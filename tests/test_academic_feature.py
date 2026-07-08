@@ -1,5 +1,7 @@
 from CampusIQ_career.ai.types import AIResponse
+from CampusIQ_career.features import run_career_feature
 from CampusIQ_career.features.academic import AcademicRunner
+from CampusIQ_career.features.orchestrator import DEFAULT_CAREER_FEATURES, run_feature
 
 
 class FakeClient:
@@ -167,3 +169,28 @@ def test_academic_missing_prompt_file_is_handled_clearly(tmp_path):
     assert result["status"] == "failed"
     assert "Prompt file not found" in result["errors"][0]
     assert client.calls == []
+
+
+def test_orchestrator_run_feature_resolves_professor_comments():
+    client = FakeClient('{"summary": "done", "data": {"themes": []}}')
+
+    result = run_feature("PROFESSOR_COMMENTS", sample_student_with_comments(), client)
+
+    assert result["feature"] == "PROFESSOR_COMMENTS"
+    assert result["status"] == "success"
+    assert client.calls[0]["role"] == "academic"
+
+
+def test_init_run_career_feature_resolves_professor_comments():
+    client = FakeClient('{"summary": "done", "data": {"themes": []}}')
+
+    result = run_career_feature("PROFESSOR_COMMENTS", sample_student_with_comments(), client)
+
+    assert result["feature"] == "PROFESSOR_COMMENTS"
+    assert result["status"] == "success"
+    assert client.calls[0]["role"] == "academic"
+
+
+def test_professor_comments_is_opt_in_not_in_default_career_features():
+    assert "PROFESSOR_COMMENTS" not in DEFAULT_CAREER_FEATURES
+    assert DEFAULT_CAREER_FEATURES == ("FIT", "GAP", "SHIFT")
