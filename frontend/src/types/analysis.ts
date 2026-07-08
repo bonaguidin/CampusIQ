@@ -1,9 +1,9 @@
-// PROVISIONAL — mirrors CampusIQ_career/features/gap.py and academic.py's
-// `output_contract` dicts, which describe the JSON shape requested from the
-// model but have not yet been confirmed against a real (non-mocked) AI
-// response — see the credit-blocked validation run. Free models in
-// particular can drift from a requested JSON contract. Revisit these types
-// once a real call has been observed end to end.
+// Mirrors CampusIQ_career/features/gap.py and academic.py's `output_contract`
+// dicts. Confirmed against real (non-mocked) DeepSeek R1 output — see
+// /tmp/career_result.json and /tmp/academic_result.json from the validation
+// run. academic.py's shape matched on the first real call; gap.py's
+// must_have_gaps/nice_to_have_gaps did not (contract said bare string[],
+// real output was structured objects) and has been corrected here to match.
 
 export type FeatureStatus = 'success' | 'skipped' | 'failed';
 
@@ -17,11 +17,18 @@ export interface FeatureResult<T> {
 
 // ── GAP (readiness check) — gap.py output_contract ──────────────────────────
 
+export interface GapMustHaveGap {
+  gap: string;
+  why_it_matters?: string;
+  why_it_helps?: string;
+  how_to_close: string;
+}
+
 export interface GapAnalysisData {
   readiness_score: number;
   strengths: string[];
-  must_have_gaps: string[];
-  nice_to_have_gaps: string[];
+  must_have_gaps: GapMustHaveGap[];
+  nice_to_have_gaps: GapMustHaveGap[];
   recommended_next_steps: string[];
 }
 

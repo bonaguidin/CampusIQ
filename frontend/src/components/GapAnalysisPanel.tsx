@@ -1,7 +1,7 @@
 import { useAuth } from '../auth/useAuth';
 import { analyzeGap } from '../api/analysis';
 import { useAnalysisRun } from '../hooks/useAnalysisRun';
-import type { GapAnalysisData } from '../types/analysis';
+import type { GapAnalysisData, GapMustHaveGap } from '../types/analysis';
 import { AnalysisPanel, type AnalysisPhase } from './AnalysisPanel';
 
 // GAP readiness panel — data shape is gap.py's output_contract (readiness_score,
@@ -42,6 +42,19 @@ export function GapAnalysisPanel() {
   );
 }
 
+// must_have_gaps items carry why_it_matters; nice_to_have_gaps carry
+// why_it_helps — the same shape covers both, only one field is ever present.
+function GapItemDetail({ item }: { item: GapMustHaveGap }) {
+  const why = item.why_it_matters ?? item.why_it_helps;
+  return (
+    <>
+      <div className="gap-item-title">{item.gap}</div>
+      {why && <p className="gap-item-why">{why}</p>}
+      <p className="gap-item-action">{item.how_to_close}</p>
+    </>
+  );
+}
+
 function GapResult({ data, summary }: { data: GapAnalysisData; summary: string }) {
   return (
     <div>
@@ -58,9 +71,9 @@ function GapResult({ data, summary }: { data: GapAnalysisData; summary: string }
           <div className="gap-column-title">Must-Have Gaps</div>
           {data.must_have_gaps.length > 0 ? (
             <ul className="gap-list">
-              {data.must_have_gaps.map((gap, idx) => (
+              {data.must_have_gaps.map((item, idx) => (
                 <li key={idx} className="gap-list-item gap-list-item--must">
-                  {gap}
+                  <GapItemDetail item={item} />
                 </li>
               ))}
             </ul>
@@ -73,9 +86,9 @@ function GapResult({ data, summary }: { data: GapAnalysisData; summary: string }
           <div className="gap-column-title">Nice-to-Have Gaps</div>
           {data.nice_to_have_gaps.length > 0 ? (
             <ul className="gap-list">
-              {data.nice_to_have_gaps.map((gap, idx) => (
+              {data.nice_to_have_gaps.map((item, idx) => (
                 <li key={idx} className="gap-list-item gap-list-item--nice">
-                  {gap}
+                  <GapItemDetail item={item} />
                 </li>
               ))}
             </ul>

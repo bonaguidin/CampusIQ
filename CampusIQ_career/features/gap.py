@@ -17,8 +17,20 @@ class GapRunner(CareerFeatureRunner):
     output_contract: Mapping[str, Any] = {
         "readiness_score": 0,
         "strengths": [],
-        "must_have_gaps": [],
-        "nice_to_have_gaps": [],
+        "must_have_gaps": [
+            {
+                "gap": "string",
+                "why_it_matters": "string",
+                "how_to_close": "string",
+            }
+        ],
+        "nice_to_have_gaps": [
+            {
+                "gap": "string",
+                "why_it_helps": "string",
+                "how_to_close": "string",
+            }
+        ],
         "recommended_next_steps": [],
     }
 

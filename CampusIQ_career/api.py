@@ -48,7 +48,11 @@ def load_student_profile(student_slug: str) -> dict:
 
 def build_client() -> OpenRouterClient:
     try:
-        return OpenRouterClient()
+        # DeepSeek R1's reasoning traces routinely run 100-200s+ (confirmed via
+        # real validation calls) — the library default of 30s is too short for
+        # this bridge specifically. Scoped here, not in openrouter_client.py,
+        # since other callers may have different latency tolerances.
+        return OpenRouterClient(timeout=300.0)
     except AIConfigError as exc:
         # Surface as a FeatureResult-shaped failure so the frontend's single
         # "failed" branch handles both "AI call failed" and "server misconfigured"

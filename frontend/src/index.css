@@ -1174,6 +1174,25 @@ a {
 .gap-list-item--nice { border-left-color: var(--pending); }
 .gap-list-item--strength { border-left-color: var(--ready); }
 
+.gap-item-title {
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 3px;
+}
+
+.gap-item-why {
+  font-size: var(--text-sm);
+  color: var(--muted);
+  line-height: 1.5;
+  margin-bottom: var(--sp-1);
+}
+
+.gap-item-action {
+  font-size: var(--text-sm);
+  color: var(--ink);
+  line-height: 1.5;
+}
+
 .gap-steps {
   display: flex;
   flex-direction: column;
