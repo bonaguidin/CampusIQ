@@ -38,6 +38,7 @@ class CareerFeatureRunner:
     prompt_filename: str
     required_paths: Sequence[str]
     output_contract: Mapping[str, Any]
+    role: str = "career"
 
     def __init__(self, client: Any, prompt_path: str | Path | None = None) -> None:
         self.client = client
@@ -58,7 +59,7 @@ class CareerFeatureRunner:
             prompt_template = load_prompt_template(self.prompt_path)
             response = self.client.complete(
                 messages=self.build_messages(student_profile, prompt_template),
-                role="career",
+                role=self.role,
             )
             parsed = parse_ai_json_response(response.text)
         except (OSError, AIConfigError, AIRequestError, AIResponseParseError, ValueError) as exc:
