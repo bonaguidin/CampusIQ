@@ -48,6 +48,39 @@ def test_analyze_gap_success(client, monkeypatch):
     assert fake.calls[0]["role"] == "career"
 
 
+def test_analyze_fit_success(client, monkeypatch):
+    fake = FakeClient(
+        """
+        {
+          "summary": "Strong fit for data analyst, weaker for data engineer.",
+          "data": {
+            "role_matches": [
+              {
+                "role": "Data Analyst",
+                "fit_level": "high",
+                "rationale": "Coursework and projects align closely.",
+                "supporting_signals": ["Excel", "Intro statistics"],
+                "missing_signals": ["SQL"]
+              }
+            ],
+            "overall_fit_summary": "Best aligned with analytics roles."
+          }
+        }
+        """
+    )
+    monkeypatch.setattr(api, "build_client", lambda: fake)
+
+    response = client.post("/api/students/jordanReyes/analyze/fit")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["feature"] == "FIT"
+    assert body["status"] == "success"
+    assert body["data"]["role_matches"][0]["role"] == "Data Analyst"
+    assert body["data"]["role_matches"][0]["fit_level"] == "high"
+    assert fake.calls[0]["role"] == "career"
+
+
 def test_analyze_professor_comments_success(client, monkeypatch):
     fake = FakeClient(
         """

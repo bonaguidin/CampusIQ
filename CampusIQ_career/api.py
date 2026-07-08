@@ -67,6 +67,13 @@ def analyze_gap(student_slug: str) -> dict:
     return run_feature("GAP", profile, client)
 
 
+@app.post("/api/students/{student_slug}/analyze/fit")
+def analyze_fit(student_slug: str) -> dict:
+    profile = load_student_profile(student_slug)
+    client = build_client()
+    return run_feature("FIT", profile, client)
+
+
 @app.post("/api/students/{student_slug}/analyze/professor-comments")
 def analyze_professor_comments(student_slug: str) -> dict:
     profile = load_student_profile(student_slug)

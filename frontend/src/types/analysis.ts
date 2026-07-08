@@ -32,6 +32,25 @@ export interface GapAnalysisData {
   recommended_next_steps: string[];
 }
 
+// ── FIT (role-fit check) — fit.py output_contract ───────────────────────────
+// Confirmed against real (non-mocked) DeepSeek R1 output — see
+// /tmp/career_result.json from the validation run.
+
+export type FitLevel = 'high' | 'medium' | 'low';
+
+export interface FitRoleMatch {
+  role: string;
+  fit_level: FitLevel;
+  rationale: string;
+  supporting_signals: string[];
+  missing_signals: string[];
+}
+
+export interface FitAnalysisData {
+  role_matches: FitRoleMatch[];
+  overall_fit_summary: string;
+}
+
 // ── PROFESSOR_COMMENTS (academic.py output_contract) ─────────────────────────
 
 export type ThemeCategory = 'strength' | 'concern' | 'praise' | 'flag';

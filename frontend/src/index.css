@@ -1264,6 +1264,34 @@ a {
   margin-bottom: var(--sp-3);
 }
 
+/* FIT role-fit level badge — mirrors .theme-badge, but a 3-level scale
+   (high/medium/low) rather than the 2-color strength/concern split. */
+.fit-badge {
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+}
+
+.fit-badge--high {
+  color: var(--ready);
+  background: var(--ready-tint);
+}
+
+.fit-badge--medium {
+  color: var(--pending);
+  background: rgba(154, 147, 140, 0.12);
+}
+
+.fit-badge--low {
+  color: var(--error);
+  background: var(--error-tint);
+}
+
 .theme-refs {
   list-style: none;
   display: flex;

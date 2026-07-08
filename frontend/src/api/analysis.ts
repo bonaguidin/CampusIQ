@@ -2,7 +2,12 @@
 // Student identity here is the dashboard slug (e.g. "jordanReyes"), matching
 // dataAdapter.ts's `/data/student_${slug}.json` convention.
 
-import type { FeatureResult, GapAnalysisData, ProfessorCommentAnalysisData } from '../types/analysis';
+import type {
+  FeatureResult,
+  FitAnalysisData,
+  GapAnalysisData,
+  ProfessorCommentAnalysisData,
+} from '../types/analysis';
 
 async function postAnalysis<T>(path: string): Promise<FeatureResult<T>> {
   const response = await fetch(path, { method: 'POST' });
@@ -14,6 +19,10 @@ async function postAnalysis<T>(path: string): Promise<FeatureResult<T>> {
 
 export function analyzeGap(slug: string): Promise<FeatureResult<GapAnalysisData>> {
   return postAnalysis(`/api/students/${encodeURIComponent(slug)}/analyze/gap`);
+}
+
+export function analyzeFit(slug: string): Promise<FeatureResult<FitAnalysisData>> {
+  return postAnalysis(`/api/students/${encodeURIComponent(slug)}/analyze/fit`);
 }
 
 export function analyzeProfessorComments(
