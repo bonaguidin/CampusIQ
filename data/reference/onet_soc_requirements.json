@@ -1,0 +1,154 @@
+{
+  "_placeholder": true,
+  "_source_note": "PLACEHOLDER DATA — structure is real, values are illustrative. Replace with the O*NET importance scores from Kasheia's June handoff doc (campus_iq_handoff.md), 2019 SOC taxonomy. Importance is on a 0-100 scale (O*NET 'Importance' element rescaled from its native 1-5). Keep this shape stable so GAP's must-have vs. nice-to-have logic and the export/cache layer don't have to change when real values drop in.",
+  "_schema": {
+    "keyed_by": "SOC code (2019 taxonomy)",
+    "must_have_threshold": 70,
+    "role": {
+      "title": "string",
+      "job_zone": "int 1-5 (O*NET education/training zone)",
+      "typical_education": "string",
+      "skills": [{ "name": "string", "importance": "0-100" }],
+      "knowledge": [{ "name": "string", "importance": "0-100" }],
+      "abilities": [{ "name": "string", "importance": "0-100" }]
+    }
+  },
+  "must_have_threshold": 70,
+  "roles": {
+    "17-2011.00": {
+      "title": "Aerospace Engineers",
+      "job_zone": 4,
+      "typical_education": "Bachelor's degree",
+      "skills": [
+        { "name": "Complex Problem Solving", "importance": 85 },
+        { "name": "Critical Thinking", "importance": 82 },
+        { "name": "Mathematics", "importance": 78 },
+        { "name": "Systems Analysis", "importance": 72 },
+        { "name": "Programming", "importance": 55 },
+        { "name": "Technical Writing", "importance": 60 }
+      ],
+      "knowledge": [
+        { "name": "Engineering and Technology", "importance": 90 },
+        { "name": "Physics", "importance": 82 },
+        { "name": "Mathematics", "importance": 80 },
+        { "name": "Design", "importance": 68 }
+      ],
+      "abilities": [
+        { "name": "Deductive Reasoning", "importance": 80 },
+        { "name": "Mathematical Reasoning", "importance": 78 },
+        { "name": "Information Ordering", "importance": 66 }
+      ]
+    },
+    "17-2141.00": {
+      "title": "Mechanical Engineers",
+      "job_zone": 4,
+      "typical_education": "Bachelor's degree",
+      "skills": [
+        { "name": "Complex Problem Solving", "importance": 80 },
+        { "name": "Critical Thinking", "importance": 78 },
+        { "name": "Mathematics", "importance": 75 },
+        { "name": "Operations Analysis", "importance": 68 },
+        { "name": "CAD / Design Tools", "importance": 72 },
+        { "name": "Technical Writing", "importance": 58 }
+      ],
+      "knowledge": [
+        { "name": "Engineering and Technology", "importance": 92 },
+        { "name": "Mechanical", "importance": 85 },
+        { "name": "Physics", "importance": 76 },
+        { "name": "Mathematics", "importance": 74 }
+      ],
+      "abilities": [
+        { "name": "Deductive Reasoning", "importance": 78 },
+        { "name": "Problem Sensitivity", "importance": 70 },
+        { "name": "Visualization", "importance": 68 }
+      ]
+    },
+    "15-1252.00": {
+      "title": "Software Developers",
+      "job_zone": 4,
+      "typical_education": "Bachelor's degree",
+      "skills": [
+        { "name": "Programming", "importance": 88 },
+        { "name": "Complex Problem Solving", "importance": 80 },
+        { "name": "Critical Thinking", "importance": 76 },
+        { "name": "Systems Analysis", "importance": 72 },
+        { "name": "Systems Evaluation", "importance": 66 },
+        { "name": "Version Control (Git)", "importance": 70 }
+      ],
+      "knowledge": [
+        { "name": "Computers and Electronics", "importance": 92 },
+        { "name": "Engineering and Technology", "importance": 78 },
+        { "name": "Mathematics", "importance": 70 }
+      ],
+      "abilities": [
+        { "name": "Deductive Reasoning", "importance": 78 },
+        { "name": "Information Ordering", "importance": 72 },
+        { "name": "Problem Sensitivity", "importance": 70 }
+      ]
+    },
+    "15-2051.00": {
+      "title": "Data Scientists",
+      "job_zone": 4,
+      "typical_education": "Bachelor's or Master's degree",
+      "skills": [
+        { "name": "Programming (Python/R)", "importance": 85 },
+        { "name": "Mathematics / Statistics", "importance": 88 },
+        { "name": "Complex Problem Solving", "importance": 78 },
+        { "name": "Critical Thinking", "importance": 76 },
+        { "name": "Machine Learning", "importance": 74 },
+        { "name": "Data Visualization", "importance": 66 }
+      ],
+      "knowledge": [
+        { "name": "Mathematics", "importance": 90 },
+        { "name": "Computers and Electronics", "importance": 85 },
+        { "name": "English Language / Communication", "importance": 60 }
+      ],
+      "abilities": [
+        { "name": "Mathematical Reasoning", "importance": 84 },
+        { "name": "Deductive Reasoning", "importance": 78 },
+        { "name": "Inductive Reasoning", "importance": 74 }
+      ]
+    },
+    "17-2112.00": {
+      "title": "Industrial Engineers",
+      "job_zone": 4,
+      "typical_education": "Bachelor's degree",
+      "skills": [
+        { "name": "Complex Problem Solving", "importance": 78 },
+        { "name": "Operations Analysis", "importance": 74 },
+        { "name": "Critical Thinking", "importance": 76 },
+        { "name": "Systems Analysis", "importance": 70 },
+        { "name": "Data Analysis", "importance": 68 }
+      ],
+      "knowledge": [
+        { "name": "Engineering and Technology", "importance": 88 },
+        { "name": "Production and Processing", "importance": 78 },
+        { "name": "Mathematics", "importance": 72 }
+      ],
+      "abilities": [
+        { "name": "Deductive Reasoning", "importance": 76 },
+        { "name": "Information Ordering", "importance": 70 }
+      ]
+    },
+    "15-1211.00": {
+      "title": "Computer Systems Analysts",
+      "job_zone": 4,
+      "typical_education": "Bachelor's degree",
+      "skills": [
+        { "name": "Systems Analysis", "importance": 82 },
+        { "name": "Critical Thinking", "importance": 78 },
+        { "name": "Complex Problem Solving", "importance": 76 },
+        { "name": "Programming", "importance": 64 },
+        { "name": "Requirements Gathering", "importance": 70 }
+      ],
+      "knowledge": [
+        { "name": "Computers and Electronics", "importance": 90 },
+        { "name": "Engineering and Technology", "importance": 70 }
+      ],
+      "abilities": [
+        { "name": "Deductive Reasoning", "importance": 76 },
+        { "name": "Information Ordering", "importance": 72 }
+      ]
+    }
+  }
+}
