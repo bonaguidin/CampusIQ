@@ -24,25 +24,29 @@
       "id": 3015,
       "name": "Stereotyping, Prejudice, and Discrimination",
       "course_code": "PBSI 211",
-      "workflow_state": "available"
+      "workflow_state": "available",
+      "credit_hours": 3
     },
     {
       "id": 3016,
       "name": "Psychology of Culture and Diversity",
       "course_code": "PBSI 209",
-      "workflow_state": "available"
+      "workflow_state": "available",
+      "credit_hours": 3
     },
     {
       "id": 3017,
       "name": "Elementary Statistical Methods",
       "course_code": "STAT 201",
-      "workflow_state": "available"
+      "workflow_state": "available",
+      "credit_hours": 3
     },
     {
       "id": 3018,
       "name": "American National Government",
       "course_code": "POLS 206",
-      "workflow_state": "available"
+      "workflow_state": "available",
+      "credit_hours": 3
     }
   ],
   "enrollments": [
@@ -427,6 +431,29 @@
           "created_at": "2026-03-28T10:00:00Z"
         }
       ]
+    },
+    {
+      "assignment_id": 5076,
+      "user_id": 604,
+      "score": 84,
+      "grade": "B",
+      "grade_matches_current_submission": true,
+      "submitted_at": "2026-04-14T19:20:00Z",
+      "graded_at": "2026-04-17T10:00:00Z",
+      "grader_id": 1,
+      "workflow_state": "graded",
+      "late": false,
+      "missing": false,
+      "submission_type": "online_text_entry",
+      "submission_comments": [
+        {
+          "id": 57480,
+          "author_id": 1,
+          "author_name": "Dr. Bennett",
+          "comment": "Good command of the bill-to-law sequence; sharpen your account of the filibuster and cloture threshold.",
+          "created_at": "2026-04-17T10:00:00Z"
+        }
+      ]
     }
   ],
   "career": {
@@ -460,7 +487,20 @@
       ],
       "ai_exposure": "moderate — uses AI for outlining and study questions, not yet for structured research workflows"
     },
-    "certifications": [],
+    "certifications": [
+      {
+        "name": "CITI Program — Human Subjects Research",
+        "issuer": "CITI Program",
+        "status": "completed",
+        "date": "Spring 2026"
+      },
+      {
+        "name": "Mental Health First Aid",
+        "issuer": "National Council for Mental Wellbeing",
+        "status": "in_progress",
+        "date": "Expected Summer 2026"
+      }
+    ],
     "work_experience": [
       {
         "employer": "Psychology course research team",
@@ -554,6 +594,32 @@
         "question_id": "q4",
         "topic": "p-values",
         "score": 15,
+        "max_score": 25
+      }
+    ],
+    "5076": [
+      {
+        "question_id": "q1",
+        "topic": "Bill Introduction & Committee Referral",
+        "score": 23,
+        "max_score": 25
+      },
+      {
+        "question_id": "q2",
+        "topic": "Committee Markup & Reporting",
+        "score": 20,
+        "max_score": 25
+      },
+      {
+        "question_id": "q3",
+        "topic": "Floor Debate, Filibuster & Cloture",
+        "score": 19,
+        "max_score": 25
+      },
+      {
+        "question_id": "q4",
+        "topic": "Conference Committee & Presidential Action",
+        "score": 22,
         "max_score": 25
       }
     ]

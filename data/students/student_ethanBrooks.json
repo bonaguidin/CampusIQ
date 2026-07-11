@@ -16,7 +16,7 @@
     "major_intended": "Computer Engineering",
     "classification": "Freshman",
     "institution": "Texas A&M University",
-    "gpa_current": 2.64,
+    "gpa_current": 2.57,
     "expected_graduation": "2029-05"
   },
   "onboarding_stage": 3,
@@ -25,37 +25,43 @@
       "id": 3010,
       "name": "Engineering Lab I: Computation",
       "course_code": "ENGR 102",
-      "workflow_state": "available"
+      "workflow_state": "available",
+      "credit_hours": 2
     },
     {
       "id": 3012,
       "name": "Engineering Mathematics I",
       "course_code": "MATH 151",
-      "workflow_state": "available"
+      "workflow_state": "available",
+      "credit_hours": 4
     },
     {
       "id": 3014,
       "name": "Health and Fitness",
       "course_code": "KINE 199",
-      "workflow_state": "available"
+      "workflow_state": "available",
+      "credit_hours": 1
     },
     {
       "id": 3023,
       "name": "General Chemistry for Engineering Students",
       "course_code": "CHEM 107",
-      "workflow_state": "available"
+      "workflow_state": "available",
+      "credit_hours": 3
     },
     {
       "id": 3024,
       "name": "General Chemistry for Engineering Students Laboratory",
       "course_code": "CHEM 117",
-      "workflow_state": "available"
+      "workflow_state": "available",
+      "credit_hours": 1
     },
     {
       "id": 3025,
       "name": "Composition and Rhetoric",
       "course_code": "ENGL 104",
-      "workflow_state": "available"
+      "workflow_state": "available",
+      "credit_hours": 3
     }
   ],
   "enrollments": [
@@ -840,7 +846,20 @@
       ],
       "ai_exposure": "informal — has used AI tools for study planning and code explanation, but no formal AI coursework yet"
     },
-    "certifications": [],
+    "certifications": [
+      {
+        "name": "GitHub Foundations",
+        "issuer": "GitHub",
+        "status": "completed",
+        "date": "Spring 2026"
+      },
+      {
+        "name": "AWS Certified Cloud Practitioner",
+        "issuer": "Amazon Web Services",
+        "status": "in_progress",
+        "date": "Expected Fall 2026"
+      }
+    ],
     "work_experience": [
       {
         "employer": "Texas A&M Engineering Project Team",
