@@ -4,16 +4,8 @@ from .academic import AcademicRunner
 from .base import FeatureResult, FeatureRunner, FeatureStatus
 from .fit import FitRunner
 from .gap import GapRunner
-from .orchestrator import run_career_analysis, run_feature
+from .orchestrator import RUNNERS, run_career_analysis, run_feature
 from .shift import ShiftRunner
-
-
-RUNNERS = {
-    "FIT": FitRunner,
-    "GAP": GapRunner,
-    "SHIFT": ShiftRunner,
-    "PROFESSOR_COMMENTS": AcademicRunner,
-}
 
 
 def run_career_feature(feature_name, student_profile, client):
