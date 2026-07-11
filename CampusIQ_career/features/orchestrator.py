@@ -2,6 +2,7 @@
 
 from typing import Any, Mapping, Sequence
 
+from .academic import AcademicRunner
 from .base import FeatureResult
 from .fit import FitRunner
 from .gap import GapRunner
@@ -14,6 +15,7 @@ RUNNERS = {
     "FIT": FitRunner,
     "GAP": GapRunner,
     "SHIFT": ShiftRunner,
+    "PROFESSOR_COMMENTS": AcademicRunner,
 }
 
 

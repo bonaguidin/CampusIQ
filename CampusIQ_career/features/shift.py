@@ -15,9 +15,26 @@ class ShiftRunner(CareerFeatureRunner):
     )
     output_contract: Mapping[str, Any] = {
         "role_evolution_summary": "string",
-        "task_shifts": [],
-        "durable_skills": [],
-        "adjacent_paths": [],
+        "task_shifts": [
+            {
+                "task": "string",
+                "changing": "string",
+                "meaning": "string",
+            }
+        ],
+        "durable_skills": [
+            {
+                "task": "string",
+                "reason": "string",
+            }
+        ],
+        "adjacent_paths": [
+            {
+                "path": "string",
+                "relevance": "string",
+                "driver": "string",
+            }
+        ],
         "ai_fluency_guidance": [],
     }
 

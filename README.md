@@ -10,7 +10,6 @@ Dallas AI Group 6 | 2026 Summer Cohort.
 - [uv](https://docs.astral.sh/uv/getting-started/installation/) — Python package manager
 - Node.js 20+ for the React/Vite frontend
 - An OpenRouter API key for the primary Campus IQ AI path
-- Optional: an Anthropic API key for the legacy direct demo script
 
 ---
 
@@ -24,18 +23,6 @@ uv sync
 cp .env.example .env
 # then edit .env and replace "your-key-here" with your actual key
 ```
-
----
-
-## Running the demo
-
-```bash
-cd CampusIQ_career/demo && uv run python campus_iq_test.py
-```
-
-To swap which student profile runs, edit `STUDENT_FILE` at the top of
-`CampusIQ_career/demo/campus_iq_test.py`. The feature (FIT / GAP / SHIFT)
-is currently selected by the hardcoded `FEATURE` value in that same file.
 
 ---
 
@@ -67,8 +54,7 @@ dashboard and future prompt/UI code.
 
 ## AI Architecture
 
-Campus IQ uses OpenRouter as the primary app AI gateway. The direct Anthropic
-demo in `CampusIQ_career/demo/campus_iq_test.py` is legacy/dev-only for now.
+Campus IQ uses OpenRouter as the primary app AI gateway.
 
 ### Role-Based Model Routing
 
@@ -102,9 +88,6 @@ CAMPUSIQ_MODEL_PARSING=
 CAMPUSIQ_MODEL_CHAT=
 CAMPUSIQ_MODEL_REPORT=
 ```
-
-`ANTHROPIC_API_KEY` is required only by the legacy direct-Anthropic demo
-(`CampusIQ_career/demo/campus_iq_test.py`).
 
 Supabase is documented in the workflow architecture, but no Supabase client,
 schema, or runtime path is implemented in the current code.

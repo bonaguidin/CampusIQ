@@ -3,8 +3,9 @@ import type { Course, Enrollment, Assignment, Submission, ExamTopicTags } from '
 import { CourseGradeTable } from './CourseGradeTable';
 import { ProfessorCommentList } from './ProfessorCommentList';
 import { ExamTopicBreakdown } from './ExamTopicBreakdown';
+import { ProfessorCommentAnalysisPanel } from './ProfessorCommentAnalysisPanel';
 
-type AcademicTab = 'grades' | 'comments' | 'topics';
+type AcademicTab = 'grades' | 'comments' | 'analysis' | 'topics';
 
 interface AcademicSnapshotProps {
   courses: Course[];
@@ -17,6 +18,7 @@ interface AcademicSnapshotProps {
 const TABS: { key: AcademicTab; label: string }[] = [
   { key: 'grades',   label: 'Grades'            },
   { key: 'comments', label: 'Professor Comments' },
+  { key: 'analysis', label: 'AI Analysis'        },
   { key: 'topics',   label: 'Exam Topics'        },
 ];
 
@@ -65,6 +67,7 @@ export function AcademicSnapshot({
             submissions={submissions}
           />
         )}
+        {activeTab === 'analysis' && <ProfessorCommentAnalysisPanel />}
         {activeTab === 'topics' && (
           <ExamTopicBreakdown
             assignments={assignments}

@@ -15,7 +15,7 @@
     "major_intended": "N/A",
     "classification": "Sophomore",
     "institution": "Texas A&M University",
-    "gpa_current": 2.69,
+    "gpa_current": 2.71,
     "expected_graduation": "2028-05"
   },
   "onboarding_stage": 3,
@@ -24,31 +24,36 @@
       "id": 3019,
       "name": "Molecular Cell Biology",
       "course_code": "BIOL 213",
-      "workflow_state": "available"
+      "workflow_state": "available",
+      "credit_hours": 3
     },
     {
       "id": 3020,
       "name": "Organic Chemistry I",
       "course_code": "CHEM 227",
-      "workflow_state": "available"
+      "workflow_state": "available",
+      "credit_hours": 3
     },
     {
       "id": 3021,
       "name": "College Physics I",
       "course_code": "PHYS 201",
-      "workflow_state": "available"
+      "workflow_state": "available",
+      "credit_hours": 4
     },
     {
       "id": 3022,
       "name": "History of the United States",
       "course_code": "HIST 105",
-      "workflow_state": "available"
+      "workflow_state": "available",
+      "credit_hours": 3
     },
     {
       "id": 3028,
       "name": "Organic Chemistry I Laboratory",
       "course_code": "CHEM 237",
-      "workflow_state": "available"
+      "workflow_state": "available",
+      "credit_hours": 1
     }
   ],
   "enrollments": [

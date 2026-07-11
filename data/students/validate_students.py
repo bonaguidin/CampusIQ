@@ -45,11 +45,15 @@ REQUIRED_SKILL_KEYS = {"technical", "soft", "ai_exposure"}
 REQUIRED_COMPLETENESS_KEYS = {"academic", "career", "overall"}
 REQUIRED_FEATURE_KEYS = {"FIT", "GAP", "SHIFT"}
 
+# Demo-critical inputs the analyzers actually consume (previously unchecked).
+REQUIRED_EXAM_TAG_KEYS = {"question_id", "topic", "score", "max_score"}
+MIN_SUBMISSION_COMMENTS = 3
+
 EXPECTED = {
-    "student_jordanReyes.json":  {"courses": 5, "enrollments": 5, "assignments": 12, "submissions": 10},
+    "student_jordanReyes.json":  {"courses": 5, "enrollments": 5, "assignments": 12, "submissions": 11},
     "student_priyaNair.json":    {"courses": 6, "enrollments": 6, "assignments": 19, "submissions": 14},
     "student_ethanBrooks.json":  {"courses": 6, "enrollments": 6, "assignments": 24, "submissions": 17},
-    "student_marcusWebb.json":   {"courses": 4, "enrollments": 4, "assignments": 9,  "submissions": 8},
+    "student_marcusWebb.json":   {"courses": 4, "enrollments": 4, "assignments": 9,  "submissions": 9},
     "student_sofiaRamirez.json": {"courses": 5, "enrollments": 5, "assignments": 17, "submissions": 12},
 }
 
@@ -195,6 +199,48 @@ def validate_unified_profile(data, issues):
                             f"profile_completeness.by_feature.{feature}.required: expected string keys and boolean values"
                         )
 
+def validate_demo_inputs(data, issues):
+    """Guard the exact inputs the demo features consume: professor comments
+    (academic.py) and exam topic tags (GAP/academic layer). These were
+    previously unchecked, so the dataset could silently regress on them."""
+    submissions = data.get("submissions")
+    if not isinstance(submissions, list):
+        issues.append("submissions: expected list")
+    else:
+        comment_count = 0
+        for sub in submissions:
+            if not isinstance(sub, dict):
+                continue
+            sc = sub.get("submission_comments", [])
+            if isinstance(sc, list):
+                comment_count += len(sc)
+        if comment_count < MIN_SUBMISSION_COMMENTS:
+            issues.append(
+                f"submission_comments: expected >= {MIN_SUBMISSION_COMMENTS} total across "
+                f"submissions, got {comment_count}"
+            )
+
+    exam_tags = data.get("examTopicTags")
+    if not isinstance(exam_tags, dict):
+        issues.append("examTopicTags: expected object")
+    elif not exam_tags:
+        issues.append("examTopicTags: expected non-empty object (at least one tagged exam)")
+    else:
+        for assignment_id, tags in exam_tags.items():
+            if not isinstance(tags, list) or not tags:
+                issues.append(f"examTopicTags[{assignment_id}]: expected non-empty list")
+                continue
+            for index, tag in enumerate(tags):
+                if not isinstance(tag, dict):
+                    issues.append(f"examTopicTags[{assignment_id}][{index}]: expected object")
+                    continue
+                missing = REQUIRED_EXAM_TAG_KEYS - set(tag.keys())
+                if missing:
+                    issues.append(
+                        f"examTopicTags[{assignment_id}][{index}]: missing keys {sorted(missing)}"
+                    )
+
+
 print(f"{'File':<30} {'Keys':>5}  {'Courses':>7}  {'Enroll':>6}  {'Assign':>6}  {'Subs':>5}  Status")
 print("-" * 80)
 
@@ -233,6 +279,7 @@ for fname, expected_counts in sorted(EXPECTED.items()):
         if actual[k] != v:
             issues.append(f"{k}: expected {v} got {actual[k]}")
     validate_unified_profile(data, issues)
+    validate_demo_inputs(data, issues)
 
     status = "OK" + (" +_notes" if has_notes else "") if not issues else "FAIL: " + "; ".join(issues)
 

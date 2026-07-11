@@ -23,8 +23,11 @@ Never refer to the student in the third person (no "the student," "they," or "th
 
 ## STUDENT PROFILE
 
-- **Intended major:** {{major_intended}}
-- **Current major:** {{major_current}}
+- **Major:** {{effective_major}} — status: {{major_status}}
+  - When `major_status` is `staying`, this is the student's declared major and
+    they are NOT switching — do not tell them they are changing majors.
+  - When `major_status` is `switching`, they are moving from {{major_current}}
+    toward {{effective_major}}; reason about the intended major.
 - **Classification:** {{classification}}
 - **Interests:** {{interests}}
 - **Technical skills:** {{skills_self_reported.technical}}

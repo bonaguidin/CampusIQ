@@ -44,6 +44,19 @@ Never refer to the student in the third person (no "the student," "they," or "th
 [Script injects O*NET skills, knowledge, and abilities with importance scores,
 plus Job Zone and education requirements]
 
+`market_requirements` (in the student profile context JSON) is the
+authoritative source for this subsection. It carries real O*NET skills,
+knowledge, and abilities per target role, each implicitly scored against
+`market_requirements.must_have_threshold` — items at or above that threshold
+are must-haves, items below it are nice-to-haves. Use it, not
+`role_requirements`, to judge skill/knowledge/ability gaps.
+
+`role_requirements` is a supplementary source, relevant ONLY for
+`must_have_certifications` and `nice_to_have_certifications` — fields
+`market_requirements` does not provide. Do not use `role_requirements`'
+skill lists (`must_have_skills` / `nice_to_have_skills`) to score gaps; if
+they ever disagree with `market_requirements`, `market_requirements` governs.
+
 ### Live DFW Posting Requirements
 [Script injects current DFW job posting requirements for the student's
 target roles — must-haves, preferred qualifications, employer phrasing]
@@ -79,21 +92,23 @@ Include a one-sentence rationale for the score.
 ### Gap Analysis
 
 #### Must-Have Gaps
-Skills, experience, or credentials that appear consistently across O*NET
-importance scores AND live posting requirements. The student is unlikely
-to get an interview without these.
+Skills/knowledge/abilities from `market_requirements` at or above its
+`must_have_threshold`, plus any `role_requirements.must_have_certifications`
+the student lacks. The student is unlikely to get an interview without these.
 
 For each gap:
-- **Gap:** [Skill or credential]
-- **Why it matters:** What percentage / frequency of postings require this?
-  What does O*NET say about its importance?
+- **Gap:** [Skill, knowledge area, ability, or certification]
+- **Why it matters:** For a skill/knowledge/ability, cite its O*NET
+  importance score from `market_requirements`. For a certification, note
+  that it's listed as must-have in `role_requirements`.
 - **How to close it:** Be specific — name a course type, project type,
   certification, or experience the student can realistically pursue
   given their timeline (graduation: {{expected_graduation}}).
 
 #### Nice-to-Have Gaps
-Skills or credentials that appear in postings but are not universal —
-they differentiate candidates, not gate them.
+Skills/knowledge/abilities from `market_requirements` below its
+`must_have_threshold`, plus any `role_requirements.nice_to_have_certifications`
+the student lacks — items that differentiate candidates, not gate them.
 
 For each gap:
 - **Gap:** [Skill or credential]

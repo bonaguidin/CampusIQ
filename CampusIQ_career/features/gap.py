@@ -1,9 +1,27 @@
 """GAP career feature runner."""
 
+import json
+from functools import lru_cache
+from pathlib import Path
 from typing import Any, Mapping
 
 from .base import CareerFeatureRunner
 from .market_data import get_market_requirements
+
+# Static, hand-curated role-requirements lookup used in place of a live O*NET /
+# job-market API for the demo (SOC code + must-have / nice-to-have skills & certs
+# per target role). Keyed by the exact target_role strings in the student JSON.
+ROLE_REQUIREMENTS_PATH = Path(__file__).resolve().parents[2] / "data" / "role_requirements.json"
+
+
+@lru_cache(maxsize=1)
+def _load_role_requirements() -> Mapping[str, Any]:
+    try:
+        with open(ROLE_REQUIREMENTS_PATH, encoding="utf-8") as handle:
+            data = json.load(handle)
+    except (OSError, ValueError):
+        return {}
+    return {key: value for key, value in data.items() if not key.startswith("_")}
 
 
 class GapRunner(CareerFeatureRunner):
@@ -18,8 +36,20 @@ class GapRunner(CareerFeatureRunner):
     output_contract: Mapping[str, Any] = {
         "readiness_score": 0,
         "strengths": [],
-        "must_have_gaps": [],
-        "nice_to_have_gaps": [],
+        "must_have_gaps": [
+            {
+                "gap": "string",
+                "why_it_matters": "string",
+                "how_to_close": "string",
+            }
+        ],
+        "nice_to_have_gaps": [
+            {
+                "gap": "string",
+                "why_it_helps": "string",
+                "how_to_close": "string",
+            }
+        ],
         "recommended_next_steps": [],
     }
 
@@ -44,7 +74,25 @@ class GapRunner(CareerFeatureRunner):
             # with importance >= must_have_threshold are must-haves; below it are
             # nice-to-haves.
             "market_requirements": get_market_requirements(target_roles),
+            "role_requirements": self.role_requirements_for(target_roles),
         }
+
+    def role_requirements_for(self, target_roles: Any) -> dict[str, Any]:
+        """Match each target role against the static lookup and return the
+        SOC-code + must-have / nice-to-have skills & certs for the roles found.
+        Unmatched roles are reported so the AI does not silently assume coverage."""
+        lookup = _load_role_requirements()
+        matched: dict[str, Any] = {}
+        unmatched: list[str] = []
+        for role in target_roles or []:
+            requirements = lookup.get(role)
+            if requirements:
+                matched[role] = requirements
+            else:
+                unmatched.append(role)
+        if unmatched:
+            matched["_unmatched_roles"] = unmatched
+        return matched
 
     def default_summary(self, data):
         score = data.get("readiness_score")

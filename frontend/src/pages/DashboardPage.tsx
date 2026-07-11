@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/useAuth';
 import { AcademicSnapshot } from '../components/AcademicSnapshot';
 import { CareerPanel } from '../components/CareerPanel';
+import { GapAnalysisPanel } from '../components/GapAnalysisPanel';
+import { FitAnalysisPanel } from '../components/FitAnalysisPanel';
 import type { ProfileCompleteness } from '../types/student';
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -368,7 +370,11 @@ export function DashboardPage() {
               <div key="career" className="stage-section">
                 <h2 className="career-section-heading">Career Profile</h2>
                 {career !== null ? (
-                  <CareerPanel career={career} />
+                  <>
+                    <GapAnalysisPanel />
+                    <FitAnalysisPanel />
+                    <CareerPanel career={career} />
+                  </>
                 ) : (
                   <p className="career-empty">
                     Career profile not set up yet — complete onboarding to unlock

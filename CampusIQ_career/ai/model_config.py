@@ -9,16 +9,18 @@ from .types import AgentRole
 
 # TODO: Verify exact OpenRouter model identifiers before live API use.
 OPENROUTER_GEMINI_2_5_PRO = "TODO_OPENROUTER_MODEL_GEMINI_2_5_PRO"
-OPENROUTER_DEEPSEEK_R1 = "TODO_OPENROUTER_MODEL_DEEPSEEK_R1"
-OPENROUTER_QWEN3_235B = "TODO_OPENROUTER_MODEL_QWEN3_235B"
 OPENROUTER_QWEN3_32B = "TODO_OPENROUTER_MODEL_QWEN3_32B"
 OPENROUTER_GEMINI_2_5_FLASH = "TODO_OPENROUTER_MODEL_GEMINI_2_5_FLASH"
+
+# Validated against real OpenRouter calls in commit 557b45d (FIT/GAP/SHIFT/
+# PROFESSOR_COMMENTS, 51/51 tests passing) — safe as a hardcoded default.
+OPENROUTER_DEEPSEEK_R1 = "deepseek/deepseek-r1-0528"
 
 
 MODEL_BY_ROLE: Mapping[AgentRole, str] = {
     "orchestrator": OPENROUTER_GEMINI_2_5_PRO,
     "career": OPENROUTER_DEEPSEEK_R1,
-    "academic": OPENROUTER_QWEN3_235B,
+    "academic": OPENROUTER_DEEPSEEK_R1,
     "parsing": OPENROUTER_QWEN3_32B,
     "chat": OPENROUTER_GEMINI_2_5_FLASH,
     "report": OPENROUTER_GEMINI_2_5_PRO,

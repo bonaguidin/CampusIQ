@@ -1,0 +1,122 @@
+{
+  "_notes": [
+    "Static, hand-curated role-requirements lookup for the Campus IQ GAP feature demo.",
+    "NOT live O*NET/Lightcast data — SOC codes reference the 2018 SOC / O*NET-SOC taxonomy for realism only.",
+    "Keyed by the exact target_role strings used across data/students/*.json (14 distinct roles).",
+    "Each role: soc_code, must_have_skills, nice_to_have_skills, must_have_certifications, nice_to_have_certifications.",
+    "must_have = student is unlikely to get an interview without it; nice_to_have = differentiator, not universal.",
+    "Verify against live market data before using with real students."
+  ],
+  "Software Engineering Intern": {
+    "soc_code": "15-1252.00",
+    "soc_title": "Software Developers",
+    "must_have_skills": ["Data structures & algorithms", "Object-oriented programming", "Proficiency in one language (Python/Java/C++)", "Version control (Git)", "Debugging", "Unit testing"],
+    "nice_to_have_skills": ["REST APIs", "SQL / relational databases", "CI/CD basics", "Cloud fundamentals (AWS/GCP)", "Agile workflow"],
+    "must_have_certifications": [],
+    "nice_to_have_certifications": ["AWS Certified Cloud Practitioner", "GitHub Foundations"]
+  },
+  "Computer Engineering Intern": {
+    "soc_code": "17-2061.00",
+    "soc_title": "Computer Hardware Engineers",
+    "must_have_skills": ["Digital logic design", "C programming", "Microcontroller fundamentals", "Circuit analysis", "Version control (Git)"],
+    "nice_to_have_skills": ["Verilog/VHDL", "FPGA prototyping", "RTOS concepts", "PCB design (KiCad/Altium)"],
+    "must_have_certifications": [],
+    "nice_to_have_certifications": ["LabVIEW Associate Developer (CLAD)"]
+  },
+  "Embedded Systems Intern": {
+    "soc_code": "17-2061.00",
+    "soc_title": "Computer Hardware Engineers",
+    "must_have_skills": ["Embedded C", "Microcontroller programming (ARM/AVR)", "Reading datasheets", "Serial protocols (UART/SPI/I2C)", "Debugging with logic analyzer/oscilloscope"],
+    "nice_to_have_skills": ["RTOS (FreeRTOS)", "Assembly basics", "Hardware bring-up", "Version control (Git)"],
+    "must_have_certifications": [],
+    "nice_to_have_certifications": ["Arm Accredited Engineer"]
+  },
+  "Business Analyst Intern": {
+    "soc_code": "13-1111.00",
+    "soc_title": "Management Analysts",
+    "must_have_skills": ["Excel modeling", "Data analysis", "Requirements gathering", "Business communication", "Basic SQL"],
+    "nice_to_have_skills": ["SQL joins & aggregation", "Tableau / Power BI", "Process mapping", "Descriptive statistics"],
+    "must_have_certifications": [],
+    "nice_to_have_certifications": ["Google Data Analytics Certificate", "Microsoft Excel Associate"]
+  },
+  "Finance Intern": {
+    "soc_code": "13-2051.00",
+    "soc_title": "Financial and Investment Analysts",
+    "must_have_skills": ["Financial statement analysis", "Excel modeling", "Accounting fundamentals", "Quantitative reasoning", "Attention to detail"],
+    "nice_to_have_skills": ["DCF / financial modeling", "Bloomberg Terminal basics", "SQL", "Valuation fundamentals"],
+    "must_have_certifications": [],
+    "nice_to_have_certifications": ["Bloomberg Market Concepts (BMC)", "CFA Level I candidate"]
+  },
+  "Operations Intern": {
+    "soc_code": "13-1199.00",
+    "soc_title": "Business Operations Specialists, All Other",
+    "must_have_skills": ["Process analysis", "Excel", "Data-driven problem solving", "Communication", "Time management"],
+    "nice_to_have_skills": ["Lean / Six Sigma basics", "SQL", "Supply chain fundamentals", "Project coordination"],
+    "must_have_certifications": [],
+    "nice_to_have_certifications": ["Six Sigma Yellow Belt"]
+  },
+  "Aerospace Engineering Intern": {
+    "soc_code": "17-2011.00",
+    "soc_title": "Aerospace Engineers",
+    "must_have_skills": ["Engineering mechanics (statics & dynamics)", "MATLAB", "CAD (SolidWorks/CATIA)", "Aerodynamics fundamentals", "Technical report writing"],
+    "nice_to_have_skills": ["CFD basics (ANSYS Fluent)", "Python for analysis", "Propulsion fundamentals", "GD&T"],
+    "must_have_certifications": [],
+    "nice_to_have_certifications": ["SolidWorks CSWA", "FAA Part 107 (sUAS)"]
+  },
+  "Flight Systems Intern": {
+    "soc_code": "17-2011.00",
+    "soc_title": "Aerospace Engineers",
+    "must_have_skills": ["Control systems fundamentals", "MATLAB/Simulink", "Aerodynamics", "Systems engineering basics", "Data analysis"],
+    "nice_to_have_skills": ["Avionics fundamentals", "Python", "Sensor integration", "Requirements & V&V"],
+    "must_have_certifications": [],
+    "nice_to_have_certifications": ["FAA Part 107 (sUAS)"]
+  },
+  "Mechanical Analysis Intern": {
+    "soc_code": "17-2141.00",
+    "soc_title": "Mechanical Engineers",
+    "must_have_skills": ["Statics & dynamics", "CAD (SolidWorks)", "FEA fundamentals", "MATLAB or Python", "Engineering mathematics (calculus/linear algebra)"],
+    "nice_to_have_skills": ["ANSYS / Abaqus FEA", "GD&T", "Thermodynamics", "Materials science"],
+    "must_have_certifications": [],
+    "nice_to_have_certifications": ["SolidWorks CSWA"]
+  },
+  "Lab Assistant": {
+    "soc_code": "19-4021.00",
+    "soc_title": "Biological Technicians",
+    "must_have_skills": ["Lab safety protocols", "Sample preparation", "Accurate lab-notebook record-keeping", "Following written procedures", "Basic wet-lab techniques"],
+    "nice_to_have_skills": ["Pipetting / micro-technique", "Data logging in Excel", "Basic statistics", "Instrument calibration"],
+    "must_have_certifications": ["Lab safety training"],
+    "nice_to_have_certifications": ["OSHA Laboratory Safety", "CITI Program (research ethics)"]
+  },
+  "Pre-Health Clinical Volunteer": {
+    "soc_code": "31-9092.00",
+    "soc_title": "Medical Assistants",
+    "must_have_skills": ["Patient interaction & communication", "Empathy & professionalism", "Reliability", "Following clinical protocols", "Confidentiality (HIPAA awareness)"],
+    "nice_to_have_skills": ["Basic Life Support (CPR)", "Medical terminology", "Vital-signs basics", "Second language (e.g. Spanish)"],
+    "must_have_certifications": [],
+    "nice_to_have_certifications": ["BLS/CPR (AHA)", "HIPAA training"]
+  },
+  "Research Assistant": {
+    "soc_code": "19-4061.00",
+    "soc_title": "Social Science Research Assistants",
+    "must_have_skills": ["Literature review", "Data collection", "Basic statistics", "Academic writing (APA)", "Attention to detail"],
+    "nice_to_have_skills": ["SPSS / R / Python", "Survey design", "Data visualization", "Research ethics (IRB/CITI)"],
+    "must_have_certifications": [],
+    "nice_to_have_certifications": ["CITI Program (Human Subjects Research)"]
+  },
+  "People Operations Intern": {
+    "soc_code": "13-1071.00",
+    "soc_title": "Human Resources Specialists",
+    "must_have_skills": ["Communication", "Organization & recordkeeping", "Discretion & confidentiality", "Excel / spreadsheets", "Interpersonal skills"],
+    "nice_to_have_skills": ["HRIS basics", "People-data analysis", "Onboarding coordination", "Employment-law awareness"],
+    "must_have_certifications": [],
+    "nice_to_have_certifications": ["SHRM-CP (eligibility)", "aPHR (Associate Professional in HR)"]
+  },
+  "Student Success Peer Mentor": {
+    "soc_code": "21-1012.00",
+    "soc_title": "Educational, Guidance, and Career Counselors and Advisors",
+    "must_have_skills": ["Active listening", "Communication", "Empathy", "Time management", "Reliability"],
+    "nice_to_have_skills": ["Group facilitation", "Conflict resolution", "Study-skills coaching", "Campus-resource referral knowledge"],
+    "must_have_certifications": [],
+    "nice_to_have_certifications": ["CRLA Peer Tutor Certification"]
+  }
+}
