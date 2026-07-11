@@ -77,12 +77,12 @@ overridden with `CAMPUSIQ_MODEL_*` environment variables.
 
 | Role | Purpose | Default model family |
 |---------|---------|---------|
-| orchestrator | Workflow orchestration | Gemini 2.5 Pro |
-| career | FIT / GAP / SHIFT career analysis | DeepSeek R1 |
-| academic | Academic analysis features | Qwen3 235B |
+| orchestrator | Workflow orchestration | Deepseek R1 |
+| career | FIT / GAP / SHIFT career analysis | Qwen3 235B A22B Thinking 2507 OR DeepSeek R1 |
+| academic | Academic analysis features | Qwen3 235B A22B Thinking 2507 |
 | parsing | JSON normalization and cleanup | Qwen3 32B |
-| chat | Student chat responses | Gemini 2.5 Flash |
-| report | Report synthesis | Gemini 2.5 Pro |
+| chat | Student chat responses | TODO |
+| report | Report synthesis | Gemini 2.5 Flash Lite |
 
 ### Environment Variables
 
