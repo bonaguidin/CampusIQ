@@ -23,37 +23,43 @@
       "id": 3006,
       "name": "Aerospace Engineering Mechanics",
       "course_code": "AERO 211",
-      "workflow_state": "available"
+      "workflow_state": "available",
+      "credit_hours": 3
     },
     {
       "id": 3007,
       "name": "Analytical Methods for Aerospace Engineering",
       "course_code": "AERO 221",
-      "workflow_state": "available"
+      "workflow_state": "available",
+      "credit_hours": 3
     },
     {
       "id": 3008,
       "name": "Engineering Mathematics III",
       "course_code": "MATH 251",
-      "workflow_state": "available"
+      "workflow_state": "available",
+      "credit_hours": 3
     },
     {
       "id": 3009,
       "name": "History of the United States",
       "course_code": "HIST 105",
-      "workflow_state": "available"
+      "workflow_state": "available",
+      "credit_hours": 3
     },
     {
       "id": 3026,
       "name": "Introduction to Flight",
       "course_code": "AERO 201",
-      "workflow_state": "available"
+      "workflow_state": "available",
+      "credit_hours": 3
     },
     {
       "id": 3027,
       "name": "Introduction to Aerothermodynamics",
       "course_code": "AERO 212",
-      "workflow_state": "available"
+      "workflow_state": "available",
+      "credit_hours": 3
     }
   ],
   "enrollments": [
@@ -704,7 +710,20 @@
       ],
       "ai_exposure": "moderate — uses AI for concept review and documentation drafts, not as a substitute for calculations"
     },
-    "certifications": [],
+    "certifications": [
+      {
+        "name": "SolidWorks CSWA (Certified SolidWorks Associate)",
+        "issuer": "Dassault Systèmes",
+        "status": "completed",
+        "date": "Spring 2026"
+      },
+      {
+        "name": "FAA Part 107 (sUAS Remote Pilot)",
+        "issuer": "Federal Aviation Administration",
+        "status": "in_progress",
+        "date": "Expected Fall 2026"
+      }
+    ],
     "work_experience": [
       {
         "employer": "Aerospace Engineering course team",
