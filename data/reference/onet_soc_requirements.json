@@ -1,154 +1,1443 @@
 {
-  "_placeholder": true,
-  "_source_note": "PLACEHOLDER DATA — structure is real, values are illustrative. Replace with the O*NET importance scores from Kasheia's June handoff doc (campus_iq_handoff.md), 2019 SOC taxonomy. Importance is on a 0-100 scale (O*NET 'Importance' element rescaled from its native 1-5). Keep this shape stable so GAP's must-have vs. nice-to-have logic and the export/cache layer don't have to change when real values drop in.",
-  "_schema": {
-    "keyed_by": "SOC code (2019 taxonomy)",
+  "_meta": {
+    "source": "O*NET 30.3 Database (canonical text release), Importance (IM) scale",
+    "source_url": "https://www.onetcenter.org/database.html",
+    "taxonomy": "O*NET-SOC 2019",
+    "generated": "2026-07-11",
+    "importance_scale": "0-100, rescaled from O*NET native 1-5 via (value-1)/4*100",
     "must_have_threshold": 70,
-    "role": {
-      "title": "string",
-      "job_zone": "int 1-5 (O*NET education/training zone)",
-      "typical_education": "string",
-      "skills": [{ "name": "string", "importance": "0-100" }],
-      "knowledge": [{ "name": "string", "importance": "0-100" }],
-      "abilities": [{ "name": "string", "importance": "0-100" }]
-    }
+    "inclusion_rule": "skills: full 10-item Essential Skills set; knowledge & abilities: importance >= 50; each sorted descending",
+    "partial_profile_codes": [
+      "13-2051.00"
+    ],
+    "license": "O*NET data \u00a9 under CC-BY 4.0 (US DOL/ETA)"
   },
   "must_have_threshold": 70,
   "roles": {
-    "17-2011.00": {
-      "title": "Aerospace Engineers",
+    "13-2051.00": {
+      "title": "Financial and Investment Analysts",
+      "role_family": "Financial Services / Banking & Insurance",
+      "job_zone": 4,
+      "typical_education": "Bachelor's degree",
+      "skills": [],
+      "knowledge": [],
+      "abilities": [],
+      "_data_status": "partial_onet_profile",
+      "_fallback": "web_search_only",
+      "_note": "O*NET has no Skills/Knowledge/Abilities importance data for this occupation (data collection underway). GAP routes this code to web-search-only per handoff fallback."
+    },
+    "13-2011.00": {
+      "title": "Accountants and Auditors",
+      "role_family": "Accounting, Audit, Tax & Risk",
       "job_zone": 4,
       "typical_education": "Bachelor's degree",
       "skills": [
-        { "name": "Complex Problem Solving", "importance": 85 },
-        { "name": "Critical Thinking", "importance": 82 },
-        { "name": "Mathematics", "importance": 78 },
-        { "name": "Systems Analysis", "importance": 72 },
-        { "name": "Programming", "importance": 55 },
-        { "name": "Technical Writing", "importance": 60 }
+        {
+          "name": "Reading Comprehension",
+          "importance": 72
+        },
+        {
+          "name": "Active Listening",
+          "importance": 69
+        },
+        {
+          "name": "Speaking",
+          "importance": 69
+        },
+        {
+          "name": "Critical Thinking",
+          "importance": 69
+        },
+        {
+          "name": "Writing",
+          "importance": 62
+        },
+        {
+          "name": "Monitoring",
+          "importance": 60
+        },
+        {
+          "name": "Mathematics",
+          "importance": 56
+        },
+        {
+          "name": "Active Learning",
+          "importance": 53
+        },
+        {
+          "name": "Learning Strategies",
+          "importance": 44
+        },
+        {
+          "name": "Science",
+          "importance": 6
+        }
       ],
       "knowledge": [
-        { "name": "Engineering and Technology", "importance": 90 },
-        { "name": "Physics", "importance": 82 },
-        { "name": "Mathematics", "importance": 80 },
-        { "name": "Design", "importance": 68 }
+        {
+          "name": "Economics and Accounting",
+          "importance": 91
+        },
+        {
+          "name": "English Language",
+          "importance": 74
+        },
+        {
+          "name": "Mathematics",
+          "importance": 73
+        },
+        {
+          "name": "Administration and Management",
+          "importance": 63
+        },
+        {
+          "name": "Customer and Personal Service",
+          "importance": 63
+        },
+        {
+          "name": "Law and Government",
+          "importance": 58
+        },
+        {
+          "name": "Administrative",
+          "importance": 52
+        },
+        {
+          "name": "Computers and Electronics",
+          "importance": 51
+        }
       ],
       "abilities": [
-        { "name": "Deductive Reasoning", "importance": 80 },
-        { "name": "Mathematical Reasoning", "importance": 78 },
-        { "name": "Information Ordering", "importance": 66 }
-      ]
+        {
+          "name": "Oral Comprehension",
+          "importance": 75
+        },
+        {
+          "name": "Written Comprehension",
+          "importance": 72
+        },
+        {
+          "name": "Oral Expression",
+          "importance": 72
+        },
+        {
+          "name": "Written Expression",
+          "importance": 69
+        },
+        {
+          "name": "Problem Sensitivity",
+          "importance": 69
+        },
+        {
+          "name": "Deductive Reasoning",
+          "importance": 69
+        },
+        {
+          "name": "Inductive Reasoning",
+          "importance": 69
+        },
+        {
+          "name": "Near Vision",
+          "importance": 69
+        },
+        {
+          "name": "Information Ordering",
+          "importance": 66
+        },
+        {
+          "name": "Mathematical Reasoning",
+          "importance": 60
+        },
+        {
+          "name": "Speech Recognition",
+          "importance": 60
+        },
+        {
+          "name": "Speech Clarity",
+          "importance": 60
+        },
+        {
+          "name": "Category Flexibility",
+          "importance": 56
+        },
+        {
+          "name": "Number Facility",
+          "importance": 56
+        },
+        {
+          "name": "Flexibility of Closure",
+          "importance": 50
+        },
+        {
+          "name": "Perceptual Speed",
+          "importance": 50
+        }
+      ],
+      "_data_status": "onet_full"
     },
-    "17-2141.00": {
-      "title": "Mechanical Engineers",
+    "15-1253.00": {
+      "title": "Software Quality Assurance Analysts and Testers",
+      "role_family": "Technology, Data & Digital Products",
       "job_zone": 4,
       "typical_education": "Bachelor's degree",
       "skills": [
-        { "name": "Complex Problem Solving", "importance": 80 },
-        { "name": "Critical Thinking", "importance": 78 },
-        { "name": "Mathematics", "importance": 75 },
-        { "name": "Operations Analysis", "importance": 68 },
-        { "name": "CAD / Design Tools", "importance": 72 },
-        { "name": "Technical Writing", "importance": 58 }
+        {
+          "name": "Reading Comprehension",
+          "importance": 75
+        },
+        {
+          "name": "Active Listening",
+          "importance": 72
+        },
+        {
+          "name": "Speaking",
+          "importance": 72
+        },
+        {
+          "name": "Critical Thinking",
+          "importance": 72
+        },
+        {
+          "name": "Writing",
+          "importance": 69
+        },
+        {
+          "name": "Monitoring",
+          "importance": 66
+        },
+        {
+          "name": "Active Learning",
+          "importance": 53
+        },
+        {
+          "name": "Learning Strategies",
+          "importance": 47
+        },
+        {
+          "name": "Mathematics",
+          "importance": 44
+        },
+        {
+          "name": "Science",
+          "importance": 44
+        }
       ],
       "knowledge": [
-        { "name": "Engineering and Technology", "importance": 92 },
-        { "name": "Mechanical", "importance": 85 },
-        { "name": "Physics", "importance": 76 },
-        { "name": "Mathematics", "importance": 74 }
+        {
+          "name": "Computers and Electronics",
+          "importance": 85
+        },
+        {
+          "name": "English Language",
+          "importance": 70
+        },
+        {
+          "name": "Engineering and Technology",
+          "importance": 57
+        },
+        {
+          "name": "Mathematics",
+          "importance": 57
+        },
+        {
+          "name": "Design",
+          "importance": 50
+        }
       ],
       "abilities": [
-        { "name": "Deductive Reasoning", "importance": 78 },
-        { "name": "Problem Sensitivity", "importance": 70 },
-        { "name": "Visualization", "importance": 68 }
-      ]
+        {
+          "name": "Oral Comprehension",
+          "importance": 75
+        },
+        {
+          "name": "Written Comprehension",
+          "importance": 75
+        },
+        {
+          "name": "Oral Expression",
+          "importance": 75
+        },
+        {
+          "name": "Problem Sensitivity",
+          "importance": 75
+        },
+        {
+          "name": "Deductive Reasoning",
+          "importance": 75
+        },
+        {
+          "name": "Inductive Reasoning",
+          "importance": 75
+        },
+        {
+          "name": "Written Expression",
+          "importance": 72
+        },
+        {
+          "name": "Information Ordering",
+          "importance": 69
+        },
+        {
+          "name": "Near Vision",
+          "importance": 66
+        },
+        {
+          "name": "Speech Recognition",
+          "importance": 56
+        },
+        {
+          "name": "Category Flexibility",
+          "importance": 53
+        },
+        {
+          "name": "Flexibility of Closure",
+          "importance": 53
+        },
+        {
+          "name": "Perceptual Speed",
+          "importance": 53
+        },
+        {
+          "name": "Fluency of Ideas",
+          "importance": 50
+        },
+        {
+          "name": "Originality",
+          "importance": 50
+        },
+        {
+          "name": "Selective Attention",
+          "importance": 50
+        },
+        {
+          "name": "Speech Clarity",
+          "importance": 50
+        }
+      ],
+      "_data_status": "onet_full"
     },
-    "15-1252.00": {
-      "title": "Software Developers",
+    "13-1111.00": {
+      "title": "Management Analysts",
+      "role_family": "Professional Services / Consulting",
       "job_zone": 4,
       "typical_education": "Bachelor's degree",
       "skills": [
-        { "name": "Programming", "importance": 88 },
-        { "name": "Complex Problem Solving", "importance": 80 },
-        { "name": "Critical Thinking", "importance": 76 },
-        { "name": "Systems Analysis", "importance": 72 },
-        { "name": "Systems Evaluation", "importance": 66 },
-        { "name": "Version Control (Git)", "importance": 70 }
+        {
+          "name": "Reading Comprehension",
+          "importance": 78
+        },
+        {
+          "name": "Active Listening",
+          "importance": 78
+        },
+        {
+          "name": "Critical Thinking",
+          "importance": 78
+        },
+        {
+          "name": "Writing",
+          "importance": 75
+        },
+        {
+          "name": "Speaking",
+          "importance": 75
+        },
+        {
+          "name": "Monitoring",
+          "importance": 72
+        },
+        {
+          "name": "Active Learning",
+          "importance": 56
+        },
+        {
+          "name": "Mathematics",
+          "importance": 50
+        },
+        {
+          "name": "Learning Strategies",
+          "importance": 50
+        },
+        {
+          "name": "Science",
+          "importance": 22
+        }
       ],
       "knowledge": [
-        { "name": "Computers and Electronics", "importance": 92 },
-        { "name": "Engineering and Technology", "importance": 78 },
-        { "name": "Mathematics", "importance": 70 }
+        {
+          "name": "English Language",
+          "importance": 93
+        },
+        {
+          "name": "Administration and Management",
+          "importance": 84
+        },
+        {
+          "name": "Customer and Personal Service",
+          "importance": 75
+        },
+        {
+          "name": "Mathematics",
+          "importance": 66
+        },
+        {
+          "name": "Education and Training",
+          "importance": 65
+        },
+        {
+          "name": "Economics and Accounting",
+          "importance": 62
+        },
+        {
+          "name": "Computers and Electronics",
+          "importance": 62
+        },
+        {
+          "name": "Personnel and Human Resources",
+          "importance": 58
+        },
+        {
+          "name": "Law and Government",
+          "importance": 58
+        },
+        {
+          "name": "Sales and Marketing",
+          "importance": 57
+        },
+        {
+          "name": "Psychology",
+          "importance": 52
+        },
+        {
+          "name": "Communications and Media",
+          "importance": 51
+        },
+        {
+          "name": "Sociology and Anthropology",
+          "importance": 50
+        }
       ],
       "abilities": [
-        { "name": "Deductive Reasoning", "importance": 78 },
-        { "name": "Information Ordering", "importance": 72 },
-        { "name": "Problem Sensitivity", "importance": 70 }
-      ]
-    },
-    "15-2051.00": {
-      "title": "Data Scientists",
-      "job_zone": 4,
-      "typical_education": "Bachelor's or Master's degree",
-      "skills": [
-        { "name": "Programming (Python/R)", "importance": 85 },
-        { "name": "Mathematics / Statistics", "importance": 88 },
-        { "name": "Complex Problem Solving", "importance": 78 },
-        { "name": "Critical Thinking", "importance": 76 },
-        { "name": "Machine Learning", "importance": 74 },
-        { "name": "Data Visualization", "importance": 66 }
+        {
+          "name": "Oral Comprehension",
+          "importance": 78
+        },
+        {
+          "name": "Written Comprehension",
+          "importance": 78
+        },
+        {
+          "name": "Oral Expression",
+          "importance": 78
+        },
+        {
+          "name": "Problem Sensitivity",
+          "importance": 78
+        },
+        {
+          "name": "Written Expression",
+          "importance": 75
+        },
+        {
+          "name": "Deductive Reasoning",
+          "importance": 75
+        },
+        {
+          "name": "Inductive Reasoning",
+          "importance": 75
+        },
+        {
+          "name": "Speech Recognition",
+          "importance": 72
+        },
+        {
+          "name": "Speech Clarity",
+          "importance": 72
+        },
+        {
+          "name": "Fluency of Ideas",
+          "importance": 69
+        },
+        {
+          "name": "Information Ordering",
+          "importance": 66
+        },
+        {
+          "name": "Near Vision",
+          "importance": 60
+        },
+        {
+          "name": "Originality",
+          "importance": 56
+        },
+        {
+          "name": "Category Flexibility",
+          "importance": 56
+        },
+        {
+          "name": "Mathematical Reasoning",
+          "importance": 50
+        },
+        {
+          "name": "Flexibility of Closure",
+          "importance": 50
+        },
+        {
+          "name": "Selective Attention",
+          "importance": 50
+        }
       ],
-      "knowledge": [
-        { "name": "Mathematics", "importance": 90 },
-        { "name": "Computers and Electronics", "importance": 85 },
-        { "name": "English Language / Communication", "importance": 60 }
-      ],
-      "abilities": [
-        { "name": "Mathematical Reasoning", "importance": 84 },
-        { "name": "Deductive Reasoning", "importance": 78 },
-        { "name": "Inductive Reasoning", "importance": 74 }
-      ]
+      "_data_status": "onet_full"
     },
-    "17-2112.00": {
-      "title": "Industrial Engineers",
+    "13-1161.00": {
+      "title": "Market Research Analysts and Marketing Specialists",
+      "role_family": "Marketing, Communications & Market Intelligence",
       "job_zone": 4,
       "typical_education": "Bachelor's degree",
       "skills": [
-        { "name": "Complex Problem Solving", "importance": 78 },
-        { "name": "Operations Analysis", "importance": 74 },
-        { "name": "Critical Thinking", "importance": 76 },
-        { "name": "Systems Analysis", "importance": 70 },
-        { "name": "Data Analysis", "importance": 68 }
+        {
+          "name": "Reading Comprehension",
+          "importance": 75
+        },
+        {
+          "name": "Writing",
+          "importance": 75
+        },
+        {
+          "name": "Critical Thinking",
+          "importance": 75
+        },
+        {
+          "name": "Active Listening",
+          "importance": 72
+        },
+        {
+          "name": "Speaking",
+          "importance": 72
+        },
+        {
+          "name": "Active Learning",
+          "importance": 62
+        },
+        {
+          "name": "Mathematics",
+          "importance": 56
+        },
+        {
+          "name": "Monitoring",
+          "importance": 56
+        },
+        {
+          "name": "Learning Strategies",
+          "importance": 50
+        },
+        {
+          "name": "Science",
+          "importance": 31
+        }
       ],
       "knowledge": [
-        { "name": "Engineering and Technology", "importance": 88 },
-        { "name": "Production and Processing", "importance": 78 },
-        { "name": "Mathematics", "importance": 72 }
+        {
+          "name": "English Language",
+          "importance": 82
+        },
+        {
+          "name": "Customer and Personal Service",
+          "importance": 79
+        },
+        {
+          "name": "Sales and Marketing",
+          "importance": 77
+        },
+        {
+          "name": "Mathematics",
+          "importance": 76
+        },
+        {
+          "name": "Administration and Management",
+          "importance": 68
+        },
+        {
+          "name": "Communications and Media",
+          "importance": 62
+        },
+        {
+          "name": "Administrative",
+          "importance": 60
+        },
+        {
+          "name": "Computers and Electronics",
+          "importance": 56
+        },
+        {
+          "name": "Sociology and Anthropology",
+          "importance": 56
+        },
+        {
+          "name": "Psychology",
+          "importance": 54
+        },
+        {
+          "name": "Economics and Accounting",
+          "importance": 52
+        }
       ],
       "abilities": [
-        { "name": "Deductive Reasoning", "importance": 76 },
-        { "name": "Information Ordering", "importance": 70 }
-      ]
+        {
+          "name": "Inductive Reasoning",
+          "importance": 78
+        },
+        {
+          "name": "Oral Comprehension",
+          "importance": 75
+        },
+        {
+          "name": "Written Comprehension",
+          "importance": 75
+        },
+        {
+          "name": "Oral Expression",
+          "importance": 75
+        },
+        {
+          "name": "Written Expression",
+          "importance": 75
+        },
+        {
+          "name": "Fluency of Ideas",
+          "importance": 75
+        },
+        {
+          "name": "Deductive Reasoning",
+          "importance": 75
+        },
+        {
+          "name": "Information Ordering",
+          "importance": 72
+        },
+        {
+          "name": "Category Flexibility",
+          "importance": 69
+        },
+        {
+          "name": "Speech Clarity",
+          "importance": 69
+        },
+        {
+          "name": "Problem Sensitivity",
+          "importance": 66
+        },
+        {
+          "name": "Near Vision",
+          "importance": 66
+        },
+        {
+          "name": "Originality",
+          "importance": 60
+        },
+        {
+          "name": "Mathematical Reasoning",
+          "importance": 60
+        },
+        {
+          "name": "Speech Recognition",
+          "importance": 56
+        },
+        {
+          "name": "Number Facility",
+          "importance": 53
+        },
+        {
+          "name": "Flexibility of Closure",
+          "importance": 50
+        }
+      ],
+      "_data_status": "onet_full"
     },
-    "15-1211.00": {
-      "title": "Computer Systems Analysts",
+    "13-1081.00": {
+      "title": "Logisticians",
+      "role_family": "Supply Chain, Logistics & Procurement",
       "job_zone": 4,
       "typical_education": "Bachelor's degree",
       "skills": [
-        { "name": "Systems Analysis", "importance": 82 },
-        { "name": "Critical Thinking", "importance": 78 },
-        { "name": "Complex Problem Solving", "importance": 76 },
-        { "name": "Programming", "importance": 64 },
-        { "name": "Requirements Gathering", "importance": 70 }
+        {
+          "name": "Critical Thinking",
+          "importance": 75
+        },
+        {
+          "name": "Reading Comprehension",
+          "importance": 72
+        },
+        {
+          "name": "Active Listening",
+          "importance": 72
+        },
+        {
+          "name": "Speaking",
+          "importance": 72
+        },
+        {
+          "name": "Monitoring",
+          "importance": 72
+        },
+        {
+          "name": "Active Learning",
+          "importance": 62
+        },
+        {
+          "name": "Writing",
+          "importance": 60
+        },
+        {
+          "name": "Mathematics",
+          "importance": 50
+        },
+        {
+          "name": "Learning Strategies",
+          "importance": 50
+        },
+        {
+          "name": "Science",
+          "importance": 19
+        }
       ],
       "knowledge": [
-        { "name": "Computers and Electronics", "importance": 90 },
-        { "name": "Engineering and Technology", "importance": 70 }
+        {
+          "name": "Transportation",
+          "importance": 94
+        },
+        {
+          "name": "English Language",
+          "importance": 75
+        },
+        {
+          "name": "Administration and Management",
+          "importance": 74
+        },
+        {
+          "name": "Customer and Personal Service",
+          "importance": 73
+        },
+        {
+          "name": "Mathematics",
+          "importance": 68
+        },
+        {
+          "name": "Computers and Electronics",
+          "importance": 66
+        },
+        {
+          "name": "Economics and Accounting",
+          "importance": 58
+        },
+        {
+          "name": "Geography",
+          "importance": 58
+        },
+        {
+          "name": "Public Safety and Security",
+          "importance": 58
+        },
+        {
+          "name": "Sales and Marketing",
+          "importance": 57
+        },
+        {
+          "name": "Personnel and Human Resources",
+          "importance": 54
+        },
+        {
+          "name": "Production and Processing",
+          "importance": 54
+        },
+        {
+          "name": "Education and Training",
+          "importance": 54
+        },
+        {
+          "name": "Law and Government",
+          "importance": 52
+        }
       ],
       "abilities": [
-        { "name": "Deductive Reasoning", "importance": 76 },
-        { "name": "Information Ordering", "importance": 72 }
-      ]
+        {
+          "name": "Oral Comprehension",
+          "importance": 75
+        },
+        {
+          "name": "Written Comprehension",
+          "importance": 75
+        },
+        {
+          "name": "Oral Expression",
+          "importance": 75
+        },
+        {
+          "name": "Problem Sensitivity",
+          "importance": 75
+        },
+        {
+          "name": "Deductive Reasoning",
+          "importance": 75
+        },
+        {
+          "name": "Inductive Reasoning",
+          "importance": 75
+        },
+        {
+          "name": "Information Ordering",
+          "importance": 75
+        },
+        {
+          "name": "Speech Recognition",
+          "importance": 72
+        },
+        {
+          "name": "Speech Clarity",
+          "importance": 72
+        },
+        {
+          "name": "Written Expression",
+          "importance": 66
+        },
+        {
+          "name": "Near Vision",
+          "importance": 66
+        },
+        {
+          "name": "Originality",
+          "importance": 62
+        },
+        {
+          "name": "Fluency of Ideas",
+          "importance": 60
+        },
+        {
+          "name": "Category Flexibility",
+          "importance": 53
+        },
+        {
+          "name": "Number Facility",
+          "importance": 53
+        },
+        {
+          "name": "Visualization",
+          "importance": 53
+        },
+        {
+          "name": "Mathematical Reasoning",
+          "importance": 50
+        },
+        {
+          "name": "Flexibility of Closure",
+          "importance": 50
+        }
+      ],
+      "_data_status": "onet_full"
+    },
+    "13-1071.00": {
+      "title": "Human Resources Specialists",
+      "role_family": "Human Resources, Recruiting & People Ops",
+      "job_zone": 4,
+      "typical_education": "Bachelor's degree",
+      "skills": [
+        {
+          "name": "Speaking",
+          "importance": 78
+        },
+        {
+          "name": "Reading Comprehension",
+          "importance": 75
+        },
+        {
+          "name": "Active Listening",
+          "importance": 75
+        },
+        {
+          "name": "Writing",
+          "importance": 72
+        },
+        {
+          "name": "Critical Thinking",
+          "importance": 72
+        },
+        {
+          "name": "Active Learning",
+          "importance": 56
+        },
+        {
+          "name": "Learning Strategies",
+          "importance": 50
+        },
+        {
+          "name": "Monitoring",
+          "importance": 50
+        },
+        {
+          "name": "Mathematics",
+          "importance": 25
+        },
+        {
+          "name": "Science",
+          "importance": 3
+        }
+      ],
+      "knowledge": [
+        {
+          "name": "Personnel and Human Resources",
+          "importance": 90
+        },
+        {
+          "name": "Administrative",
+          "importance": 74
+        },
+        {
+          "name": "Administration and Management",
+          "importance": 71
+        },
+        {
+          "name": "English Language",
+          "importance": 70
+        },
+        {
+          "name": "Customer and Personal Service",
+          "importance": 62
+        },
+        {
+          "name": "Law and Government",
+          "importance": 57
+        },
+        {
+          "name": "Education and Training",
+          "importance": 52
+        }
+      ],
+      "abilities": [
+        {
+          "name": "Oral Comprehension",
+          "importance": 75
+        },
+        {
+          "name": "Written Comprehension",
+          "importance": 75
+        },
+        {
+          "name": "Oral Expression",
+          "importance": 75
+        },
+        {
+          "name": "Written Expression",
+          "importance": 72
+        },
+        {
+          "name": "Problem Sensitivity",
+          "importance": 72
+        },
+        {
+          "name": "Deductive Reasoning",
+          "importance": 72
+        },
+        {
+          "name": "Speech Recognition",
+          "importance": 72
+        },
+        {
+          "name": "Speech Clarity",
+          "importance": 72
+        },
+        {
+          "name": "Near Vision",
+          "importance": 66
+        },
+        {
+          "name": "Inductive Reasoning",
+          "importance": 56
+        },
+        {
+          "name": "Information Ordering",
+          "importance": 56
+        },
+        {
+          "name": "Category Flexibility",
+          "importance": 53
+        }
+      ],
+      "_data_status": "onet_full"
+    },
+    "43-6013.00": {
+      "title": "Medical Secretaries and Administrative Assistants",
+      "role_family": "Healthcare & Life Sciences / Admin",
+      "job_zone": 2,
+      "typical_education": "High school diploma or equivalent",
+      "skills": [
+        {
+          "name": "Speaking",
+          "importance": 75
+        },
+        {
+          "name": "Active Listening",
+          "importance": 72
+        },
+        {
+          "name": "Reading Comprehension",
+          "importance": 62
+        },
+        {
+          "name": "Writing",
+          "importance": 53
+        },
+        {
+          "name": "Critical Thinking",
+          "importance": 53
+        },
+        {
+          "name": "Monitoring",
+          "importance": 50
+        },
+        {
+          "name": "Active Learning",
+          "importance": 31
+        },
+        {
+          "name": "Mathematics",
+          "importance": 28
+        },
+        {
+          "name": "Learning Strategies",
+          "importance": 28
+        },
+        {
+          "name": "Science",
+          "importance": 3
+        }
+      ],
+      "knowledge": [
+        {
+          "name": "Customer and Personal Service",
+          "importance": 86
+        },
+        {
+          "name": "English Language",
+          "importance": 82
+        },
+        {
+          "name": "Administrative",
+          "importance": 73
+        },
+        {
+          "name": "Medicine and Dentistry",
+          "importance": 65
+        },
+        {
+          "name": "Personnel and Human Resources",
+          "importance": 60
+        },
+        {
+          "name": "Computers and Electronics",
+          "importance": 60
+        },
+        {
+          "name": "Administration and Management",
+          "importance": 57
+        },
+        {
+          "name": "Economics and Accounting",
+          "importance": 50
+        }
+      ],
+      "abilities": [
+        {
+          "name": "Oral Comprehension",
+          "importance": 75
+        },
+        {
+          "name": "Written Comprehension",
+          "importance": 75
+        },
+        {
+          "name": "Oral Expression",
+          "importance": 75
+        },
+        {
+          "name": "Speech Recognition",
+          "importance": 69
+        },
+        {
+          "name": "Speech Clarity",
+          "importance": 69
+        },
+        {
+          "name": "Near Vision",
+          "importance": 60
+        },
+        {
+          "name": "Written Expression",
+          "importance": 53
+        },
+        {
+          "name": "Deductive Reasoning",
+          "importance": 53
+        },
+        {
+          "name": "Inductive Reasoning",
+          "importance": 53
+        },
+        {
+          "name": "Information Ordering",
+          "importance": 53
+        },
+        {
+          "name": "Problem Sensitivity",
+          "importance": 50
+        },
+        {
+          "name": "Category Flexibility",
+          "importance": 50
+        }
+      ],
+      "_data_status": "onet_full"
+    },
+    "15-1212.00": {
+      "title": "Information Security Analysts",
+      "role_family": "IT Systems & Security",
+      "job_zone": 4,
+      "typical_education": "Bachelor's degree",
+      "skills": [
+        {
+          "name": "Reading Comprehension",
+          "importance": 75
+        },
+        {
+          "name": "Critical Thinking",
+          "importance": 72
+        },
+        {
+          "name": "Active Listening",
+          "importance": 69
+        },
+        {
+          "name": "Speaking",
+          "importance": 66
+        },
+        {
+          "name": "Writing",
+          "importance": 62
+        },
+        {
+          "name": "Monitoring",
+          "importance": 60
+        },
+        {
+          "name": "Active Learning",
+          "importance": 56
+        },
+        {
+          "name": "Learning Strategies",
+          "importance": 47
+        },
+        {
+          "name": "Mathematics",
+          "importance": 31
+        },
+        {
+          "name": "Science",
+          "importance": 22
+        }
+      ],
+      "knowledge": [
+        {
+          "name": "Computers and Electronics",
+          "importance": 84
+        },
+        {
+          "name": "English Language",
+          "importance": 82
+        },
+        {
+          "name": "Administration and Management",
+          "importance": 67
+        },
+        {
+          "name": "Engineering and Technology",
+          "importance": 66
+        },
+        {
+          "name": "Telecommunications",
+          "importance": 66
+        },
+        {
+          "name": "Customer and Personal Service",
+          "importance": 60
+        },
+        {
+          "name": "Public Safety and Security",
+          "importance": 57
+        },
+        {
+          "name": "Education and Training",
+          "importance": 55
+        }
+      ],
+      "abilities": [
+        {
+          "name": "Oral Comprehension",
+          "importance": 75
+        },
+        {
+          "name": "Written Comprehension",
+          "importance": 75
+        },
+        {
+          "name": "Problem Sensitivity",
+          "importance": 75
+        },
+        {
+          "name": "Deductive Reasoning",
+          "importance": 75
+        },
+        {
+          "name": "Inductive Reasoning",
+          "importance": 75
+        },
+        {
+          "name": "Written Expression",
+          "importance": 72
+        },
+        {
+          "name": "Information Ordering",
+          "importance": 72
+        },
+        {
+          "name": "Oral Expression",
+          "importance": 69
+        },
+        {
+          "name": "Near Vision",
+          "importance": 69
+        },
+        {
+          "name": "Category Flexibility",
+          "importance": 62
+        },
+        {
+          "name": "Flexibility of Closure",
+          "importance": 60
+        },
+        {
+          "name": "Speech Recognition",
+          "importance": 60
+        },
+        {
+          "name": "Speech Clarity",
+          "importance": 60
+        },
+        {
+          "name": "Selective Attention",
+          "importance": 53
+        },
+        {
+          "name": "Fluency of Ideas",
+          "importance": 50
+        },
+        {
+          "name": "Originality",
+          "importance": 50
+        },
+        {
+          "name": "Perceptual Speed",
+          "importance": 50
+        }
+      ],
+      "_data_status": "onet_full"
+    },
+    "25-9031.00": {
+      "title": "Instructional Coordinators",
+      "role_family": "Education & Training / Instructional Design",
+      "job_zone": 5,
+      "typical_education": "Graduate or professional degree",
+      "skills": [
+        {
+          "name": "Learning Strategies",
+          "importance": 81
+        },
+        {
+          "name": "Writing",
+          "importance": 78
+        },
+        {
+          "name": "Speaking",
+          "importance": 78
+        },
+        {
+          "name": "Reading Comprehension",
+          "importance": 75
+        },
+        {
+          "name": "Active Listening",
+          "importance": 75
+        },
+        {
+          "name": "Monitoring",
+          "importance": 75
+        },
+        {
+          "name": "Critical Thinking",
+          "importance": 72
+        },
+        {
+          "name": "Active Learning",
+          "importance": 72
+        },
+        {
+          "name": "Mathematics",
+          "importance": 44
+        },
+        {
+          "name": "Science",
+          "importance": 12
+        }
+      ],
+      "knowledge": [
+        {
+          "name": "Education and Training",
+          "importance": 94
+        },
+        {
+          "name": "English Language",
+          "importance": 83
+        },
+        {
+          "name": "Administration and Management",
+          "importance": 70
+        },
+        {
+          "name": "Mathematics",
+          "importance": 67
+        },
+        {
+          "name": "Computers and Electronics",
+          "importance": 65
+        },
+        {
+          "name": "Customer and Personal Service",
+          "importance": 62
+        },
+        {
+          "name": "Public Safety and Security",
+          "importance": 62
+        },
+        {
+          "name": "Personnel and Human Resources",
+          "importance": 60
+        },
+        {
+          "name": "Communications and Media",
+          "importance": 59
+        },
+        {
+          "name": "Sociology and Anthropology",
+          "importance": 57
+        },
+        {
+          "name": "Philosophy and Theology",
+          "importance": 55
+        },
+        {
+          "name": "Psychology",
+          "importance": 54
+        },
+        {
+          "name": "Administrative",
+          "importance": 53
+        }
+      ],
+      "abilities": [
+        {
+          "name": "Written Comprehension",
+          "importance": 84
+        },
+        {
+          "name": "Oral Expression",
+          "importance": 81
+        },
+        {
+          "name": "Written Expression",
+          "importance": 81
+        },
+        {
+          "name": "Oral Comprehension",
+          "importance": 78
+        },
+        {
+          "name": "Speech Clarity",
+          "importance": 78
+        },
+        {
+          "name": "Problem Sensitivity",
+          "importance": 75
+        },
+        {
+          "name": "Speech Recognition",
+          "importance": 75
+        },
+        {
+          "name": "Deductive Reasoning",
+          "importance": 72
+        },
+        {
+          "name": "Near Vision",
+          "importance": 72
+        },
+        {
+          "name": "Originality",
+          "importance": 69
+        },
+        {
+          "name": "Inductive Reasoning",
+          "importance": 69
+        },
+        {
+          "name": "Information Ordering",
+          "importance": 69
+        },
+        {
+          "name": "Category Flexibility",
+          "importance": 69
+        },
+        {
+          "name": "Fluency of Ideas",
+          "importance": 66
+        },
+        {
+          "name": "Memorization",
+          "importance": 53
+        },
+        {
+          "name": "Far Vision",
+          "importance": 53
+        },
+        {
+          "name": "Mathematical Reasoning",
+          "importance": 50
+        },
+        {
+          "name": "Number Facility",
+          "importance": 50
+        },
+        {
+          "name": "Flexibility of Closure",
+          "importance": 50
+        },
+        {
+          "name": "Visualization",
+          "importance": 50
+        },
+        {
+          "name": "Selective Attention",
+          "importance": 50
+        }
+      ],
+      "_data_status": "onet_full"
     }
   }
 }
