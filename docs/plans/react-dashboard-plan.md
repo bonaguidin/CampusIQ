@@ -136,7 +136,7 @@ A simple dropdown: "Select student →" shows the 5 names. Clicking "Enter Dashb
 | Post-demo carryover | Medium — the auth hook pattern carries over; the selector itself is replaced. Static JSON must be migrated to Supabase before real users can be added. |
 | Risk | Near-zero. No external dependency on demo day. |
 
-**Recommendation: Option B for July 25.** The demo's value is in the dashboard experience and AI feature outputs — not in the login screen. Spending 2+ days on Supabase auth for 5 pre-selected mock profiles is poor ROI at this stage. If Supabase is also needed for the AI feature data layer (it likely is), set up the Supabase project after the dashboard is working and migrate then. This is an open decision; surface it to the team.
+**Recommendation: Option B for July 25.** The demo's value is in the dashboard experience and AI feature outputs — not in the login screen. Spending 2+ days on Supabase auth for 5 pre-selected mock profiles is poor ROI at this stage. If Supabase is also needed for the AI feature data layer (it likely is), set up the Supabase project after the dashboard is working and migrate then. **Confirmed as Option B — see Confirmed Decisions.**
 
 ---
 
@@ -353,20 +353,40 @@ No testing library is listed — the Python validator is the contract check. Add
 
 ---
 
+## Confirmed Decisions
+
+Decisions that were previously open and are now settled. Recorded here so they stop being treated as open questions.
+
+- **Demo student: Jordan Reyes (Business, Freshman) — CONFIRMED as of 2026-07-08.** Primary walkthrough student for the July 25 demo. Jordan has been the de facto lead throughout (architecture examples, the GPA reconciliation walkthrough, and the FIT staying-status trace all center on her); this entry makes that the official decision. The other four mock profiles remain in the roster and must still exist and pass `validate_students.py` — Jordan simply leads the live walkthrough.
+
+  Current mock roster (`data/students/`), Jordan as demo-lead:
+
+  | Student | Major | Classification | Demo role |
+  |---|---|---|---|
+  | **Jordan Reyes** | Business Administration (pre-major) | Freshman | **Primary / demo-lead** |
+  | Priya Nair | Aerospace Engineering | Sophomore | Supporting |
+  | Marcus Webb | Psychology | Sophomore | Supporting |
+  | Ethan Brooks | General Engineering (intended: Computer Engineering) | Freshman | Supporting |
+  | Sofia Ramirez | Biology | Sophomore | Supporting |
+
+- **Export/output layer: CUT from July 25 demo scope — CONFIRMED as of 2026-07-09.** Students view all feature results (FIT, GAP, SHIFT, Professor Comment Analyzer) in the dashboard UI only. No PDF/DOCX export. Nothing in the codebase persists output to disk today (confirmed via audit) — this is a deliberate scope cut, not an unfinished feature. Closes the "Output ownership" open item as: cut, not built. A frontend audit found no export/download UI (no button, menu item, or placeholder), so nothing needed to be removed.
+
+- **Auth: profile-select (Option B) — CONFIRMED as of 2026-07-10.** Students choose their profile from a dropdown (`AuthContext`/`useAuth`/`RequireAuth`/`LoginPage`), no real login for the July 25 demo. Code already implements this; this entry formalizes it as decided, resolving the prior "Open Decision #1" entry.
+
+---
+
 ## Open Decisions for Deepak
 
 These are unresolved choices this plan cannot make unilaterally. Each needs an answer before the corresponding phase begins.
 
-1. **Auth approach for July 25:** Mock profile-selector login (Option B, recommended) or real Supabase Auth (Option A)? Option B is faster and lower-risk for the demo; Option A has better post-demo carryover. Which matters more for the July deadline?
+1. **CSS framework:** Tailwind CSS + shadcn/ui (fast component library, requires setup), plain CSS modules (zero config, more hand-rolling), or something else? Tailwind is recommended for speed; shadcn/ui gives usable form inputs, tags, and badges without designing from scratch.
 
-2. **CSS framework:** Tailwind CSS + shadcn/ui (fast component library, requires setup), plain CSS modules (zero config, more hand-rolling), or something else? Tailwind is recommended for speed; shadcn/ui gives usable form inputs, tags, and badges without designing from scratch.
+2. **Is `student.major_intended` student-editable or read-only?** It's categorized as Canvas-derived in `_schema_notes`, but freshmen enter it during onboarding, not Canvas. Should the dashboard let students update it (e.g., they change their mind from Computer Engineering to Electrical Engineering)? If yes, it needs to move to the editable career block or get its own edit path — and the validator needs updating.
 
-3. **Is `student.major_intended` student-editable or read-only?** It's categorized as Canvas-derived in `_schema_notes`, but freshmen enter it during onboarding, not Canvas. Should the dashboard let students update it (e.g., they change their mind from Computer Engineering to Electrical Engineering)? If yes, it needs to move to the editable career block or get its own edit path — and the validator needs updating.
+3. **What should happen with `career.resume`?** The schema doc defines a nested `career.resume` block, but all 5 student files omit it. Should the dashboard populate it as a parallel write whenever `career.work_experience/projects/certifications` are saved? Or is the `resume` block deprecated in favor of the top-level career mirrors? This needs resolution before the save function is written.
 
-4. **What should happen with `career.resume`?** The schema doc defines a nested `career.resume` block, but all 5 student files omit it. Should the dashboard populate it as a parallel write whenever `career.work_experience/projects/certifications` are saved? Or is the `resume` block deprecated in favor of the top-level career mirrors? This needs resolution before the save function is written.
+4. **Inline edit vs modal edit:** This plan recommends inline per-section edit. If a full-page edit form is preferred (single "Edit Profile" button → form view → save → return to dashboard), that changes the component layout significantly. Confirm before building `<CareerPanel>`.
 
-5. **Inline edit vs modal edit:** This plan recommends inline per-section edit. If a full-page edit form is preferred (single "Edit Profile" button → form view → save → return to dashboard), that changes the component layout significantly. Confirm before building `<CareerPanel>`.
+5. **Is Supabase being set up before the demo?** If yes, Phase 3 should run in parallel with Phase 2. If no, the demo runs entirely on static JSON and Supabase migration happens after July 25. This affects whether `@supabase/supabase-js` is installed now or later.
 
-6. **Is Supabase being set up before the demo?** If yes, Phase 3 should run in parallel with Phase 2. If no, the demo runs entirely on static JSON and Supabase migration happens after July 25. This affects whether `@supabase/supabase-js` is installed now or later.
-
-7. **Client-only validation or server-side check?** This plan proposes JS-only validation in the browser. An alternative is a small Python FastAPI endpoint that runs `validate_students.py` logic on the submitted JSON before writing to Supabase. Recommended default: client-only for the demo, server-side validation before any real student data goes live.
+6. **Client-only validation or server-side check?** This plan proposes JS-only validation in the browser. An alternative is a small Python FastAPI endpoint that runs `validate_students.py` logic on the submitted JSON before writing to Supabase. Recommended default: client-only for the demo, server-side validation before any real student data goes live.
