@@ -192,3 +192,88 @@ def test_analyze_gap_malformed_ai_json_returns_failed_status(client, monkeypatch
     body = response.json()
     assert body["feature"] == "GAP"
     assert body["status"] == "failed"
+
+
+def test_run_feature_with_fallback_cache_miss_returns_live_failure(monkeypatch):
+    live_failure = {
+        "feature": "GAP",
+        "status": "failed",
+        "summary": "GAP analysis failed.",
+        "data": {},
+        "errors": ["OpenRouter request failed: timed out"],
+    }
+    monkeypatch.setattr(api, "run_feature", lambda feature, profile, client: live_failure)
+    monkeypatch.setattr(api, "load_cached_feature_result", lambda student_slug, feature_name: None)
+
+    result = api.run_feature_with_fallback("GAP", "noCacheStudent", profile={}, client=None)
+
+    assert result == live_failure
+
+
+def test_run_feature_with_fallback_cached_success_is_served(monkeypatch):
+    live_failure = {
+        "feature": "GAP",
+        "status": "failed",
+        "summary": "GAP analysis failed.",
+        "data": {},
+        "errors": ["OpenRouter request failed: timed out"],
+    }
+    cached_success = {
+        "feature": "GAP",
+        "status": "success",
+        "summary": "You've built a solid foundation.",
+        "data": {"readiness_score": 7},
+        "errors": [],
+    }
+    monkeypatch.setattr(api, "run_feature", lambda feature, profile, client: live_failure)
+    monkeypatch.setattr(api, "load_cached_feature_result", lambda student_slug, feature_name: cached_success)
+
+    result = api.run_feature_with_fallback("GAP", "jordanReyes", profile={}, client=None)
+
+    assert result == cached_success
+    assert result["status"] == "success"
+
+
+def test_run_feature_with_fallback_cached_failure_is_not_served_as_success(monkeypatch):
+    live_failure = {
+        "feature": "GAP",
+        "status": "failed",
+        "summary": "GAP analysis failed.",
+        "data": {},
+        "errors": ["OpenRouter request failed: live timeout"],
+    }
+    cached_failure = {
+        "feature": "GAP",
+        "status": "failed",
+        "summary": "GAP analysis failed.",
+        "data": {},
+        "errors": ["OpenRouter request failed: HTTPSConnectionPool read timed out (300.0)"],
+    }
+    monkeypatch.setattr(api, "run_feature", lambda feature, profile, client: live_failure)
+    monkeypatch.setattr(api, "load_cached_feature_result", lambda student_slug, feature_name: cached_failure)
+
+    result = api.run_feature_with_fallback("GAP", "ethanBrooks", profile={}, client=None)
+
+    assert result["status"] == "failed"
+    assert result["data"] == {}
+    # The cached failure's own summary/errors are surfaced, not a generic message.
+    assert result["summary"] == cached_failure["summary"]
+    assert result["errors"] == cached_failure["errors"]
+
+
+def test_run_feature_with_fallback_cached_status_missing_fails_closed(monkeypatch):
+    live_failure = {
+        "feature": "GAP",
+        "status": "failed",
+        "summary": "GAP analysis failed.",
+        "data": {},
+        "errors": ["OpenRouter request failed: live timeout"],
+    }
+    # Schema-drift case: a cached entry with no recognizable "status" at all.
+    cached_malformed = {"feature": "GAP", "data": {}}
+    monkeypatch.setattr(api, "run_feature", lambda feature, profile, client: live_failure)
+    monkeypatch.setattr(api, "load_cached_feature_result", lambda student_slug, feature_name: cached_malformed)
+
+    result = api.run_feature_with_fallback("GAP", "someStudent", profile={}, client=None)
+
+    assert result["status"] == "failed"

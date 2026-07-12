@@ -22,6 +22,7 @@ from CampusIQ_career.ai.openrouter_client import (
     DEEPSEEK_R1_REASONING_TIMEOUT_SECONDS,
     OpenRouterClient,
 )
+from CampusIQ_career.features.base import FeatureResult
 from CampusIQ_career.features.orchestrator import run_feature
 
 load_dotenv()
@@ -65,7 +66,10 @@ def load_cached_feature_result(student_slug: str, feature_name: str) -> dict | N
 
     Cache files are built by CampusIQ_career/demo/build_demo_cache.py, which
     only writes FIT/GAP/SHIFT (PROFESSOR_COMMENTS is never included) -- so a
-    None return for that feature is expected, not a bug.
+    None return for that feature is expected, not a bug. The returned dict may
+    itself have status="failed" baked in (build_demo_cache.py writes whatever
+    run_career_analysis() produced, including failures) -- callers must check
+    status before treating this as a good result.
     """
     cache_path = CACHED_ANALYSIS_DIR / f"analysis_{student_slug}.json"
     if not cache_path.exists():
@@ -78,20 +82,35 @@ def load_cached_feature_result(student_slug: str, feature_name: str) -> dict | N
 
 
 def run_feature_with_fallback(feature_name: str, student_slug: str, profile: dict, client: OpenRouterClient) -> dict:
-    """Run a live feature call; on failure, silently serve the cached result.
+    """Run a live feature call; on failure, silently serve a cached success.
 
-    The dashboard should render the cached result exactly as if it were live
-    -- no error or banner -- so callers of this function never see the live
-    failure when a cached fallback exists. If no cached entry exists for this
-    student/feature, the live failure result is returned as-is (unhandled
-    genuine-failure case; see Fix 2 write-up for what's flagged there).
+    The dashboard should render a cached *successful* result exactly as if it
+    were live -- no error or banner. A cache entry that is itself
+    status="failed" (or missing/has an unrecognized status -- schema drift)
+    must not be served as a success; fail closed and return an explicit
+    failure instead, reusing the cached failure's own summary/errors when
+    available so the message still reflects what actually went wrong. If no
+    cached entry exists at all, the live failure result is returned as-is
+    (unhandled genuine-failure case; see Fix 2 write-up for what's flagged
+    there).
     """
     result = run_feature(feature_name, profile, client)
-    if result.get("status") == "failed":
-        cached = load_cached_feature_result(student_slug, feature_name)
-        if cached is not None:
-            return cached
-    return result
+    if result.get("status") != "failed":
+        return result
+
+    cached = load_cached_feature_result(student_slug, feature_name)
+    if cached is None:
+        return result
+    if cached.get("status") == "success":
+        return cached
+
+    return FeatureResult(
+        feature=feature_name,
+        status="failed",
+        summary=cached.get("summary") or result.get("summary", f"{feature_name} analysis failed."),
+        data={},
+        errors=cached.get("errors") or result.get("errors", []),
+    ).to_dict()
 
 
 @app.post("/api/students/{student_slug}/analyze/gap")
