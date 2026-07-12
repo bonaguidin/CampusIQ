@@ -106,6 +106,55 @@ def test_malformed_provider_response_becomes_parse_error(monkeypatch):
         client.complete(messages=[{"role": "user", "content": "hello"}], role="chat")
 
 
+def test_complete_message_returns_raw_message_with_tool_calls_and_null_content(monkeypatch):
+    # This is the exact shape that broke the role-research tool loop when it
+    # called complete(): tool_calls present, content null -- extract_text()
+    # would raise AIResponseParseError since there's no text to extract.
+    monkeypatch.setenv("OPENROUTER_API_KEY", "test-key")
+    session = FakeSession(
+        payload={
+            "choices": [
+                {
+                    "message": {
+                        "content": None,
+                        "tool_calls": [
+                            {"id": "call_1", "function": {"name": "web_search", "arguments": "{}"}}
+                        ],
+                    }
+                }
+            ]
+        }
+    )
+    client = OpenRouterClient(session=session)
+
+    message = client.complete_message(messages=[{"role": "user", "content": "hello"}], model="test-model")
+
+    assert message["content"] is None
+    assert message["tool_calls"][0]["function"]["name"] == "web_search"
+    assert len(session.calls) == 1
+
+
+def test_complete_message_still_raises_ai_request_error_on_network_failure(monkeypatch):
+    monkeypatch.setenv("OPENROUTER_API_KEY", "test-key")
+    session = FakeSession(error=requests.Timeout("too slow"))
+    client = OpenRouterClient(session=session)
+
+    with pytest.raises(AIRequestError, match="OpenRouter request failed"):
+        client.complete_message(messages=[{"role": "user", "content": "hello"}], model="test-model")
+
+
+def test_complete_unaffected_by_complete_message_addition(monkeypatch):
+    # Guards against the refactor of complete()'s internals into _send()
+    # changing complete()'s existing text-extraction behavior.
+    monkeypatch.setenv("OPENROUTER_API_KEY", "test-key")
+    session = FakeSession()
+    client = OpenRouterClient(session=session)
+
+    response = client.complete(messages=[{"role": "user", "content": "hello"}], role="chat")
+
+    assert response.text == '{"ok": true}'
+
+
 def test_parser_handles_plain_json():
     assert parse_ai_json_response('{"feature": "FIT", "status": "success"}') == {
         "feature": "FIT",

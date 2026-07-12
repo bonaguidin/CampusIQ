@@ -3,51 +3,40 @@ import json
 import pytest
 
 from CampusIQ_career.ai.errors import AIConfigError, AIRequestError, AIResponseParseError
-from CampusIQ_career.ai.types import AIResponse
 from CampusIQ_career.features import role_research_agent as agent
 
 
-def _final_response(payload: dict) -> AIResponse:
-    return AIResponse(
-        text=json.dumps(payload),
-        raw={"choices": [{"message": {"content": json.dumps(payload), "tool_calls": None}}]},
-        model="fake-model",
-    )
+def _final_message(payload: dict) -> dict:
+    return {"content": json.dumps(payload), "tool_calls": None}
 
 
-def _tool_call_response(call_id: str = "call_1") -> AIResponse:
-    return AIResponse(
-        text="",
-        raw={
-            "choices": [
-                {
-                    "message": {
-                        "content": None,
-                        "tool_calls": [
-                            {
-                                "id": call_id,
-                                "function": {
-                                    "name": "web_search",
-                                    "arguments": json.dumps({"query": "software engineering intern skills"}),
-                                },
-                            }
-                        ],
-                    }
-                }
-            ]
-        },
-        model="fake-model",
-    )
+def _tool_call_message(call_id: str = "call_1") -> dict:
+    return {
+        "content": None,
+        "tool_calls": [
+            {
+                "id": call_id,
+                "function": {
+                    "name": "web_search",
+                    "arguments": json.dumps({"query": "software engineering intern skills"}),
+                },
+            }
+        ],
+    }
 
 
 class FakeClient:
-    """Mirrors tests/test_career_features.py's FakeClient mock-injection style."""
+    """Mirrors tests/test_career_features.py's FakeClient mock-injection style.
+
+    Simulates OpenRouterClient.complete_message(), which returns the raw
+    assistant message dict directly (not wrapped in AIResponse/.raw).
+    """
 
     def __init__(self, responses):
         self._responses = list(responses)
         self.calls = []
 
-    def complete(self, **kwargs):
+    def complete_message(self, **kwargs):
         self.calls.append(kwargs)
         if not self._responses:
             raise AssertionError("FakeClient ran out of scripted responses")
@@ -68,7 +57,7 @@ VALID_PAYLOAD = {
 
 
 def test_successful_lookup_with_mocked_tool_calls_returns_correct_schema():
-    client = FakeClient([_tool_call_response(), _final_response(VALID_PAYLOAD)])
+    client = FakeClient([_tool_call_message(), _final_message(VALID_PAYLOAD)])
 
     result = agent.get_role_requirements("Software Engineering Intern", client=client)
 
@@ -81,7 +70,7 @@ def test_successful_lookup_with_mocked_tool_calls_returns_correct_schema():
 
 def test_hallucinated_soc_code_returns_none():
     bad_payload = dict(VALID_PAYLOAD, soc_code="99-9999.99")
-    client = FakeClient([_final_response(bad_payload)])
+    client = FakeClient([_final_message(bad_payload)])
 
     result = agent.get_role_requirements("Software Engineering Intern", client=client)
 
@@ -90,7 +79,7 @@ def test_hallucinated_soc_code_returns_none():
 
 def test_tool_loop_exceeding_max_rounds_aborts_and_returns_none():
     # Client always wants to call a tool -- never returns a final answer.
-    client = FakeClient([_tool_call_response(f"call_{i}") for i in range(10)])
+    client = FakeClient([_tool_call_message(f"call_{i}") for i in range(10)])
 
     result = agent.get_role_requirements("Software Engineering Intern", client=client)
 
@@ -104,7 +93,7 @@ def test_tool_loop_exceeding_time_budget_aborts_and_returns_none(monkeypatch):
     # before the first client call) is already past it.
     clock = iter([0.0, 91.0])
     monkeypatch.setattr(agent.time, "monotonic", lambda: next(clock))
-    client = FakeClient([_tool_call_response()])
+    client = FakeClient([_tool_call_message()])
 
     result = agent.get_role_requirements("Software Engineering Intern", client=client)
 
@@ -113,15 +102,7 @@ def test_tool_loop_exceeding_time_budget_aborts_and_returns_none(monkeypatch):
 
 
 def test_malformed_json_in_final_response_returns_none():
-    client = FakeClient(
-        [
-            AIResponse(
-                text="not json",
-                raw={"choices": [{"message": {"content": "not json", "tool_calls": None}}]},
-                model="fake-model",
-            )
-        ]
-    )
+    client = FakeClient([{"content": "not json", "tool_calls": None}])
 
     result = agent.get_role_requirements("Software Engineering Intern", client=client)
 
@@ -147,7 +128,7 @@ def test_caught_exceptions_return_none_without_raising(exc):
 
 def test_timeout_error_returns_none_without_raising():
     class TimeoutClient:
-        def complete(self, **kwargs):
+        def complete_message(self, **kwargs):
             raise TimeoutError("lookup timed out")
 
     result = agent.get_role_requirements("Software Engineering Intern", client=TimeoutClient())

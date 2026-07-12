@@ -150,14 +150,6 @@ def _validate_schema(data: Any, known_soc_codes: frozenset[str]) -> dict[str, An
     return validated
 
 
-def _extract_message(raw: Mapping[str, Any]) -> Mapping[str, Any] | None:
-    try:
-        message = raw["choices"][0]["message"]
-    except (KeyError, IndexError, TypeError):
-        return None
-    return message if isinstance(message, Mapping) else None
-
-
 def _run_tool_loop(role: str, client: OpenRouterClient) -> dict[str, Any] | None:
     known_soc_codes = _known_soc_codes()
     messages: list[dict[str, Any]] = [
@@ -171,14 +163,12 @@ def _run_tool_loop(role: str, client: OpenRouterClient) -> dict[str, Any] | None
         if time.monotonic() >= deadline:
             return None
 
-        response = client.complete(
+        message = client.complete_message(
             messages=messages,
             model=_LOOKUP_MODEL,
             extra_body={"tools": [_WEB_SEARCH_TOOL]},
         )
-
-        message = _extract_message(response.raw)
-        if message is None:
+        if not isinstance(message, Mapping):
             return None
 
         tool_calls = message.get("tool_calls")

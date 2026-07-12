@@ -39,6 +39,64 @@ class OpenRouterClient:
         temperature: float | None = None,
         extra_body: Mapping[str, Any] | None = None,
     ) -> AIResponse:
+        raw, selected_model = self._send(
+            messages=messages,
+            role=role,
+            model=model,
+            max_tokens=max_tokens,
+            temperature=temperature,
+            extra_body=extra_body,
+        )
+        text = self.extract_text(raw)
+        return AIResponse(text=text, raw=raw, model=selected_model)
+
+    def complete_message(
+        self,
+        *,
+        messages: Sequence[AIMessage | Mapping[str, Any]],
+        role: AgentRole | str | None = None,
+        model: str | None = None,
+        max_tokens: int | None = None,
+        temperature: float | None = None,
+        extra_body: Mapping[str, Any] | None = None,
+        timeout: float | None = None,
+    ) -> Mapping[str, Any]:
+        """Like complete(), but returns the raw assistant message unparsed.
+
+        Skips extract_text() so tool-calling callers doing their own
+        tool_calls parsing don't hit AIResponseParseError when the assistant
+        responds with tool_calls and null/empty content -- a normal shape for
+        tool-calling turns that complete()'s text-only contract can't
+        represent.
+        """
+        raw, _selected_model = self._send(
+            messages=messages,
+            role=role,
+            model=model,
+            max_tokens=max_tokens,
+            temperature=temperature,
+            extra_body=extra_body,
+            timeout=timeout,
+        )
+        try:
+            message = raw["choices"][0]["message"]
+        except (KeyError, IndexError, TypeError) as exc:
+            raise AIResponseParseError("OpenRouter response is missing choices[0].message.") from exc
+        if not isinstance(message, Mapping):
+            raise AIResponseParseError("OpenRouter response message must be an object.")
+        return message
+
+    def _send(
+        self,
+        *,
+        messages: Sequence[AIMessage | Mapping[str, Any]],
+        role: AgentRole | str | None = None,
+        model: str | None = None,
+        max_tokens: int | None = None,
+        temperature: float | None = None,
+        extra_body: Mapping[str, Any] | None = None,
+        timeout: float | None = None,
+    ) -> tuple[Mapping[str, Any], str]:
         selected_model = self._select_model(role=role, model=model)
         body: dict[str, Any] = {
             "model": selected_model,
@@ -59,15 +117,14 @@ class OpenRouterClient:
                     "Content-Type": "application/json",
                 },
                 json=body,
-                timeout=self.timeout,
+                timeout=timeout if timeout is not None else self.timeout,
             )
             response.raise_for_status()
         except requests.RequestException as exc:
             raise AIRequestError(f"OpenRouter request failed: {exc}") from exc
 
         raw = self._response_json(response)
-        text = self.extract_text(raw)
-        return AIResponse(text=text, raw=raw, model=selected_model)
+        return raw, selected_model
 
     def raw_complete(
         self,
