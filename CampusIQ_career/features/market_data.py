@@ -1,9 +1,10 @@
 """Career market-intelligence provider for GAP (and, later, FIT/SHIFT).
 
 The GAP prompt expects an O*NET-scored "market requirements" block per target
-role so it can distinguish must-have vs. nice-to-have gaps. Per the June spec,
-target roles map to SOC codes via a hardcoded map, and the SOC codes key into
-importance-scored O*NET requirements.
+role so it can distinguish must-have vs. nice-to-have gaps. Target roles map
+to SOC codes via the curated lookup in ``data/role_requirements.json`` (exact
+role-string match, no guessing), and the SOC codes key into importance-scored
+O*NET requirements.
 
 For the demo this reads a STATIC data file housed in the repo
 (``data/reference/onet_soc_requirements.json``). Live O*NET API + DFW job
@@ -34,26 +35,43 @@ _DATA_PATH = Path(os.getenv("CAMPUSIQ_ONET_DATA", str(_DEFAULT_DATA_PATH)))
 # Fallback if the data file omits its own threshold.
 _DEFAULT_MUST_HAVE_THRESHOLD = 70
 
-# Hardcoded target-role -> SOC map (2019 taxonomy). Free-text target roles are
-# matched by keyword (longest keyword wins) so "Aerospace Engineering Intern",
-# "Flight Systems Intern", etc. all resolve. Extend this from the handoff doc's
-# full 10-code map.
-_KEYWORD_TO_SOC: tuple[tuple[str, str], ...] = (
-    ("aerospace", "17-2011.00"),
-    ("flight systems", "17-2011.00"),
-    ("flight", "17-2011.00"),
-    ("mechanical", "17-2141.00"),
-    ("industrial", "17-2112.00"),
-    ("systems engineer", "17-2011.00"),
-    ("data scien", "15-2051.00"),
-    ("data analy", "15-2051.00"),
-    ("machine learning", "15-2051.00"),
-    ("software", "15-1252.00"),
-    ("developer", "15-1252.00"),
-    ("swe", "15-1252.00"),
-    ("systems analyst", "15-1211.00"),
-    ("business analyst", "15-1211.00"),
-)
+# Curated role -> SOC lookup, shared with role_requirements_for() in gap.py.
+# Each of the 14 demo target roles has a hand-assigned, correct SOC code here.
+# Loaded independently (not imported from gap.py) to keep this module
+# dependency-free of the runners.
+_ROLE_REQUIREMENTS_PATH = _REPO_ROOT / "data" / "role_requirements.json"
+
+_role_soc_cache: Mapping[str, str] | None = None
+
+
+def _load_role_soc_map() -> Mapping[str, str]:
+    """Load {target_role: soc_code} from the curated role_requirements.json.
+
+    Cached at module scope (not functools.lru_cache — a plain dict swap is
+    enough here and keeps this testable via monkeypatching _DATA_PATH-style
+    globals without cache-clearing gymnastics).
+    """
+    global _role_soc_cache
+    if _role_soc_cache is not None:
+        return _role_soc_cache
+    try:
+        with _ROLE_REQUIREMENTS_PATH.open("r", encoding="utf-8") as handle:
+            data = json.load(handle)
+    except (OSError, ValueError):
+        _role_soc_cache = {}
+        return _role_soc_cache
+    if not isinstance(data, Mapping):
+        _role_soc_cache = {}
+        return _role_soc_cache
+    _role_soc_cache = {
+        role: entry["soc_code"]
+        for role, entry in data.items()
+        if not role.startswith("_")
+        and isinstance(entry, Mapping)
+        and isinstance(entry.get("soc_code"), str)
+        and entry["soc_code"]
+    }
+    return _role_soc_cache
 
 
 def _load_onet() -> Mapping[str, Any]:
@@ -67,18 +85,19 @@ def _load_onet() -> Mapping[str, Any]:
 
 
 def resolve_soc(target_role: str) -> str | None:
-    """Map one free-text target role to a SOC code via keyword match."""
+    """Look up one target role's curated SOC code from role_requirements.json.
+
+    This used to keyword-match target-role text against a hardcoded SOC map,
+    which could produce confidently wrong matches (e.g. "Business Analyst
+    Intern" resolving to 15-1211.00 Computer Systems Analysts instead of the
+    correct 13-1111.00 Management Analysts) and covered fewer roles than the
+    hand-curated lookup already maintained in role_requirements.json. Exact
+    match only, by design — an unrecognized role returns None rather than a
+    guessed code.
+    """
     if not isinstance(target_role, str):
         return None
-    text = target_role.strip().lower()
-    if not text:
-        return None
-    best: tuple[int, str] | None = None
-    for keyword, soc in _KEYWORD_TO_SOC:
-        if keyword in text:
-            if best is None or len(keyword) > best[0]:
-                best = (len(keyword), soc)
-    return best[1] if best else None
+    return _load_role_soc_map().get(target_role)
 
 
 def get_market_requirements(target_roles: Sequence[str] | None) -> dict[str, Any]:
@@ -127,7 +146,10 @@ def get_market_requirements(target_roles: Sequence[str] | None) -> dict[str, Any
         if soc and not entry:
             notes.append(f"Role '{role}' mapped to SOC {soc} but no O*NET entry exists for it.")
         elif not soc:
-            notes.append(f"Role '{role}' did not map to any SOC code; add a keyword to the SOC map.")
+            notes.append(
+                f"Role '{role}' has no curated SOC code in role_requirements.json; "
+                "add one there to enable O*NET grounding for it."
+            )
         by_role[role] = {
             "soc_code": soc,
             "soc_title": entry.get("title") if isinstance(entry, Mapping) else None,
