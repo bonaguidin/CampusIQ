@@ -1,46 +1,51 @@
 """Live role-requirements lookup agent (web_search tool loop).
 
-Stage 1 of the role-research build: the tool-calling control loop and output
-validation, exercised against an injected client (mirroring the ``client=``
-mock-injection style used in ``tests/test_career_features.py``). The
-``web_search`` tool is stubbed here -- real search wiring, file-based caching,
-and the ``model_config.py`` "role_research" role land in Stage 2. Wiring this
-into ``GapRunner.role_requirements_for()`` lands in Stage 3.
+The tool-calling control loop and output validation are exercised against an
+injected client (mirroring the ``client=`` mock-injection style used in
+``tests/test_career_features.py``). ``web_search`` is wired to Tavily.
+Wiring this into ``GapRunner.role_requirements_for()`` lands in Stage 3.
 
 This module never raises: any failure (timeout, malformed JSON, unknown SOC
 code, request/config error) returns ``None`` so ``gap.py`` can fall back to
-the static ``data/role_requirements.json`` lookup silently. Only the module's
-one log line records which path (``agent`` vs. ``static_fallback``) served a
-given lookup, so fallback frequency is visible during demo testing.
+the static ``data/role_requirements.json`` lookup silently. The module's one
+log line records which path (``cache`` / ``agent`` / ``static_fallback``)
+served a given lookup, so fallback frequency is visible during demo testing.
 """
 
 from __future__ import annotations
 
 import json
 import logging
+import os
 import time
 from pathlib import Path
 from typing import Any, Mapping
+
+from tavily import TavilyClient
 
 from CampusIQ_career.ai import AIConfigError, AIRequestError, AIResponseParseError, OpenRouterClient
 from CampusIQ_career.ai.parser import parse_ai_json_response
 
 logger = logging.getLogger(__name__)
 
-# Flash-tier lookup model for the tool-calling research loop. Kept local (not
-# in model_config.py's MODEL_BY_ROLE) until Stage 2 adds a "role_research"
-# AgentRole there -- this constant moves at that point.
-_LOOKUP_MODEL = "deepseek/deepseek-v4-flash"
+# Which AgentRole (model_config.py's MODEL_BY_ROLE / ENV_BY_ROLE) drives the
+# lookup loop's model selection -- resolves to OPENROUTER_DEEPSEEK_V4_FLASH by
+# default, overridable via CAMPUSIQ_MODEL_ROLE_RESEARCH like every other role.
+_LOOKUP_ROLE = "role_research"
 
-# Max number of tool-call round-trips before the loop aborts (Stage-1 spec: 3).
+# Max number of tool-call round-trips before the loop aborts.
 _MAX_TOOL_ROUNDS = 3
 # Wall-clock budget for the whole research phase, checked between rounds.
 _TIME_BUDGET_SECONDS = 90.0
 # Per-call timeout for the Flash-tier lookup model -- explicitly NOT the 300s
 # override api.py uses for DeepSeek R1 synthesis calls.
 _LOOKUP_TIMEOUT_SECONDS = 25.0
+# Tavily's own per-call timeout, kept well under _LOOKUP_TIMEOUT_SECONDS so a
+# slow search doesn't eat the whole per-round model-call budget.
+_TAVILY_TIMEOUT_SECONDS = 15.0
 
 _ROLE_REQUIREMENTS_PATH = Path(__file__).resolve().parents[2] / "data" / "role_requirements.json"
+_CACHE_PATH = Path(__file__).resolve().parents[2] / "data" / ".cache" / "role_research_cache.json"
 
 _WEB_SEARCH_TOOL: Mapping[str, Any] = {
     "type": "function",
@@ -113,16 +118,45 @@ def _known_soc_codes() -> frozenset[str]:
     )
 
 
-def _execute_tool_call(name: str, arguments: Mapping[str, Any]) -> str:
-    """Execute one tool call and return its string result.
+def _tavily_client() -> TavilyClient | None:
+    api_key = os.getenv("TAVILY_API_KEY")
+    if not api_key or not api_key.strip():
+        return None
+    return TavilyClient(api_key=api_key.strip())
 
-    Stage-1 stub: web_search is not wired to a real provider yet (Stage 2).
-    Returns an empty-results marker so the loop's control flow (message
-    round-trips, round counting, time budget) is exercised end to end even
-    though no real search happens yet.
-    """
+
+def _run_web_search(arguments: Mapping[str, Any]) -> str:
+    query = arguments.get("query") if isinstance(arguments, Mapping) else None
+    if not isinstance(query, str) or not query.strip():
+        return json.dumps({"results": [], "error": "web_search called without a query."})
+
+    client = _tavily_client()
+    if client is None:
+        return json.dumps({"results": [], "error": "TAVILY_API_KEY is not configured."})
+
+    try:
+        response = client.search(query, max_results=5, timeout=_TAVILY_TIMEOUT_SECONDS)
+    except Exception as exc:  # noqa: BLE001 -- Tavily's SDK raises several
+        # distinct exception types (auth, usage-limit, timeout, plus whatever
+        # the underlying requests call raises). A failed search is a failed
+        # tool call, not a fatal error for the whole lookup: the loop just
+        # sees empty results and can retry a different query or give up, the
+        # same as if the web genuinely had nothing relevant.
+        return json.dumps({"results": [], "error": str(exc)})
+
+    results = response.get("results", []) if isinstance(response, Mapping) else []
+    summarized = [
+        {"title": item.get("title"), "url": item.get("url"), "content": item.get("content")}
+        for item in results
+        if isinstance(item, Mapping)
+    ]
+    return json.dumps({"results": summarized})
+
+
+def _execute_tool_call(name: str, arguments: Mapping[str, Any]) -> str:
+    """Execute one tool call and return its string result."""
     if name == "web_search":
-        return json.dumps({"results": [], "note": "web_search not yet wired (Stage 2)."})
+        return _run_web_search(arguments)
     return json.dumps({"error": f"Unknown tool '{name}'."})
 
 
@@ -165,7 +199,7 @@ def _run_tool_loop(role: str, client: OpenRouterClient) -> dict[str, Any] | None
 
         message = client.complete_message(
             messages=messages,
-            model=_LOOKUP_MODEL,
+            role=_LOOKUP_ROLE,
             extra_body={"tools": [_WEB_SEARCH_TOOL]},
         )
         if not isinstance(message, Mapping):
@@ -211,6 +245,36 @@ def _run_tool_loop(role: str, client: OpenRouterClient) -> dict[str, Any] | None
     return None
 
 
+def _load_cache() -> dict[str, Any]:
+    try:
+        with _CACHE_PATH.open("r", encoding="utf-8") as handle:
+            data = json.load(handle)
+    except (OSError, ValueError):
+        return {}
+    return data if isinstance(data, dict) else {}
+
+
+def _read_cache(role: str) -> dict[str, Any] | None:
+    entry = _load_cache().get(role)
+    # Re-validate on read (not just at write time): a stale cache entry from
+    # a prior schema version, or a hand-edited file, must be treated as a
+    # miss rather than returned as trusted data.
+    return _validate_schema(entry, _known_soc_codes())
+
+
+def _write_cache(role: str, requirements: dict[str, Any]) -> None:
+    cache = _load_cache()
+    cache[role] = requirements
+    try:
+        _CACHE_PATH.parent.mkdir(parents=True, exist_ok=True)
+        with _CACHE_PATH.open("w", encoding="utf-8") as handle:
+            json.dump(cache, handle, indent=2, sort_keys=True)
+    except OSError:
+        # A cache write failure must never break a lookup that already
+        # succeeded -- the result is still returned, just not persisted.
+        pass
+
+
 def get_role_requirements(role: str, client: OpenRouterClient | None = None) -> dict[str, Any] | None:
     """Look up live skill/certification requirements for one target role.
 
@@ -220,6 +284,11 @@ def get_role_requirements(role: str, client: OpenRouterClient | None = None) -> 
     """
     if not isinstance(role, str) or not role.strip():
         return None
+
+    cached = _read_cache(role)
+    if cached is not None:
+        logger.info("role_research source=cache role=%s", role)
+        return cached
 
     try:
         active_client = client if client is not None else OpenRouterClient(timeout=_LOOKUP_TIMEOUT_SECONDS)
@@ -232,5 +301,6 @@ def get_role_requirements(role: str, client: OpenRouterClient | None = None) -> 
         logger.info("role_research source=static_fallback role=%s", role)
         return None
 
+    _write_cache(role, result)
     logger.info("role_research source=agent role=%s", role)
     return result

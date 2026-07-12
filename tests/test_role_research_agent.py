@@ -3,7 +3,15 @@ import json
 import pytest
 
 from CampusIQ_career.ai.errors import AIConfigError, AIRequestError, AIResponseParseError
+from CampusIQ_career.ai.model_config import OPENROUTER_DEEPSEEK_V4_FLASH, get_model_for_role
 from CampusIQ_career.features import role_research_agent as agent
+
+
+@pytest.fixture(autouse=True)
+def _isolated_cache_path(tmp_path, monkeypatch):
+    # Every test gets its own cache file so lookups here never read/write the
+    # real data/.cache/role_research_cache.json used by the running app.
+    monkeypatch.setattr(agent, "_CACHE_PATH", tmp_path / "role_research_cache.json")
 
 
 def _final_message(payload: dict) -> dict:
@@ -143,3 +151,61 @@ def test_blank_role_returns_none_without_calling_client():
 
     assert result is None
     assert client.calls == []
+
+
+def test_cache_hit_on_second_call_skips_the_agent():
+    client = FakeClient([_tool_call_message(), _final_message(VALID_PAYLOAD)])
+
+    first = agent.get_role_requirements("Software Engineering Intern", client=client)
+    assert first == VALID_PAYLOAD
+    calls_after_first = len(client.calls)
+
+    second = agent.get_role_requirements("Software Engineering Intern", client=client)
+
+    assert second == VALID_PAYLOAD
+    assert len(client.calls) == calls_after_first  # no new client calls on the cache hit
+
+
+def test_cache_is_not_written_on_fallback_result():
+    client = FakeClient([AIRequestError("network down")])
+
+    result = agent.get_role_requirements("Software Engineering Intern", client=client)
+
+    assert result is None
+    assert not agent._CACHE_PATH.exists()
+
+
+def test_cache_is_not_written_on_hallucinated_soc_code():
+    bad_payload = dict(VALID_PAYLOAD, soc_code="99-9999.99")
+    client = FakeClient([_final_message(bad_payload)])
+
+    result = agent.get_role_requirements("Software Engineering Intern", client=client)
+
+    assert result is None
+    assert not agent._CACHE_PATH.exists()
+
+
+def test_stale_or_malformed_cache_entry_is_treated_as_a_miss(tmp_path):
+    agent._CACHE_PATH.parent.mkdir(parents=True, exist_ok=True)
+    agent._CACHE_PATH.write_text(
+        json.dumps({"Software Engineering Intern": {"soc_code": "15-1252.00"}}),  # missing required keys
+        encoding="utf-8",
+    )
+    client = FakeClient([_tool_call_message(), _final_message(VALID_PAYLOAD)])
+
+    result = agent.get_role_requirements("Software Engineering Intern", client=client)
+
+    assert result == VALID_PAYLOAD
+    assert len(client.calls) == 2  # agent was actually invoked, cache miss was honored
+
+
+def test_role_research_model_resolves_to_deepseek_v4_flash_by_default(monkeypatch):
+    monkeypatch.delenv("CAMPUSIQ_MODEL_ROLE_RESEARCH", raising=False)
+
+    assert get_model_for_role("role_research") == OPENROUTER_DEEPSEEK_V4_FLASH
+
+
+def test_role_research_model_env_override_wins(monkeypatch):
+    monkeypatch.setenv("CAMPUSIQ_MODEL_ROLE_RESEARCH", "openrouter/test-role-research-model")
+
+    assert get_model_for_role("role_research") == "openrouter/test-role-research-model"
