@@ -813,14 +813,6 @@ a {
   border-bottom: 1px solid var(--line);
 }
 
-.career-empty {
-  padding: var(--sp-8) 0;
-  font-size: var(--text-base);
-  color: var(--muted);
-  font-style: italic;
-  line-height: 1.6;
-}
-
 /* ─── CARDS ───────────────────────────────────────────────────────────────── */
 .card {
   background: var(--surface);

@@ -370,18 +370,13 @@ export function DashboardPage() {
             {activeSection === 'career' && (
               <div key="career" className="stage-section">
                 <h2 className="career-section-heading">Career Profile</h2>
-                {career !== null ? (
+                {career && (
                   <>
                     <GapAnalysisPanel />
                     <FitAnalysisPanel />
                     <ShiftAnalysisPanel />
                     <CareerPanel career={career} />
                   </>
-                ) : (
-                  <p className="career-empty">
-                    Career profile not set up yet — complete onboarding to unlock
-                    this section.
-                  </p>
                 )}
               </div>
             )}
