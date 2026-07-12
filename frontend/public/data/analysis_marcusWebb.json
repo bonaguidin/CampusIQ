@@ -1,0 +1,188 @@
+{
+  "analysis_type": "career",
+  "errors": [],
+  "features_requested": [
+    "FIT",
+    "GAP",
+    "SHIFT"
+  ],
+  "results": {
+    "FIT": {
+      "data": {
+        "overall_fit_summary": "Peer mentoring roles offer the strongest near-term match, leveraging your existing facilitation skills and academic experience directly on campus while building foundations for future applied psychology careers.",
+        "role_matches": [
+          {
+            "fit_level": "high",
+            "missing_signals": [
+              "Documented experience with academic mentoring frameworks",
+              "Knowledge of specific campus resource navigation tools"
+            ],
+            "rationale": "Your group facilitation skills from class research contributions directly translate to mentoring work. Strong empathy and public speaking abilities align with peer support requirements, and your Psychology curriculum provides contextual understanding of student development needs.",
+            "role": "Student Success Peer Mentor",
+            "supporting_signals": [
+              "DFW colleges prioritize hiring current students for campus roles like peer mentors",
+              "Local emphasis on first-generation student support programs",
+              "Employers cite conflict resolution and cultural awareness as top requirements"
+            ]
+          },
+          {
+            "fit_level": "medium",
+            "missing_signals": [
+              "Experience with research ethics protocols (IRB applications)",
+              "Intermediate statistics software proficiency beyond Excel"
+            ],
+            "rationale": "Your projects demonstrate literature analysis and hypothesis testing abilities core to behavioral research. APA-style writing competence and statistical coursework form a foundation for data documentation tasks, though applications require more structured research experience.",
+            "role": "Research Assistant",
+            "supporting_signals": [
+              "UT Dallas and UTA psychology departments regularly hire undergrad assistants",
+              "Regional healthcare providers seek research help for behavioral health studies",
+              "Entry roles emphasize academic writing and basic data management skills"
+            ]
+          },
+          {
+            "fit_level": "low",
+            "missing_signals": [
+              "Understanding of HR compliance/employment law fundamentals",
+              "Exposure to personnel management systems like Workday or BambooHR"
+            ],
+            "rationale": "Your cultural research brief and diversity interests provide theoretical grounding for DEI work, while facilitation skills could support HR functions. However, lacking business operations context creates significant knowledge gaps.",
+            "role": "People Operations Intern",
+            "supporting_signals": [
+              "DFW tech companies expanding DEI internship programs",
+              "Corporate HR teams seeking psychology backgrounds for culture initiatives",
+              "Entry roles value presentation skills for training support"
+            ]
+          }
+        ]
+      },
+      "errors": [],
+      "feature": "FIT",
+      "status": "success",
+      "summary": "As a sophomore Psychology major retaining your declared field, you demonstrate strong interests in behavioral research, student support, and workplace dynamics. Your profile highlights foundational psychology research skills through academic projects and analytical capabilities complemented by soft skills like empathy. The DFW market presents opportunities in education-centered roles with growing need for DEI-focused talent across sectors."
+    },
+    "GAP": {
+      "data": {
+        "must_have_gaps": [
+          {
+            "gap": "Personnel and Human Resources Knowledge",
+            "how_to_close": "Enroll in HR Management 302 or equivalent course by Spring 2027",
+            "why_it_matters": "O*NET importance score of 90 for People Operations roles"
+          },
+          {
+            "gap": "Active Listening",
+            "how_to_close": "Complete campus workshop (e.g., Student Affairs' 'Active Listening Lab') by Fall 2026",
+            "why_it_matters": "Required for both Peer Mentor roles and in People Operations with O*NET importance of 75"
+          },
+          {
+            "gap": "Microsoft Office (Word/PowerPoint)",
+            "how_to_close": "Finish LinkedIn Learning 'Microsoft 365 Fundamentals' path within 3 months",
+            "why_it_matters": "Required for Research Assistant roles where Excel alone is insufficient"
+          },
+          {
+            "gap": "Administration and Management Knowledge",
+            "how_to_close": "Seek administrative assistant role in campus department during 2026-27 academic year",
+            "why_it_matters": "O*NET importance score of 71 for People Operations roles"
+          }
+        ],
+        "nice_to_have_gaps": [
+          {
+            "gap": "SHRM-CP certification",
+            "how_to_close": "Begin prep courses (via SHRM student membership) after completing HR Management coursework",
+            "why_it_helps": "Differentiates HR applicants long-term despite not being entry-level required"
+          },
+          {
+            "gap": "Statistical Software (SPSS/R)",
+            "how_to_close": "Take PSYC 311 - Research Methods with SPSS by Fall 2027",
+            "why_it_helps": "Preferred for advanced research assistant roles analyzing quantitative data"
+          },
+          {
+            "gap": "People-Data Analysis",
+            "how_to_close": "Complete Google Analytics Certificate before applying for internships",
+            "why_it_helps": "Emerging HR skill mentioned in DFW internship postings"
+          }
+        ],
+        "readiness_score": 4,
+        "recommended_next_steps": [
+          "Register for HR Management 302 next available semester",
+          "Attend Active Listening workshop through Student Affairs this semester",
+          "Complete LinkedIn Learning M365 modules before spring course registration",
+          "Apply for campus administrative positions starting August 2026",
+          "Maintain progress on Mental Health First Aid certification"
+        ],
+        "strengths": [
+          "Empathy: Your self-reported empathy and facilitation skills align with core peer mentor requirements. Frame this as 'Demonstrated empathy in academic collaborations' on resumes.",
+          "Literature Review: Your psychology project proves your ability to synthesize sources\u2014crucial for research roles. Highlight as 'Conducted comprehensive literature reviews on cultural identity'.",
+          "Excel Basics: Your statistics project shows foundational data skills. Present this as 'Applied Excel for statistical analysis in academic projects'.",
+          "APA Writing: Technical writing proficiency evident in your projects\u2014essential across all roles. Label this as 'Academic writing compliant with APA standards'."
+        ]
+      },
+      "errors": [],
+      "feature": "GAP",
+      "status": "success",
+      "summary": "You've built a solid foundation in research methods and interpersonal skills, but significant gaps remain in HR-specific knowledge and software proficiency for your target roles. The most critical need is developing personnel management competencies to prepare for People Operations opportunities."
+    },
+    "SHIFT": {
+      "data": {
+        "adjacent_paths": [
+          {
+            "driver": "Growing demand for professionals who can bridge behavioral science and tech product development",
+            "path": "UX Research Coordinator",
+            "relevance": "Leverages your psychology training and survey skills to study human-AI interaction patterns"
+          },
+          {
+            "driver": "Companies prioritizing mental health in AI-integrated workplaces need data-informed wellbeing strategies",
+            "path": "Workplace Wellbeing Analyst",
+            "relevance": "Aligns with your interest in organizational psychology and student success principles"
+          }
+        ],
+        "ai_fluency_guidance": [
+          "You can already say: 'I use AI tools to efficiently generate research outlines and study questions, which helps me explore multiple perspectives while maintaining critical oversight of the content.'",
+          "Build toward: 1) Incorporating AI for thematic analysis of open-ended survey responses in your research projects, 2) Developing protocols for ethical AI use in peer mentoring sessions"
+        ],
+        "durable_skills": [
+          {
+            "reason": "Human judgment is irreplaceable for navigating privacy concerns and research biases.",
+            "task": "Ethical decision-making in research"
+          },
+          {
+            "reason": "Emotional nuance and trust-building require authentic human connection.",
+            "task": "Crisis intervention support"
+          },
+          {
+            "reason": "Creating equitable initiatives demands cultural awareness beyond algorithmic fairness.",
+            "task": "Designing inclusive programs"
+          },
+          {
+            "reason": "Navigating sensitive topics relies on emotional intelligence and real-time adaptability.",
+            "task": "Facilitating difficult conversations"
+          }
+        ],
+        "role_evolution_summary": "Your target roles are shifting toward human-AI collaboration, where tools handle routine data processing while professionals focus on interpreting complex human behaviors. In research and people operations, AI augments administrative tasks so you can prioritize relationship-building and strategic insights.",
+        "task_shifts": [
+          {
+            "changing": "AI tools rapidly scan and summarize academic sources",
+            "meaning": "Your critical evaluation of sources becomes more vital to identify biases and contextual relevance.",
+            "task": "Literature review"
+          },
+          {
+            "changing": "AI accelerates pattern detection in quantitative responses",
+            "meaning": "Your ability to design nuanced follow-up questions and interpret ambiguous results gains importance.",
+            "task": "Survey data analysis"
+          },
+          {
+            "changing": "Algorithms suggest support resources based on keywords",
+            "meaning": "Your empathy and active listening skills become essential to understand unspoken student needs.",
+            "task": "Resource matching"
+          }
+        ]
+      },
+      "errors": [],
+      "feature": "SHIFT",
+      "status": "success",
+      "summary": "Focus on strengthening your human-centered skills while strategically incorporating AI tools for data-heavy tasks. Your psychology background positions you perfectly to thrive in roles requiring emotional intelligence and critical thinking in tech-enhanced environments."
+    }
+  },
+  "status": "success",
+  "student_id": "604",
+  "summary": "Career analysis completed successfully for 3 feature(s)."
+}

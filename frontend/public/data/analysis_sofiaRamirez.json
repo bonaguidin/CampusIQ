@@ -1,0 +1,185 @@
+{
+  "analysis_type": "career",
+  "errors": [],
+  "features_requested": [
+    "FIT",
+    "GAP",
+    "SHIFT"
+  ],
+  "results": {
+    "FIT": {
+      "data": {
+        "overall_fit_summary": "Lab Assistant roles are your strongest immediate fit due to direct alignment between your coursework experience and employer requirements for technical lab skills in DFW's academic settings.",
+        "role_matches": [
+          {
+            "fit_level": "high",
+            "missing_signals": [
+              "Experience with specialized lab equipment beyond basic coursework setups",
+              "Exposure to high-volume sample processing common in clinical/diagnostic labs"
+            ],
+            "rationale": "Your coursework as a Student Lab Contributor provided direct experience with lab safety protocols, data recording, and scientific documentation. Projects like your Organic Chemistry Reaction Tracker demonstrate practical application of lab observation skills using Excel.",
+            "role": "Lab Assistant",
+            "supporting_signals": [
+              "DFW academic and clinical labs prioritize candidates with documented wet lab technique experience and safety compliance",
+              "Local employers emphasize need for precise lab notebook documentation in entry-level roles"
+            ]
+          },
+          {
+            "fit_level": "medium",
+            "missing_signals": [
+              "Independent research experience outside structured coursework",
+              "Experience designing original experiments or analyzing complex datasets"
+            ],
+            "rationale": "Your Molecular Cell Biology Mechanism Map project shows strong concept synthesis abilities relevant to research design. Interests in cell biology and organic chemistry align with biomedical research domains, while soft skills like persistence suit experimental workflows.",
+            "role": "Research Assistant",
+            "supporting_signals": [
+              "DFW research institutions seek undergraduates with demonstrated ability to connect theoretical knowledge to lab evidence",
+              "Entry-level roles prioritize candidates who can maintain detailed experimental records"
+            ]
+          },
+          {
+            "fit_level": "medium",
+            "missing_signals": [
+              "Direct patient interaction experience or HIPAA training",
+              "Exposure to clinical terminology beyond academic biology contexts"
+            ],
+            "rationale": "Your healthcare interests and soft skills like careful observation and collaboration align with patient-facing roles. Reflective learning approach suits clinical environments requiring continuous skill development.",
+            "role": "Pre-Health Clinical Volunteer",
+            "supporting_signals": [
+              "DFW hospitals value volunteers with consistent availability and documented reliability",
+              "Clinical settings prioritize candidates who can synthesize observations into accurate reports"
+            ]
+          }
+        ]
+      },
+      "errors": [],
+      "feature": "FIT",
+      "status": "success",
+      "summary": "As a Biology sophomore, you've built foundational lab skills through coursework and structured projects, with strong interests in cell biology and healthcare. Your profile shows alignment with hands-on lab roles but requires more independent research or clinical exposure for advanced positions. DFW employers seek candidates with practical lab experience and attention to detail for entry-level scientific support positions."
+    },
+    "GAP": {
+      "data": {
+        "must_have_gaps": [
+          {
+            "gap": "Lab safety training certification",
+            "how_to_close": "Complete OSHA Laboratory Safety training through your university's environmental health department or CITI Program.",
+            "why_it_matters": "This certification is listed as must-have in live job postings for Lab Assistant roles."
+          },
+          {
+            "gap": "Lab safety protocols",
+            "how_to_close": "Take BIO 301: Laboratory Safety Management during your junior year or complete NIH's free online lab safety course.",
+            "why_it_matters": "This is a must-have requirement in live job postings for all lab roles."
+          },
+          {
+            "gap": "Sample preparation skills",
+            "how_to_close": "Practice tissue processing in BIOL 213 lab sessions or volunteer at campus research labs for hands-on training.",
+            "why_it_matters": "This is a must-have requirement in live job postings for Lab Assistant roles."
+          },
+          {
+            "gap": "Following clinical protocols",
+            "how_to_close": "Complete HIPAA certification and shadow clinical volunteers at your university hospital.",
+            "why_it_matters": "This is a must-have requirement in live job postings for Pre-Health Clinical Volunteer roles."
+          },
+          {
+            "gap": "Research methodology and design",
+            "how_to_close": "Take 'Introduction to Research Methods' (PSY 250 or BIO 290) next semester.",
+            "why_it_matters": "This is a must-have requirement in live job postings for Research Assistant roles."
+          }
+        ],
+        "nice_to_have_gaps": [
+          {
+            "gap": "Pipetting / micro-technique",
+            "how_to_close": "Practice daily with micropipettes in CHEM 227 lab and document your precision logs.",
+            "why_it_helps": "Improves precision for lab measurements and appears in Preferred Qualifications."
+          },
+          {
+            "gap": "BLS/CPR certification",
+            "how_to_close": "Complete weekend American Heart Association CPR training at campus health center.",
+            "why_it_helps": "Differentiates candidates in clinical volunteer roles."
+          }
+        ],
+        "readiness_score": 0,
+        "recommended_next_steps": [
+          "Complete OSHA Laboratory Safety certification through CITI Program by next semester",
+          "Enroll in BIO 290: Research Methods during your junior year course registration",
+          "Volunteer for tissue sampling shifts in campus biology labs starting this semester",
+          "Obtain BLS/CPR certification before summer break",
+          "Shadow clinical volunteers at university hospital for protocol exposure"
+        ],
+        "strengths": [
+          "Basic lab safety training certification",
+          "Hands-on wet lab technique experience",
+          "Scientific documentation ability",
+          "Project synthesis skills"
+        ]
+      },
+      "errors": [],
+      "feature": "GAP",
+      "status": "success",
+      "summary": "Your foundational coursework provides good exposure to lab basics, but you're missing critical must-have requirements for all roles. The highest priority is addressing standardized lab safety certification and core protocol training before seeking positions."
+    },
+    "SHIFT": {
+      "data": {
+        "adjacent_paths": [
+          {
+            "driver": "Precision medicine growth creating new trial management roles that require scientific literacy",
+            "path": "Clinical Research Coordinator",
+            "relevance": "Leverages your lab skills in FDA-compliant trials while adding patient interaction"
+          },
+          {
+            "driver": "FDA validation requirements creating demand for domain experts in algorithm testing",
+            "path": "Biomedical Data Validator",
+            "relevance": "Uses your biology knowledge to audit AI outputs in diagnostic labs"
+          }
+        ],
+        "ai_fluency_guidance": [
+          "You can honestly say: 'I strategically use AI tools for academic reinforcement \u2013 breaking down complex biological concepts and practicing mechanism analysis \u2013 to deepen my understanding before hands-on lab work.'",
+          "Build demonstrable fluency through bioinformatics workshops in campus maker spaces where you learn RNA sequencing visualization tools, showing explicit connection between data skills and your wet-lab observations."
+        ],
+        "durable_skills": [
+          {
+            "reason": "Hypothesis formation requires biological intuition AI cannot replicate",
+            "task": "Experimental design"
+          },
+          {
+            "reason": "Bedside manner and empathetic patient interaction rely on human connection",
+            "task": "Clinical communication"
+          },
+          {
+            "reason": "Translating science across specialties requires human perspective-shifting",
+            "task": "Cross-disciplinary collaboration"
+          },
+          {
+            "reason": "Research integrity decisions demand human moral judgment",
+            "task": "Ethical protocol oversight"
+          }
+        ],
+        "role_evolution_summary": "Biology roles are transitioning toward human-AI collaboration where routine data tasks become automated, freeing you for higher-value work in experiment interpretation and ethical oversight. For lab and research positions, this means shifting from manual processing to validating AI-generated insights and cross-disciplinary communication.",
+        "task_shifts": [
+          {
+            "changing": "AI rapidly identifies trends in large datasets from experiments",
+            "meaning": "Your critical oversight becomes vital for validating AI findings against biological context",
+            "task": "Data pattern recognition"
+          },
+          {
+            "changing": "AI aggregates research papers and clinical findings",
+            "meaning": "Your judgment matters more in assessing applicability to specific scientific contexts",
+            "task": "Literature synthesis"
+          },
+          {
+            "changing": "Digital tools automate data logging from instruments",
+            "meaning": "Your observation skills shift focus to anomaly detection and protocol quality control",
+            "task": "Lab documentation"
+          }
+        ]
+      },
+      "errors": [],
+      "feature": "SHIFT",
+      "status": "success",
+      "summary": "Your foundational skills in observation and collaboration align perfectly with biology's human-centered core. Focus on developing hands-on experience in experimental design while gradually integrating data tools \u2013 you're building a versatile skillset that remains essential as labs evolve. What won't change is biology's reliance on human judgment, especially in healthcare and research integrity."
+    }
+  },
+  "status": "success",
+  "student_id": "605",
+  "summary": "Career analysis completed successfully for 3 feature(s)."
+}
