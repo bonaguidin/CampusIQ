@@ -2,8 +2,12 @@
 
 The tool-calling control loop and output validation are exercised against an
 injected client (mirroring the ``client=`` mock-injection style used in
-``tests/test_career_features.py``). ``web_search`` is wired to Tavily.
-Wiring this into ``GapRunner.role_requirements_for()`` lands in Stage 3.
+``tests/test_career_features.py``). ``web_search`` is wired to Tavily. Wired
+into ``GapRunner.role_requirements_for()``.
+
+On the final round, the ``tools`` param is withheld so the model can't just
+keep asking for more searches indefinitely -- it must synthesize a final
+answer from what it already has.
 
 This module never raises: any failure (timeout, malformed JSON, unknown SOC
 code, request/config error) returns ``None`` so ``gap.py`` can fall back to
@@ -202,10 +206,28 @@ def _run_tool_loop(role: str, client: OpenRouterClient) -> dict[str, Any] | None
         if time.monotonic() >= deadline:
             return None
 
+        is_final_round = round_index >= _MAX_TOOL_ROUNDS
+        if is_final_round:
+            # The model has used its full search budget. Withhold the tools
+            # param entirely (rather than just hoping the model stops asking)
+            # so it is structurally unable to request another round, and
+            # nudge it to answer from what it already has instead of just
+            # silently truncating the conversation.
+            messages.append(
+                {
+                    "role": "user",
+                    "content": (
+                        "You have used all available searches. Respond now "
+                        "with the final JSON object only, using the "
+                        "information you already have."
+                    ),
+                }
+            )
+
         message = client.complete_message(
             messages=messages,
             role=_LOOKUP_ROLE,
-            extra_body={"tools": [_WEB_SEARCH_TOOL]},
+            extra_body=None if is_final_round else {"tools": [_WEB_SEARCH_TOOL]},
         )
         if not isinstance(message, Mapping):
             return None
@@ -221,8 +243,9 @@ def _run_tool_loop(role: str, client: OpenRouterClient) -> dict[str, Any] | None
                 return None
             return _validate_schema(parsed, known_soc_codes)
 
-        if round_index >= _MAX_TOOL_ROUNDS:
-            # Model still wants to call tools after using up its budget.
+        if is_final_round:
+            # No tools were offered this round, so any tool_calls here are
+            # not actionable -- treat as a failed final answer.
             return None
 
         messages.append(

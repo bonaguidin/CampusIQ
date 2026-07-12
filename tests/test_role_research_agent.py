@@ -1,3 +1,4 @@
+import itertools
 import json
 
 import pytest
@@ -107,6 +108,87 @@ def test_tool_loop_exceeding_time_budget_aborts_and_returns_none(monkeypatch):
 
     assert result is None
     assert len(client.calls) == 0
+
+
+class _FakeTime:
+    """A scripted stand-in for the ``time`` module, bound only inside
+    ``role_research_agent``'s own namespace (see the test below) -- unlike
+    ``monkeypatch.setattr(agent.time, "monotonic", ...)``, this never touches
+    the real, process-wide ``time`` module, so it can't be desynced by
+    unrelated code (other tests' background threads, pytest internals, etc.)
+    also calling ``time.monotonic()`` during the test.
+    """
+
+    def __init__(self, values):
+        self._values = iter(values)
+
+    def monotonic(self):
+        return next(self._values)
+
+
+def test_time_budget_exceeded_before_final_round_aborts_and_returns_none(monkeypatch):
+    # Deadline set at 90.0; rounds 0-2 each check in under budget, then the
+    # final round's own deadline check (before it would force an answer)
+    # trips -- the forced-answer path must not bypass the time budget.
+    fake_time = _FakeTime(itertools.chain([0.0, 1.0, 2.0, 3.0], itertools.repeat(91.0)))
+    monkeypatch.setattr(agent, "time", fake_time)
+    client = FakeClient(
+        [
+            _tool_call_message("call_0"),
+            _tool_call_message("call_1"),
+            _tool_call_message("call_2"),
+        ]
+    )
+
+    result = agent.get_role_requirements("Software Engineering Intern", client=client)
+
+    assert result is None
+    assert len(client.calls) == 3  # rounds 0-2 ran; the final round never got called
+
+
+def test_final_round_forces_answer_when_model_would_otherwise_keep_requesting_tools():
+    # Rounds 0-2 exhaust the search budget as before. Previously, if the
+    # model still returned tool_calls on round 3, the loop aborted with None
+    # without ever letting the model answer. Now tools are withheld on the
+    # final round, so a model that would otherwise ask for a 4th search is
+    # forced to respond with content instead -- this is the core regression
+    # case for the bug: a role that used to fail now succeeds.
+    client = FakeClient(
+        [
+            _tool_call_message("call_0"),
+            _tool_call_message("call_1"),
+            _tool_call_message("call_2"),
+            _final_message(VALID_PAYLOAD),
+        ]
+    )
+
+    result = agent.get_role_requirements("Software Engineering Intern", client=client)
+
+    assert result == VALID_PAYLOAD
+    assert len(client.calls) == 4
+    final_call_kwargs = client.calls[-1]
+    # tools must be structurally withheld, not just hoped-away
+    assert final_call_kwargs.get("extra_body") is None
+    assert any(
+        m.get("role") == "user" and "final JSON" in (m.get("content") or "")
+        for m in final_call_kwargs["messages"]
+    )
+
+
+def test_final_round_forced_answer_failing_schema_validation_still_returns_none():
+    bad_payload = dict(VALID_PAYLOAD, soc_code="99-9999.99")
+    client = FakeClient(
+        [
+            _tool_call_message("call_0"),
+            _tool_call_message("call_1"),
+            _tool_call_message("call_2"),
+            _final_message(bad_payload),
+        ]
+    )
+
+    result = agent.get_role_requirements("Software Engineering Intern", client=client)
+
+    assert result is None
 
 
 def test_malformed_json_in_final_response_returns_none():
