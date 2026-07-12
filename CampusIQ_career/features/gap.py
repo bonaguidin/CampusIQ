@@ -5,6 +5,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any, Mapping
 
+from . import role_research_agent
 from .base import CareerFeatureRunner
 from .market_data import get_market_requirements
 
@@ -78,14 +79,19 @@ class GapRunner(CareerFeatureRunner):
         }
 
     def role_requirements_for(self, target_roles: Any) -> dict[str, Any]:
-        """Match each target role against the static lookup and return the
-        SOC-code + must-have / nice-to-have skills & certs for the roles found.
-        Unmatched roles are reported so the AI does not silently assume coverage."""
+        """Match each target role against the live research agent, falling
+        back to the static lookup, and return the SOC-code + must-have /
+        nice-to-have skills & certs for the roles found. Unmatched roles are
+        reported so the AI does not silently assume coverage.
+
+        The agent is tried first per role (it returns None on any failure,
+        per its own fallback contract); a None result falls through to the
+        exact same static-file lookup this used before the agent existed."""
         lookup = _load_role_requirements()
         matched: dict[str, Any] = {}
         unmatched: list[str] = []
         for role in target_roles or []:
-            requirements = lookup.get(role)
+            requirements = role_research_agent.get_role_requirements(role) or lookup.get(role)
             if requirements:
                 matched[role] = requirements
             else:
