@@ -5,7 +5,23 @@
     "credit_hours": 3,
     "description": "Survey of the scholarly discipline of political science and its theoretical foundations, principal subfields, major research questions and modes of scholarship",
     "prerequisites": null,
-    "department": "Political Science"
+    "department": "Political Science",
+    "prefix": "POLS",
+    "number": "200",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/pols/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "POLS 203",
@@ -13,7 +29,23 @@
     "credit_hours": 3,
     "description": "Introduction to the study of political theory, with attention to major themes in the history of political thought; discussion of the nature of politics; examination of method in political theory and its relation to the discipline of political science",
     "prerequisites": null,
-    "department": "Political Science"
+    "department": "Political Science",
+    "prefix": "POLS",
+    "number": "203",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/pols/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "POLS 206",
@@ -22,7 +54,28 @@
     "description": "(GOVT 2305) American National Government. Survey of American national government, politics, and constitutional development; also taught at Galveston and Qatar campuses",
     "prerequisites": null,
     "department": "Political Science",
-    "satisfies_ucc": "Government/Political Science"
+    "satisfies_ucc": "Government/Political Science",
+    "prefix": "POLS",
+    "number": "206",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [
+      "Government/Political Science"
+    ],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [
+      "Galveston",
+      "Qatar"
+    ],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/pols/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "POLS 207",
@@ -31,7 +84,28 @@
     "description": "(GOVT 2306) State and Local Government. Survey of state and local government and politics with special reference to the constitution and politics of Texas; also taught at Galveston and Qatar campuses",
     "prerequisites": null,
     "department": "Political Science",
-    "satisfies_ucc": "Government/Political Science"
+    "satisfies_ucc": "Government/Political Science",
+    "prefix": "POLS",
+    "number": "207",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [
+      "Government/Political Science"
+    ],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [
+      "Galveston",
+      "Qatar"
+    ],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/pols/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "POLS 209",
@@ -39,7 +113,25 @@
     "credit_hours": 3,
     "description": "Introduction to the philosophy and practice of social science and to modes of research in major subfields of political science",
     "prerequisites": "Political science majors must have completed POLS 209 before they enroll in their last 18 hours of 300- and 400-level POLS courses; may take no more than 6 hours of upper division (300- and 400-level courses) before completing POLS 209 ; political science majors.",
-    "department": "Political Science"
+    "department": "Political Science",
+    "prefix": "POLS",
+    "number": "209",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "POLS 209"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/pols/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "POLS 229",
@@ -47,7 +139,23 @@
     "credit_hours": 3,
     "description": "A comparison of political institutions, processes and issues across a wide variety of political systems",
     "prerequisites": null,
-    "department": "Political Science"
+    "department": "Political Science",
+    "prefix": "POLS",
+    "number": "229",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/pols/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "POLS 231",
@@ -55,7 +163,25 @@
     "credit_hours": 3,
     "description": "Analysis of contemporary world from point of view of nation-state; political problems, factors involved in foreign policies and relations of nations; also taught at Galveston campus",
     "prerequisites": null,
-    "department": "Political Science"
+    "department": "Political Science",
+    "prefix": "POLS",
+    "number": "231",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [
+      "Galveston"
+    ],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/pols/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "POLS 232",
@@ -63,7 +189,25 @@
     "credit_hours": 3,
     "description": "Introduction to maritime public policy; social, economic, political and cultural contexts of public policy; study of policy analysis and policymakers; examines public problems, policy choice, and limits of governmental action; Galveston campus",
     "prerequisites": null,
-    "department": "Political Science"
+    "department": "Political Science",
+    "prefix": "POLS",
+    "number": "232",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [
+      "Galveston"
+    ],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/pols/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "POLS 233",
@@ -71,7 +215,23 @@
     "credit_hours": 3,
     "description": "Survey of institutions of American government, mass political behavior, and policy fields of significant contemporary importance",
     "prerequisites": null,
-    "department": "Political Science"
+    "department": "Political Science",
+    "prefix": "POLS",
+    "number": "233",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/pols/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "POLS 285",
@@ -79,7 +239,25 @@
     "credit_hours": "0-3",
     "description": "Individual instruction in selected aspects of political science not adequately covered by other courses",
     "prerequisites": "Approval of department head.",
-    "department": "Political Science"
+    "department": "Political Science",
+    "prefix": "POLS",
+    "number": "285",
+    "course_level": 200,
+    "credit_min": 0,
+    "credit_max": 3,
+    "is_variable_credit": true,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Approval of department head"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/pols/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "POLS 289",
@@ -87,7 +265,27 @@
     "credit_hours": 3,
     "description": "Selected topics in an identified area of political science and public policy. May be taken for credit seven times",
     "prerequisites": "POLS 206 or approval of department head.",
-    "department": "Political Science"
+    "department": "Political Science",
+    "prefix": "POLS",
+    "number": "289",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": "May be taken for credit seven times",
+    "campuses": [],
+    "prerequisite_courses": [
+      "POLS 206"
+    ],
+    "restrictions": [
+      "approval of department head"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/pols/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "POLS 291",
@@ -95,7 +293,26 @@
     "credit_hours": "0-6",
     "description": "Research conducted under the direction of a faculty member in political science. May be taken three times for credit",
     "prerequisites": "Freshman or sophomore classification and approval of instructor.",
-    "department": "Political Science"
+    "department": "Political Science",
+    "prefix": "POLS",
+    "number": "291",
+    "course_level": 200,
+    "credit_min": 0,
+    "credit_max": 6,
+    "is_variable_credit": true,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": "May be taken three times for credit",
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Freshman or sophomore classification",
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/pols/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "POLS 302",
@@ -103,7 +320,33 @@
     "credit_hours": 3,
     "description": "COURSE OVERVIEW. Explores how communication practices construct, circulate and contest political ideas and authority. Examines both how media influence political attitudes, participation and policy outcomes, and how political identity and conflict are shaped symbolically through news, entertainment, digital platforms and public rhetoric. Approaches may draw from social scientific models of media effects or rhetorical and critical analysis of political discourse. Emphasizes case-based evaluation of messages, sources and strategies across institutional, journalistic and citizen communication. Course content may include material involving political disagreement, conflict or graphic representation, examined for purposes of analysis rather than endorsement. RELEVANCE AND APPLICATION. Develops literacy in how political messages are constructed, distributed and interpreted across media systems. Applies to careers in journalism, political communication, public affairs, advocacy, research, law and civic or governmental work. Supports informed participation in democratic life by strengthening abilities to evaluate claims, recognize framing and distinguish between reporting, persuasion and manipulation. DEEPENING UNDERSTANDINGS. Reveals how politics is communicated not only through speeches or news outlets, but also through satire, visuals, entertainment formats, algorithmic feeds and policy messaging. Demonstrates how political messaging often blends information, symbolism and emotion to shape interpretation. Highlights the ways messages are interpreted differently depending on audience history, identity and media environment. Clarifies how communication shapes what counts as “fact,” “controversy” or “consensus” in public life. TOPICS AND THEMES. May include study of political news coverage, campaign strategy, advertising, agenda-setting, framing, propaganda models, political entertainment, social media activism and theories of representation. Consideration of media regulation, government communication practices, the influence of media on policymaking and the production of ideology. Course material may draw on historical and contemporary cases from local, national or international contexts, including disputed elections and outcomes, political controversies and crises, disinformation and surveillance, and contested social movements",
     "prerequisites": "POLS 206 or approval of department head; junior or senior classification. Cross Listing: COMM 302 and JOUR 302 .",
-    "department": "Political Science"
+    "department": "Political Science",
+    "prefix": "POLS",
+    "number": "302",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "COMM 302",
+      "JOUR 302"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "POLS 206",
+      "COMM 302",
+      "JOUR 302"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "approval of department head"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/pols/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "POLS 304",
@@ -111,7 +354,25 @@
     "credit_hours": 3,
     "description": "Survey of historical and contemporary issues in Latino politics in the U.S.; race and ethnicity in the context of U.S. politics; comparisons of racial and ethnic group experiences in the U.S. with those experienced by racial and ethnic groups elsewhere; Latino access to the political system through political participation",
     "prerequisites": "Junior or senior classification.",
-    "department": "Political Science"
+    "department": "Political Science",
+    "prefix": "POLS",
+    "number": "304",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/pols/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "POLS 306",
@@ -119,7 +380,28 @@
     "credit_hours": 3,
     "description": "Major contemporary political problems and issues with primary emphasis on the U.S. Each term one to three problems or issues will be examined in some depth. Students may register in up to but no more than two different sections of this course. May be repeated for credit",
     "prerequisites": "POLS 206 or approval of department head. NOTE: POLS 306 courses taken in a study abroad program may not count toward this limit; please consult with the undergraduate advisor.",
-    "department": "Political Science"
+    "department": "Political Science",
+    "prefix": "POLS",
+    "number": "306",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": "Students may register in up to but no more than two different sections of this course.",
+    "campuses": [],
+    "prerequisite_courses": [
+      "POLS 206",
+      "POLS 306"
+    ],
+    "restrictions": [
+      "approval of department head"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/pols/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "POLS 308",
@@ -127,7 +409,28 @@
     "credit_hours": 3,
     "description": "Core concepts of game theory to study strategic interaction in politics; game theory using simple mathematical models to describe social situations, understand political and social phenomena; emphasis on model building skills and problem solving",
     "prerequisites": "POLS 206 and junior or senior classification or approval of department head.",
-    "department": "Political Science"
+    "department": "Political Science",
+    "prefix": "POLS",
+    "number": "308",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "POLS 206"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "approval of department head"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/pols/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "POLS 309",
@@ -135,7 +438,27 @@
     "credit_hours": 3,
     "description": "Theory, techniques, and application of quantitative analysis in political science; focus on quantitative techniques commonly used to evaluate empirical theories of politics",
     "prerequisites": "POLS 209 and 9 additional hours of political science or approval of instructor.",
-    "department": "Political Science"
+    "department": "Political Science",
+    "prefix": "POLS",
+    "number": "309",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "POLS 209"
+    ],
+    "restrictions": [
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/pols/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "POLS 312",
@@ -143,7 +466,25 @@
     "credit_hours": 3,
     "description": "Examination of government institutions designed to structure ethnic relations; source of ethnic conflict; mechanisms to facilitate the peaceful resolution of ethnic conflict",
     "prerequisites": "Junior or senior classification.",
-    "department": "Political Science"
+    "department": "Political Science",
+    "prefix": "POLS",
+    "number": "312",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/pols/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "POLS 313",
@@ -151,7 +492,27 @@
     "credit_hours": 3,
     "description": "Role of public opinion in a democratic political system--its formation, properties and patterns, with special attention to problems of linking public opinion to public policy",
     "prerequisites": "POLS 206 or approval of department head.",
-    "department": "Political Science"
+    "department": "Political Science",
+    "prefix": "POLS",
+    "number": "313",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "POLS 206"
+    ],
+    "restrictions": [
+      "approval of department head"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/pols/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "POLS 314",
@@ -159,7 +520,27 @@
     "credit_hours": 3,
     "description": "Role of interest groups in politics; types of groups and resources; internal dynamics; group strategies/tactics (including PACs); forms of indirect and direct lobbying; influence of groups in political arena",
     "prerequisites": "POLS 206 or approval of department head.",
-    "department": "Political Science"
+    "department": "Political Science",
+    "prefix": "POLS",
+    "number": "314",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "POLS 206"
+    ],
+    "restrictions": [
+      "approval of department head"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/pols/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "POLS 315",
@@ -167,7 +548,27 @@
     "credit_hours": 3,
     "description": "Organization, history, and activities of political parties and functions they serve in national, state and local politics in the United States and elsewhere",
     "prerequisites": "POLS 206 or approval of department head.",
-    "department": "Political Science"
+    "department": "Political Science",
+    "prefix": "POLS",
+    "number": "315",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "POLS 206"
+    ],
+    "restrictions": [
+      "approval of department head"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/pols/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "POLS 316",
@@ -175,7 +576,28 @@
     "credit_hours": 3,
     "description": "Politics at the community level; urban and metropolitan political systems",
     "prerequisites": "POLS 206 and POLS 207 or approval of department head.",
-    "department": "Political Science"
+    "department": "Political Science",
+    "prefix": "POLS",
+    "number": "316",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "POLS 206",
+      "POLS 207"
+    ],
+    "restrictions": [
+      "approval of department head"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/pols/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "POLS 317",
@@ -183,7 +605,25 @@
     "credit_hours": 3,
     "description": "Role of women in the political system; treatment of women in political theory; effect of law on women's status; women as political leaders; current policy issues of concern to women",
     "prerequisites": "POLS 206 .",
-    "department": "Political Science"
+    "department": "Political Science",
+    "prefix": "POLS",
+    "number": "317",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "POLS 206"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/pols/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "POLS 318",
@@ -191,7 +631,29 @@
     "credit_hours": 3,
     "description": "Examination of major paradigms of international relations; focus on theory development and application to cases",
     "prerequisites": "POLS 206 , POLS 209 , and junior or senior classification or approval of department head.",
-    "department": "Political Science"
+    "department": "Political Science",
+    "prefix": "POLS",
+    "number": "318",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "POLS 206",
+      "POLS 209"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "approval of department head"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/pols/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "POLS 319",
@@ -199,7 +661,27 @@
     "credit_hours": 3,
     "description": "The American Presidency and the primary relationships and responsibilities of the office, dealing with the public, decision making, influencing Congress, and implementing policy",
     "prerequisites": "POLS 206 or approval of department head.",
-    "department": "Political Science"
+    "department": "Political Science",
+    "prefix": "POLS",
+    "number": "319",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "POLS 206"
+    ],
+    "restrictions": [
+      "approval of department head"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/pols/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "POLS 320",
@@ -207,7 +689,28 @@
     "credit_hours": 3,
     "description": "The politics of race in the United States: contrast of the political experiences of racial groups with the ideals and realities of democratic political systems",
     "prerequisites": "POLS 206 and POLS 207 and junior or senior classification.",
-    "department": "Political Science"
+    "department": "Political Science",
+    "prefix": "POLS",
+    "number": "320",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "POLS 206",
+      "POLS 207"
+    ],
+    "restrictions": [
+      "junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/pols/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "POLS 322",
@@ -215,7 +718,27 @@
     "credit_hours": 3,
     "description": "Political institutions and ideas of major European countries. Prospects for political integration",
     "prerequisites": "POLS 206 or approval of department head.",
-    "department": "Political Science"
+    "department": "Political Science",
+    "prefix": "POLS",
+    "number": "322",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "POLS 206"
+    ],
+    "restrictions": [
+      "approval of department head"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/pols/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "POLS 323",
@@ -223,7 +746,27 @@
     "credit_hours": 3,
     "description": "Survey of the major features of the political process in Latin America; key political groups and sources and characteristics of their political power; studies of selected countries",
     "prerequisites": "POLS 206 or approval of department head.",
-    "department": "Political Science"
+    "department": "Political Science",
+    "prefix": "POLS",
+    "number": "323",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "POLS 206"
+    ],
+    "restrictions": [
+      "approval of department head"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/pols/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "POLS 324",
@@ -231,7 +774,25 @@
     "credit_hours": 3,
     "description": "Examination of the causes and consequences of economic inequality between rich and poor states; evaluation of competing explanations for poverty of less-developed countries; development strategies employed by poor states; and structure of global economic relations",
     "prerequisites": "Junior or senior classification.",
-    "department": "Political Science"
+    "department": "Political Science",
+    "prefix": "POLS",
+    "number": "324",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/pols/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "POLS 325",
@@ -239,7 +800,28 @@
     "credit_hours": 3,
     "description": "Survey of African politics from pre-colonial period to contemporary era; examination of local experience of democracy, governance, economic development in light of varied colonial experiences, independence movements, international political economy, informal sources of political power",
     "prerequisites": "POLS 206 and POLS 207 ; junior or senior classification.",
-    "department": "Political Science"
+    "department": "Political Science",
+    "prefix": "POLS",
+    "number": "325",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "POLS 206",
+      "POLS 207"
+    ],
+    "restrictions": [
+      "junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/pols/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "POLS 326",
@@ -247,7 +829,28 @@
     "credit_hours": 3,
     "description": "Political, social and economic transformations in the post-Communist Eastern and Southern European countries; examination of the interrelations between political, economic and social issues that impact the building of new governments and institutions in these countries",
     "prerequisites": "POLS 206 and POLS 207 ; junior or senior classification.",
-    "department": "Political Science"
+    "department": "Political Science",
+    "prefix": "POLS",
+    "number": "326",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "POLS 206",
+      "POLS 207"
+    ],
+    "restrictions": [
+      "junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/pols/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "POLS 327",
@@ -255,7 +858,27 @@
     "credit_hours": 3,
     "description": "Congressional elections, decision-making structure and processes in Congress, and their implications for representation and public policy in the United States",
     "prerequisites": "POLS 206 or approval of department head.",
-    "department": "Political Science"
+    "department": "Political Science",
+    "prefix": "POLS",
+    "number": "327",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "POLS 206"
+    ],
+    "restrictions": [
+      "approval of department head"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/pols/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "POLS 328",
@@ -263,7 +886,25 @@
     "credit_hours": 3,
     "description": "Examination of the political and economic origins of globalization; effects of globalization on advanced industrial democracies; effect on less developed nations; evaluation of the economic, social, cultural and political consequences of globalization",
     "prerequisites": "Junior or senior classification.",
-    "department": "Political Science"
+    "department": "Political Science",
+    "prefix": "POLS",
+    "number": "328",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/pols/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "POLS 333",
@@ -271,7 +912,28 @@
     "credit_hours": 3,
     "description": "Contemporary issues, problems, and solutions in international cooperation",
     "prerequisites": "POLS 206 ; junior or senior classification or approval of department head.",
-    "department": "Political Science"
+    "department": "Political Science",
+    "prefix": "POLS",
+    "number": "333",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "POLS 206"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "approval of department head"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/pols/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "POLS 335",
@@ -279,7 +941,28 @@
     "credit_hours": 3,
     "description": "Examination of major theoretical explanations of war and conflict resolution",
     "prerequisites": "POLS 206 ; junior or senior classification or approval of department head.",
-    "department": "Political Science"
+    "department": "Political Science",
+    "prefix": "POLS",
+    "number": "335",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "POLS 206"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "approval of department head"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/pols/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "POLS 338",
@@ -287,7 +970,27 @@
     "credit_hours": 3,
     "description": "Major political issues of the post-communist transition in the former Soviet Union",
     "prerequisites": "POLS 206 or approval of department head.",
-    "department": "Political Science"
+    "department": "Political Science",
+    "prefix": "POLS",
+    "number": "338",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "POLS 206"
+    ],
+    "restrictions": [
+      "approval of department head"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/pols/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "POLS 342",
@@ -295,7 +998,27 @@
     "credit_hours": 3,
     "description": "Public bureaucracy in the context of a political environment; role of experts, the use of political power and problems of bureaucratic accountability and responsibility",
     "prerequisites": "POLS 206 or approval of department head.",
-    "department": "Political Science"
+    "department": "Political Science",
+    "prefix": "POLS",
+    "number": "342",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "POLS 206"
+    ],
+    "restrictions": [
+      "approval of department head"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/pols/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "POLS 347",
@@ -303,7 +1026,31 @@
     "credit_hours": 3,
     "description": "U.S. energy and environmental problems and politics and the political, legal, and institutional factors influencing their development and implementation",
     "prerequisites": "POLS 206 or approval of department head; junior or senior classification or approval of instructor; also taught at Galveston campus.",
-    "department": "Political Science"
+    "department": "Political Science",
+    "prefix": "POLS",
+    "number": "347",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [
+      "Galveston"
+    ],
+    "prerequisite_courses": [
+      "POLS 206"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "approval of department head",
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/pols/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "POLS 349",
@@ -311,7 +1058,27 @@
     "credit_hours": 3,
     "description": "Political thought from Greek antiquity to Renaissance",
     "prerequisites": "POLS 206 or approval of department head.",
-    "department": "Political Science"
+    "department": "Political Science",
+    "prefix": "POLS",
+    "number": "349",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "POLS 206"
+    ],
+    "restrictions": [
+      "approval of department head"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/pols/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "POLS 350",
@@ -319,7 +1086,27 @@
     "credit_hours": 3,
     "description": "Political thought from Machiavelli to Marx",
     "prerequisites": "POLS 206 or approval of department head.",
-    "department": "Political Science"
+    "department": "Political Science",
+    "prefix": "POLS",
+    "number": "350",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "POLS 206"
+    ],
+    "restrictions": [
+      "approval of department head"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/pols/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "POLS 352",
@@ -327,7 +1114,29 @@
     "credit_hours": 3,
     "description": "Examination of empirical political science theory about the nature and consequences of democratic government in the modern era; study of scientific theory that accounts for the rise, characteristics and behavior of democratic political systems",
     "prerequisites": "POLS 206 , POLS 207 , and POLS 209 ; junior or senior classification.",
-    "department": "Political Science"
+    "department": "Political Science",
+    "prefix": "POLS",
+    "number": "352",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "POLS 206",
+      "POLS 207",
+      "POLS 209"
+    ],
+    "restrictions": [
+      "junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/pols/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "POLS 353",
@@ -335,7 +1144,29 @@
     "credit_hours": 3,
     "description": "Legal issues, controversies and significant developments in constitutional rights and liberties, and the impact of these developments upon American politics, culture and social institutions",
     "prerequisites": "POLS 206 or approval of department head; also taught at Galveston campus.",
-    "department": "Political Science"
+    "department": "Political Science",
+    "prefix": "POLS",
+    "number": "353",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [
+      "Galveston"
+    ],
+    "prerequisite_courses": [
+      "POLS 206"
+    ],
+    "restrictions": [
+      "approval of department head"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/pols/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "POLS 355",
@@ -343,7 +1174,28 @@
     "credit_hours": 3,
     "description": "Leading decisions of the Supreme Court. Trends in our constitutional development since 1789; expansion through judicial interpretation of powers delegated to national government",
     "prerequisites": "POLS 206 and HIST 105 or approval of department head.",
-    "department": "Political Science"
+    "department": "Political Science",
+    "prefix": "POLS",
+    "number": "355",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "POLS 206",
+      "HIST 105"
+    ],
+    "restrictions": [
+      "approval of department head"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/pols/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "POLS 357",
@@ -351,7 +1203,29 @@
     "credit_hours": 3,
     "description": "Political factors that influence judicial selection; decision making and policy-making roles and impact of the U.S. Supreme Court and Federal Court System",
     "prerequisites": "POLS 206 , POLS 209 , and junior or senior classification or approval of department head.",
-    "department": "Political Science"
+    "department": "Political Science",
+    "prefix": "POLS",
+    "number": "357",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "POLS 206",
+      "POLS 209"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "approval of department head"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/pols/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "POLS 358",
@@ -359,7 +1233,27 @@
     "credit_hours": 3,
     "description": "Survey of the major features of court systems of the world; examination of the role played by courts in the politics of selected nations of the world; comparison of judicial decision making in selected counties; the impact of courts in developing democracies",
     "prerequisites": "POLS 206 and 207; junior or senior classification.",
-    "department": "Political Science"
+    "department": "Political Science",
+    "prefix": "POLS",
+    "number": "358",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "POLS 206"
+    ],
+    "restrictions": [
+      "junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/pols/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "POLS 359",
@@ -367,7 +1261,27 @@
     "credit_hours": 3,
     "description": "American political thought from colonial times to the present",
     "prerequisites": "POLS 206 or approval of department head.",
-    "department": "Political Science"
+    "department": "Political Science",
+    "prefix": "POLS",
+    "number": "359",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "POLS 206"
+    ],
+    "restrictions": [
+      "approval of department head"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/pols/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "POLS 362",
@@ -375,7 +1289,28 @@
     "credit_hours": 3,
     "description": "Survey of various traditions in the history of Latin American political thought; key texts in the history of political theory in the Spanish-American continent",
     "prerequisites": "POLS 206 ; junior or senior classification or approval of instructor.",
-    "department": "Political Science"
+    "department": "Political Science",
+    "prefix": "POLS",
+    "number": "362",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "POLS 206"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/pols/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "POLS 364",
@@ -383,7 +1318,25 @@
     "credit_hours": 3,
     "description": "Global perspective on the history of political ideas and contemporary political philosophy; confrontation and conversion of East Asia and Middle Eastern concepts of political problems and Western perspectives; impact of culture on the shaping of political ideas",
     "prerequisites": "Junior or senior classification.",
-    "department": "Political Science"
+    "department": "Political Science",
+    "prefix": "POLS",
+    "number": "364",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/pols/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "POLS 365",
@@ -391,7 +1344,27 @@
     "credit_hours": 3,
     "description": "Contemporary political systems of Asia, political institutions, actors and processes",
     "prerequisites": "POLS 206 or approval of department head.",
-    "department": "Political Science"
+    "department": "Political Science",
+    "prefix": "POLS",
+    "number": "365",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "POLS 206"
+    ],
+    "restrictions": [
+      "approval of department head"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/pols/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "POLS 366",
@@ -399,7 +1372,31 @@
     "credit_hours": 3,
     "description": "The internal, regional and international politics of the Middle East; study of selected political conflicts; the influence of the region's cultures, religions, natural resources and outside political forces",
     "prerequisites": "Grade of C or better in POLS 206 ; junior or senior classification or approval of instructor; Galveston campus.",
-    "department": "Political Science"
+    "department": "Political Science",
+    "prefix": "POLS",
+    "number": "366",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [
+      "Galveston"
+    ],
+    "prerequisite_courses": [
+      "POLS 206"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "approval of instructor",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/pols/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "POLS 368",
@@ -407,7 +1404,28 @@
     "credit_hours": 3,
     "description": "Survey of the major features of the legislative branch in Latin America; examination of the role played by legislatures in the politics of selected countries; studies of executive-legislative relations in selected countries; participation by traditionally excluded groups in legislatures",
     "prerequisites": "POLS 206 , junior or senior classification or approval of department head.",
-    "department": "Political Science"
+    "department": "Political Science",
+    "prefix": "POLS",
+    "number": "368",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "POLS 206"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "approval of department head"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/pols/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "POLS 369",
@@ -415,7 +1433,27 @@
     "credit_hours": 3,
     "description": "Definitions and justifications of democratic political systems; criticisms of democratic legitimacy, difficulties encountered by actual democratic regimes; methodological problems of assessing the fulfillment of democratic goals",
     "prerequisites": "POLS 206 or approval of instructor.",
-    "department": "Political Science"
+    "department": "Political Science",
+    "prefix": "POLS",
+    "number": "369",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "POLS 206"
+    ],
+    "restrictions": [
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/pols/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "POLS 375",
@@ -423,7 +1461,27 @@
     "credit_hours": 3,
     "description": "Theories of voter choice; effects of mass media and campaign finance regulations on the conduct and outcome of elections; effects of elections on policy; emphasis on U.S. national elections",
     "prerequisites": "POLS 206 or approval of department head.",
-    "department": "Political Science"
+    "department": "Political Science",
+    "prefix": "POLS",
+    "number": "375",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "POLS 206"
+    ],
+    "restrictions": [
+      "approval of department head"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/pols/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "POLS 412",
@@ -431,7 +1489,28 @@
     "credit_hours": 3,
     "description": "Politics of international economic relations; interactions between political and economic realms in the contemporary world",
     "prerequisites": "POLS 206 ; junior or senior classification or approval of department head.",
-    "department": "Political Science"
+    "department": "Political Science",
+    "prefix": "POLS",
+    "number": "412",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "POLS 206"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "approval of department head"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/pols/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "POLS 413",
@@ -439,7 +1518,27 @@
     "credit_hours": 3,
     "description": "Evolution of U.S. foreign policies since World War II. Policy process; role of executive, legislative, bureaucratic and private institutions; current foreign policy issues and problems",
     "prerequisites": "POLS 206 or approval of department head.",
-    "department": "Political Science"
+    "department": "Political Science",
+    "prefix": "POLS",
+    "number": "413",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "POLS 206"
+    ],
+    "restrictions": [
+      "approval of department head"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/pols/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "POLS 415",
@@ -447,7 +1546,27 @@
     "credit_hours": 3,
     "description": "Detailed analysis of a selected aspect of American foreign policy",
     "prerequisites": "POLS 206 or approval of department head.",
-    "department": "Political Science"
+    "department": "Political Science",
+    "prefix": "POLS",
+    "number": "415",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "POLS 206"
+    ],
+    "restrictions": [
+      "approval of department head"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/pols/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "POLS 420",
@@ -455,7 +1574,29 @@
     "credit_hours": 3,
     "description": "Examination of nuclear weapons in world politics, including nuclear nonproliferation, deterrence and strategic stability, arms control and disarmament, decision-making in nuclear crises and contemporary nonproliferation challenges",
     "prerequisites": "POLS 206 ; POLS 209 and junior or senior classification or approval of department head.",
-    "department": "Political Science"
+    "department": "Political Science",
+    "prefix": "POLS",
+    "number": "420",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "POLS 206",
+      "POLS 209"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "approval of department head"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/pols/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "POLS 423",
@@ -463,7 +1604,29 @@
     "credit_hours": 3,
     "description": "Political, economic and social relations between the United States and Latin American nations from independence to the present",
     "prerequisites": "POLS 206 , POLS 207 and POLS 323 ; junior or senior classification.",
-    "department": "Political Science"
+    "department": "Political Science",
+    "prefix": "POLS",
+    "number": "423",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "POLS 206",
+      "POLS 207",
+      "POLS 323"
+    ],
+    "restrictions": [
+      "junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/pols/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "POLS 424",
@@ -471,7 +1634,28 @@
     "credit_hours": 3,
     "description": "Study of the politics and structure of governmental institutions in a comparative venue; examination of the building blocks by which patterns of governments and institutions can be identified across various political systems of the world; role of institutions across different types of political systems and how they are affected by global economic factors",
     "prerequisites": "POLS 206 and POLS 207 ; junior or senior classification.",
-    "department": "Political Science"
+    "department": "Political Science",
+    "prefix": "POLS",
+    "number": "424",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "POLS 206",
+      "POLS 207"
+    ],
+    "restrictions": [
+      "junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/pols/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "POLS 429",
@@ -479,7 +1663,27 @@
     "credit_hours": 3,
     "description": "Selected issues of importance in contemporary world politics. May be taken two times for credit as content varies",
     "prerequisites": "POLS 206 or approval of department head.",
-    "department": "Political Science"
+    "department": "Political Science",
+    "prefix": "POLS",
+    "number": "429",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": "May be taken two times for credit as content varies",
+    "campuses": [],
+    "prerequisite_courses": [
+      "POLS 206"
+    ],
+    "restrictions": [
+      "approval of department head"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/pols/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "POLS 432",
@@ -487,7 +1691,28 @@
     "credit_hours": 3,
     "description": "Examination of the institutional, economic and political forces that led to the development of the European Economic Union; impact of the European Union on world affairs",
     "prerequisites": "POLS 206 and POLS 207 ; junior or senior classification.",
-    "department": "Political Science"
+    "department": "Political Science",
+    "prefix": "POLS",
+    "number": "432",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "POLS 206",
+      "POLS 207"
+    ],
+    "restrictions": [
+      "junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/pols/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "POLS 435",
@@ -495,7 +1720,27 @@
     "credit_hours": 3,
     "description": "Voting decisions, electoral behavior and consequences for the political system",
     "prerequisites": "POLS 206 or approval of department head.",
-    "department": "Political Science"
+    "department": "Political Science",
+    "prefix": "POLS",
+    "number": "435",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "POLS 206"
+    ],
+    "restrictions": [
+      "approval of department head"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/pols/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "POLS 439",
@@ -503,7 +1748,29 @@
     "credit_hours": 3,
     "description": "Examination of decision processes in contemporary world politics; individual, group and organizational aspects of decision making in the context of world events",
     "prerequisites": "POLS 206 , POLS 209 , and junior or senior classification or approval of department head.",
-    "department": "Political Science"
+    "department": "Political Science",
+    "prefix": "POLS",
+    "number": "439",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "POLS 206",
+      "POLS 209"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "approval of department head"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/pols/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "POLS 447",
@@ -511,7 +1778,27 @@
     "credit_hours": 3,
     "description": "Need for national security policy, the factors involved in determining defense policy and the resulting problems; special attention to the United States",
     "prerequisites": "POLS 206 or approval of department head.",
-    "department": "Political Science"
+    "department": "Political Science",
+    "prefix": "POLS",
+    "number": "447",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "POLS 206"
+    ],
+    "restrictions": [
+      "approval of department head"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/pols/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "POLS 454",
@@ -519,7 +1806,27 @@
     "credit_hours": 3,
     "description": "Contemporary political ideas such as liberalism, socialism, communism and fascism; role of ideology in political change",
     "prerequisites": "POLS 206 or approval of department head.",
-    "department": "Political Science"
+    "department": "Political Science",
+    "prefix": "POLS",
+    "number": "454",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "POLS 206"
+    ],
+    "restrictions": [
+      "approval of department head"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/pols/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "POLS 455",
@@ -527,7 +1834,28 @@
     "credit_hours": 3,
     "description": "Survey of particular schools or historical periods of normative political theory. May be taken three times",
     "prerequisites": "POLS 206 and POLS 207 ; junior or senior classification.",
-    "department": "Political Science"
+    "department": "Political Science",
+    "prefix": "POLS",
+    "number": "455",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": "May be taken three times",
+    "campuses": [],
+    "prerequisite_courses": [
+      "POLS 206",
+      "POLS 207"
+    ],
+    "restrictions": [
+      "junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/pols/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "POLS 461",
@@ -535,7 +1863,27 @@
     "credit_hours": 3,
     "description": "History of legal philosophy from the ancient Greeks to the present; exploration of recurring themes such as natural law, legal positivism, legal realism, sociological jurisprudence and Marxist jurisprudence; exposure to various issues, such as liberty, privacy, obedience, responsibility and punishment",
     "prerequisites": "POLS 206 or approval of department head.",
-    "department": "Political Science"
+    "department": "Political Science",
+    "prefix": "POLS",
+    "number": "461",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "POLS 206"
+    ],
+    "restrictions": [
+      "approval of department head"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/pols/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "POLS 475",
@@ -543,7 +1891,27 @@
     "credit_hours": 3,
     "description": "Constitutional and legal framework of governmental involvement in economy; governmental budget in management of business cycle; regulation of business activities; governmental economic planning in democratic societies",
     "prerequisites": "POLS 206 or approval of department head.",
-    "department": "Political Science"
+    "department": "Political Science",
+    "prefix": "POLS",
+    "number": "475",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "POLS 206"
+    ],
+    "restrictions": [
+      "approval of department head"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/pols/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "POLS 481",
@@ -551,7 +1919,29 @@
     "credit_hours": 3,
     "description": "In-depth study of topics associated with particular sub-field of political science; experience designing and implementing major, original research project",
     "prerequisites": "POLS 206 , POLS 207 , POLS 209 , 9 credits in POLS at or above 300 level; junior or senior political science major or approval of instructor.",
-    "department": "Political Science"
+    "department": "Political Science",
+    "prefix": "POLS",
+    "number": "481",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "POLS 206",
+      "POLS 207",
+      "POLS 209"
+    ],
+    "restrictions": [
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/pols/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "POLS 484",
@@ -559,7 +1949,26 @@
     "credit_hours": "0-3",
     "description": "Directed internship in a public organization to provide students with on-the-job training and applied research experience with professionals in settings appropriate to the student's degree plan and career objectives. May be taken for credit up to three hours. Must be taken on a satisfactory/unsatisfactory basis",
     "prerequisites": "Majors only; approval of department head.",
-    "department": "Political Science"
+    "department": "Political Science",
+    "prefix": "POLS",
+    "number": "484",
+    "course_level": 400,
+    "credit_min": 0,
+    "credit_max": 3,
+    "is_variable_credit": true,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": "May be taken for credit up to three hours.",
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "approval of department head",
+      "Majors only"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/pols/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "POLS 485",
@@ -567,7 +1976,27 @@
     "credit_hours": "0-6",
     "description": "Individual instruction in selected aspects of political science not adequately covered by other courses",
     "prerequisites": "Approval of department head; also taught at Qatar campus.",
-    "department": "Political Science"
+    "department": "Political Science",
+    "prefix": "POLS",
+    "number": "485",
+    "course_level": 400,
+    "credit_min": 0,
+    "credit_max": 6,
+    "is_variable_credit": true,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [
+      "Qatar"
+    ],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Approval of department head"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/pols/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "POLS 489",
@@ -575,7 +2004,27 @@
     "credit_hours": "1-4",
     "description": "Selected topics in an identified area of political science and public policy. May be repeated for credit",
     "prerequisites": "POLS 206 or approval of department head.",
-    "department": "Political Science"
+    "department": "Political Science",
+    "prefix": "POLS",
+    "number": "489",
+    "course_level": 400,
+    "credit_min": 1,
+    "credit_max": 4,
+    "is_variable_credit": true,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": "May be repeated for credit",
+    "campuses": [],
+    "prerequisite_courses": [
+      "POLS 206"
+    ],
+    "restrictions": [
+      "approval of department head"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/pols/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "POLS 491",
@@ -583,7 +2032,26 @@
     "credit_hours": "0-6",
     "description": "Research conducted under the direction of a faculty member in political science. May be taken three times for credit",
     "prerequisites": "Junior or senior classification and approval of instructor.",
-    "department": "Political Science"
+    "department": "Political Science",
+    "prefix": "POLS",
+    "number": "491",
+    "course_level": 400,
+    "credit_min": 0,
+    "credit_max": 6,
+    "is_variable_credit": true,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": "May be taken three times for credit",
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification",
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/pols/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "POLS 497",
@@ -591,6 +2059,24 @@
     "credit_hours": "0-4",
     "description": "Directed independent studies for upper division Honors students, regardless of academic major, in selected aspects of political science",
     "prerequisites": "Junior or senior classification either as Honors student or with overall GPR of 3.25; letter of approval from head of student's major department.",
-    "department": "Political Science"
+    "department": "Political Science",
+    "prefix": "POLS",
+    "number": "497",
+    "course_level": 400,
+    "credit_min": 0,
+    "credit_max": 4,
+    "is_variable_credit": true,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/pols/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   }
 ]

@@ -5,7 +5,26 @@
     "credit_hours": 1,
     "description": "Elementary topics in statistics; data collection; design of experiments; confidence intervals, hypothesis testing; ethics in statistics; the role of statistics in industry, the health profession and the sciences",
     "prerequisites": "Statistics majors only.",
-    "department": "Statistics"
+    "department": "Statistics",
+    "prefix": "STAT",
+    "number": "182",
+    "course_level": 100,
+    "credit_min": 1,
+    "credit_max": 1,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Statistics majors only",
+      "majors only"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/stat/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "STAT 201",
@@ -14,7 +33,25 @@
     "description": "(MATH 1342, 1442) Elementary Statistical Inference. Data collection, tabulation and presentation; elementary description of the tools of statistical inference; probability, sampling and hypothesis testing; applications of statistical techniques to practical problems. Only one of the following will satisfy the requirements for a degree: STAT 201 or BUSN 203 ; STAT 301 , STAT 302 , STAT 303",
     "prerequisites": null,
     "department": "Statistics",
-    "satisfies_ucc": "Mathematics"
+    "satisfies_ucc": "Mathematics",
+    "prefix": "STAT",
+    "number": "201",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [
+      "Mathematics"
+    ],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/stat/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "STAT 205",
@@ -22,7 +59,28 @@
     "credit_hours": 1,
     "description": "Exploration of reading, writing, and analyzing various biological, genetic, and medical topics, with a focus on learning how to think and write like a bioinformatician; strengthening critical reading comprehension and technical writing skills; writing synopses of research findings to lay audiences",
     "prerequisites": "BIOL 112 and STAT 211 ; CSCE 110 or CSCE 111 .",
-    "department": "Statistics"
+    "department": "Statistics",
+    "prefix": "STAT",
+    "number": "205",
+    "course_level": 200,
+    "credit_min": 1,
+    "credit_max": 1,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "BIOL 112",
+      "STAT 211",
+      "CSCE 110",
+      "CSCE 111"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/stat/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "STAT 211",
@@ -30,7 +88,30 @@
     "credit_hours": 3,
     "description": "Introduction to probability and probability distributions; sampling and descriptive measures; inference and hypothesis testing; linear regression, analysis of variance",
     "prerequisites": "MATH 148 , MATH 152 , or MATH 172 ; also taught at Galveston and Qatar campuses.",
-    "department": "Statistics"
+    "department": "Statistics",
+    "prefix": "STAT",
+    "number": "211",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [
+      "Galveston",
+      "Qatar"
+    ],
+    "prerequisite_courses": [
+      "MATH 148",
+      "MATH 152",
+      "MATH 172"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/stat/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "STAT 212",
@@ -38,7 +119,25 @@
     "credit_hours": 3,
     "description": "Design of experiments, model building, multiple regression, nonparametric techniques and contingency tables",
     "prerequisites": "STAT 211 .",
-    "department": "Statistics"
+    "department": "Statistics",
+    "prefix": "STAT",
+    "number": "212",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "STAT 211"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/stat/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "STAT 301",
@@ -46,7 +145,27 @@
     "credit_hours": 3,
     "description": "Intended for students in animal sciences. Introduces fundamental concepts of biometry including measures of location and variation, probability, tests of significance, regression, correlation and analysis of variance which are used in advanced courses and are being widely applied to animal-oriented industry. Only one of the following will satisfy the requirements for a degree: STAT 201 or BUSN 203 ; STAT 301 , STAT 302 , STAT 303",
     "prerequisites": "MATH 168 or equivalent; junior or senior classification.",
-    "department": "Statistics"
+    "department": "Statistics",
+    "prefix": "STAT",
+    "number": "301",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "MATH 168"
+    ],
+    "restrictions": [
+      "junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/stat/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "STAT 302",
@@ -54,7 +173,27 @@
     "credit_hours": 3,
     "description": "Intended for undergraduates in the biological sciences. Introduction to concepts of random sampling and statistical inference; estimation and testing hypotheses of means and variances; analysis of variance; regression analysis; chi-square tests. Only one of the following will satisfy the requirements for a degree: STAT 201 or BUSN 203 ; STAT 301 , STAT 302 , STAT 303",
     "prerequisites": "MATH 168 or equivalent; junior or senior classification.",
-    "department": "Statistics"
+    "department": "Statistics",
+    "prefix": "STAT",
+    "number": "302",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "MATH 168"
+    ],
+    "restrictions": [
+      "junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/stat/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "STAT 303",
@@ -62,7 +201,29 @@
     "credit_hours": 3,
     "description": "Intended for undergraduates in the social sciences. Introduction to concepts of random sampling and statistical inference, estimation and testing hypotheses of means and variances, analysis of variance, regression analysis, chi-square tests. Only one of the following will satisfy the requirements for a degree: STAT 201 or BUSN 203 ; STAT 301 , STAT 302 , STAT 303",
     "prerequisites": "MATH 168 or equivalent; junior or senior classification; also taught at Galveston campus.",
-    "department": "Statistics"
+    "department": "Statistics",
+    "prefix": "STAT",
+    "number": "303",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [
+      "Galveston"
+    ],
+    "prerequisite_courses": [
+      "MATH 168"
+    ],
+    "restrictions": [
+      "junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/stat/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "STAT 307",
@@ -70,7 +231,28 @@
     "credit_hours": 3,
     "description": "Concepts of population and sample; the organization of a sample survey; questionnaire design. Basic survey designs and computation of estimates and variances",
     "prerequisites": "STAT 301 or STAT 302 or STAT 303 or BUSN 203 .",
-    "department": "Statistics"
+    "department": "Statistics",
+    "prefix": "STAT",
+    "number": "307",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "STAT 301",
+      "STAT 302",
+      "STAT 303",
+      "BUSN 203"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/stat/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "STAT 312",
@@ -78,7 +260,28 @@
     "credit_hours": 3,
     "description": "Statistical learning methods for biological applications including the topics on generative models for count data, clustering, dimension reduction, hypothesis testing, classification and regression, experimental design and software tools in R to visualize and analyze biological data",
     "prerequisites": "MATH 147 or MATH 142 , or equivalent; STAT 201 or MATH 148 , or equivalents.",
-    "department": "Statistics"
+    "department": "Statistics",
+    "prefix": "STAT",
+    "number": "312",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "MATH 147",
+      "MATH 142",
+      "STAT 201",
+      "MATH 148"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/stat/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "STAT 315",
@@ -86,7 +289,40 @@
     "credit_hours": 3,
     "description": "Computational practice of data science through a sequence of interactive modules that provides an integrated hands-on approach to its methods, tools, applications and supporting technologies including high performance and cloud computing platforms",
     "prerequisites": "Grade of C or better in ENGR 102 , CSCE 110 , CSCE 111 , or CSCE 206 ; grade of C or better in MATH 251 , MATH 253 , or STAT 211 ; junior or senior classification. Cross Listing: CSCE 305 and ECEN 360 .",
-    "department": "Statistics"
+    "department": "Statistics",
+    "prefix": "STAT",
+    "number": "315",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "CSCE 305",
+      "ECEN 360"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ENGR 102",
+      "CSCE 110",
+      "CSCE 111",
+      "CSCE 206",
+      "MATH 251",
+      "MATH 253",
+      "STAT 211",
+      "CSCE 305",
+      "ECEN 360"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "Grade of C or better",
+      "grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/stat/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "STAT 404",
@@ -94,7 +330,27 @@
     "credit_hours": 3,
     "description": "Statistical programming in R; random number generation; design of simulation studies; interactive and dynamic statistical graphics; parallel computing in statistics; statistical and machine learning algorithms",
     "prerequisites": "STAT 212 ; junior or senior classification.",
-    "department": "Statistics"
+    "department": "Statistics",
+    "prefix": "STAT",
+    "number": "404",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "STAT 212"
+    ],
+    "restrictions": [
+      "junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/stat/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "STAT 406",
@@ -102,7 +358,26 @@
     "credit_hours": 3,
     "description": "Design fundamentals; completely randomized designs; blocking; factorial, nested, nested-factorial designs; incomplete designs; fractional factorial designs; confounding; general mixed factorials; split pilot; analysis of covariance; crossover designs; power analysis, sample size determination",
     "prerequisites": "STAT 212 ; STAT 408 .",
-    "department": "Statistics"
+    "department": "Statistics",
+    "prefix": "STAT",
+    "number": "406",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "STAT 212",
+      "STAT 408"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/stat/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "STAT 407",
@@ -110,7 +385,25 @@
     "credit_hours": 3,
     "description": "Principles of sample surveys and survey design; techniques for variance reduction; simple, stratified and multi-stage sampling; ratio and regression estimates; post-stratification; equal and unequal probability sampling",
     "prerequisites": "STAT 212 .",
-    "department": "Statistics"
+    "department": "Statistics",
+    "prefix": "STAT",
+    "number": "407",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "STAT 212"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/stat/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "STAT 408",
@@ -118,7 +411,27 @@
     "credit_hours": 3,
     "description": "Introduction to the formulation of linear models and the estimation of the parameters of such models, with primary emphasis on least squares. Application to multiple regression and curve fitting",
     "prerequisites": "STAT 212 ; MATH 304 or MATH 323 .",
-    "department": "Statistics"
+    "department": "Statistics",
+    "prefix": "STAT",
+    "number": "408",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "STAT 212",
+      "MATH 304",
+      "MATH 323"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/stat/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "STAT 414",
@@ -126,7 +439,27 @@
     "credit_hours": 3,
     "description": "Mathematical theory of statistics; probability, random variables and their distributions, transformations of random variables, expectations and variance, generating functions, sampling distributions and basic limit theorems",
     "prerequisites": "MATH 221 , MATH 251 or MATH 253 .",
-    "department": "Statistics"
+    "department": "Statistics",
+    "prefix": "STAT",
+    "number": "414",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "MATH 221",
+      "MATH 251",
+      "MATH 253"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/stat/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "STAT 415",
@@ -134,7 +467,26 @@
     "credit_hours": 3,
     "description": "Continuation of the mathematical theory of statistics, including principles for statistical inference, formulation of statistical models, reduction of data, point estimation, confidence intervals, hypothesis testing and Bayesian inference",
     "prerequisites": "STAT 414 or MATH 411 .",
-    "department": "Statistics"
+    "department": "Statistics",
+    "prefix": "STAT",
+    "number": "415",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "STAT 414",
+      "MATH 411"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/stat/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "STAT 421",
@@ -142,7 +494,40 @@
     "credit_hours": 3,
     "description": "Theoretical foundations of machine learning, pattern recognition and generating predictive models and classifiers from data; includes methods for supervised and unsupervised learning (decision trees, linear discriminants, neural networks, Gaussian models, non-parametric models, clustering, dimensionality reduction, deep learning), optimization procedures and statistical inference",
     "prerequisites": "Grade of C or better in MATH 304 , MATH 311 , or MATH 323 ; Grade of C or better in STAT 211 , and STAT 404 or CSCE 221 , or ECEN 303 , and CSCE 121 or CSCE 120 . Cross Listing: CSCE 421 and ECEN 427 .",
-    "department": "Statistics"
+    "department": "Statistics",
+    "prefix": "STAT",
+    "number": "421",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "CSCE 421",
+      "ECEN 427"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "MATH 304",
+      "MATH 311",
+      "MATH 323",
+      "STAT 211",
+      "STAT 404",
+      "CSCE 221",
+      "ECEN 303",
+      "CSCE 121",
+      "CSCE 120",
+      "CSCE 421",
+      "ECEN 427"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/stat/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "STAT 426",
@@ -150,7 +535,26 @@
     "credit_hours": 3,
     "description": "Autocorrelation and spectral characteristics of univariate, autoregressive and moving average models; identification, estimation and forecasting",
     "prerequisites": "STAT 408 ; STAT 414 .",
-    "department": "Statistics"
+    "department": "Statistics",
+    "prefix": "STAT",
+    "number": "426",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "STAT 408",
+      "STAT 414"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/stat/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "STAT 436",
@@ -158,7 +562,28 @@
     "credit_hours": 3,
     "description": "Matrix algebra; random vectors; multivariate distributions; copulas; multivariate generalizations of classical testing; principle component analysis; discriminant analysis; clustering; multidimensional scaling; factor analysis; canonical analysis",
     "prerequisites": "MATH 304 or MATH 323 ; STAT 212 ; STAT 415 or equivalent.",
-    "department": "Statistics"
+    "department": "Statistics",
+    "prefix": "STAT",
+    "number": "436",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "MATH 304",
+      "MATH 323",
+      "STAT 212",
+      "STAT 415"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/stat/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "STAT 438",
@@ -166,7 +591,26 @@
     "credit_hours": 3,
     "description": "Analysis of scalar and vector-valued parameters; Bayesian linear models; Monte Carlo computational methods; prior elicitation; hypothesis testing and model selection; hierarchical models; selected advanced models; use of statistical packages such as WinBUGS, R or MATLAB",
     "prerequisites": "MATH 221 ; STAT 408 or equivalent.",
-    "department": "Statistics"
+    "department": "Statistics",
+    "prefix": "STAT",
+    "number": "438",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "MATH 221",
+      "STAT 408"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/stat/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "STAT 445",
@@ -174,7 +618,26 @@
     "credit_hours": 3,
     "description": "Applications of regression methods in biostatistics; correlated data analysis; survival analysis; missing data techniques; use of the R programming language",
     "prerequisites": "STAT 212 ; STAT 408 .",
-    "department": "Statistics"
+    "department": "Statistics",
+    "prefix": "STAT",
+    "number": "445",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "STAT 212",
+      "STAT 408"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/stat/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "STAT 446",
@@ -182,7 +645,25 @@
     "credit_hours": 3,
     "description": "Analysis of high-dimensional genomic and proteomic data using R; sequence analysis; genome-wide association studies; proteomics; array-based technologies; classification techniques",
     "prerequisites": "STAT 212 .",
-    "department": "Statistics"
+    "department": "Statistics",
+    "prefix": "STAT",
+    "number": "446",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "STAT 212"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/stat/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "STAT 447",
@@ -190,7 +671,29 @@
     "credit_hours": 3,
     "description": "Machine learning and statistical learning for bioinformatics techniques and tools, with application to biological, genetic/genomic, and medical case studies",
     "prerequisites": "STAT 315 ; GENE 301 or GENE 302 ; senior classification.",
-    "department": "Statistics"
+    "department": "Statistics",
+    "prefix": "STAT",
+    "number": "447",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "STAT 315",
+      "GENE 301",
+      "GENE 302"
+    ],
+    "restrictions": [
+      "senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/stat/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "STAT 459",
@@ -198,7 +701,26 @@
     "credit_hours": 3,
     "description": "Techniques for the analysis of categorical data; contingency table analysis; logistic regression; Poisson regression; loglinear models; analysis of ordinal data; use of computer software such as SAS or R",
     "prerequisites": "STAT 212 ; STAT 408 or equivalent.",
-    "department": "Statistics"
+    "department": "Statistics",
+    "prefix": "STAT",
+    "number": "459",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "STAT 212",
+      "STAT 408"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/stat/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "STAT 482",
@@ -206,7 +728,28 @@
     "credit_hours": 3,
     "description": "Integration of statistical models, design, sampling, graphics and computing for the analysis of real problems; planning, drafting, revising and editing reports; ethics; principles of collaboration and communication",
     "prerequisites": "STAT 404 ; STAT 408 and senior classification.",
-    "department": "Statistics"
+    "department": "Statistics",
+    "prefix": "STAT",
+    "number": "482",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "STAT 404",
+      "STAT 408"
+    ],
+    "restrictions": [
+      "senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/stat/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "STAT 483",
@@ -214,7 +757,44 @@
     "credit_hours": 3,
     "description": "Application of data analytic methods and technologies in domain-based problems with real-world data; use of relevant machine learning platforms and open source tools; organization of project activities to meet goals; written and oral communication skills and methods for effective collaboration in teams with members drawn from varied technical disciplines",
     "prerequisites": "STAT 404 , ISTM 313 , ISTM 315 , PETE 404 , GEOP 361 , CSCE 310 , or CSCE 314 ; STAT 408 , SCMT 305 , ECEN 360 , STAT 315 , CSCE 305 , GEOL 360 , CSCE 305 , CSCE 320/STAT 335 , or STAT335; STAT 436 , STAT 421 , CSCE 421 , ISTM 360 , or PETE 419 .",
-    "department": "Statistics"
+    "department": "Statistics",
+    "prefix": "STAT",
+    "number": "483",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "STAT 404",
+      "ISTM 313",
+      "ISTM 315",
+      "PETE 404",
+      "GEOP 361",
+      "CSCE 310",
+      "CSCE 314",
+      "STAT 408",
+      "SCMT 305",
+      "ECEN 360",
+      "STAT 315",
+      "CSCE 305",
+      "GEOL 360",
+      "CSCE 320",
+      "STAT 335",
+      "STAT 436",
+      "STAT 421",
+      "CSCE 421",
+      "ISTM 360",
+      "PETE 419"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/stat/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "STAT 484",
@@ -222,7 +802,23 @@
     "credit_hours": "0-3",
     "description": "Directed internship in an organization to provide on-the-job training and applied research experience with professionals in settings appropriate to statistics and student professional interest",
     "prerequisites": "Major in statistics; 12 completed hours of statistics; 2.5 cumulative GPA; 2.5 GPA in statistics courses; approval of statistics undergraduate advisor.",
-    "department": "Statistics"
+    "department": "Statistics",
+    "prefix": "STAT",
+    "number": "484",
+    "course_level": 400,
+    "credit_min": 0,
+    "credit_max": 3,
+    "is_variable_credit": true,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/stat/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "STAT 485",
@@ -230,7 +826,25 @@
     "credit_hours": "1-6",
     "description": "Special problems in statistics not covered by another course in the curriculum. Work may be in either theory or methodology",
     "prerequisites": "Approval of instructor.",
-    "department": "Statistics"
+    "department": "Statistics",
+    "prefix": "STAT",
+    "number": "485",
+    "course_level": 400,
+    "credit_min": 1,
+    "credit_max": 6,
+    "is_variable_credit": true,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/stat/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "STAT 486",
@@ -238,7 +852,28 @@
     "credit_hours": 3,
     "description": "Integration of experimental design, computational algorithm, statistical methods for the analysis of high-throughput genomic data; planning, drafting, revising, and editing reports; principles of collaboration and communication",
     "prerequisites": "STAT 408 or STAT 446 ; senior classification.",
-    "department": "Statistics"
+    "department": "Statistics",
+    "prefix": "STAT",
+    "number": "486",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "STAT 408",
+      "STAT 446"
+    ],
+    "restrictions": [
+      "senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/stat/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "STAT 489",
@@ -246,7 +881,26 @@
     "credit_hours": "1-4",
     "description": "Selected topics in an identified area of statistics. May be repeated for credit",
     "prerequisites": "Junior or senior classification or approval of department head.",
-    "department": "Statistics"
+    "department": "Statistics",
+    "prefix": "STAT",
+    "number": "489",
+    "course_level": 400,
+    "credit_min": 1,
+    "credit_max": 4,
+    "is_variable_credit": true,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": "May be repeated for credit",
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification",
+      "approval of department head"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/stat/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "STAT 491",
@@ -254,6 +908,25 @@
     "credit_hours": "0-4",
     "description": "Research conducted under the direction of faculty members in statistics. May be taken four times for credit. Registration in multiple sections of this course is possible within a given semester provided that the per semester credit hour limit is not exceeded",
     "prerequisites": "Junior or senior classification or approval of instructor.",
-    "department": "Statistics"
+    "department": "Statistics",
+    "prefix": "STAT",
+    "number": "491",
+    "course_level": 400,
+    "credit_min": 0,
+    "credit_max": 4,
+    "is_variable_credit": true,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": "May be taken four times for credit.",
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification",
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/stat/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   }
 ]

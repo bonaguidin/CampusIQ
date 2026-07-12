@@ -5,7 +5,35 @@
     "credit_hours": 3,
     "description": "Standard atmosphere, basic aerodynamic theory, airfoil and wing descriptions, introduction to orbital mechanics, elementary aerospace vehicle performance, and experiential introduction to aerospace engineering",
     "prerequisites": "Grade of C or better in ENGR 102 and PHYS 206 ; grade of C or better in ENGR 216/PHYS 216 or PHYS 216/ENGR 216 ; grade of C or better in MATH 251 or MATH 253 or concurrent enrollment; Aerospace Engineering majors only.",
-    "department": "Aerospace Engineering"
+    "department": "Aerospace Engineering",
+    "prefix": "AERO",
+    "number": "201",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ENGR 102",
+      "PHYS 206",
+      "ENGR 216",
+      "PHYS 216",
+      "MATH 251",
+      "MATH 253"
+    ],
+    "restrictions": [
+      "Aerospace Engineering majors only",
+      "majors only",
+      "Grade of C or better",
+      "grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/aero/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "AERO 211",
@@ -13,7 +41,35 @@
     "credit_hours": 3,
     "description": "Fundamentals of Newtonian mechanics; static equilibrium of particles, system of particles and rigid bodies; free body diagrams; rectilinear and curvilinear motion of particles; linear momentum; angular momentum; friction; plane motion of rigid bodies; beams and trusses",
     "prerequisites": "Grade of C or better in ENGR 102 and PHYS 206 ; grade of C or better in ENGR 216/PHYS 216 or PHYS 216/ENGR 216 ; grade of C or better in MATH 251 or MATH 253 , or concurrent enrollment; Aerospace Engineering majors only.",
-    "department": "Aerospace Engineering"
+    "department": "Aerospace Engineering",
+    "prefix": "AERO",
+    "number": "211",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ENGR 102",
+      "PHYS 206",
+      "ENGR 216",
+      "PHYS 216",
+      "MATH 251",
+      "MATH 253"
+    ],
+    "restrictions": [
+      "Aerospace Engineering majors only",
+      "majors only",
+      "Grade of C or better",
+      "grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/aero/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "AERO 212",
@@ -21,7 +77,32 @@
     "credit_hours": 3,
     "description": "Study of thermodynamic properties and processes, heat and work, first and second laws of thermodynamics, ideal cycles for power and refrigeration applications; emphasis on the Brayton jet-engine cycle",
     "prerequisites": "Grade of C or better in CHEM 107 and CHEM 117 , or CHEM 120 ; grade of C or better in MATH 251 or MATH 253 , or concurrent enrollment; AERO majors.",
-    "department": "Aerospace Engineering"
+    "department": "Aerospace Engineering",
+    "prefix": "AERO",
+    "number": "212",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "CHEM 107",
+      "CHEM 117",
+      "CHEM 120",
+      "MATH 251",
+      "MATH 253"
+    ],
+    "restrictions": [
+      "Grade of C or better",
+      "grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/aero/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "AERO 214",
@@ -29,7 +110,29 @@
     "credit_hours": 3,
     "description": "Fundamental concepts for deformable bodies (conservation of linear and angular momentum, kinematics and thermoelasticity); notions of stress and strain and illustrative examples for engineering applications; introduction to experimental methods and reporting, instrumentation and uncertainty analysis; measurement of elastic and thermal material properties",
     "prerequisites": "Grade of C or better in AERO 211 ; grade of C or better in MATH 308 , or concurrent enrollment.",
-    "department": "Aerospace Engineering"
+    "department": "Aerospace Engineering",
+    "prefix": "AERO",
+    "number": "214",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "AERO 211",
+      "MATH 308"
+    ],
+    "restrictions": [
+      "Grade of C or better",
+      "grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/aero/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "AERO 221",
@@ -37,7 +140,33 @@
     "credit_hours": 3,
     "description": "Matrix operations, Gaussian elimination, linear transformations, coordinate transformations, eigenvalues, eigenvectors, diagonalization, including programming and computer implementation, applied to solid mechanics, fluid mechanics, dynamics and control of air and space vehicles",
     "prerequisites": "Grade of C or better in ENGR 102 , PHYS 206 , and ENGR 216/PHYS 216 or PHYS 216/ENGR 216 ; grade of C or better in MATH 251 or MATH 253 , or concurrent enrollment.",
-    "department": "Aerospace Engineering"
+    "department": "Aerospace Engineering",
+    "prefix": "AERO",
+    "number": "221",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ENGR 102",
+      "PHYS 206",
+      "ENGR 216",
+      "PHYS 216",
+      "MATH 251",
+      "MATH 253"
+    ],
+    "restrictions": [
+      "Grade of C or better",
+      "grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/aero/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "AERO 222",
@@ -45,7 +174,28 @@
     "credit_hours": 3,
     "description": "Review of basic skills required for developing computer programs and introduction to more advanced concepts in scientific computing to solve aerospace engineering problems; numerical and analytical methods of solving engineering problems involving interpolation and extrapolation; function approximation; numerical differentiation; integration; solutions to linear and non-linear equations and systems of equations; eigenvalues and eigenvectors, numerical integration of differential equations with aerospace engineering applications",
     "prerequisites": "Admitted to major degree sequence in aerospace engineering; grade of C or better in AERO 221 ; grade of C or better in MATH 308 or concurrent enrollment.",
-    "department": "Aerospace Engineering"
+    "department": "Aerospace Engineering",
+    "prefix": "AERO",
+    "number": "222",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "AERO 221",
+      "MATH 308"
+    ],
+    "restrictions": [
+      "grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/aero/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "AERO 285",
@@ -53,7 +203,26 @@
     "credit_hours": "0-4",
     "description": "Directed study of special problems in aerospace engineering",
     "prerequisites": "Freshman or sophomore classification, or approval of instructor. May be repeated for credit.",
-    "department": "Aerospace Engineering"
+    "department": "Aerospace Engineering",
+    "prefix": "AERO",
+    "number": "285",
+    "course_level": 200,
+    "credit_min": 0,
+    "credit_max": 4,
+    "is_variable_credit": true,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": "May be repeated for credit.",
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Freshman or sophomore classification",
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/aero/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "AERO 289",
@@ -61,7 +230,25 @@
     "credit_hours": "1-4",
     "description": "Selected topics in an identified area of aerospace engineering. May be repeated for credit",
     "prerequisites": "Approval of instructor.",
-    "department": "Aerospace Engineering"
+    "department": "Aerospace Engineering",
+    "prefix": "AERO",
+    "number": "289",
+    "course_level": 200,
+    "credit_min": 1,
+    "credit_max": 4,
+    "is_variable_credit": true,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": "May be repeated for credit",
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/aero/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "AERO 291",
@@ -69,7 +256,26 @@
     "credit_hours": "0-4",
     "description": "Research conducted under the direction of faculty member in aerospace engineering. May be taken three times",
     "prerequisites": "Freshman or sophomore classification and approval of instructor.",
-    "department": "Aerospace Engineering"
+    "department": "Aerospace Engineering",
+    "prefix": "AERO",
+    "number": "291",
+    "course_level": 200,
+    "credit_min": 0,
+    "credit_max": 4,
+    "is_variable_credit": true,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": "May be taken three times",
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Freshman or sophomore classification",
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/aero/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "AERO 299",
@@ -77,7 +283,23 @@
     "credit_hours": 0,
     "description": "Participation in an approved high-impact learning practice; reflection on professional outcomes from engineering body of knowledge; documentation and self-assessment of learning experience at mid-curriculum point",
     "prerequisites": null,
-    "department": "Aerospace Engineering"
+    "department": "Aerospace Engineering",
+    "prefix": "AERO",
+    "number": "299",
+    "course_level": 200,
+    "credit_min": 0,
+    "credit_max": 0,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/aero/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "AERO 301",
@@ -85,7 +307,31 @@
     "credit_hours": 3,
     "description": "Conservation of mass and momentum; Reynolds transport theorem; fundamentals of incompressible flow, rotationality, potential flow, superposition, circulation, lift, thin airfoil theory, elliptic wing theory and induced drag",
     "prerequisites": "Grade of C or better in AERO 201 , AERO 212 ; grade of C or better in AERO 222 and MATH 308 , or concurrent enrollment.",
-    "department": "Aerospace Engineering"
+    "department": "Aerospace Engineering",
+    "prefix": "AERO",
+    "number": "301",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "AERO 201",
+      "AERO 212",
+      "AERO 222",
+      "MATH 308"
+    ],
+    "restrictions": [
+      "Grade of C or better",
+      "grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/aero/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "AERO 303",
@@ -93,7 +339,27 @@
     "credit_hours": 3,
     "description": "Fundamentals of compressible flow; governing Euler equations; adiabatic and isentropic flow; normal and oblique shocks and expansion waves, moving shocks, shock interactions, wedge and cone flow; supersonic airfoils, exact and thin theory, choked flow and wind-tunnel design, two-dimensional gas dynamics, and method of characteristics",
     "prerequisites": "Grade of C or better in AERO 301 .",
-    "department": "Aerospace Engineering"
+    "department": "Aerospace Engineering",
+    "prefix": "AERO",
+    "number": "303",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "AERO 301"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/aero/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "AERO 304",
@@ -101,7 +367,30 @@
     "credit_hours": 3,
     "description": "Three-dimensional beam theory; applications of elasticity theory to beam extension and compression, bending, torsion and transverse shearing; combined loading; analysis of thin-walled structures; stress concentrations; analysis of stability of aerospace structures; elements of structural failure, buckling; structural design considerations",
     "prerequisites": "Grade of C or better in AERO 214 and MATH 308 ; grade of C or better in AERO 222 or concurrent enrollment.",
-    "department": "Aerospace Engineering"
+    "department": "Aerospace Engineering",
+    "prefix": "AERO",
+    "number": "304",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "AERO 214",
+      "MATH 308",
+      "AERO 222"
+    ],
+    "restrictions": [
+      "Grade of C or better",
+      "grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/aero/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "AERO 306",
@@ -109,7 +398,27 @@
     "credit_hours": 3,
     "description": "Work and energy principles; analysis of indeterminate structures by classical virtual work and finite elements; introduction to elastic stability of columns; application of energy methods to determine stresses, strains and displacements in typical aerospace structures; design considerations in aerospace structures",
     "prerequisites": "Grade of C or better in AERO 304 .",
-    "department": "Aerospace Engineering"
+    "department": "Aerospace Engineering",
+    "prefix": "AERO",
+    "number": "306",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "AERO 304"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/aero/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "AERO 307",
@@ -117,7 +426,34 @@
     "credit_hours": 3,
     "description": "Intermediate and advanced topics in instrumentation, signal conditioning, data acquisition analysis for aerospace-related measurements; emphasis on technical reporting and data presentation; measurements of materials strain, deformation, pressure, velocity and aerodynamic forces; experimental investigations of static and dynamic response of structures; use of nonintrusive optical techniques; uncertainty analysis; linear regression, Fourier transform and power spectra; tests for statistical significance; design of experiments",
     "prerequisites": "Grade of C or better in ENGL 103 or ENGL 104 ; grade of C or better in AERO 222 , AERO 301 , AERO 304 , AERO 310 , ECEN 215 , or concurrent enrollment.",
-    "department": "Aerospace Engineering"
+    "department": "Aerospace Engineering",
+    "prefix": "AERO",
+    "number": "307",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ENGL 103",
+      "ENGL 104",
+      "AERO 222",
+      "AERO 301",
+      "AERO 304",
+      "AERO 310",
+      "ECEN 215"
+    ],
+    "restrictions": [
+      "Grade of C or better",
+      "grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/aero/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "AERO 310",
@@ -125,7 +461,30 @@
     "credit_hours": 3,
     "description": "Spatial kinematics; general motion of particles; Euler angles; Newton-Euler methods for translation and rotation of rigid bodies; work-energy and impulse momentum principles applied to aerospace systems; Linear theory of free dynamic response of single and multi-degree of freedom systems; frequency response of first and second order systems with instrumentation applications",
     "prerequisites": "Grade of C or better in AERO 211 and MATH 308 ; grade of C or better in AERO 222 or concurrent enrollment.",
-    "department": "Aerospace Engineering"
+    "department": "Aerospace Engineering",
+    "prefix": "AERO",
+    "number": "310",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "AERO 211",
+      "MATH 308",
+      "AERO 222"
+    ],
+    "restrictions": [
+      "Grade of C or better",
+      "grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/aero/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "AERO 321",
@@ -133,7 +492,28 @@
     "credit_hours": 3,
     "description": "Derivation of the nonlinear air and space vehicle dynamics equations; attitude representation with Euler angles and quaternions; forces and moments due to aerodynamics, thrust and gravity gradient; linearization; development of state-space models for aircraft and spacecraft; static and dynamic stability analysis for aircraft and satellites; spin and gravity gradient stabilization; stability derivatives; longitudinal and lateral modes and transfer functions for aircraft; aircraft flying qualities; elements of aircraft configuration design; response to control inputs",
     "prerequisites": "Grade of C or better in AERO 301 and AERO 310 .",
-    "department": "Aerospace Engineering"
+    "department": "Aerospace Engineering",
+    "prefix": "AERO",
+    "number": "321",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "AERO 301",
+      "AERO 310"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/aero/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "AERO 351",
@@ -141,7 +521,27 @@
     "credit_hours": 3,
     "description": "Aerothermodynamics of gases; laws of thermodynamics; equilibrium conditions; mixtures of gases; combustion and thermochemistry; compressible internal flows with friction, heat transfer and shock; turbojet cycle analysis and performance; chemical rockets",
     "prerequisites": "Grade of C or better in AERO 303 .",
-    "department": "Aerospace Engineering"
+    "department": "Aerospace Engineering",
+    "prefix": "AERO",
+    "number": "351",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "AERO 303"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/aero/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "AERO 401",
@@ -149,7 +549,30 @@
     "credit_hours": 3,
     "description": "Study of systems engineering; project lifecycle; stakeholder, concept of operations (CONOPS) & requirements definition; cost assessment; risk management; trade studies; decomposition and design of an aerospace system; engineering ethics; technical communications",
     "prerequisites": "Grade of C or better in AERO 306 , AERO 307 , AERO 321 , and AERO 351 , or concurrent enrollment.",
-    "department": "Aerospace Engineering"
+    "department": "Aerospace Engineering",
+    "prefix": "AERO",
+    "number": "401",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "AERO 306",
+      "AERO 307",
+      "AERO 321",
+      "AERO 351"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/aero/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "AERO 402",
@@ -157,7 +580,31 @@
     "credit_hours": 2,
     "description": "Continuation of AERO 401 ; detailed design; subsystem integration; realization of the system through prototyping, modeling, and/or simulation; verification and validation through experimentation and analysis; documentation and presentation of results",
     "prerequisites": "Grade of C or better in AERO 306 , AERO 307 , AERO 321 , AERO 351 , and AERO 401 .",
-    "department": "Aerospace Engineering"
+    "department": "Aerospace Engineering",
+    "prefix": "AERO",
+    "number": "402",
+    "course_level": 400,
+    "credit_min": 2,
+    "credit_max": 2,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "AERO 306",
+      "AERO 307",
+      "AERO 321",
+      "AERO 351",
+      "AERO 401"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/aero/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "AERO 404",
@@ -165,7 +612,28 @@
     "credit_hours": 3,
     "description": "Advanced analysis techniques for aerospace structures; material anisotropy, plasticity, fatigue and fracture; laminated materials; solution of plane elasticity, plate and multi-component structural configurations; buckling of beams and plates; application of finite element analysis",
     "prerequisites": "Grade of C or better in AERO 304 and junior or senior classification.",
-    "department": "Aerospace Engineering"
+    "department": "Aerospace Engineering",
+    "prefix": "AERO",
+    "number": "404",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "AERO 304"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/aero/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "AERO 405",
@@ -173,7 +641,27 @@
     "credit_hours": 3,
     "description": "Overall structural integrity of complete aerospace systems; structures subjected to critical loads; design considerations in aerospace structures",
     "prerequisites": "Grade of C or better in AERO 306 .",
-    "department": "Aerospace Engineering"
+    "department": "Aerospace Engineering",
+    "prefix": "AERO",
+    "number": "405",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "AERO 306"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/aero/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "AERO 411",
@@ -181,7 +669,27 @@
     "credit_hours": 3,
     "description": "Foundations of linear elastic fracture mechanics of aerospace structure; calculation of stress intensity factors and energy release rates; crack growth under fatigue loading; ASTM standards for fracture testing; the role of fracture mechanics in the analysis and design of aerospace structures",
     "prerequisites": "AERO 304 or equivalent with a grade of C or better.",
-    "department": "Aerospace Engineering"
+    "department": "Aerospace Engineering",
+    "prefix": "AERO",
+    "number": "411",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "AERO 304"
+    ],
+    "restrictions": [
+      "grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/aero/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "AERO 413",
@@ -189,7 +697,27 @@
     "credit_hours": 3,
     "description": "Relationship between aerospace engineering material properties and microstructure; mechanical and thermal properties; environmental degradation; mechanical failure",
     "prerequisites": "Grade of C or better in AERO 304 .",
-    "department": "Aerospace Engineering"
+    "department": "Aerospace Engineering",
+    "prefix": "AERO",
+    "number": "413",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "AERO 304"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/aero/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "AERO 414",
@@ -197,7 +725,27 @@
     "credit_hours": 3,
     "description": "Current physiological and psychological aspects affecting human performance during space missions using a quantitative approach and engineering methods",
     "prerequisites": "Grade of C or better in AERO 321 .",
-    "department": "Aerospace Engineering"
+    "department": "Aerospace Engineering",
+    "prefix": "AERO",
+    "number": "414",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "AERO 321"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/aero/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "AERO 415",
@@ -205,7 +753,28 @@
     "credit_hours": 3,
     "description": "Present methods for solving internal and external flow problems for inviscid and viscous compressible flow; Euler, Navier-Stokes and Large Eddy Simulation solvers, boundary conditions formulation, and basics of parallel processing",
     "prerequisites": "Grade of C or better in AERO 303 and AERO 351 .",
-    "department": "Aerospace Engineering"
+    "department": "Aerospace Engineering",
+    "prefix": "AERO",
+    "number": "415",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "AERO 303",
+      "AERO 351"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/aero/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "AERO 416",
@@ -213,7 +782,28 @@
     "credit_hours": 3,
     "description": "There are three major phases of aircraft design: (1) conceptual design, (2) preliminary design and (3) detail design. The aircraft design process starts with identifying requirements and performing initial calculations to generate the overall concept of the aircraft. In preliminary design, we design the aircraft’s systems and subsystems. Finally, in detail design, we specify how the aircraft will be fabricated and tested. The course introduces students to tools and methods used in the conceptual and preliminary design of fixed-wing aircraft. Students will learn about aircraft design requirements, aircraft mission, weight estimation, aerodynamics and propulsion analysis, performance analysis, stability characteristics and cost estimation",
     "prerequisites": "Grade of C or better in AERO 321 ; grade C or better in AERO 401 , or concurrent enrollment.",
-    "department": "Aerospace Engineering"
+    "department": "Aerospace Engineering",
+    "prefix": "AERO",
+    "number": "416",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "AERO 321",
+      "AERO 401"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/aero/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "AERO 417",
@@ -221,7 +811,27 @@
     "credit_hours": 3,
     "description": "Air breathing propulsion; design and analysis of inlets, compressors, combustors, turbines and nozzles; application to aeronautical, aerospace, ground transportation and energy",
     "prerequisites": "Grade of C or better in AERO 351 .",
-    "department": "Aerospace Engineering"
+    "department": "Aerospace Engineering",
+    "prefix": "AERO",
+    "number": "417",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "AERO 351"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/aero/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "AERO 419",
@@ -229,7 +839,27 @@
     "credit_hours": 3,
     "description": "Nozzles and heat transfer in rockets, liquid/solid/hybrid propellant systems; combustion and combustion stability; flight performance including trajectories, multistaging and flight dynamics; rocket testing",
     "prerequisites": "Grade of C or better in AERO 351 .",
-    "department": "Aerospace Engineering"
+    "department": "Aerospace Engineering",
+    "prefix": "AERO",
+    "number": "419",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "AERO 351"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/aero/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "AERO 420",
@@ -237,7 +867,29 @@
     "credit_hours": 3,
     "description": "Classical analysis of fundamental aeroelastic phenomena with application to aerospace vehicles; flutter, divergence, control effectiveness",
     "prerequisites": "Grade of C or better in AERO 303 , AERO 306 , and AERO 310 .",
-    "department": "Aerospace Engineering"
+    "department": "Aerospace Engineering",
+    "prefix": "AERO",
+    "number": "420",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "AERO 303",
+      "AERO 306",
+      "AERO 310"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/aero/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "AERO 422",
@@ -245,7 +897,27 @@
     "credit_hours": 3,
     "description": "Introduction to the Theory of Automatic Control specifically applied to aerospace vehicles; techniques for analysis and synthesis of linear control systems, stability criteria, systems response and performance criteria; design studies of active controls to improve aerospace vehicle performance",
     "prerequisites": "Grade of C or better in AERO 321 .",
-    "department": "Aerospace Engineering"
+    "department": "Aerospace Engineering",
+    "prefix": "AERO",
+    "number": "422",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "AERO 321"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/aero/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "AERO 423",
@@ -253,7 +925,27 @@
     "credit_hours": 3,
     "description": "Two-body problem, restricted three-body problem, orbital perturbations, orbital maneuvers, interplanetary trajectories, orbit determination and other selected topics",
     "prerequisites": "Grade of C or better in AERO 310 .",
-    "department": "Aerospace Engineering"
+    "department": "Aerospace Engineering",
+    "prefix": "AERO",
+    "number": "423",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "AERO 310"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/aero/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "AERO 424",
@@ -261,7 +953,27 @@
     "credit_hours": 3,
     "description": "Introduces fundamental concepts of satellite attitude dynamics and control; includes derivations of environmental disturbances due to gravity gradient, aerodynamic, and solar radiation pressure; includes treatments of attitude control subsystems, such as thrusters, reaction wheels, CMGs, and magnetic torquers, and their designs",
     "prerequisites": "Grade of C or better in AERO 321 .",
-    "department": "Aerospace Engineering"
+    "department": "Aerospace Engineering",
+    "prefix": "AERO",
+    "number": "424",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "AERO 321"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/aero/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "AERO 425",
@@ -269,7 +981,27 @@
     "credit_hours": 3,
     "description": "Application of performance and stability and control theory to flight test measurements; standard atmosphere and airspeed equations for pilot-static system calibrations; flight test methods for evaluating performance, stability and control, and stall-spin characteristics; laboratory practice in planning and conducting small flight test project",
     "prerequisites": "Grade of C or better in AERO 321 .",
-    "department": "Aerospace Engineering"
+    "department": "Aerospace Engineering",
+    "prefix": "AERO",
+    "number": "425",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "AERO 321"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/aero/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "AERO 426",
@@ -277,7 +1009,29 @@
     "credit_hours": 3,
     "description": "Introduces prevailing practices and processes used in modern space system design; applies knowledge in component engineering disciplines to a design challenge of interest to NASA or DoD; utilizes instruction in systematic methods of design and on dynamics of teamwork; when possible concludes with detailed design using an engineering design facility",
     "prerequisites": "Grade of C or better in AERO 306 , AERO 321 , AERO 351 .",
-    "department": "Aerospace Engineering"
+    "department": "Aerospace Engineering",
+    "prefix": "AERO",
+    "number": "426",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "AERO 306",
+      "AERO 321",
+      "AERO 351"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/aero/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "AERO 428",
@@ -285,7 +1039,29 @@
     "credit_hours": 3,
     "description": "Study IR and Visible range imaging systems to obtain high resolution imaging of objects from space; this area has numerous applications and areas of advanced development; following instruction in needed background on optics, telescopes, and interferometry, perform preliminary design of imaging system with a different imaging design offered each year",
     "prerequisites": "Grade of C or better in AERO 306 , AERO 321 , AERO 351 .",
-    "department": "Aerospace Engineering"
+    "department": "Aerospace Engineering",
+    "prefix": "AERO",
+    "number": "428",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "AERO 306",
+      "AERO 321",
+      "AERO 351"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/aero/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "AERO 430",
@@ -293,7 +1069,28 @@
     "credit_hours": 3,
     "description": "Numerical and analytical simulation of physical problems in sciences and engineering using applied methods; developing and using numerical techniques for physical problems described by nonlinear algebraic equations, ordinary and partial differential equations",
     "prerequisites": "Grade of C or better in AERO 222 or MATH 417 .",
-    "department": "Aerospace Engineering"
+    "department": "Aerospace Engineering",
+    "prefix": "AERO",
+    "number": "430",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "AERO 222",
+      "MATH 417"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/aero/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "AERO 435",
@@ -301,7 +1098,27 @@
     "credit_hours": 3,
     "description": "Composition of chemically reacting gases (air and propellant); thermodynamic functions based on classical and quantum mechanical theories; calculation of gas temperatures; equilibrium, frozen and non-equilibrium flows through nozzles and shock waves",
     "prerequisites": "Grade of C or better in AERO 303 .",
-    "department": "Aerospace Engineering"
+    "department": "Aerospace Engineering",
+    "prefix": "AERO",
+    "number": "435",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "AERO 303"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/aero/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "AERO 440",
@@ -309,7 +1126,28 @@
     "credit_hours": 3,
     "description": "Design, development, and implementation of cockpit systems and multi-function displays; cockpit system requirements and specifications; human-machine interfaces, Flight Management Systems, navigation and guidance systems; 3-D real-time displays of weather, traffic, and terrain; characteristics and missions of air vehicles; project design and cost analysis",
     "prerequisites": "Grade of C or better in AERO 321 or junior or senior classification in computer science.",
-    "department": "Aerospace Engineering"
+    "department": "Aerospace Engineering",
+    "prefix": "AERO",
+    "number": "440",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "AERO 321"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/aero/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "AERO 445",
@@ -317,7 +1155,27 @@
     "credit_hours": 3,
     "description": "Introduction to vehicle management systems for manned and unmanned air and space vehicles; system centric concepts, requirements definition, specifications, and architectures; reliability analysis, health monitoring, and mission management; SISO digital design of integrated flight control, propulsion control and structural control; introduction to vehicle autonomy; design and analysis methods, industrial examples",
     "prerequisites": "Grade of C or better in AERO 422 .",
-    "department": "Aerospace Engineering"
+    "department": "Aerospace Engineering",
+    "prefix": "AERO",
+    "number": "445",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "AERO 422"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/aero/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "AERO 446",
@@ -325,7 +1183,27 @@
     "credit_hours": 3,
     "description": "This course discusses fundamental concepts and algorithms in machine learning with a focus on aerospace applications. Students will learn to model, analyze and interpret data arising from flight dynamics, aerodynamics and space systems. The course emphasizes both theoretical understanding and practical implementation using aerospace datasets",
     "prerequisites": "Grade of C or better in AERO 321 .",
-    "department": "Aerospace Engineering"
+    "department": "Aerospace Engineering",
+    "prefix": "AERO",
+    "number": "446",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "AERO 321"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/aero/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "AERO 451",
@@ -333,7 +1211,28 @@
     "credit_hours": 3,
     "description": "Essential aspects of human spaceflight operations as performed by NASA; in-depth understanding of the state-of-the-art in spacecraft operations, including spacecraft systems, ground and launch operations, mission management and on-orbit activities such as science, robotics, spacewalking and human health maintenance; applications to future space systems",
     "prerequisites": "Grade of C or better in AERO 310 or equivalent; senior classification.",
-    "department": "Aerospace Engineering"
+    "department": "Aerospace Engineering",
+    "prefix": "AERO",
+    "number": "451",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "AERO 310"
+    ],
+    "restrictions": [
+      "senior classification",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/aero/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "AERO 452",
@@ -341,7 +1240,28 @@
     "credit_hours": 3,
     "description": "Navier-Stokes and boundary layer equations; exact and approximate solutions; laminar boundary layers; basic concepts of transition and turbulence; turbulent boundary layers; one and two dimensional heat transfer; methods for steady and transient heat conduction; thermal boundary layers; convection; radiation",
     "prerequisites": "Grade of C or better in AERO 303 and AERO 351 .",
-    "department": "Aerospace Engineering"
+    "department": "Aerospace Engineering",
+    "prefix": "AERO",
+    "number": "452",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "AERO 303",
+      "AERO 351"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/aero/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "AERO 455",
@@ -349,7 +1269,29 @@
     "credit_hours": 3,
     "description": "Hovering theory, hovering and vertical flight performance, factors affecting hovering and vertical flight performance, auto-rotation in vertical descent, concepts of blade motion and control, aerodynamics of forward flight, forward flight performance, operational envelope and introduction to conceptual design of helicopters",
     "prerequisites": "Grade of C or better in AERO 222 , AERO 301 , and AERO 310 .",
-    "department": "Aerospace Engineering"
+    "department": "Aerospace Engineering",
+    "prefix": "AERO",
+    "number": "455",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "AERO 222",
+      "AERO 301",
+      "AERO 310"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/aero/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "AERO 472",
@@ -357,7 +1299,27 @@
     "credit_hours": 3,
     "description": "Subsonic airfoil design and analysis, subsonic wing design and analysis, swept and delta wings, vortex lift, transonic flow methods, viscous transonic phenomena, transonic airfoil and wing design, optimization and advanced topics such as supersonic panel methods",
     "prerequisites": "Grade of C or better in AERO 303 .",
-    "department": "Aerospace Engineering"
+    "department": "Aerospace Engineering",
+    "prefix": "AERO",
+    "number": "472",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "AERO 303"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/aero/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "AERO 477",
@@ -365,7 +1327,28 @@
     "credit_hours": 3,
     "description": "Analysis of robotic and human space mission design processes, including Low-Earth orbiting missions, planetary orbital missions and robotic and human planetary landing missions; review of spacecraft subsystems, orbital mechanics, and introduction to concept- and detail-level space mission design tools and techniques",
     "prerequisites": "Grade of C or better in AERO 351 ; grade C or better in AERO 423 or concurrent enrollment.",
-    "department": "Aerospace Engineering"
+    "department": "Aerospace Engineering",
+    "prefix": "AERO",
+    "number": "477",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "AERO 351",
+      "AERO 423"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/aero/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "AERO 478",
@@ -373,7 +1356,28 @@
     "credit_hours": 3,
     "description": "Basic theory and fundamentals of low-temperature plasma, elements of plasma kinetic theory, equilibrium and non-equilibrium plasma, modeling approaches, plasma discharges",
     "prerequisites": "Grade of C or better in AERO 303 and MATH 308 .",
-    "department": "Aerospace Engineering"
+    "department": "Aerospace Engineering",
+    "prefix": "AERO",
+    "number": "478",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "AERO 303",
+      "MATH 308"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/aero/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "AERO 481",
@@ -381,7 +1385,25 @@
     "credit_hours": 1,
     "description": "Readings, reports, conferences and discussion. Must be taken on a satisfactory/unsatisfactory basis",
     "prerequisites": "Senior classification in aerospace engineering.",
-    "department": "Aerospace Engineering"
+    "department": "Aerospace Engineering",
+    "prefix": "AERO",
+    "number": "481",
+    "course_level": 400,
+    "credit_min": 1,
+    "credit_max": 1,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/aero/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "AERO 485",
@@ -389,7 +1411,26 @@
     "credit_hours": "0-4",
     "description": "Special problems in aerospace engineering assigned to individual students or groups",
     "prerequisites": "Junior or senior classification or approval of instructor.",
-    "department": "Aerospace Engineering"
+    "department": "Aerospace Engineering",
+    "prefix": "AERO",
+    "number": "485",
+    "course_level": 400,
+    "credit_min": 0,
+    "credit_max": 4,
+    "is_variable_credit": true,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification",
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/aero/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "AERO 489",
@@ -397,7 +1438,25 @@
     "credit_hours": "1-4",
     "description": "Selected topics in an identified field of aerospace engineering. May be repeated for credit",
     "prerequisites": "Approval of instructor.",
-    "department": "Aerospace Engineering"
+    "department": "Aerospace Engineering",
+    "prefix": "AERO",
+    "number": "489",
+    "course_level": 400,
+    "credit_min": 1,
+    "credit_max": 4,
+    "is_variable_credit": true,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": "May be repeated for credit",
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/aero/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "AERO 491",
@@ -405,6 +1464,25 @@
     "credit_hours": "0-4",
     "description": "Research conducted under the direction of faculty member in aerospace engineering. May be repeated 3 times for credit",
     "prerequisites": "Junior or senior classification and approval of instructor.",
-    "department": "Aerospace Engineering"
+    "department": "Aerospace Engineering",
+    "prefix": "AERO",
+    "number": "491",
+    "course_level": 400,
+    "credit_min": 0,
+    "credit_max": 4,
+    "is_variable_credit": true,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": "May be repeated 3 times for credit",
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification",
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/aero/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   }
 ]

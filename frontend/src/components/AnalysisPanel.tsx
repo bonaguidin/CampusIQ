@@ -1,0 +1,84 @@
+import type { ReactNode } from 'react';
+
+export type AnalysisPhase = 'idle' | 'loading' | 'skipped' | 'failed' | 'success';
+
+interface AnalysisPanelProps {
+  title: string;
+  invitation: string;
+  phase: AnalysisPhase;
+  onRun(): void;
+  missingFields?: string[];
+  children?: ReactNode;
+}
+
+// Shared shell for read-only AI-generated result panels (GAP, Professor
+// Comment Analyzer). Mirrors EditableSection's card + header-actions layout
+// so these read-only panels feel like part of the same system as the
+// editable career sections, without offering Edit/Save/Cancel — these are
+// AI-generated, not user-editable fields.
+export function AnalysisPanel({
+  title,
+  invitation,
+  phase,
+  onRun,
+  missingFields = [],
+  children,
+}: AnalysisPanelProps) {
+  return (
+    <div className="card analysis-panel">
+      <div className="editable-section-header">
+        <h3 className="editable-section-title">{title}</h3>
+        <div className="editable-section-actions">
+          <button
+            type="button"
+            className="btn btn-ghost btn-sm"
+            onClick={onRun}
+            disabled={phase === 'loading'}
+            aria-busy={phase === 'loading'}
+          >
+            {phase === 'loading' ? (
+              <span className="btn-loading">
+                <span className="spinner-small" aria-hidden="true" />
+                Analyzing…
+              </span>
+            ) : phase === 'idle' ? (
+              'Run analysis'
+            ) : (
+              'Re-run analysis'
+            )}
+          </button>
+        </div>
+      </div>
+
+      {phase === 'idle' && <p className="analysis-empty">{invitation}</p>}
+
+      {phase === 'loading' && (
+        <div className="analysis-loading" role="status" aria-live="polite">
+          <span className="spinner" aria-hidden="true" />
+          <p>Running this analysis against a live model — this can take a moment.</p>
+        </div>
+      )}
+
+      {phase === 'skipped' && (
+        <div className="analysis-skipped">
+          <p>Your profile is missing information this analysis needs:</p>
+          <ul className="section-errors">
+            {missingFields.map((field, idx) => (
+              <li key={idx} className="section-error-item">
+                {field}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {phase === 'failed' && (
+        <div className="analysis-failed">
+          <p>Something went wrong generating this analysis. Try again in a moment.</p>
+        </div>
+      )}
+
+      {phase === 'success' && children}
+    </div>
+  );
+}

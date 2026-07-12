@@ -5,7 +5,25 @@
     "credit_hours": 1,
     "description": "An introduction to the study of chemistry at Texas A&M University and departmental and campus resources helpful to success in the degree; information about research and internship opportunities; information about careers with and without a graduate-level degree",
     "prerequisites": "Major in chemistry or approval of instructor.",
-    "department": "Chemistry"
+    "department": "Chemistry",
+    "prefix": "CHEM",
+    "number": "100",
+    "course_level": 100,
+    "credit_min": 1,
+    "credit_max": 1,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/chem/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "CHEM 106",
@@ -14,7 +32,27 @@
     "description": "(CHEM 1305, 1405*) Molecular Science for Citizens. Molecules that control daily life explored via a conceptual approach to molecular science; properties, synthesis, transformations and utility of important molecules and fuels, fibers, metals, pharmaceuticals, foods, biomolecules and structural materials; pollution, consumerism, energy production, disease, biotechnology and risk-benefit analysis considered; also taught at Galveston campus",
     "prerequisites": null,
     "department": "Chemistry",
-    "satisfies_ucc": "Life and Physical Sciences"
+    "satisfies_ucc": "Life and Physical Sciences",
+    "prefix": "CHEM",
+    "number": "106",
+    "course_level": 100,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [
+      "Life and Physical Sciences"
+    ],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [
+      "Galveston"
+    ],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/chem/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "CHEM 107",
@@ -23,7 +61,33 @@
     "description": "(CHEM 1309, 1409*) General Chemistry for Engineering Students. Introduction to important concepts and principles of chemistry; emphasis on areas considered most relevant in an engineering context; practical applications of chemical principles in engineering and technology. Students completing CHEM 107 and changing majors to curricula requiring CHEM 101 and CHEM 102 may substitute CHEM 107 for CHEM 101. Only one of the following will satisfy the requirements for a degree: CHEM 107 or CHEM 101",
     "prerequisites": "Concurrent enrollment in CHEM 117 ; grade of C or better in MATH 150 , or equivalent, or acceptable score on Texas A&M University math placement exam; also taught at Galveston and Qatar campuses.",
     "department": "Chemistry",
-    "satisfies_ucc": "Life and Physical Sciences"
+    "satisfies_ucc": "Life and Physical Sciences",
+    "prefix": "CHEM",
+    "number": "107",
+    "course_level": 100,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [
+      "Life and Physical Sciences"
+    ],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [
+      "Galveston",
+      "Qatar"
+    ],
+    "prerequisite_courses": [
+      "CHEM 117",
+      "MATH 150"
+    ],
+    "restrictions": [
+      "grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/chem/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "CHEM 116",
@@ -32,7 +96,29 @@
     "description": "(CHEM 1105, 1405*) Molecular Science for Citizens Laboratory. The importance of molecular science to daily life illustrated by using experiments, demonstration and videos; designed to accompany CHEM 106",
     "prerequisites": "CHEM 106 or registration therein; also taught at Galveston campus.",
     "department": "Chemistry",
-    "satisfies_ucc": "Life and Physical Sciences"
+    "satisfies_ucc": "Life and Physical Sciences",
+    "prefix": "CHEM",
+    "number": "116",
+    "course_level": 100,
+    "credit_min": 1,
+    "credit_max": 1,
+    "is_variable_credit": false,
+    "ucc_attributes": [
+      "Life and Physical Sciences"
+    ],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [
+      "Galveston"
+    ],
+    "prerequisite_courses": [
+      "CHEM 106"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/chem/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "CHEM 117",
@@ -41,7 +127,30 @@
     "description": "(CHEM 1109, 1409*) General Chemistry for Engineering Students Laboratory. Introduction to important concepts and principles of chemistry in the laboratory; emphasis on areas considered most relevant in an engineering context; practical applications of chemical principles in engineering and technology. Students completing CHEM 117 and changing majors to curricula requiring CHEM 111 and CHEM 112 may substitute CHEM 117 for CHEM 111. Only one of the following will satisfy the requirements for a degree: CHEM 117 or CHEM 111",
     "prerequisites": "CHEM 107 or registration therein; also taught at Galveston and Qatar campuses.",
     "department": "Chemistry",
-    "satisfies_ucc": "Life and Physical Sciences"
+    "satisfies_ucc": "Life and Physical Sciences",
+    "prefix": "CHEM",
+    "number": "117",
+    "course_level": 100,
+    "credit_min": 1,
+    "credit_max": 1,
+    "is_variable_credit": false,
+    "ucc_attributes": [
+      "Life and Physical Sciences"
+    ],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [
+      "Galveston",
+      "Qatar"
+    ],
+    "prerequisite_courses": [
+      "CHEM 107"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/chem/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "CHEM 119",
@@ -50,7 +159,32 @@
     "description": "(CHEM 1311 and 1111, 1411) Fundamentals of Chemistry I. Introduction to modern theories of atomic structure and chemical bonding; chemical reactions; stoichiometry; states of matter; solutions; equilibrium; acids and bases; coordination chemistry; methods and techniques of chemical experimentation; qualitative and semiquantitative procedures applied to investigative situations; also taught at Galveston campus",
     "prerequisites": "Completion of at least 90% of the ALEKS chemistry preparatory module; or grade of C or better in MATH 140 , MATH 150 , or equivalent; or acceptable score on Texas A&M University math placement exam.",
     "department": "Chemistry",
-    "satisfies_ucc": "Life and Physical Sciences"
+    "satisfies_ucc": "Life and Physical Sciences",
+    "prefix": "CHEM",
+    "number": "119",
+    "course_level": 100,
+    "credit_min": 4,
+    "credit_max": 4,
+    "is_variable_credit": false,
+    "ucc_attributes": [
+      "Life and Physical Sciences"
+    ],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [
+      "Galveston"
+    ],
+    "prerequisite_courses": [
+      "MATH 140",
+      "MATH 150"
+    ],
+    "restrictions": [
+      "grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/chem/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "CHEM 120",
@@ -59,7 +193,32 @@
     "description": "(CHEM 1312 and 1112, 1412) Fundamentals of Chemistry II. Theory and applications of oxidation-reductions systems; thermodynamics and kinetics; complex equilibria and solubility product; nuclear chemistry; descriptive inorganic and organic chemistry; introduction to analytical and synthetic methods and to quantitative techniques to both inorganic and organic compounds with emphasis on an investigative approach",
     "prerequisites": "CHEM 119 , or CHEM 107 and CHEM 117 ; also taught at Galveston and Qatar campuses.",
     "department": "Chemistry",
-    "satisfies_ucc": "Life and Physical Sciences"
+    "satisfies_ucc": "Life and Physical Sciences",
+    "prefix": "CHEM",
+    "number": "120",
+    "course_level": 100,
+    "credit_min": 4,
+    "credit_max": 4,
+    "is_variable_credit": false,
+    "ucc_attributes": [
+      "Life and Physical Sciences"
+    ],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [
+      "Galveston",
+      "Qatar"
+    ],
+    "prerequisite_courses": [
+      "CHEM 119",
+      "CHEM 107",
+      "CHEM 117"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/chem/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "CHEM 181",
@@ -67,7 +226,31 @@
     "credit_hours": 0,
     "description": "Introduction and integration of current learning theory, evidence-based learning, and educational psychology into the daily operations and practice of the Chemistry Learning Laboratory; must be a peer-tutor for the Chemistry Learning Laboratory",
     "prerequisites": "Grade of B or better in CHEM 107 , or CHEM 119 and CHEM 120 ; or grade of B or better in CHEM 257 and CHEM 258 ; approval of instructor.",
-    "department": "Chemistry"
+    "department": "Chemistry",
+    "prefix": "CHEM",
+    "number": "181",
+    "course_level": 100,
+    "credit_min": 0,
+    "credit_max": 0,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "CHEM 107",
+      "CHEM 119",
+      "CHEM 120",
+      "CHEM 257",
+      "CHEM 258"
+    ],
+    "restrictions": [
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/chem/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "CHEM 220",
@@ -75,7 +258,26 @@
     "credit_hours": 3,
     "description": "Structure, properties and function of materials developed from an atomistic and molecular perspective emphasizing quantum chemical descriptions; elements of solid-state chemistry and physics including bonding, crystal structure and symmetry, origin of electronic band structure, synthesis and characterization tools in materials chemistry and role of finite size effects",
     "prerequisites": "CHEM 120 ; concurrent enrollment in PHYS 207 .",
-    "department": "Chemistry"
+    "department": "Chemistry",
+    "prefix": "CHEM",
+    "number": "220",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "CHEM 120",
+      "PHYS 207"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/chem/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "CHEM 222",
@@ -83,7 +285,27 @@
     "credit_hours": 3,
     "description": "Organic chemistry and its applications to biological and agricultural chemistry, including chemistry of functional groups, acid-base and redox chemistry, stereochemistry and chemistry of important biological compounds. Not to be used as the basis for further study in organic chemistry or biochemistry",
     "prerequisites": "CHEM 101, CHEM 119 , or CHEM 107 .",
-    "department": "Chemistry"
+    "department": "Chemistry",
+    "prefix": "CHEM",
+    "number": "222",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "CHEM 101",
+      "CHEM 119",
+      "CHEM 107"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/chem/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "CHEM 227",
@@ -91,7 +313,30 @@
     "credit_hours": 3,
     "description": "(CHEM 2323, 2423*) Organic Chemistry I. Introduction to chemistry of compounds of carbon; general principles and their application to various industrial and biological processes",
     "prerequisites": "CHEM 102 or CHEM 120 ; concurrent enrollment in CHEM 237 is suggested; also taught at Galveston and Qatar campuses.",
-    "department": "Chemistry"
+    "department": "Chemistry",
+    "prefix": "CHEM",
+    "number": "227",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [
+      "Galveston",
+      "Qatar"
+    ],
+    "prerequisite_courses": [
+      "CHEM 102",
+      "CHEM 120",
+      "CHEM 237"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/chem/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "CHEM 228",
@@ -99,7 +344,29 @@
     "credit_hours": 3,
     "description": "(CHEM 2325, 2425*) Organic Chemistry II. Continuation of CHEM 227",
     "prerequisites": "CHEM 227 ; concurrent registration in CHEM 238 is suggested; also taught at Galveston and Qatar campuses.",
-    "department": "Chemistry"
+    "department": "Chemistry",
+    "prefix": "CHEM",
+    "number": "228",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [
+      "Galveston",
+      "Qatar"
+    ],
+    "prerequisite_courses": [
+      "CHEM 227",
+      "CHEM 238"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/chem/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "CHEM 231",
@@ -107,7 +374,27 @@
     "credit_hours": 2,
     "description": "Techniques of organic chemistry; preparation, properties of typical organic compounds; separation, purification, analysis, and characterization of organic compounds",
     "prerequisites": "CHEM 112 or CHEM 120 ; concurrent enrollment in CHEM 227 .",
-    "department": "Chemistry"
+    "department": "Chemistry",
+    "prefix": "CHEM",
+    "number": "231",
+    "course_level": 200,
+    "credit_min": 2,
+    "credit_max": 2,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "CHEM 112",
+      "CHEM 120",
+      "CHEM 227"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/chem/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "CHEM 234",
@@ -115,7 +402,28 @@
     "credit_hours": 3,
     "description": "The synthesis of significant types of organic compounds and study of their properties; laboratory separations of mixtures of organic substances, identification of compounds by functional group tests and preparation of derivatives; instrumental methods of separation, identification and analysis",
     "prerequisites": "CHEM 228 or concurrent enrollment; CHEM 231 , CHEM 237 or CHEM 257 .",
-    "department": "Chemistry"
+    "department": "Chemistry",
+    "prefix": "CHEM",
+    "number": "234",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "CHEM 228",
+      "CHEM 231",
+      "CHEM 237",
+      "CHEM 257"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/chem/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "CHEM 237",
@@ -123,7 +431,31 @@
     "credit_hours": 1,
     "description": "(CHEM 2123, 2423*) Organic Chemistry Laboratory. Operations and techniques of elementary organic chemistry laboratory; preparation, reactions and properties of representative organic compounds",
     "prerequisites": "CHEM 102 and CHEM 112, or CHEM 120 ; CHEM 227 or concurrent enrollment; also taught at Galveston and Qatar campuses.",
-    "department": "Chemistry"
+    "department": "Chemistry",
+    "prefix": "CHEM",
+    "number": "237",
+    "course_level": 200,
+    "credit_min": 1,
+    "credit_max": 1,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [
+      "Galveston",
+      "Qatar"
+    ],
+    "prerequisite_courses": [
+      "CHEM 102",
+      "CHEM 112",
+      "CHEM 120",
+      "CHEM 227"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/chem/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "CHEM 238",
@@ -131,7 +463,31 @@
     "credit_hours": 1,
     "description": "(CHEM 2125, 2425*) Organic Chemistry Laboratory. Continuation of CHEM 237",
     "prerequisites": "CHEM 228 or concurrent enrollment; CHEM 231 , CHEM 237 , or CHEM 257 ; also taught at Galveston and Qatar campuses.",
-    "department": "Chemistry"
+    "department": "Chemistry",
+    "prefix": "CHEM",
+    "number": "238",
+    "course_level": 200,
+    "credit_min": 1,
+    "credit_max": 1,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [
+      "Galveston",
+      "Qatar"
+    ],
+    "prerequisite_courses": [
+      "CHEM 228",
+      "CHEM 231",
+      "CHEM 237",
+      "CHEM 257"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/chem/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "CHEM 242",
@@ -139,7 +495,25 @@
     "credit_hours": 1,
     "description": "Operations and techniques of elementary organic chemistry laboratory with emphasis on experiments for students of agriculture",
     "prerequisites": "CHEM 222 or registration therein.",
-    "department": "Chemistry"
+    "department": "Chemistry",
+    "prefix": "CHEM",
+    "number": "242",
+    "course_level": 200,
+    "credit_min": 1,
+    "credit_max": 1,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "CHEM 222"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/chem/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "CHEM 257",
@@ -147,7 +521,28 @@
     "credit_hours": 4,
     "description": "Introduction to the chemistry of carbon-containing compounds, including general principles and application to various academic, industrial, and biological processes; includes elementary operations and techniques of organic chemistry laboratories",
     "prerequisites": "CHEM 102 or CHEM 120 ; also taught at Galveston campus.",
-    "department": "Chemistry"
+    "department": "Chemistry",
+    "prefix": "CHEM",
+    "number": "257",
+    "course_level": 200,
+    "credit_min": 4,
+    "credit_max": 4,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [
+      "Galveston"
+    ],
+    "prerequisite_courses": [
+      "CHEM 102",
+      "CHEM 120"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/chem/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "CHEM 258",
@@ -155,7 +550,29 @@
     "credit_hours": 4,
     "description": "Continuation of CHEM 257 ; introduction to the chemistry of carbon-containing compounds, including general principles and application to various academic, industrial, and biological processes; includes elementary operations and techniques of organic chemistry laboratories",
     "prerequisites": "CHEM 257 ; or CHEM 227 and CHEM 237 ; also taught at Galveston campus.",
-    "department": "Chemistry"
+    "department": "Chemistry",
+    "prefix": "CHEM",
+    "number": "258",
+    "course_level": 200,
+    "credit_min": 4,
+    "credit_max": 4,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [
+      "Galveston"
+    ],
+    "prerequisite_courses": [
+      "CHEM 257",
+      "CHEM 227",
+      "CHEM 237"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/chem/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "CHEM 285",
@@ -163,7 +580,25 @@
     "credit_hours": "1-4",
     "description": "Introduction to research, library and laboratory work designed for the freshman or sophomore students",
     "prerequisites": "Approval of department head.",
-    "department": "Chemistry"
+    "department": "Chemistry",
+    "prefix": "CHEM",
+    "number": "285",
+    "course_level": 200,
+    "credit_min": 1,
+    "credit_max": 4,
+    "is_variable_credit": true,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Approval of department head"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/chem/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "CHEM 289",
@@ -171,7 +606,25 @@
     "credit_hours": "0-4",
     "description": "Selected topics in an identified area of chemistry. May be repeated for credit",
     "prerequisites": "Approval of instructor.",
-    "department": "Chemistry"
+    "department": "Chemistry",
+    "prefix": "CHEM",
+    "number": "289",
+    "course_level": 200,
+    "credit_min": 0,
+    "credit_max": 4,
+    "is_variable_credit": true,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": "May be repeated for credit",
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/chem/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "CHEM 291",
@@ -179,7 +632,26 @@
     "credit_hours": "0-4",
     "description": "Research conducted under the direction of faculty member in chemistry. May be repeated 2 times for credit",
     "prerequisites": "Freshman or sophomore classification and approval of instructor.",
-    "department": "Chemistry"
+    "department": "Chemistry",
+    "prefix": "CHEM",
+    "number": "291",
+    "course_level": 200,
+    "credit_min": 0,
+    "credit_max": 4,
+    "is_variable_credit": true,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": "May be repeated 2 times for credit",
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Freshman or sophomore classification",
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/chem/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "CHEM 310",
@@ -187,7 +659,39 @@
     "credit_hours": 3,
     "description": "Thermodynamics, Quantum theory, spectroscopy, reaction kinetics, electrochemistry and macromolecules; may not be used by chemistry majors",
     "prerequisites": "CHEM 102 or CHEM 120 ; MATH 151 and MATH 152 , MATH 140 and MATH 142 , MATH 168 and MATH 142 , or MATH 147 and MATH 148 , or equivalent; PHYS 201 or PHYS 218, or PHYS 206 and PHYS 226 ; Galveston campus.",
-    "department": "Chemistry"
+    "department": "Chemistry",
+    "prefix": "CHEM",
+    "number": "310",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [
+      "Galveston"
+    ],
+    "prerequisite_courses": [
+      "CHEM 102",
+      "CHEM 120",
+      "MATH 151",
+      "MATH 152",
+      "MATH 140",
+      "MATH 142",
+      "MATH 168",
+      "MATH 147",
+      "MATH 148",
+      "PHYS 201",
+      "PHYS 218",
+      "PHYS 206",
+      "PHYS 226"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/chem/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "CHEM 311",
@@ -195,7 +699,29 @@
     "credit_hours": 1,
     "description": "Quantitative experiments designed to illustrate some principles of thermodynamics, quantum theory, kinetics and spectroscopy; may not be used by chemistry majors",
     "prerequisites": "CHEM 310 , CHEM 322 , or CHEM 327 , or concurrent enrollment; Galveston campus.",
-    "department": "Chemistry"
+    "department": "Chemistry",
+    "prefix": "CHEM",
+    "number": "311",
+    "course_level": 300,
+    "credit_min": 1,
+    "credit_max": 1,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [
+      "Galveston"
+    ],
+    "prerequisite_courses": [
+      "CHEM 310",
+      "CHEM 322",
+      "CHEM 327"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/chem/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "CHEM 315",
@@ -203,7 +729,26 @@
     "credit_hours": 3,
     "description": "Quantitative and statistical methods of analysis; solution chemistry; chemical equilibrium of analytically useful reactions; advanced analytical methods including electrochemistry, separations and kinetic methods",
     "prerequisites": "CHEM 102 or CHEM 120 .",
-    "department": "Chemistry"
+    "department": "Chemistry",
+    "prefix": "CHEM",
+    "number": "315",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "CHEM 102",
+      "CHEM 120"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/chem/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "CHEM 316",
@@ -211,7 +756,29 @@
     "credit_hours": 2,
     "description": "Introductory quantitative chemical analysis; error propagation and statistics; chemical equilibrium for titrations of weak acids, polyprotic acids, and EDTA; basic chemical instrumentation including spectrophotometry, electrochemistry, and chromatography",
     "prerequisites": "CHEM 102 or CHEM 120 ; also taught at Galveston and Qatar campuses.",
-    "department": "Chemistry"
+    "department": "Chemistry",
+    "prefix": "CHEM",
+    "number": "316",
+    "course_level": 300,
+    "credit_min": 2,
+    "credit_max": 2,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [
+      "Galveston",
+      "Qatar"
+    ],
+    "prerequisite_courses": [
+      "CHEM 102",
+      "CHEM 120"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/chem/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "CHEM 318",
@@ -219,7 +786,31 @@
     "credit_hours": 1,
     "description": "Laboratory work consists of selected experiments in quantitative analysis designed to typify operations of general analytical lab, including chemical analyses by volumetric and gravimetric methods; introduction to chemical measurements by spectroscopic and separations techniques and associated instrumentation",
     "prerequisites": "CHEM 112 or CHEM 120 ; CHEM 315 or CHEM 316 , or concurrent enrollment; also taught at Galveston and Qatar campuses.",
-    "department": "Chemistry"
+    "department": "Chemistry",
+    "prefix": "CHEM",
+    "number": "318",
+    "course_level": 300,
+    "credit_min": 1,
+    "credit_max": 1,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [
+      "Galveston",
+      "Qatar"
+    ],
+    "prerequisite_courses": [
+      "CHEM 112",
+      "CHEM 120",
+      "CHEM 315",
+      "CHEM 316"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/chem/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "CHEM 321",
@@ -227,7 +818,31 @@
     "credit_hours": 3,
     "description": "Physical chemistry for the description of biological processes and the structure and behavior of biological molecules and macromolecules; theory of thermodynamics, kinetics, quantum and statistical mechanics. Only one of the following will satisfy the requirements for a degree: CHEM 321 or CHEM 327",
     "prerequisites": "CHEM 107 or CHEM 120 ; PHYS 206 or PHYS 201 ; MATH 152 , MATH 172 , or MATH 148 , or equivalent.",
-    "department": "Chemistry"
+    "department": "Chemistry",
+    "prefix": "CHEM",
+    "number": "321",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "CHEM 107",
+      "CHEM 120",
+      "PHYS 206",
+      "PHYS 201",
+      "MATH 152",
+      "MATH 172",
+      "MATH 148"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/chem/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "CHEM 322",
@@ -235,7 +850,32 @@
     "credit_hours": 3,
     "description": "Quantum theory, spectroscopy, statistical mechanics, kinetic theory, reaction kinetics, electrochemistry and macromolecules",
     "prerequisites": "CHEM 102 or CHEM 120 ; CHEN 205 and CHEN 354 ; MATH 152 or equivalent; also taught at Galveston and Qatar campuses.",
-    "department": "Chemistry"
+    "department": "Chemistry",
+    "prefix": "CHEM",
+    "number": "322",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [
+      "Galveston",
+      "Qatar"
+    ],
+    "prerequisite_courses": [
+      "CHEM 102",
+      "CHEM 120",
+      "CHEN 205",
+      "CHEN 354",
+      "MATH 152"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/chem/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "CHEM 325",
@@ -243,7 +883,26 @@
     "credit_hours": 1,
     "description": "Quantitative experiments involving physical chemistry principles in areas such as thermodynamics, electrochemistry, molecular structure and equilibria using modern instrumentation",
     "prerequisites": "CHEM 321 , or CHEM 327 or concurrent enrollment.",
-    "department": "Chemistry"
+    "department": "Chemistry",
+    "prefix": "CHEM",
+    "number": "325",
+    "course_level": 300,
+    "credit_min": 1,
+    "credit_max": 1,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "CHEM 321",
+      "CHEM 327"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/chem/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "CHEM 326",
@@ -251,7 +910,26 @@
     "credit_hours": 1,
     "description": "Quantitative experiments involving physical chemistry principles in such areas as kinetics, properties of gases, phase equilibria and macromolecules using modern instrumentation",
     "prerequisites": "CHEM 321 , or CHEM 328 or concurrent enrollment.",
-    "department": "Chemistry"
+    "department": "Chemistry",
+    "prefix": "CHEM",
+    "number": "326",
+    "course_level": 300,
+    "credit_min": 1,
+    "credit_max": 1,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "CHEM 321",
+      "CHEM 328"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/chem/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "CHEM 327",
@@ -259,7 +937,30 @@
     "credit_hours": 3,
     "description": "Introduction to quantum mechanics, exactly solvable model problems, many-electron systems, chemical bonding and the electronic structure of molecules, computational chemistry, interaction of radiation with matter, spectroscopy and related topics of physical chemistry. Applications to contemporary problems in science and technology. Only one of the following will satisfy the requirements for a degree: CHEM 321 or CHEM 327",
     "prerequisites": "MATH 152 or MATH 172 ; MATH 221 , MATH 251 or MATH 253 encouraged; PHYS 207 or equivalent.",
-    "department": "Chemistry"
+    "department": "Chemistry",
+    "prefix": "CHEM",
+    "number": "327",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "MATH 152",
+      "MATH 172",
+      "MATH 221",
+      "MATH 251",
+      "MATH 253",
+      "PHYS 207"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/chem/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "CHEM 328",
@@ -267,7 +968,26 @@
     "credit_hours": 3,
     "description": "A rigorous treatment of first, second, and third laws of thermodynamics; applications to gases (both ideal and real), liquids, solutions and phase equilibria; statistical thermodynamics; kinetic theory of gases; introduction to chemical kinetics",
     "prerequisites": "CHEM 327 . Replaces CHEM 323 in previous catalogs.",
-    "department": "Chemistry"
+    "department": "Chemistry",
+    "prefix": "CHEM",
+    "number": "328",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "CHEM 327",
+      "CHEM 323"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/chem/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "CHEM 362",
@@ -275,7 +995,26 @@
     "credit_hours": 3,
     "description": "Introduction to inorganic chemistry with a focus in descriptive inorganic chemistry, bonding theories in inorganic molecules and in the solid state, redox chemistry, descriptive main group and transition metal chemistry; ligand field theory, molecular magnetism and electronic spectra in transition metal complexes",
     "prerequisites": "CHEM 102 or CHEM 120 .",
-    "department": "Chemistry"
+    "department": "Chemistry",
+    "prefix": "CHEM",
+    "number": "362",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "CHEM 102",
+      "CHEM 120"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/chem/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "CHEM 383",
@@ -283,7 +1022,29 @@
     "credit_hours": 3,
     "description": "Chemical pollutants in the air, in water and on land; their generation, chemical reactivity, action on environment and disappearance through chemical mechanisms; chemistry of existing pollution abatement",
     "prerequisites": "CHEM 120 ; junior or senior classification; also taught at Galveston campus.",
-    "department": "Chemistry"
+    "department": "Chemistry",
+    "prefix": "CHEM",
+    "number": "383",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [
+      "Galveston"
+    ],
+    "prerequisite_courses": [
+      "CHEM 120"
+    ],
+    "restrictions": [
+      "junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/chem/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "CHEM 415",
@@ -291,7 +1052,25 @@
     "credit_hours": 3,
     "description": "Theory and practical aspects of modern instrumental methods of quantitative analysis; instrumental approaches to selectivity and sensitivity; examples of major, minor and trace component analysis",
     "prerequisites": "CHEM 315 .",
-    "department": "Chemistry"
+    "department": "Chemistry",
+    "prefix": "CHEM",
+    "number": "415",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "CHEM 315"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/chem/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "CHEM 433",
@@ -299,7 +1078,25 @@
     "credit_hours": 2,
     "description": "Preparation, characterization and properties of bioinorganic, organometallic and macromolecular inorganic compounds; special techniques (glove box manipulations and double-manifold Schlenk lines) for handling air-sensitive materials",
     "prerequisites": "CHEM 362 or registration therein.",
-    "department": "Chemistry"
+    "department": "Chemistry",
+    "prefix": "CHEM",
+    "number": "433",
+    "course_level": 400,
+    "credit_min": 2,
+    "credit_max": 2,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "CHEM 362"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/chem/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "CHEM 434",
@@ -307,7 +1104,26 @@
     "credit_hours": 2,
     "description": "Practical application of modern instrumental methods of quantitative analysis; atomic and molecular techniques to conduct chemical characterizations and analyses",
     "prerequisites": "CHEM 318 ; CHEM 415 or concurrent enrollment.",
-    "department": "Chemistry"
+    "department": "Chemistry",
+    "prefix": "CHEM",
+    "number": "434",
+    "course_level": 400,
+    "credit_min": 2,
+    "credit_max": 2,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "CHEM 318",
+      "CHEM 415"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/chem/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "CHEM 446",
@@ -315,7 +1131,28 @@
     "credit_hours": 3,
     "description": "Principles and applications of organic chemistry for students majoring in chemistry, chemical engineering, materials science, biological, and physical science: emphasis on chemical reactivity, mechanistic chemistry, and synthesis",
     "prerequisites": "CHEM 228 or CHEM 258 ; or approval of instructor.",
-    "department": "Chemistry"
+    "department": "Chemistry",
+    "prefix": "CHEM",
+    "number": "446",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "CHEM 228",
+      "CHEM 258"
+    ],
+    "restrictions": [
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/chem/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "CHEM 456",
@@ -323,7 +1160,28 @@
     "credit_hours": 3,
     "description": "Application of chemical principles to biological phenomena; capstone course for advanced students, integrating organic or inorganic chemistry with biology",
     "prerequisites": "CHEM 228 or CHEM 258 or equivalent; junior or senior classification.",
-    "department": "Chemistry"
+    "department": "Chemistry",
+    "prefix": "CHEM",
+    "number": "456",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "CHEM 228",
+      "CHEM 258"
+    ],
+    "restrictions": [
+      "junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/chem/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "CHEM 458",
@@ -331,7 +1189,29 @@
     "credit_hours": 3,
     "description": "Application of organic chemistry concepts to drug design; emphasis on small molecule interaction with living systems; exploration of importance of molecular interactions in chemical biology of living systems",
     "prerequisites": "CHEM 228 or CHEM 258 ; BICH 409 , or concurrent enrollment in BICH 411 or BICH 441 .",
-    "department": "Chemistry"
+    "department": "Chemistry",
+    "prefix": "CHEM",
+    "number": "458",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "CHEM 228",
+      "CHEM 258",
+      "BICH 409",
+      "BICH 411",
+      "BICH 441"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/chem/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "CHEM 462",
@@ -339,7 +1219,26 @@
     "credit_hours": 3,
     "description": "Periodic relationship of elements, their compounds, principles of their bonding and applications",
     "prerequisites": "CHEM 328 and CHEM 362 .",
-    "department": "Chemistry"
+    "department": "Chemistry",
+    "prefix": "CHEM",
+    "number": "462",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "CHEM 328",
+      "CHEM 362"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/chem/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "CHEM 464",
@@ -347,7 +1246,30 @@
     "credit_hours": 3,
     "description": "Properties of the nucleus; radioactivity; decay kinetics; nuclear masses; theory of radioactive decay; nuclear reactions; radiochemistry; nuclear energy; hands-on demonstrations; applications to non-nuclear problems",
     "prerequisites": "CHEM 322 or CHEM 327 ; CHEM 315 or CHEM 316 recommended; also taught at Galveston campus.",
-    "department": "Chemistry"
+    "department": "Chemistry",
+    "prefix": "CHEM",
+    "number": "464",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [
+      "Galveston"
+    ],
+    "prerequisite_courses": [
+      "CHEM 322",
+      "CHEM 327",
+      "CHEM 315",
+      "CHEM 316"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/chem/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "CHEM 466",
@@ -355,7 +1277,29 @@
     "credit_hours": 3,
     "description": "Mechanisms of polymerization reactions of monomers and molecular weight distributions of products; principles, limitations and advantages of most important methods of molecular weight determination; relationship of physical properties to structure and composition; correlations of applications with chemical constitution",
     "prerequisites": "CHEM 228 or CHEM 258 ; also taught at Galveston and Qatar campuses.",
-    "department": "Chemistry"
+    "department": "Chemistry",
+    "prefix": "CHEM",
+    "number": "466",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [
+      "Galveston",
+      "Qatar"
+    ],
+    "prerequisite_courses": [
+      "CHEM 228",
+      "CHEM 258"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/chem/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "CHEM 468",
@@ -363,7 +1307,30 @@
     "credit_hours": 3,
     "description": "Structure, bonding and reactivity of inorganic solids developed from a perspective emphasizing models of chemical bonding, symmetry and electronic structure; methods for characterizing extended periodic solids; descriptions of band structure and contrasts to molecular orbital theory; synthetic routes, quantum confinement and finite size effects of relevance to nanoscale materials",
     "prerequisites": "Grade of C or better in CHEM 102 or CHEM 120 ; PHYS 207 or equivalent; junior or senior classification.",
-    "department": "Chemistry"
+    "department": "Chemistry",
+    "prefix": "CHEM",
+    "number": "468",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "CHEM 102",
+      "CHEM 120",
+      "PHYS 207"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/chem/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "CHEM 470",
@@ -371,7 +1338,28 @@
     "credit_hours": 3,
     "description": "Applications of organic and inorganic chemical reactions in the manufacture of commercial products; chemistry of petroleum refining and petrochemical processing; industrial polymerization processes; commodity and fine chemical production; influence of kinetics and thermodynamics on economics of industrial chemical production; pollution abatement technology",
     "prerequisites": "CHEM 228 or CHEM 258 ; junior or senior classification.",
-    "department": "Chemistry"
+    "department": "Chemistry",
+    "prefix": "CHEM",
+    "number": "470",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "CHEM 228",
+      "CHEM 258"
+    ],
+    "restrictions": [
+      "junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/chem/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "CHEM 481",
@@ -379,7 +1367,23 @@
     "credit_hours": 2,
     "description": "Preparation of oral and written reports on selected topics from recent technical publications",
     "prerequisites": null,
-    "department": "Chemistry"
+    "department": "Chemistry",
+    "prefix": "CHEM",
+    "number": "481",
+    "course_level": 400,
+    "credit_min": 2,
+    "credit_max": 2,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/chem/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "CHEM 483",
@@ -387,7 +1391,30 @@
     "credit_hours": 3,
     "description": "Environmentally benign chemistry; the design of chemical products and processes that reduce or eliminate the use and generation of hazardous substances; twelve principles of Green Chemistry; atom economy; use of renewable resources; catalysis for Green Chemistry; alternative solvents and reaction media; energy and the environment",
     "prerequisites": "CHEM 228 or CHEM 258 ; junior or senior classification; also taught at Galveston campus.",
-    "department": "Chemistry"
+    "department": "Chemistry",
+    "prefix": "CHEM",
+    "number": "483",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [
+      "Galveston"
+    ],
+    "prerequisite_courses": [
+      "CHEM 228",
+      "CHEM 258"
+    ],
+    "restrictions": [
+      "junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/chem/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "CHEM 484",
@@ -395,7 +1422,23 @@
     "credit_hours": "0-3",
     "description": "Directed internship in a private firm or public agency to provide experience appropriate to the student's degree program and career objectives. May be repeated one time for credit. Must be taken on a satisfactory/unsatisfactory basis. Must be taken on a satisfactory/unsatisfactory basis",
     "prerequisites": "Chemistry majors; approval of internship agency and advising office.",
-    "department": "Chemistry"
+    "department": "Chemistry",
+    "prefix": "CHEM",
+    "number": "484",
+    "course_level": 400,
+    "credit_min": 0,
+    "credit_max": 3,
+    "is_variable_credit": true,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": "May be repeated one time for credit.",
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/chem/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "CHEM 485",
@@ -403,7 +1446,27 @@
     "credit_hours": "1-16",
     "description": "Introduction to research, library and laboratory work",
     "prerequisites": "Senior classification and approval of chemistry advisor; also taught at Galveston campus.",
-    "department": "Chemistry"
+    "department": "Chemistry",
+    "prefix": "CHEM",
+    "number": "485",
+    "course_level": 400,
+    "credit_min": 1,
+    "credit_max": 16,
+    "is_variable_credit": true,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [
+      "Galveston"
+    ],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/chem/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "CHEM 489",
@@ -411,7 +1474,25 @@
     "credit_hours": "1-4",
     "description": "Selected topics in an identified area of chemistry; also taught at Galveston campus. May be repeated for credit",
     "prerequisites": null,
-    "department": "Chemistry"
+    "department": "Chemistry",
+    "prefix": "CHEM",
+    "number": "489",
+    "course_level": 400,
+    "credit_min": 1,
+    "credit_max": 4,
+    "is_variable_credit": true,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": "May be repeated for credit",
+    "campuses": [
+      "Galveston"
+    ],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/chem/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "CHEM 491",
@@ -419,6 +1500,24 @@
     "credit_hours": "0-10",
     "description": "Active research of basic nature under the supervision of Department of Chemistry faculty member. Registration in multiple sections of this course is possible within a given semester provided that the per semester credit hour limit is not exceeded",
     "prerequisites": "Chemistry major; junior classification or approval of chemistry advisor.",
-    "department": "Chemistry"
+    "department": "Chemistry",
+    "prefix": "CHEM",
+    "number": "491",
+    "course_level": 400,
+    "credit_min": 0,
+    "credit_max": 10,
+    "is_variable_credit": true,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "junior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/chem/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   }
 ]

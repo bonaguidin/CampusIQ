@@ -27,7 +27,7 @@ STUDENT_COURSES = {
     "ENGR 102": "ethanBrooks",
     "ENGR 111": "ethanBrooks",   # does not exist in catalog — mock invented it
     "HIST 105": "priyaNair/sofiaRamirez",
-    "KINE 198": "ethanBrooks",   # does not exist in catalog — closest is KINE 199
+    "KINE 199": "ethanBrooks",
     "MATH 142": "jordanReyes",
     "MATH 151": "ethanBrooks",
     "MATH 251": "priyaNair",
@@ -40,7 +40,7 @@ STUDENT_COURSES = {
     "STAT 201": "marcusWebb",
 }
 
-KNOWN_MOCK_ONLY = {"ENGR 111", "KINE 198", "PBSI 209", "PBSI 211"}
+KNOWN_MOCK_ONLY = {"ENGR 111", "PBSI 209", "PBSI 211"}
 
 def level_bucket(code):
     m = re.search(r'\d+', code)
@@ -135,5 +135,5 @@ if real_errors:
         print(f"  {e}")
     sys.exit(1)
 else:
-    print("RESULT: Catalog structure valid. 4 mock-only codes noted above are fabrications")
+    print("RESULT: Catalog structure valid. 3 mock-only codes noted above are fabrications")
     print("        in student data files (not catalog errors) — see ~ lines above.")

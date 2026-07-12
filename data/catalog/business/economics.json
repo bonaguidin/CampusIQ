@@ -1,0 +1,1168 @@
+[
+  {
+    "code": "ECON 202",
+    "title": "Principles of Economics",
+    "credit_hours": 3,
+    "description": "(ECON 2302) Principles of Economics. Examination of how individuals, firms and governments make choices under scarcity and how their interactions shape markets and economic outcomes; emphasizes opportunity cost, marginal reasoning and the determinants of demand and supply; explores how prices, competition and policy affect efficiency; highlights the value of economic reasoning for understanding real-world behavior and guiding sound policy and decision-making; applications may include causes of market and government failures, labor-market outcomes and strategic behavior in business decision-making; also taught at Galveston campus.",
+    "prerequisites": null,
+    "department": "Economics",
+    "prefix": "ECON",
+    "number": "202",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [
+      "Galveston"
+    ],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/econ/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
+  },
+  {
+    "code": "ECON 203",
+    "title": "Principles of Economics",
+    "credit_hours": 3,
+    "description": "(ECON 2301) Principles of Economics. Study of the overall performance of the economy and the forces that drive growth, inflation and unemployment; measuring and interpreting key indicators such as GDP, prices and labor-market outcomes; examines fiscal and monetary policy tools and their influence on output, employment and prices; applications may include the effects of taxation, government debt and international trade on macroeconomic stability and long-term prosperity; emphasizes how macroeconomic reasoning informs business and policy decisions.",
+    "prerequisites": "Prerequisites: ECON 202 or approval of undergraduate advisor; also taught at Galveston campus.",
+    "department": "Economics",
+    "prefix": "ECON",
+    "number": "203",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [
+      "Galveston"
+    ],
+    "prerequisite_courses": [
+      "ECON 202"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/econ/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
+  },
+  {
+    "code": "ECON 285",
+    "title": "Directed Studies",
+    "credit_hours": "0-4",
+    "description": "Directed studies in specific problem areas of economics. May be repeated for credit.",
+    "prerequisites": "Prerequisite: Freshman or sophomore classification; approval of instructor.",
+    "department": "Economics",
+    "prefix": "ECON",
+    "number": "285",
+    "course_level": 200,
+    "credit_min": 0,
+    "credit_max": 4,
+    "is_variable_credit": true,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": "May be repeated for credit.",
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Freshman or sophomore classification",
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/econ/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
+  },
+  {
+    "code": "ECON 289",
+    "title": "Special Topics in...",
+    "credit_hours": 3,
+    "description": "Selected topics in an identified area of economics. May be repeated for credit.",
+    "prerequisites": "Prerequisite: Approval of undergraduate advisor.",
+    "department": "Economics",
+    "prefix": "ECON",
+    "number": "289",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": "May be repeated for credit.",
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/econ/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
+  },
+  {
+    "code": "ECON 291",
+    "title": "Research",
+    "credit_hours": "0-3",
+    "description": "Research conducted under the direction of faculty member in economics. May be taken three times for credit.",
+    "prerequisites": "Prerequisites: Freshman or sophomore classification.",
+    "department": "Economics",
+    "prefix": "ECON",
+    "number": "291",
+    "course_level": 200,
+    "credit_min": 0,
+    "credit_max": 3,
+    "is_variable_credit": true,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": "May be taken three times for credit.",
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Freshman or sophomore classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/econ/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
+  },
+  {
+    "code": "ECON 311",
+    "title": "Money and Banking",
+    "credit_hours": 3,
+    "description": "Study of money, financial institutions and monetary policy in the U.S. and global economy; examines the structure and functions of financial markets and intermediaries; examines the nature, role and measurement of money; explores the organization and policy tools of the Federal Reserve System and the transmission of monetary policy; links between interest rates, credit conditions and macroeconomic performance; develops understanding of how financial systems support stability, growth and effective policy-making.",
+    "prerequisites": "Prerequisite: Grade of C or better in ECON 203 ; also taught at Galveston campus.",
+    "department": "Economics",
+    "prefix": "ECON",
+    "number": "311",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [
+      "Galveston"
+    ],
+    "prerequisite_courses": [
+      "ECON 203"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/econ/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
+  },
+  {
+    "code": "ECON 312",
+    "title": "Poverty, Inequality and Social Policy",
+    "credit_hours": 3,
+    "description": "Analysis of the causes and consequences of poverty and inequality and the role of public policy in shaping economic outcomes; examines the measurement of income, wealth and mobility; explores theoretical and empirical perspectives on market forces, discrimination and opportunity; evaluates the design and impact of social insurance and welfare programs on poverty reduction, incentives and economic performance; emphasizes evidence-based approaches to understanding how policy choices affect efficiency and distributional outcomes in modern economies.",
+    "prerequisites": "Prerequisite: Grade of C or better in ECON 323 .",
+    "department": "Economics",
+    "prefix": "ECON",
+    "number": "312",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ECON 323"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/econ/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
+  },
+  {
+    "code": "ECON 315",
+    "title": "Sports Economics",
+    "credit_hours": 3,
+    "description": "Application of microeconomic theory to the business and practice of sports; analyzes market structure, pricing and competition in sports industries; concepts of market power, antitrust policy and valuation of long-term assets; explores strategic behavior using game theory and the effects of imperfect information on decision-making; examines public finance aspects such as stadium subsidies and distributional impacts; emphasizes how sports contexts illustrate broader economic principles and empirical testing of models of behavior.",
+    "prerequisites": "Prerequisite: Grade of C or better in ECON 202 .",
+    "department": "Economics",
+    "prefix": "ECON",
+    "number": "315",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ECON 202"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/econ/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
+  },
+  {
+    "code": "ECON 318",
+    "title": "Work, Family and Public Policy",
+    "credit_hours": 3,
+    "description": "Analysis of how work, family and public policy interact to shape labor market outcomes and inequality; theories and evidence on labor supply, human capital formation and earnings differences; effects of family structure, workplace flexibility and government policies on employment and wages; explanations and empirical measurement of discrimination; emphasizes the use of quantitative methods to evaluate costs and benefits of policies addressing inequality in the United States and abroad.",
+    "prerequisites": "Prerequisites: Grade of C or better in ECON 323 or approval of instructor. Cross Listing: WGST 318/ECON 318 .",
+    "department": "Economics",
+    "prefix": "ECON",
+    "number": "318",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "WGST 318",
+      "ECON 318"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ECON 323",
+      "WGST 318",
+      "ECON 318"
+    ],
+    "restrictions": [
+      "approval of instructor",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/econ/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
+  },
+  {
+    "code": "ECON 320",
+    "title": "Economic Development of Europe",
+    "credit_hours": 3,
+    "description": "Development of wage system expansion of markets, Industrial Revolution, relation of industrial development to political policy.",
+    "prerequisites": "Prerequisites: ECON 202 and ECON 203 with a grade of C or better.",
+    "department": "Economics",
+    "prefix": "ECON",
+    "number": "320",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ECON 202",
+      "ECON 203"
+    ],
+    "restrictions": [
+      "grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/econ/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
+  },
+  {
+    "code": "ECON 323",
+    "title": "Microeconomic Theory",
+    "credit_hours": 3,
+    "description": "Analysis of how consumers and firms make decisions under scarcity and how their interactions determine prices and resource allocation; develops the theoretical foundations of demand, supply and market equilibrium; examines consumer choice and utility maximization, firm production and cost minimization, and profit-maximizing behavior under competition; explores outcomes when markets depart from perfect competition, including monopoly and oligopoly; emphasizes the efficiency and distributional consequences of market structures.",
+    "prerequisites": "Prerequisite: Grade of C or better in ECON 202 ; grade of C or better in MATH 142 , MATH 151 or MATH 171 ; also taught at Galveston campus.",
+    "department": "Economics",
+    "prefix": "ECON",
+    "number": "323",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [
+      "Galveston"
+    ],
+    "prerequisite_courses": [
+      "ECON 202",
+      "MATH 142",
+      "MATH 151",
+      "MATH 171"
+    ],
+    "restrictions": [
+      "Grade of C or better",
+      "grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/econ/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
+  },
+  {
+    "code": "ECON 328",
+    "title": "Economics of Education",
+    "credit_hours": 3,
+    "description": "Application of economic principles to the study of education systems and policy; examines theoretical foundations for private and public investment in education; analyzes returns to education, human capital formation and the role of non-cognitive skills; explores how resources, financing, accountability and choice affect educational outcomes in K-12 and higher education; focuses on empirical approaches to evaluating education policy and the measurement of effectiveness.",
+    "prerequisites": "Prerequisites: Grade of C or better in ECON 202 ; grade of C or better in ECMT 461 , STAT 211 or STAT 303 .",
+    "department": "Economics",
+    "prefix": "ECON",
+    "number": "328",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ECON 202",
+      "ECMT 461",
+      "STAT 211",
+      "STAT 303"
+    ],
+    "restrictions": [
+      "Grade of C or better",
+      "grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/econ/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
+  },
+  {
+    "code": "ECON 330",
+    "title": "Economic Development",
+    "credit_hours": 3,
+    "description": "Analysis of the causes and consequences of economic development and underdevelopment across countries; topics may include historical and contemporary theories of growth, structural transformation and inequality; measures of income, poverty and well-being and their use in comparing nations; the challenges of agricultural and industrial transition, institutional change and policy design; emphasizes empirical approaches to evaluate development strategies and innovations.",
+    "prerequisites": "Prerequisites: Grade of C or better in ECON 202 and ECON 203 .",
+    "department": "Economics",
+    "prefix": "ECON",
+    "number": "330",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ECON 202",
+      "ECON 203"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/econ/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
+  },
+  {
+    "code": "ECON 399",
+    "title": "High Impact Experience",
+    "credit_hours": 0,
+    "description": "Student participation in an approved high-impact learning practice; reflection on professional outcomes; documentation and self-assessment of the learning experience at mid-curriculum point.",
+    "prerequisites": "Prerequisite: Grade of C or better in ECON 323 .",
+    "department": "Economics",
+    "prefix": "ECON",
+    "number": "399",
+    "course_level": 300,
+    "credit_min": 0,
+    "credit_max": 0,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ECON 323"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/econ/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
+  },
+  {
+    "code": "ECON 410",
+    "title": "Macroeconomic Theory",
+    "credit_hours": 3,
+    "description": "Analysis of the determinants of national income, employment and prices in modern macroeconomic theory; models of long-run growth, short-run fluctuations and policy responses; examines aggregate demand and supply frameworks and the role of expectations in shaping economic outcomes; explores how monetary and fiscal policy influence inflation, output and stability across business cycles; emphasizes the use of theoretical and empirical tools to interpret macroeconomic data and evaluate policy.",
+    "prerequisites": "Prerequisite: Grade of C or better in ECON 203 .",
+    "department": "Economics",
+    "prefix": "ECON",
+    "number": "410",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ECON 203"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/econ/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
+  },
+  {
+    "code": "ECON 412",
+    "title": "Public Finance",
+    "credit_hours": 3,
+    "description": "Examination of the economic role of government in market economies; analyzes the rationale for public intervention through the provision of public goods, correction of externalities and design of social insurance and transfer programs; evaluates the effects of taxation and government spending on resource allocation, income distribution and incentives; explores the concepts of market and government failure and the tradeoffs inherent in policy design; emphasizes the use of theoretical and empirical tools to evaluate policy.",
+    "prerequisites": "Prerequisite: Grade of C or better in ECON 323 .",
+    "department": "Economics",
+    "prefix": "ECON",
+    "number": "412",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ECON 323"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/econ/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
+  },
+  {
+    "code": "ECON 414",
+    "title": "Health Economics",
+    "credit_hours": 3,
+    "description": "Analysis of the organization, financing and delivery of health care in the U.S. and global context; examines the demand for health and health care, the behavior of providers and insurers and the impact of public and private insurance on costs, access and quality; explores market imperfections arising from information asymmetries, moral hazard and adverse selection; evaluates the role of competition and regulation among hospitals, insurers, physicians and pharmaceutical firms; considers how policy design and innovation affect the health care sector.",
+    "prerequisites": "Prerequisite: Grade of C or better in ECON 323 .",
+    "department": "Economics",
+    "prefix": "ECON",
+    "number": "414",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ECON 323"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/econ/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
+  },
+  {
+    "code": "ECON 416",
+    "title": "Economics of Microfinance",
+    "credit_hours": 3,
+    "description": "Analysis of recent research in the economics of microfinance; fundamental issues with microfinance and wealth creation; study of both theory and empirical work of recent research on microfinance; use of academic research to see how relevant it is to the practical aspects of microfinance.",
+    "prerequisites": "Prerequisite: Grade of C or better in ECON 323 .",
+    "department": "Economics",
+    "prefix": "ECON",
+    "number": "416",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ECON 323"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/econ/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
+  },
+  {
+    "code": "ECON 418",
+    "title": "Economics of Labor",
+    "credit_hours": 3,
+    "description": "Analysis of how labor markets determine wages, employment and the allocation of labor across sectors; develops theoretical and empirical models of labor supply and labor demand to explain patterns of work and compensation; examines the role of human capital, discrimination, unions and labor-market institutions; topics may include minimum wages, taxation, social insurance and immigration.",
+    "prerequisites": "Prerequisite: Grade of C or better in ECON 323 .",
+    "department": "Economics",
+    "prefix": "ECON",
+    "number": "418",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ECON 323"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/econ/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
+  },
+  {
+    "code": "ECON 419",
+    "title": "Personnel Economics",
+    "credit_hours": 3,
+    "description": "Exploration of the economics of the workplace using the insights of economic models and behavioral economics; focus on incentives and information, motivation of workers through incentive pay, promotion tournaments and threats, design of the hiring process to recruit a talented workforce, attraction and retention of employees, downsizing.",
+    "prerequisites": "Prerequisites: Grade of C or better in ECON 323 .",
+    "department": "Economics",
+    "prefix": "ECON",
+    "number": "419",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ECON 323"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/econ/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
+  },
+  {
+    "code": "ECON 420",
+    "title": "Law and Economics",
+    "credit_hours": 3,
+    "description": "Application of economic reasoning to legal rules, institutions and outcomes; examines how property, contract and tort law shape incentives and resource allocation; analyzes the efficiency and distributional consequences of legal decisions and regulatory frameworks; develops testable hypotheses on how laws influence behavior and market outcomes; uses economic models and empirical evidence to interpret court rulings, evaluate legal reforms and understand the reciprocal relationship between law and the economy.",
+    "prerequisites": "Prerequisite: Grade of C or better in ECON 323 .",
+    "department": "Economics",
+    "prefix": "ECON",
+    "number": "420",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ECON 323"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/econ/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
+  },
+  {
+    "code": "ECON 421",
+    "title": "Economics of Crime",
+    "credit_hours": 3,
+    "description": "Application of economic theory and empirical methods to the study of crime and criminal justice policy; examines how incentives, deterrence and opportunity costs influence criminal behavior; analyzes the effects of policing, punishment, incarceration and rehabilitation on crime rates and social welfare; explores issues of rationality, discrimination and inequality within the justice system; considers evidence on crime-reduction policies; integrates data analysis to assess the effectiveness of crime-control strategies.",
+    "prerequisites": "Prerequisite: Grade of C or better in ECON 323 .",
+    "department": "Economics",
+    "prefix": "ECON",
+    "number": "421",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ECON 323"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/econ/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
+  },
+  {
+    "code": "ECON 425",
+    "title": "The Organization of Industry",
+    "credit_hours": 3,
+    "description": "Analysis of how market structure and firm behavior determine industry performance and economic welfare; develops theoretical and empirical tools to study competition, market power and strategic interaction among firms; examines pricing, product differentiation, entry, innovation and advertising as determinants of market outcomes; explores the role of antitrust policy and regulation in promoting efficiency and preventing collusion; demonstrates how industrial organization principles explain firm strategy and market design in the modern economy.",
+    "prerequisites": "Prerequisite: Grade of C or better in ECON 323 .",
+    "department": "Economics",
+    "prefix": "ECON",
+    "number": "425",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ECON 323"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/econ/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
+  },
+  {
+    "code": "ECON 426",
+    "title": "Economics of Antitrust and Regulation",
+    "credit_hours": 3,
+    "description": "Analysis of competition, regulation and antitrust policy through the lens of modern industrial organization; examines how strategic interactions among firms affect efficiency, innovation and consumer welfare; studies the economic rationale behind antitrust laws and their application to practices such as price discrimination, collusion, mergers and vertical restraints; evaluates landmark judicial decisions and regulatory actions shaping competition policy and market outcomes.",
+    "prerequisites": "Prerequisite: Grade of C or better in ECON 323 .",
+    "department": "Economics",
+    "prefix": "ECON",
+    "number": "426",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ECON 323"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/econ/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
+  },
+  {
+    "code": "ECON 433",
+    "title": "Energy Markets and Policy",
+    "credit_hours": 3,
+    "description": "Analysis of the operation and regulation of energy markets and the design of efficient energy policy; applies microeconomic theory and empirical methods to sectors including oil, gasoline, electricity, natural gas, renewables and nuclear power; examines market structure, pricing and investment under evolving technologies and environmental constraints; studies the interaction between energy and environmental policies such as fuel economy standards, carbon pricing and cap-and-trade programs; considers domestic and international experiences to evaluate how regulation and innovation shape energy efficiency, sustainability and market performance.",
+    "prerequisites": "Prerequisites: Grade of C or better in ECON 323 ; junior or senior classification or approval of instructor.",
+    "department": "Economics",
+    "prefix": "ECON",
+    "number": "433",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ECON 323"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "approval of instructor",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/econ/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
+  },
+  {
+    "code": "ECON 436",
+    "title": "Environmental Economics",
+    "credit_hours": 3,
+    "description": "Application of economic theory to the analysis of global environmental challenges and policy design; examines how market failures and externalities give rise to pollution and resource depletion; evaluates alternative approaches to environmental management including regulation, taxation and market-based instruments such as tradable permits; introduces methods for cost-benefit analysis and non-market valuation of environmental goods.",
+    "prerequisites": "Prerequisite: Grade of C or better in ECON 323 .",
+    "department": "Economics",
+    "prefix": "ECON",
+    "number": "436",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ECON 323"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/econ/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
+  },
+  {
+    "code": "ECON 440",
+    "title": "Experimental Economics",
+    "credit_hours": 3,
+    "description": "Study of how experiments and behavioral insights advance understanding of economic decision-making; examines deviations from standard models of rationality and self-interest in choices under risk, time and social interaction; introduces experimental methods for testing economic theories and evaluating policy-relevant behavior in laboratory, field and online settings; explores issues of experimental design, data reliability and statistical analysis; emphasizes the development and interpretation of experiments to study individual and group behavior in economics and related fields.",
+    "prerequisites": "Prerequisite: Grade of C or better in ECON 323 .",
+    "department": "Economics",
+    "prefix": "ECON",
+    "number": "440",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ECON 323"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/econ/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
+  },
+  {
+    "code": "ECON 441",
+    "title": "Economics of Policy Evaluation",
+    "credit_hours": 3,
+    "description": "Experimental approaches to evaluating economic policies and programs in real-world settings; introduces field experimental methods used to identify causal effects of interventions implemented by firms, governments and NGOs; examines how individuals and organizations respond to changes in incentives across contexts such as education, labor, health, political economy and development; explores the design, implementation and interpretation of randomized evaluations; demonstrates how experimental evidence informs effective and evidence-based policy making in both developed and developing economies.",
+    "prerequisites": "Prerequisites: Grade of C or better in ECON 202 and ECMT 461 .",
+    "department": "Economics",
+    "prefix": "ECON",
+    "number": "441",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ECON 202",
+      "ECMT 461"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/econ/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
+  },
+  {
+    "code": "ECON 445",
+    "title": "Financial Economics",
+    "credit_hours": 3,
+    "description": "Introduction to the economic principles underlying financial markets and asset pricing; examines the structure and operation of equity, bond, foreign exchange and derivative markets in domestic and international contexts; topics may include portfolio choice, risk management, intertemporal decision-making, models of market efficiency, arbitrage and the relationship between financial markets and the broader economy; integrates theoretical and empirical perspectives to understand how financial systems allocate resources and influence economic performance.",
+    "prerequisites": "Prerequisites: Grade of C or better in ECON 323 and ECMT 461 ; or approval of instructor.",
+    "department": "Economics",
+    "prefix": "ECON",
+    "number": "445",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ECON 323",
+      "ECMT 461"
+    ],
+    "restrictions": [
+      "approval of instructor",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/econ/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
+  },
+  {
+    "code": "ECON 449",
+    "title": "Economics of Decision-Making Strategy",
+    "credit_hours": 3,
+    "description": "Analysis of individual and strategic decision-making; develops formal models of choice under risk, uncertainty and interdependence; explores how preferences, information and incentives shape behavior and outcomes in competitive and cooperative settings; applies these concepts to the design and evaluation of mechanisms and institutions that govern exchange and allocation; topics may include auctions, matching, contract design, signaling, bargaining and repeated interaction.",
+    "prerequisites": "Prerequisites: Grade of C or better in ECON 323 .",
+    "department": "Economics",
+    "prefix": "ECON",
+    "number": "449",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ECON 323"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/econ/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
+  },
+  {
+    "code": "ECON 452",
+    "title": "International Trade Theory and Policy",
+    "credit_hours": 3,
+    "description": "Analysis of the causes and consequences of international trade and trade policy; develops theoretical foundations based on comparative advantage and factor endowments to explain patterns of trade and the distribution of gains across individuals and countries; examines the determination of product and factor prices and the effects of trade on income inequality and economic welfare; evaluates the rationale and impact of trade policies such as tariffs, quotas and subsidies.",
+    "prerequisites": "Prerequisite: Grade of C or better in ECON 323 ; also taught at Galveston campus.",
+    "department": "Economics",
+    "prefix": "ECON",
+    "number": "452",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [
+      "Galveston"
+    ],
+    "prerequisite_courses": [
+      "ECON 323"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/econ/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
+  },
+  {
+    "code": "ECON 453",
+    "title": "Global Macroeconomics",
+    "credit_hours": 3,
+    "description": "Interaction of people, firms and governments across countries in the global macroeconomy; examines international flows of goods, capital and currencies and their implications for output, employment and prices; models of exchange rate determination, balance of payments and cross-border borrowing and lending; explores the effects of fiscal and monetary policy in open economies; causes and consequences of currency, debt and financial crises.",
+    "prerequisites": "Prerequisite: Grade of C or better in ECON 410 , or approval of instructor.",
+    "department": "Economics",
+    "prefix": "ECON",
+    "number": "453",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ECON 410"
+    ],
+    "restrictions": [
+      "approval of instructor",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/econ/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
+  },
+  {
+    "code": "ECON 459",
+    "title": "Games and Economic Behavior",
+    "credit_hours": 3,
+    "description": "Examines strategic interaction and decision-making using game theory; develops the concepts of strategy, equilibrium and rational behavior in simultaneous, sequential and repeated games; examines topics such as uncertainty, information, coordination and collective action; explores equilibrium refinements and evolutionary stability; applies theoretical tools to real-world settings including auctions, bargaining, oligopoly, voting and cooperation; emphasizes how strategic reasoning and experimental evidence inform understanding of competition and cooperation among individuals and organizations.",
+    "prerequisites": "Prerequisite: Grade of C or better in ECON 323 .",
+    "department": "Economics",
+    "prefix": "ECON",
+    "number": "459",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ECON 323"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/econ/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
+  },
+  {
+    "code": "ECON 460",
+    "title": "Foundations of Mathematical Economics",
+    "credit_hours": 3,
+    "description": "Introduction to the mathematical methods used in modern economic analysis; develops tools for solving systems of linear equations, conducting comparative statics and optimizing economic models; covers topics in linear algebra, calculus and constrained optimization with applications to consumer and producer theory; emphasizes mathematical reasoning as a tool to formalize economic relationships, derive testable implications and build a foundation for advanced study in economics and related fields.",
+    "prerequisites": "Prerequisites: Grade of C or better in ECON 323 and ECON 410 .",
+    "department": "Economics",
+    "prefix": "ECON",
+    "number": "460",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ECON 323",
+      "ECON 410"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/econ/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
+  },
+  {
+    "code": "ECON 465",
+    "title": "Contemporary Economic Issues",
+    "credit_hours": 3,
+    "description": "Applies microeconomic and macroeconomic principles to the analysis of current policy and market challenges; topics vary by instructor but may include evaluating issues such as fiscal and monetary policy, globalization and trade, labor markets, technological change, health care, innovation and long-run growth; emphasizes critical interpretation of data, policy evaluation and evidence-based reasoning; encourages application of economic tools to real-world topics. May be taken two times for credit as content varies.",
+    "prerequisites": "Prerequisite: Grade of C or better in ECON 323 and ECON 410 .",
+    "department": "Economics",
+    "prefix": "ECON",
+    "number": "465",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": "May be taken two times for credit as content varies.",
+    "campuses": [],
+    "prerequisite_courses": [
+      "ECON 323",
+      "ECON 410"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/econ/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
+  },
+  {
+    "code": "ECON 470",
+    "title": "Data Science for Economic and Social Issues",
+    "credit_hours": 3,
+    "description": "Application of economic and quantitative methods to the analysis of decisions made by individuals, firms and policymakers; focuses on causal inference and the identification strategies that distinguish correlation from causation; includes coding fundamentals and data management techniques to clean, summarize and analyze data using statistical software; develops skills in implementing and interpreting empirical models, presenting results through data visualization and written analysis and evaluating the effectiveness of policies and programs; topics and applications vary across instructors. May be taken two times for credit as content varies.",
+    "prerequisites": "Prerequisites: Grade of C or better in ECMT 463 or ECMT 464 , or approval of instructor.",
+    "department": "Economics",
+    "prefix": "ECON",
+    "number": "470",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": "May be taken two times for credit as content varies.",
+    "campuses": [],
+    "prerequisite_courses": [
+      "ECMT 463",
+      "ECMT 464"
+    ],
+    "restrictions": [
+      "approval of instructor",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/econ/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
+  },
+  {
+    "code": "ECON 471",
+    "title": "Applied Data Science in Economics",
+    "credit_hours": 3,
+    "description": "Introduction to modern data science methods and their application to real-world economic and business decision-making; integrates economic reasoning with computational tools for analyzing and interpreting data; introduces coding and statistical modeling, including resampling, cross-validation and machine learning techniques such as random forests and neural networks; emphasizes how data-driven insights complement economic intuition in organizational and policy contexts; designed for students seeking to apply economic analysis and data skills in professional, multidisciplinary environments; topics and applications vary across instructors. May be taken two times for credit.",
+    "prerequisites": "Prerequisite: Grade of C or better in ECMT 463 .",
+    "department": "Economics",
+    "prefix": "ECON",
+    "number": "471",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": "May be taken two times for credit.",
+    "campuses": [],
+    "prerequisite_courses": [
+      "ECMT 463"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/econ/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
+  },
+  {
+    "code": "ECON 484",
+    "title": "Internship",
+    "credit_hours": "0-6",
+    "description": "Directed internship in an organization to provide on-the-job training and applied research experience with professionals in settings appropriate to economics and student professional interest. Maximum 6 hours can count toward major. Must be taken on a satisfactory/unsatisfactory basis.",
+    "prerequisites": "Prerequisites: Major in economics; 12 completed hours of economics including ECON 323 with a grade of C or better; 2.5 cumulative GPA; 3.0 GPA in economic courses; pre-approval of the director of economics internship programs.",
+    "department": "Economics",
+    "prefix": "ECON",
+    "number": "484",
+    "course_level": 400,
+    "credit_min": 0,
+    "credit_max": 6,
+    "is_variable_credit": true,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ECON 323"
+    ],
+    "restrictions": [
+      "grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/econ/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
+  },
+  {
+    "code": "ECON 485",
+    "title": "Directed Studies",
+    "credit_hours": "0-6",
+    "description": "Research and design of specific problem areas approved on an individual basis with the intention of promoting independent study and to supplement existing course offerings. Results of study presented in writing.",
+    "prerequisites": "Prerequisites: Major or minor in economics; approval of undergraduate advisor.",
+    "department": "Economics",
+    "prefix": "ECON",
+    "number": "485",
+    "course_level": 400,
+    "credit_min": 0,
+    "credit_max": 6,
+    "is_variable_credit": true,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/econ/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
+  },
+  {
+    "code": "ECON 489",
+    "title": "Special Topics in...",
+    "credit_hours": "1-4",
+    "description": "Selected topics in an identified area of economics. May be repeated for credit.",
+    "prerequisites": "Prerequisite: Approval of undergraduate advisor.",
+    "department": "Economics",
+    "prefix": "ECON",
+    "number": "489",
+    "course_level": 400,
+    "credit_min": 1,
+    "credit_max": 4,
+    "is_variable_credit": true,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": "May be repeated for credit.",
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/econ/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
+  },
+  {
+    "code": "ECON 491",
+    "title": "Research",
+    "credit_hours": "0-4",
+    "description": "Research conducted under the direction of faculty member in economics. May be taken three times for credit.",
+    "prerequisites": "Prerequisites: Junior or senior classification; grade of C or better in ECON 323 , ECON 410 , and ECMT 463 .",
+    "department": "Economics",
+    "prefix": "ECON",
+    "number": "491",
+    "course_level": 400,
+    "credit_min": 0,
+    "credit_max": 4,
+    "is_variable_credit": true,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": "May be taken three times for credit.",
+    "campuses": [],
+    "prerequisite_courses": [
+      "ECON 323",
+      "ECON 410",
+      "ECMT 463"
+    ],
+    "restrictions": [
+      "Junior or senior classification",
+      "grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/econ/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
+  }
+]

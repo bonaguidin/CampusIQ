@@ -5,7 +5,27 @@
     "credit_hours": 3,
     "description": "Introduction to C language programming and common algorithms; computer systems; simple C programs; basic language constructs; file I/O; modular programming and functions; arrays and matrices; pointers and strings; simple data structures; searching, sorting, and numerical algorithms; algorithmic complexity",
     "prerequisites": "Grade of C or better in ENGR 102 .",
-    "department": "Electrical & Computer Engineering (ECEN)"
+    "department": "Electrical & Computer Engineering (ECEN)",
+    "prefix": "ECEN",
+    "number": "209",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ENGR 102"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/ecen/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ECEN 210",
@@ -13,7 +33,27 @@
     "credit_hours": 4,
     "description": "Introduction to C language and common algorithms; computer systems; simple C programs; basic language constructs; file I/O; modular programming and functions; arrays and matrices; pointers and strings; simple data structures; searching, sorting, and numerical algorithms; algorithmic complexity",
     "prerequisites": "Sophomore classification in an engineering major; Qatar campus.",
-    "department": "Electrical & Computer Engineering (ECEN)"
+    "department": "Electrical & Computer Engineering (ECEN)",
+    "prefix": "ECEN",
+    "number": "210",
+    "course_level": 200,
+    "credit_min": 4,
+    "credit_max": 4,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [
+      "Qatar"
+    ],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Sophomore classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/ecen/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ECEN 214",
@@ -21,7 +61,34 @@
     "credit_hours": 4,
     "description": "Resistive circuits including circuit laws, network reduction, nodal analysis, mesh analysis; introduction to operational amplifiers; circuit analysis with inductors and capacitors; sinusoidal steady state circuit analysis; AC power calculations; magnetically coupled circuits; the ideal transformer; resonance; introduction to circuit simulation",
     "prerequisites": "Grade of C or better in PHYS 207 ; grade of C or better in PHYS 217/ENGR 217 or ENGR 217/PHYS 217 ; grade of C or better in CHEM 107 , CHEM 102, or CHEM 120 ; grade of C or better in MATH 308 , or concurrent enrollment.",
-    "department": "Electrical & Computer Engineering (ECEN)"
+    "department": "Electrical & Computer Engineering (ECEN)",
+    "prefix": "ECEN",
+    "number": "214",
+    "course_level": 200,
+    "credit_min": 4,
+    "credit_max": 4,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "PHYS 207",
+      "PHYS 217",
+      "ENGR 217",
+      "CHEM 107",
+      "CHEM 102",
+      "CHEM 120",
+      "MATH 308"
+    ],
+    "restrictions": [
+      "Grade of C or better",
+      "grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/ecen/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ECEN 215",
@@ -29,7 +96,30 @@
     "credit_hours": 3,
     "description": "Fundamentals of electric circuit analysis and introduction to electronics for engineering majors other than electrical and computer engineering",
     "prerequisites": "Grade of C or better in MATH 251 or MATH 253 ; Grade of C or better in PHYS 207 or PHYS 208.",
-    "department": "Electrical & Computer Engineering (ECEN)"
+    "department": "Electrical & Computer Engineering (ECEN)",
+    "prefix": "ECEN",
+    "number": "215",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "MATH 251",
+      "MATH 253",
+      "PHYS 207",
+      "PHYS 208"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/ecen/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ECEN 248",
@@ -37,7 +127,30 @@
     "credit_hours": 4,
     "description": "Combinational and sequential digital system design techniques; design of practical digital systems",
     "prerequisites": "Grade of C or better in MATH 152 ; grade of C or better in PHYS 207 or PHYS 208, or concurrent enrollment.",
-    "department": "Electrical & Computer Engineering (ECEN)"
+    "department": "Electrical & Computer Engineering (ECEN)",
+    "prefix": "ECEN",
+    "number": "248",
+    "course_level": 200,
+    "credit_min": 4,
+    "credit_max": 4,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "MATH 152",
+      "PHYS 207",
+      "PHYS 208"
+    ],
+    "restrictions": [
+      "Grade of C or better",
+      "grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/ecen/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ECEN 250",
@@ -45,7 +158,30 @@
     "credit_hours": 3,
     "description": "Engineering application-focused introduction to machine learning covering key machine learning concepts, guidance on selecting machine learning models, and application of python-based tools for data preparation, model development, and performance evaluation; practical engineering use-cases for machine learning from electronics, energy, motors, robotics, security, computer systems, and health; machine learning laboratory project including dataset management, ML model development, visualization, and deployment to an IoT platform showcasing ML expertise",
     "prerequisites": "Grade of C or better in ENGR 102 ; grade of C or better in MATH 251 or MATH 253 .",
-    "department": "Electrical & Computer Engineering (ECEN)"
+    "department": "Electrical & Computer Engineering (ECEN)",
+    "prefix": "ECEN",
+    "number": "250",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ENGR 102",
+      "MATH 251",
+      "MATH 253"
+    ],
+    "restrictions": [
+      "Grade of C or better",
+      "grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/ecen/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ECEN 285",
@@ -53,7 +189,25 @@
     "credit_hours": "0-4",
     "description": "Problems of limited scope approved on an individual basis intended to promote independent study",
     "prerequisites": "Approval of department head.",
-    "department": "Electrical & Computer Engineering (ECEN)"
+    "department": "Electrical & Computer Engineering (ECEN)",
+    "prefix": "ECEN",
+    "number": "285",
+    "course_level": 200,
+    "credit_min": 0,
+    "credit_max": 4,
+    "is_variable_credit": true,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Approval of department head"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/ecen/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ECEN 289",
@@ -61,7 +215,25 @@
     "credit_hours": "1-4",
     "description": "Selected topics in an identified area of electrical engineering. May be repeated for credit",
     "prerequisites": "Approval of instructor.",
-    "department": "Electrical & Computer Engineering (ECEN)"
+    "department": "Electrical & Computer Engineering (ECEN)",
+    "prefix": "ECEN",
+    "number": "289",
+    "course_level": 200,
+    "credit_min": 1,
+    "credit_max": 4,
+    "is_variable_credit": true,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": "May be repeated for credit",
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/ecen/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ECEN 291",
@@ -69,7 +241,26 @@
     "credit_hours": "0-4",
     "description": "Research conducted under the direction of faculty member in electrical engineering. May be repeated 3 times for credit",
     "prerequisites": "Freshman or sophomore classification and approval of instructor.",
-    "department": "Electrical & Computer Engineering (ECEN)"
+    "department": "Electrical & Computer Engineering (ECEN)",
+    "prefix": "ECEN",
+    "number": "291",
+    "course_level": 200,
+    "credit_min": 0,
+    "credit_max": 4,
+    "is_variable_credit": true,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": "May be repeated 3 times for credit",
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Freshman or sophomore classification",
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/ecen/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ECEN 303",
@@ -77,7 +268,29 @@
     "credit_hours": 3,
     "description": "Concepts of probability and random variables necessary for study of signals and systems involving uncertainty; applications to elementary problems in detection, signal processing and communication",
     "prerequisites": "Grade of C or better in MATH 251 or MATH 253 ; Grade of C or better in ECEN 248 .",
-    "department": "Electrical & Computer Engineering (ECEN)"
+    "department": "Electrical & Computer Engineering (ECEN)",
+    "prefix": "ECEN",
+    "number": "303",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "MATH 251",
+      "MATH 253",
+      "ECEN 248"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/ecen/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ECEN 314",
@@ -85,7 +298,31 @@
     "credit_hours": 3,
     "description": "Introduction to the continuous-time and discrete-time signals and systems; time domain characterization of linear time-invariant systems; Fourier analysis; filtering; sampling; modulation techniques for communication systems",
     "prerequisites": "Grade of C or better in ECEN 214 or ECEN 215 ; grade of C or better in MATH 308 ; junior or senior classification.",
-    "department": "Electrical & Computer Engineering (ECEN)"
+    "department": "Electrical & Computer Engineering (ECEN)",
+    "prefix": "ECEN",
+    "number": "314",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ECEN 214",
+      "ECEN 215",
+      "MATH 308"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "Grade of C or better",
+      "grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/ecen/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ECEN 322",
@@ -93,7 +330,31 @@
     "credit_hours": 3,
     "description": "Vector analysis, Maxwell's equations, wave propagation in unbounded regions, reflection and refraction of waves, transmission line theory; introduction to waveguides and antennas",
     "prerequisites": "Grade of C or better in ECEN 214 , PHYS 207 or PHYS 208, and MATH 311 ; junior or senior classification.",
-    "department": "Electrical & Computer Engineering (ECEN)"
+    "department": "Electrical & Computer Engineering (ECEN)",
+    "prefix": "ECEN",
+    "number": "322",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ECEN 214",
+      "PHYS 207",
+      "PHYS 208",
+      "MATH 311"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/ecen/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ECEN 325",
@@ -101,7 +362,29 @@
     "credit_hours": 4,
     "description": "Electronic systems; linear circuits; operational amplifiers and applications; diodes, field effect transistors, bipolar transistors; amplifiers and nonlinear circuits",
     "prerequisites": "Grade of C or better in MATH 311 ; grade of C or better in ECEN 314 , or concurrent enrollment.",
-    "department": "Electrical & Computer Engineering (ECEN)"
+    "department": "Electrical & Computer Engineering (ECEN)",
+    "prefix": "ECEN",
+    "number": "325",
+    "course_level": 300,
+    "credit_min": 4,
+    "credit_max": 4,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "MATH 311",
+      "ECEN 314"
+    ],
+    "restrictions": [
+      "Grade of C or better",
+      "grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/ecen/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ECEN 326",
@@ -109,7 +392,29 @@
     "credit_hours": 4,
     "description": "Basic circuits used in electronic systems; differential and multistage amplifiers; output stages and power amplifiers; frequency response, feedback circuits, stability and oscillators, analog integrated circuits, active filters",
     "prerequisites": "Grade of C or better in ECEN 314 and ECEN 325 ; junior or senior classification.",
-    "department": "Electrical & Computer Engineering (ECEN)"
+    "department": "Electrical & Computer Engineering (ECEN)",
+    "prefix": "ECEN",
+    "number": "326",
+    "course_level": 300,
+    "credit_min": 4,
+    "credit_max": 4,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ECEN 314",
+      "ECEN 325"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/ecen/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ECEN 333",
@@ -117,7 +422,28 @@
     "credit_hours": 3,
     "description": "Broad overview of electrical and computer engineering principles applied to various areas of life sciences; medical imaging and biomedical signal processing; micro/nano devices and systems; computational biology and genomic signal processing; recent trends in interfacing engineering and life science that address emerging grand challenge problems in health, bio-energy and bio-security; taught in a team approach",
     "prerequisites": "Grade of C or better in ECEN 214 ; junior or senior classification.",
-    "department": "Electrical & Computer Engineering (ECEN)"
+    "department": "Electrical & Computer Engineering (ECEN)",
+    "prefix": "ECEN",
+    "number": "333",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ECEN 214"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/ecen/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ECEN 338",
@@ -125,7 +451,25 @@
     "credit_hours": 4,
     "description": "Introduction to magnetic circuits, transformers, electromechanical energy conversion devices such as dc, induction and synchronous motors; equivalent circuits, performance characteristics and power electronic control",
     "prerequisites": "ECEN 214 .",
-    "department": "Electrical & Computer Engineering (ECEN)"
+    "department": "Electrical & Computer Engineering (ECEN)",
+    "prefix": "ECEN",
+    "number": "338",
+    "course_level": 300,
+    "credit_min": 4,
+    "credit_max": 4,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ECEN 214"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/ecen/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ECEN 340",
@@ -133,7 +477,28 @@
     "credit_hours": 3,
     "description": "Fundamental topics in power and energy systems; phasors; three-phase circuits; self and mutual inductance; transformers; electromechanical systems; synchronous and induction machines; advanced concepts in electric energy conversion; DC-DC converters; inverters and rectifiers; solar and wind energy systems; DC and single-phase machines",
     "prerequisites": "Grade of C or better in ECEN 214 ; junior or senior classification.",
-    "department": "Electrical & Computer Engineering (ECEN)"
+    "department": "Electrical & Computer Engineering (ECEN)",
+    "prefix": "ECEN",
+    "number": "340",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ECEN 214"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/ecen/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ECEN 360",
@@ -141,7 +506,40 @@
     "credit_hours": 3,
     "description": "Computational practice of data science through a sequence of interactive modules that provides an integrated hands-on approach to its methods, tools, applications and supporting technologies including high performance and cloud computing platforms",
     "prerequisites": "Grade of C or better in ENGR 102 , CSCE 110 , CSCE 111 , or CSCE 206 ; grade of C or better in MATH 251 , MATH 253 , or STAT 211 ; junior or senior classification. Cross Listing: CSCE 305 and STAT 315 .",
-    "department": "Electrical & Computer Engineering (ECEN)"
+    "department": "Electrical & Computer Engineering (ECEN)",
+    "prefix": "ECEN",
+    "number": "360",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "CSCE 305",
+      "STAT 315"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ENGR 102",
+      "CSCE 110",
+      "CSCE 111",
+      "CSCE 206",
+      "MATH 251",
+      "MATH 253",
+      "STAT 211",
+      "CSCE 305",
+      "STAT 315"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "Grade of C or better",
+      "grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/ecen/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ECEN 370",
@@ -149,7 +547,29 @@
     "credit_hours": 3,
     "description": "Introduction to basic physical properties of solid materials; some solid state physics employed, but major emphasis is on engineering applications based on semiconducting, magnetic, dielectric and superconducting phenomena",
     "prerequisites": "Grade of C or better in PHYS 222 or PHYS 309 ; junior or senior classification.",
-    "department": "Electrical & Computer Engineering (ECEN)"
+    "department": "Electrical & Computer Engineering (ECEN)",
+    "prefix": "ECEN",
+    "number": "370",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "PHYS 222",
+      "PHYS 309"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/ecen/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ECEN 399",
@@ -157,7 +577,32 @@
     "credit_hours": 0,
     "description": "Participation in an approved high-impact learning practice; reflection on professional outcomes from engineering body of knowledge; documentation and self-assessment of learning experience at mid-curriculum point",
     "prerequisites": "Grade of C or better in ECEN 484 , ECEN 491 , ENGR 484 , ENGR 491 , or ENGR 385 ; junior or senior classification.",
-    "department": "Electrical & Computer Engineering (ECEN)"
+    "department": "Electrical & Computer Engineering (ECEN)",
+    "prefix": "ECEN",
+    "number": "399",
+    "course_level": 300,
+    "credit_min": 0,
+    "credit_max": 0,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ECEN 484",
+      "ECEN 491",
+      "ENGR 484",
+      "ENGR 491",
+      "ENGR 385"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/ecen/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ECEN 403",
@@ -165,7 +610,43 @@
     "credit_hours": 3,
     "description": "Application of design process and project engineering as practiced in industry; team approach to the design process; development of a project proposal; documentation of the proposal, implementation and project; development of execution and validation plan; project execution will begin in ECEN 403 and continue through to ECEN 404",
     "prerequisites": "Grade of C or better in COMM 205 or COMM 243 or ENGL 210 ; grade of C or better in ECEN 314 , ECEN 325 , and ECEN 350/CSCE 350 or CSCE 350/ECEN 350 ; grade of C or better in ECEN 303 , ECEN 322 , and ECEN 370 , or grade C or better in CSCE 315 or CSCE 331 , and ECEN 303 or STAT 211 , and ECEN 449 or CSCE 462 , or concurrent enrollment; senior classification.",
-    "department": "Electrical & Computer Engineering (ECEN)"
+    "department": "Electrical & Computer Engineering (ECEN)",
+    "prefix": "ECEN",
+    "number": "403",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "COMM 205",
+      "COMM 243",
+      "ENGL 210",
+      "ECEN 314",
+      "ECEN 325",
+      "ECEN 350",
+      "CSCE 350",
+      "ECEN 303",
+      "ECEN 322",
+      "ECEN 370",
+      "CSCE 315",
+      "CSCE 331",
+      "STAT 211",
+      "ECEN 449",
+      "CSCE 462"
+    ],
+    "restrictions": [
+      "senior classification",
+      "Grade of C or better",
+      "grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/ecen/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ECEN 404",
@@ -173,7 +654,28 @@
     "credit_hours": 3,
     "description": "Continuation of ECEN 403 ; application of the design process and project engineering as practiced in industry; team approach to the design process; completion of project based on proposal from ECEN 403 ; includes testing, evaluation and report writing",
     "prerequisites": "Grade of C or better in ECEN 403 ; senior classification.",
-    "department": "Electrical & Computer Engineering (ECEN)"
+    "department": "Electrical & Computer Engineering (ECEN)",
+    "prefix": "ECEN",
+    "number": "404",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ECEN 403"
+    ],
+    "restrictions": [
+      "senior classification",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/ecen/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ECEN 410",
@@ -181,7 +683,32 @@
     "credit_hours": 4,
     "description": "Fundamentals of physics and the engineering principles of medical imaging systems; focus on magnetic resonance imaging, x-ray computer tomography, ultrasonography, optical imaging and nuclear medicine; includes systems, sources, energy tissue interaction, image formation and clinical examples; virtual labs, on- and off-campus lab tours",
     "prerequisites": "Grade of C or better in MATH 251 or MATH 253 ; ECEN 444 or grade of C or better in ECEN 314 ; junior or senior classification.",
-    "department": "Electrical & Computer Engineering (ECEN)"
+    "department": "Electrical & Computer Engineering (ECEN)",
+    "prefix": "ECEN",
+    "number": "410",
+    "course_level": 400,
+    "credit_min": 4,
+    "credit_max": 4,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "MATH 251",
+      "MATH 253",
+      "ECEN 444",
+      "ECEN 314"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "Grade of C or better",
+      "grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/ecen/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ECEN 411",
@@ -189,7 +716,32 @@
     "credit_hours": 3,
     "description": "Introduction to the basic physics of magnetic resonance, the principles of MR imaging and spectroscopy, the major contrast mechanisms in MRI and MR imaging system hardware; development of pulse sequences for different imaging methods, including flow and spectroscopic imaging; will build RF coils",
     "prerequisites": "Grade of C or better in MATH 251 or MATH 253 ; grade of C or better in PHYS 207 or PHYS 208; junior or senior classification.",
-    "department": "Electrical & Computer Engineering (ECEN)"
+    "department": "Electrical & Computer Engineering (ECEN)",
+    "prefix": "ECEN",
+    "number": "411",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "MATH 251",
+      "MATH 253",
+      "PHYS 207",
+      "PHYS 208"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "Grade of C or better",
+      "grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/ecen/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ECEN 412",
@@ -197,7 +749,28 @@
     "credit_hours": 3,
     "description": "Mathematical analysis of wave propagation, scattering of ultrasound in biological tissues, electronic transducer arrays for the beam forming, models of the received signals and signal processing methods for medical ultrasound imaging of tissues; includes discussions of research related to fundamental ultrasound imaging concepts",
     "prerequisites": "Grade of C or better in ECEN 314 ; junior or senior classification.",
-    "department": "Electrical & Computer Engineering (ECEN)"
+    "department": "Electrical & Computer Engineering (ECEN)",
+    "prefix": "ECEN",
+    "number": "412",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ECEN 314"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/ecen/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ECEN 414",
@@ -205,7 +778,28 @@
     "credit_hours": 3,
     "description": "Hands-on lab experience in the development of miniaturized biosensors; includes microfluidic devices for biosensing",
     "prerequisites": "Grade of C or better in ECEN 214 ; senior classification.",
-    "department": "Electrical & Computer Engineering (ECEN)"
+    "department": "Electrical & Computer Engineering (ECEN)",
+    "prefix": "ECEN",
+    "number": "414",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ECEN 214"
+    ],
+    "restrictions": [
+      "senior classification",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/ecen/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ECEN 415",
@@ -213,7 +807,30 @@
     "credit_hours": 3,
     "description": "Operational issues for sustainable electric energy systems; basic relevant topics in engineering, optimization and economic concepts; modular view of individual electric energy processing components; physical and market operations in electricity industry in support of sustainable energy integration; computer simulations and demonstrations to create and evaluate examples of power systems",
     "prerequisites": "Grade of C or better in ECEN 340 , and ECEN 420 or ECEN 460 ; junior or senior classification.",
-    "department": "Electrical & Computer Engineering (ECEN)"
+    "department": "Electrical & Computer Engineering (ECEN)",
+    "prefix": "ECEN",
+    "number": "415",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ECEN 340",
+      "ECEN 420",
+      "ECEN 460"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/ecen/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ECEN 419",
@@ -221,7 +838,28 @@
     "credit_hours": 3,
     "description": "Fundamentals of molecular biology; application of engineering principles to systems biology; topics include unearthing intergene relationships, carrying out genebased classification of disease, modeling genetic regulatory networks, and altering their dynamic behavior",
     "prerequisites": "Grade of C or better in ECEN 314 ; junior or senior classification.",
-    "department": "Electrical & Computer Engineering (ECEN)"
+    "department": "Electrical & Computer Engineering (ECEN)",
+    "prefix": "ECEN",
+    "number": "419",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ECEN 314"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/ecen/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ECEN 420",
@@ -229,7 +867,29 @@
     "credit_hours": 3,
     "description": "Application of state variable and frequency domain techniques to modeling, analysis and synthesis of single input, single output linear control systems",
     "prerequisites": "Grade of C or better in ECEN 314 and MATH 308 ; junior or senior classification.",
-    "department": "Electrical & Computer Engineering (ECEN)"
+    "department": "Electrical & Computer Engineering (ECEN)",
+    "prefix": "ECEN",
+    "number": "420",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ECEN 314",
+      "MATH 308"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/ecen/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ECEN 423",
@@ -237,7 +897,28 @@
     "credit_hours": 3,
     "description": "Fundamentals of wired and wireless computer networks, design and performance evaluations of wired and wireless networks, various unguided media characterizations and classifications/comparisons, digital-data representations/transmissions, error control, MAC protocols, routing, TCP/UDP/IP, wireless TCP, queuing-delay/loss modeling, IEEE 802.11 and its interconnections with Internet, and QoS provisioning over wired/wireless networks",
     "prerequisites": "Grade of C or better in MATH 311 ; junior or senior classification.",
-    "department": "Electrical & Computer Engineering (ECEN)"
+    "department": "Electrical & Computer Engineering (ECEN)",
+    "prefix": "ECEN",
+    "number": "423",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "MATH 311"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/ecen/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ECEN 424",
@@ -245,7 +926,29 @@
     "credit_hours": 3,
     "description": "Foundations of computer networking; layered architecture of the Internet, analysis of protocols, new-age networks such as the Web and social networks; computer network programming and offline analysis of real network data",
     "prerequisites": "Grade of C or better in ECEN 303 or STAT 211 ; junior or senior classification.",
-    "department": "Electrical & Computer Engineering (ECEN)"
+    "department": "Electrical & Computer Engineering (ECEN)",
+    "prefix": "ECEN",
+    "number": "424",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ECEN 303",
+      "STAT 211"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/ecen/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ECEN 425",
@@ -253,7 +956,28 @@
     "credit_hours": 3,
     "description": "Fundamental Radio Frequency (RF) and microwave circuit analysis including scattering and ABCD matrices, return loss, insertion loss; transmission lines, lumped elements, impedance matching; theory, analysis and design of basic RF and microwave passive circuits; use of commercial CAD programs for RF and microwave circuit design and simulation",
     "prerequisites": "Grade of C or better in ECEN 322 ; junior or senior classification.",
-    "department": "Electrical & Computer Engineering (ECEN)"
+    "department": "Electrical & Computer Engineering (ECEN)",
+    "prefix": "ECEN",
+    "number": "425",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ECEN 322"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/ecen/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ECEN 427",
@@ -261,7 +985,40 @@
     "credit_hours": 3,
     "description": "Theoretical foundations of machine learning, pattern recognition and generating predictive models and classifiers from data; includes methods for supervised and unsupervised learning (decision trees, linear discriminants, neural networks, Gaussian models, non-parametric models, clustering, dimensionality reduction, deep learning), optimization procedures and statistical inference",
     "prerequisites": "Grade of C or better in MATH 304 , MATH 311 , or MATH 323 ; Grade of C or better in STAT 211 , and STAT 404 or CSCE 221 , or ECEN 303 , and CSCE 121 or CSCE 120 . Cross Listing: CSCE 421 and STAT 421 .",
-    "department": "Electrical & Computer Engineering (ECEN)"
+    "department": "Electrical & Computer Engineering (ECEN)",
+    "prefix": "ECEN",
+    "number": "427",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "CSCE 421",
+      "STAT 421"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "MATH 304",
+      "MATH 311",
+      "MATH 323",
+      "STAT 211",
+      "STAT 404",
+      "CSCE 221",
+      "ECEN 303",
+      "CSCE 121",
+      "CSCE 120",
+      "CSCE 421",
+      "STAT 421"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/ecen/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ECEN 428",
@@ -269,7 +1026,29 @@
     "credit_hours": 4,
     "description": "Signal processing and neural network implementations on field programmable gate arrays (FPGA); FPGA designs of digital filters, Fourier transform, JPEG decoding, fast convolution, Kalman filter and Viterbi decoding; circuit design techniques commonly used in signal processing and neural network, such as pipelining, parallel processing, folding, unfolding and systolic array",
     "prerequisites": "Grade of C or better in ECEN 248 and ECEN 314 ; junior or senior classification.",
-    "department": "Electrical & Computer Engineering (ECEN)"
+    "department": "Electrical & Computer Engineering (ECEN)",
+    "prefix": "ECEN",
+    "number": "428",
+    "course_level": 400,
+    "credit_min": 4,
+    "credit_max": 4,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ECEN 248",
+      "ECEN 314"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/ecen/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ECEN 429",
@@ -277,7 +1056,31 @@
     "credit_hours": 3,
     "description": "Principles of pattern recognition and machine learning and electrical and computer engineering applications in signal estimation, detection and classification, detection of patterns in engineering systems and communications networks, assessment of normality and abnormality patterns in biomedical engineering applications and cyber security of power systems",
     "prerequisites": "Grade of C or better in ECEN 314 ; grade of C or better in ECEN 303 or STAT 211 ; junior or senior classification.",
-    "department": "Electrical & Computer Engineering (ECEN)"
+    "department": "Electrical & Computer Engineering (ECEN)",
+    "prefix": "ECEN",
+    "number": "429",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ECEN 314",
+      "ECEN 303",
+      "STAT 211"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "Grade of C or better",
+      "grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/ecen/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ECEN 430",
@@ -285,7 +1088,28 @@
     "credit_hours": 4,
     "description": "Vehicular electronic systems, electric powertrain, motors and motor control, battery management power management, driver assistance systems (ADAS), LIDAR/Radar/Camera modules, sensing and actuator devices for anti-collision systems, automotive communication, vehicle-to-vehicle and vehicle to infrastructure communication systems, autonomous and driverless vehicles",
     "prerequisites": "Grade of C or better in ECEN 325 ; junior or senior classification.",
-    "department": "Electrical & Computer Engineering (ECEN)"
+    "department": "Electrical & Computer Engineering (ECEN)",
+    "prefix": "ECEN",
+    "number": "430",
+    "course_level": 400,
+    "credit_min": 4,
+    "credit_max": 4,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ECEN 325"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/ecen/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ECEN 431",
@@ -293,7 +1117,28 @@
     "credit_hours": 4,
     "description": "Radio Frequency (RF) circuits for wireless communications applications; RF systems and their applications, noise, distortion, analog and digital modulations and radio architectures; transistor-level implementation of super-heterodyne AM/FM radios, RF/IF amplifiers, mixers, oscillators, demodulators, and baseband amplifiers",
     "prerequisites": "Grade of C or better in ECEN 325 ; senior classification.",
-    "department": "Electrical & Computer Engineering (ECEN)"
+    "department": "Electrical & Computer Engineering (ECEN)",
+    "prefix": "ECEN",
+    "number": "431",
+    "course_level": 400,
+    "credit_min": 4,
+    "credit_max": 4,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ECEN 325"
+    ],
+    "restrictions": [
+      "senior classification",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/ecen/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ECEN 432",
@@ -301,7 +1146,29 @@
     "credit_hours": 4,
     "description": "Sampling theory and sampling circuit implementations, quantization architectures and interpolation techniques for data conversion interfaces such as analog-to-digital and digital-to-analog converters, noise modeling of sampled and quantized data, performance metrics, modeling of circuits errors (capacitor mismatch, gain mismatches, etc.) basic linear calibration techniques and compensation techniques",
     "prerequisites": "Grade of C or better in ECEN 314 and ECEN 325 ; junior or senior classification.",
-    "department": "Electrical & Computer Engineering (ECEN)"
+    "department": "Electrical & Computer Engineering (ECEN)",
+    "prefix": "ECEN",
+    "number": "432",
+    "course_level": 400,
+    "credit_min": 4,
+    "credit_max": 4,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ECEN 314",
+      "ECEN 325"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/ecen/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ECEN 433",
@@ -309,7 +1176,28 @@
     "credit_hours": 3,
     "description": "In-depth discussion of state-of-the-art fabrication and assembly techniques for micro sensors and actuators to be used in today and future's smart electronics and intelligent systems",
     "prerequisites": "Grade of C or better in ECEN 370 ; junior or senior classification.",
-    "department": "Electrical & Computer Engineering (ECEN)"
+    "department": "Electrical & Computer Engineering (ECEN)",
+    "prefix": "ECEN",
+    "number": "433",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ECEN 370"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/ecen/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ECEN 434",
@@ -317,7 +1205,33 @@
     "credit_hours": 3,
     "description": "Principles of optimization including linear and nonlinear optimization as well as electrical and computer engineering applications in signal estimation, routing in communication networks, flows in wireless networks, wafer fabrication plants, and economic dispatch in power systems",
     "prerequisites": "Grade of C or better in MATH 304 or MATH 309 or MATH 311 ; grade of C or better in MATH 251 or MATH 253 ; junior or senior classification.",
-    "department": "Electrical & Computer Engineering (ECEN)"
+    "department": "Electrical & Computer Engineering (ECEN)",
+    "prefix": "ECEN",
+    "number": "434",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "MATH 304",
+      "MATH 309",
+      "MATH 311",
+      "MATH 251",
+      "MATH 253"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "Grade of C or better",
+      "grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/ecen/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ECEN 435",
@@ -325,7 +1239,29 @@
     "credit_hours": 3,
     "description": "Sound propagation, psychoacoustics, electroacoustics and architectural acoustics for the design and application of audio technology. Auditory system and audio perception concepts such as pitch, loudness, timbre, masking, apparent location. Speakers, microphones, and other electroacoustic transducers, enclosures and the mixers and the audio power amplifiers used to drive them. Architectural and environmental acoustics building acoustics, reflecting and absorbent materials, noise barriers, echoes, presence, reverberation, resonance",
     "prerequisites": "Grade of C or better in ECEN 314 and ECEN 325 ; junior or senior classification.",
-    "department": "Electrical & Computer Engineering (ECEN)"
+    "department": "Electrical & Computer Engineering (ECEN)",
+    "prefix": "ECEN",
+    "number": "435",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ECEN 314",
+      "ECEN 325"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/ecen/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ECEN 438",
@@ -333,7 +1269,28 @@
     "credit_hours": 4,
     "description": "Electric power conditioning and control; characteristics of solid state power switches; analysis and experiments with AC power controllers, controlled rectifiers, DC choppers and DC-AC converters; applications to power supplies, airborne and spaceborne power systems",
     "prerequisites": "Grade of C or better in ECEN 340 ; junior or senior classification.",
-    "department": "Electrical & Computer Engineering (ECEN)"
+    "department": "Electrical & Computer Engineering (ECEN)",
+    "prefix": "ECEN",
+    "number": "438",
+    "course_level": 400,
+    "credit_min": 4,
+    "credit_max": 4,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ECEN 340"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/ecen/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ECEN 440",
@@ -341,7 +1298,28 @@
     "credit_hours": 4,
     "description": "Thin film fundamentals, processing and industrial applications; topics include crystal structures in thin films, deposition techniques, thin film characterizations and several advanced topics related to electrical and optical devices; lab or tour sessions provided to promote teaching and learning",
     "prerequisites": "Grade of C or better in ECEN 370 ; junior or senior classification.",
-    "department": "Electrical & Computer Engineering (ECEN)"
+    "department": "Electrical & Computer Engineering (ECEN)",
+    "prefix": "ECEN",
+    "number": "440",
+    "course_level": 400,
+    "credit_min": 4,
+    "credit_max": 4,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ECEN 370"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/ecen/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ECEN 441",
@@ -349,7 +1327,28 @@
     "credit_hours": 4,
     "description": "Application of semiconductor switching power converters to adjustable speed DC and AC motor drives; steady state theory and analysis of electric motion control in industrial, robotic and traction systems; laboratory experiments in power electronic motor drives and their control",
     "prerequisites": "Grade of C or better in ECEN 340 ; junior or senior classification.",
-    "department": "Electrical & Computer Engineering (ECEN)"
+    "department": "Electrical & Computer Engineering (ECEN)",
+    "prefix": "ECEN",
+    "number": "441",
+    "course_level": 400,
+    "credit_min": 4,
+    "credit_max": 4,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ECEN 340"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/ecen/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ECEN 442",
@@ -357,7 +1356,28 @@
     "credit_hours": 3,
     "description": "Overview of energy conversion and basic concepts on electromechanical motion devices; different control strategies including the solid-state drive topologies; for every electromechanical motion device, its DSP control implementation discussed and implemented in the lab",
     "prerequisites": "Grade of C or better in ECEN 314 ; junior or senior classification.",
-    "department": "Electrical & Computer Engineering (ECEN)"
+    "department": "Electrical & Computer Engineering (ECEN)",
+    "prefix": "ECEN",
+    "number": "442",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ECEN 314"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/ecen/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ECEN 444",
@@ -365,7 +1385,28 @@
     "credit_hours": 4,
     "description": "Digital signal processing; discrete-time signals and systems, linear shift-invariant systems, the discrete Fourier transform and fast Fourier transform algorithm, and design of finite impulse response and infinite impulse response digital filters",
     "prerequisites": "Grade of C or better in ECEN 314 ; junior or senior classification.",
-    "department": "Electrical & Computer Engineering (ECEN)"
+    "department": "Electrical & Computer Engineering (ECEN)",
+    "prefix": "ECEN",
+    "number": "444",
+    "course_level": 400,
+    "credit_min": 4,
+    "credit_max": 4,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ECEN 314"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/ecen/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ECEN 445",
@@ -373,7 +1414,28 @@
     "credit_hours": 3,
     "description": "Guided wave and wireless methods; applications of Maxwell’s equations and electromagnetic wave phenomena to radiation, antennas and microwave circuit design; digital transmission line analysis and design",
     "prerequisites": "Grade of C or better in ECEN 322 ; junior or senior classification.",
-    "department": "Electrical & Computer Engineering (ECEN)"
+    "department": "Electrical & Computer Engineering (ECEN)",
+    "prefix": "ECEN",
+    "number": "445",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ECEN 322"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/ecen/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ECEN 446",
@@ -381,7 +1443,31 @@
     "credit_hours": 3,
     "description": "Basic concepts and techniques on data compression, error control codes, and information theoretic measures; basic concepts and techniques in statistical inference such as clustering, maximum likelihood, exact marginalization, Monte Carlo methods, importance sampling, and Markov chain Monte Carlo; introduction to neuron and neural networks; support vector machines",
     "prerequisites": "Grade of C or better in MATH 311 ; grade of C or better in ECEN 303 or STAT 211 ; junior or senior classification.",
-    "department": "Electrical & Computer Engineering (ECEN)"
+    "department": "Electrical & Computer Engineering (ECEN)",
+    "prefix": "ECEN",
+    "number": "446",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "MATH 311",
+      "ECEN 303",
+      "STAT 211"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "Grade of C or better",
+      "grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/ecen/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ECEN 447",
@@ -389,7 +1475,28 @@
     "credit_hours": 4,
     "description": "Improvement of pictorial information using spatial and frequency domain techniques; two-dimensional discrete Fourier transform; image filtering, enhancement, restoration, compression; image processing project",
     "prerequisites": "Grade of C or better in ECEN 314 ; junior or senior classification.",
-    "department": "Electrical & Computer Engineering (ECEN)"
+    "department": "Electrical & Computer Engineering (ECEN)",
+    "prefix": "ECEN",
+    "number": "447",
+    "course_level": 400,
+    "credit_min": 4,
+    "credit_max": 4,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ECEN 314"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/ecen/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ECEN 449",
@@ -397,7 +1504,28 @@
     "credit_hours": 3,
     "description": "Introduction to microprocessors; 16/32 bit single board computer hardware and software designs; chip select equations for memory board design, serial and parallel I/O interfacing; ROM, static and dynamic RAM circuits for no wait-state design; assembly language programming, stack models, subroutines and I/O processing",
     "prerequisites": "Grade of C or better in ECEN 248 ; junior or senior classification.",
-    "department": "Electrical & Computer Engineering (ECEN)"
+    "department": "Electrical & Computer Engineering (ECEN)",
+    "prefix": "ECEN",
+    "number": "449",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ECEN 248"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/ecen/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ECEN 451",
@@ -405,7 +1533,28 @@
     "credit_hours": 3,
     "description": "Antenna theory and design; including antenna performance parameters, analysis of radiation from sources using Maxwell's equations, theory and design of wire antennas, arrays and frequency independent antennas; computer methods for antenna design",
     "prerequisites": "Grade of C or better in ECEN 322 ; junior or senior classification.",
-    "department": "Electrical & Computer Engineering (ECEN)"
+    "department": "Electrical & Computer Engineering (ECEN)",
+    "prefix": "ECEN",
+    "number": "451",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ECEN 322"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/ecen/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ECEN 453",
@@ -413,7 +1562,28 @@
     "credit_hours": 4,
     "description": "Microwave solid-state devices and circuits; theory and design of various types of active circuits; applications of these devices and circuits in radar, communication, and surveillance systems; hands-on lab activities covering basics of microwave measurements",
     "prerequisites": "Grade of C or better in ECEN 322 ; junior or senior classification.",
-    "department": "Electrical & Computer Engineering (ECEN)"
+    "department": "Electrical & Computer Engineering (ECEN)",
+    "prefix": "ECEN",
+    "number": "453",
+    "course_level": 400,
+    "credit_min": 4,
+    "credit_max": 4,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ECEN 322"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/ecen/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ECEN 454",
@@ -421,7 +1591,29 @@
     "credit_hours": 3,
     "description": "Analysis and design of digital devices and integrated circuits using MOS and bipolar technologies and computer aided simulation",
     "prerequisites": "Grade of C or better in ECEN 214 and ECEN 248 ; junior or senior classification.",
-    "department": "Electrical & Computer Engineering (ECEN)"
+    "department": "Electrical & Computer Engineering (ECEN)",
+    "prefix": "ECEN",
+    "number": "454",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ECEN 214",
+      "ECEN 248"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/ecen/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ECEN 455",
@@ -429,7 +1621,30 @@
     "credit_hours": 4,
     "description": "Digital transmission of information through stochastic channels; analog-to-dialog conversion, entropy and information, Huffman coding; signal detection, the matched-filter receiver, probability of error; baseband and passband modulation, signal space representation of signals, PAM, QAM, PSK, FSK; block coding, convolutional coding; synchronization; communication through fading channels; spread-spectrum signaling; simulation of digital communication systems",
     "prerequisites": "Grade of C or better in ECEN 314 and ECEN 303 or STAT 211 ; junior or senior classification.",
-    "department": "Electrical & Computer Engineering (ECEN)"
+    "department": "Electrical & Computer Engineering (ECEN)",
+    "prefix": "ECEN",
+    "number": "455",
+    "course_level": 400,
+    "credit_min": 4,
+    "credit_max": 4,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ECEN 314",
+      "ECEN 303",
+      "STAT 211"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/ecen/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ECEN 457",
@@ -437,7 +1652,28 @@
     "credit_hours": 4,
     "description": "Analysis of basic operational amplifier and operational transconductance amplifier (OTA) circuits; noise analysis in Op amp and OTA circuits; nonlinear OTA and Op amp circuits; instrumentation amplifiers; transducer circuits; function generators; oscillators and D/A converters and basics of switched-capacitor circuits",
     "prerequisites": "Grade of C or better in ECEN 325 ; junior or senior classification.",
-    "department": "Electrical & Computer Engineering (ECEN)"
+    "department": "Electrical & Computer Engineering (ECEN)",
+    "prefix": "ECEN",
+    "number": "457",
+    "course_level": 400,
+    "credit_min": 4,
+    "credit_max": 4,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ECEN 325"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/ecen/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ECEN 459",
@@ -445,7 +1681,28 @@
     "credit_hours": 4,
     "description": "General considerations in transmission and distribution of electrical energy as related to power systems; calculation of electric transmission line constants; general theory of symmetrical components and application to analysis of power systems during fault conditions",
     "prerequisites": "Grade of C or better in ECEN 340 ; junior or senior classification.",
-    "department": "Electrical & Computer Engineering (ECEN)"
+    "department": "Electrical & Computer Engineering (ECEN)",
+    "prefix": "ECEN",
+    "number": "459",
+    "course_level": 400,
+    "credit_min": 4,
+    "credit_max": 4,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ECEN 340"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/ecen/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ECEN 460",
@@ -453,7 +1710,28 @@
     "credit_hours": 4,
     "description": "Load flow studies; power system transient stability studies; economic system loading and automatic load flow control",
     "prerequisites": "Grade of C or better in ECEN 340 ; junior or senior classification.",
-    "department": "Electrical & Computer Engineering (ECEN)"
+    "department": "Electrical & Computer Engineering (ECEN)",
+    "prefix": "ECEN",
+    "number": "460",
+    "course_level": 400,
+    "credit_min": 4,
+    "credit_max": 4,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ECEN 340"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/ecen/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ECEN 461",
@@ -461,7 +1739,31 @@
     "credit_hours": 3,
     "description": "Surveying the elements of electronic noise including concept, theory, measurements, analysis and design; focusing on creative pictures, examples and problems",
     "prerequisites": "Grade of C or better in ECEN 325 ; grade of C or better in ECEN 303 or STAT 211 ; junior or senior classification.",
-    "department": "Electrical & Computer Engineering (ECEN)"
+    "department": "Electrical & Computer Engineering (ECEN)",
+    "prefix": "ECEN",
+    "number": "461",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ECEN 325",
+      "ECEN 303",
+      "STAT 211"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "Grade of C or better",
+      "grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/ecen/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ECEN 462",
@@ -469,7 +1771,29 @@
     "credit_hours": 3,
     "description": "Principles of optical communication systems; characteristics of optical fibers, lasers and photodetectors for use in communication systems; design of fiber-optic digital systems and other optical communication systems",
     "prerequisites": "Grade of C or better in ECEN 322 and ECEN 370 ; junior or senior classification.",
-    "department": "Electrical & Computer Engineering (ECEN)"
+    "department": "Electrical & Computer Engineering (ECEN)",
+    "prefix": "ECEN",
+    "number": "462",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ECEN 322",
+      "ECEN 370"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/ecen/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ECEN 463",
@@ -477,7 +1801,29 @@
     "credit_hours": 3,
     "description": "Design, construction and application of instrumentation for MR imaging; fundamentals of the architecture of an MR spectrometer and the gradient subsystem used for image localization; emphasis on the radiofrequency sensors and systems used for signal generation and reception",
     "prerequisites": "Grade of C or better in ECEN 322 or BMEN 420 ; junior or senior classification.",
-    "department": "Electrical & Computer Engineering (ECEN)"
+    "department": "Electrical & Computer Engineering (ECEN)",
+    "prefix": "ECEN",
+    "number": "463",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ECEN 322",
+      "BMEN 420"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/ecen/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ECEN 464",
@@ -485,7 +1831,29 @@
     "credit_hours": 3,
     "description": "Ray optics; wave optics; propagation, reflection, refraction and diffraction of light; passive optical components, polarization, optical modulators, interferometers and lasers",
     "prerequisites": "Grade of C or better in ECEN 322 and ECEN 370 ; junior or senior classification.",
-    "department": "Electrical & Computer Engineering (ECEN)"
+    "department": "Electrical & Computer Engineering (ECEN)",
+    "prefix": "ECEN",
+    "number": "464",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ECEN 322",
+      "ECEN 370"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/ecen/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ECEN 465",
@@ -493,7 +1861,28 @@
     "credit_hours": 4,
     "description": "In-depth study of experimental optic techniques; opto-mechanical assemblies; passive optics; interferometers; opto-electronics; basic op-amp circuits; feedback and control of optics with electronics",
     "prerequisites": "Grade of C or better in ECEN 370 ; junior or senior classification.",
-    "department": "Electrical & Computer Engineering (ECEN)"
+    "department": "Electrical & Computer Engineering (ECEN)",
+    "prefix": "ECEN",
+    "number": "465",
+    "course_level": 400,
+    "credit_min": 4,
+    "credit_max": 4,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ECEN 370"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/ecen/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ECEN 467",
@@ -501,7 +1890,29 @@
     "credit_hours": 4,
     "description": "Solar radiation characteristics and measurement; optical coatings including reflection, transmission, absorption and emissivity; concentrating optics, tracking and etendue limit; photovoltaic cells, modules and systems overview; introduction to solar thermal systems",
     "prerequisites": "Grade of C or better in ECEN 322 and ECEN 370 ; junior or senior classification.",
-    "department": "Electrical & Computer Engineering (ECEN)"
+    "department": "Electrical & Computer Engineering (ECEN)",
+    "prefix": "ECEN",
+    "number": "467",
+    "course_level": 400,
+    "credit_min": 4,
+    "credit_max": 4,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ECEN 322",
+      "ECEN 370"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/ecen/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ECEN 468",
@@ -509,7 +1920,28 @@
     "credit_hours": 4,
     "description": "Design, modeling and verification of complex digital systems using hardware description language and electronic system level language",
     "prerequisites": "Grade of C or better in ECEN 248 ; junior or senior classification.",
-    "department": "Electrical & Computer Engineering (ECEN)"
+    "department": "Electrical & Computer Engineering (ECEN)",
+    "prefix": "ECEN",
+    "number": "468",
+    "course_level": 400,
+    "credit_min": 4,
+    "credit_max": 4,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ECEN 248"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/ecen/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ECEN 470",
@@ -517,7 +1949,29 @@
     "credit_hours": 3,
     "description": "Working understanding of the basic principles of laser science, the major components of laser system and their function; examples of laser applications to science, engineering, medicine and industry",
     "prerequisites": "Grade of C or better in ECEN 322 and ECEN 370 ; junior or senior classification.",
-    "department": "Electrical & Computer Engineering (ECEN)"
+    "department": "Electrical & Computer Engineering (ECEN)",
+    "prefix": "ECEN",
+    "number": "470",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ECEN 322",
+      "ECEN 370"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/ecen/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ECEN 471",
@@ -525,7 +1979,28 @@
     "credit_hours": 4,
     "description": "Overview of modern semiconductor power devices, DC-DC linear regulators, switching regulators and battery chargers; emphasis on mathematical foundations, feedback theory, stability and root locus, multi-stage amplifiers, analysis and design of power electronic circuits including DC-DC and AC-DC converters and power supplies; applications on power electronics and power management circuits",
     "prerequisites": "Grade of C or better in ECEN 325 ; junior or senior classification.",
-    "department": "Electrical & Computer Engineering (ECEN)"
+    "department": "Electrical & Computer Engineering (ECEN)",
+    "prefix": "ECEN",
+    "number": "471",
+    "course_level": 400,
+    "credit_min": 4,
+    "credit_max": 4,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ECEN 325"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/ecen/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ECEN 472",
@@ -533,7 +2008,29 @@
     "credit_hours": 4,
     "description": "Fundamentals of MOS and bipolar microelectronic circuit fabrication; theory and practice of diffusion, oxidation, ion implantation, photolithography, etch; yield and reliability considerations; statistical process control; integrated process design, simulation and characterization",
     "prerequisites": "Grade of C or better in ECEN 325 and ECEN 370 ; junior or senior classification.",
-    "department": "Electrical & Computer Engineering (ECEN)"
+    "department": "Electrical & Computer Engineering (ECEN)",
+    "prefix": "ECEN",
+    "number": "472",
+    "course_level": 400,
+    "credit_min": 4,
+    "credit_max": 4,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ECEN 325",
+      "ECEN 370"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/ecen/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ECEN 473",
@@ -541,7 +2038,29 @@
     "credit_hours": 3,
     "description": "General processes for the fabrication of microelectronic devices and integrated circuits; a review of the electronic properties of semiconductors and carrier transport and recombination; analysis and characterization of p-n junctions, bipolar transistors, and MOS capacitors and transistors; design considerations for achieving optimum performance and practical structures are discussed",
     "prerequisites": "Grade of C or better in ECEN 325 and ECEN 370 ; junior or senior classification.",
-    "department": "Electrical & Computer Engineering (ECEN)"
+    "department": "Electrical & Computer Engineering (ECEN)",
+    "prefix": "ECEN",
+    "number": "473",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ECEN 325",
+      "ECEN 370"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/ecen/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ECEN 474",
@@ -549,7 +2068,25 @@
     "credit_hours": 4,
     "description": "Analysis and design of monolithic analog and digital integrated circuits using NMOS, CMOS and bipolar technologies; device modeling; CAD tools and computer-aided design; design methodologies for LSI and VLSI scale circuits; yield and economics; test and evaluation of integrated circuits",
     "prerequisites": "ECEN 326 .",
-    "department": "Electrical & Computer Engineering (ECEN)"
+    "department": "Electrical & Computer Engineering (ECEN)",
+    "prefix": "ECEN",
+    "number": "474",
+    "course_level": 400,
+    "credit_min": 4,
+    "credit_max": 4,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ECEN 326"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/ecen/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ECEN 475",
@@ -557,7 +2094,28 @@
     "credit_hours": 4,
     "description": "Introduction to design and fabrication of microelectronic circuits; emphasis on very large scale integration (VLSI) digital systems; use of state-of-the art design methodologies and tools; design of small to medium scale integrated circuits for fabrication",
     "prerequisites": "Grade of C or better in ECEN 454 ; junior or senior classification.",
-    "department": "Electrical & Computer Engineering (ECEN)"
+    "department": "Electrical & Computer Engineering (ECEN)",
+    "prefix": "ECEN",
+    "number": "475",
+    "course_level": 400,
+    "credit_min": 4,
+    "credit_max": 4,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ECEN 454"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/ecen/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ECEN 477",
@@ -565,7 +2123,29 @@
     "credit_hours": 4,
     "description": "Photonics lab including optical power and spectral measurements of singlemode and multimode optical fibers, hands-on arc fusion splicing, lasers, amplifiers, interferometers, photodetectors, integrated optics, fiber-optic devices, optical modulators",
     "prerequisites": "Grade of C or better in ECEN 322 and ECEN 370 ; junior or senior classification.",
-    "department": "Electrical & Computer Engineering (ECEN)"
+    "department": "Electrical & Computer Engineering (ECEN)",
+    "prefix": "ECEN",
+    "number": "477",
+    "course_level": 400,
+    "credit_min": 4,
+    "credit_max": 4,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ECEN 322",
+      "ECEN 370"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/ecen/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ECEN 478",
@@ -573,7 +2153,28 @@
     "credit_hours": 3,
     "description": "Overview of wireless applications, models for wireless communication channels, modulation formats for wireless communications, multiple access techniques, wireless standards",
     "prerequisites": "Grade of C or better in ECEN 314 ; junior or senior classification.",
-    "department": "Electrical & Computer Engineering (ECEN)"
+    "department": "Electrical & Computer Engineering (ECEN)",
+    "prefix": "ECEN",
+    "number": "478",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ECEN 314"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/ecen/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ECEN 480",
@@ -581,7 +2182,28 @@
     "credit_hours": 3,
     "description": "Introduction to various RF and microwave system parameters, architectures and applications; theory, implementation, and design of RF and microwave systems for communications, radar, sensor, surveillance, navigation, medical and optical applications",
     "prerequisites": "Grade of C or better in ECEN 322 ; junior or senior classification.",
-    "department": "Electrical & Computer Engineering (ECEN)"
+    "department": "Electrical & Computer Engineering (ECEN)",
+    "prefix": "ECEN",
+    "number": "480",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ECEN 322"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/ecen/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ECEN 484",
@@ -589,7 +2211,30 @@
     "credit_hours": 0,
     "description": "Professional internship in a private company, government agency or laboratory, university or organization to provide work and/or research experience related to the student’s major and career objectives. May be taken three times for credit",
     "prerequisites": "Grade of C or better in ECEN 214 or ECEN 248 ; junior or senior classification; approval of instructor and internship agency.",
-    "department": "Electrical & Computer Engineering (ECEN)"
+    "department": "Electrical & Computer Engineering (ECEN)",
+    "prefix": "ECEN",
+    "number": "484",
+    "course_level": 400,
+    "credit_min": 0,
+    "credit_max": 0,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": "May be taken three times for credit",
+    "campuses": [],
+    "prerequisite_courses": [
+      "ECEN 214",
+      "ECEN 248"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "approval of instructor",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/ecen/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ECEN 485",
@@ -597,7 +2242,26 @@
     "credit_hours": "0-6",
     "description": "Problems of limited scope approved on an individual basis intended to promote independent study",
     "prerequisites": "Senior classification; approval of department head.",
-    "department": "Electrical & Computer Engineering (ECEN)"
+    "department": "Electrical & Computer Engineering (ECEN)",
+    "prefix": "ECEN",
+    "number": "485",
+    "course_level": 400,
+    "credit_min": 0,
+    "credit_max": 6,
+    "is_variable_credit": true,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Senior classification",
+      "approval of department head"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/ecen/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ECEN 489",
@@ -605,7 +2269,25 @@
     "credit_hours": "1-4",
     "description": "Selected topics in an identified area of electrical engineering. May be repeated for credit",
     "prerequisites": "Approval of instructor.",
-    "department": "Electrical & Computer Engineering (ECEN)"
+    "department": "Electrical & Computer Engineering (ECEN)",
+    "prefix": "ECEN",
+    "number": "489",
+    "course_level": 400,
+    "credit_min": 1,
+    "credit_max": 4,
+    "is_variable_credit": true,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": "May be repeated for credit",
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/ecen/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ECEN 491",
@@ -613,6 +2295,25 @@
     "credit_hours": "0-4",
     "description": "Research conducted under the direction of faculty member in electrical engineering. May be repeated 3 times for credit",
     "prerequisites": "Junior or senior classification and approval of instructor.",
-    "department": "Electrical & Computer Engineering (ECEN)"
+    "department": "Electrical & Computer Engineering (ECEN)",
+    "prefix": "ECEN",
+    "number": "491",
+    "course_level": 400,
+    "credit_min": 0,
+    "credit_max": 4,
+    "is_variable_credit": true,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": "May be repeated 3 times for credit",
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification",
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/ecen/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   }
 ]

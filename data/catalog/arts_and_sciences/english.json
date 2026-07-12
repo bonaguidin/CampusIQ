@@ -6,7 +6,25 @@
     "description": "(ENGL 1301) Introduction to Rhetoric and Composition. Intensive study of and practice in writing processes, from invention and researching to drafting, revising and editing, both individually and corroboratively; emphasis on effective rhetorical choices including audience, purpose, arrangement and style; focus on writing the academic essay as a vehicle for learning, communicating and critical analysis",
     "prerequisites": null,
     "department": "English",
-    "satisfies_ucc": "Communication"
+    "satisfies_ucc": "Communication",
+    "prefix": "ENGL",
+    "number": "103",
+    "course_level": 100,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [
+      "Communication"
+    ],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGL 104",
@@ -15,7 +33,30 @@
     "description": "(ENGL 1302) Composition and Rhetoric. Focus on written communication through the development of analytical reading ability, critical thinking and information literacy; emphasis on effective rhetorical choices such as audience, purpose, arrangement and style. Instructors teaching this class will choose texts, assessments and approaches that represent current scholarship and satisfy course learning objectives",
     "prerequisites": "Freshman or sophomore classification; also taught at Galveston and Qatar campuses.",
     "department": "English",
-    "satisfies_ucc": "Communication"
+    "satisfies_ucc": "Communication",
+    "prefix": "ENGL",
+    "number": "104",
+    "course_level": 100,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [
+      "Communication"
+    ],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [
+      "Galveston",
+      "Qatar"
+    ],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Freshman or sophomore classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGL 107",
@@ -23,7 +64,23 @@
     "credit_hours": 3,
     "description": "Introduction to the methods and approaches of the health humanities; exposure to key scholarship in this field as well as major methods and approaches; application of such skills to the analysis of cultural case studies such as illness narratives or contemporary debates in scientific bioethics. Cross Listing: HHUM 107 and PHIL 107",
     "prerequisites": null,
-    "department": "English"
+    "department": "English",
+    "prefix": "ENGL",
+    "number": "107",
+    "course_level": 100,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGL 202",
@@ -32,7 +89,27 @@
     "description": "How does one tell the story of the natural world and human interactions within it? This course explores that question through environmental literature, investigating creative efforts that imagine, celebrate, exploit and advocate for the more-than-human world. Students will engage with a variety of texts, practice interpretive methods from literary studies and ask critical questions about how narrative and other forms of representation shape our understanding of the environment and our personal or social responsibilities to the natural world of which humans are a part. This course is reading intensive. Instructors teaching this class will choose texts, assessments and approaches that represent current scholarship and satisfy course learning objectives; also taught at Qatar campus",
     "prerequisites": null,
     "department": "English",
-    "satisfies_ucc": "Language, Philosophy and Culture"
+    "satisfies_ucc": "Language, Philosophy and Culture",
+    "prefix": "ENGL",
+    "number": "202",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [
+      "Language, Philosophy and Culture"
+    ],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [
+      "Qatar"
+    ],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGL 203",
@@ -41,7 +118,27 @@
     "description": "Focus on writing about literature through practice in skills such as literary analysis, close reading and interpretation; practice in writing, discussion and other forms of communication about texts; may include works drawn from a wide range of definitions of literature, such as novels, films, songs, poetry, drama and/or other kinds of texts. Text selection organized thematically and/or by genre. Instructors teaching this class will choose texts, assessments and approaches that represent current scholarship and satisfy course learning objectives; also taught at Galveston campus",
     "prerequisites": null,
     "department": "English",
-    "satisfies_ucc": "Communication"
+    "satisfies_ucc": "Communication",
+    "prefix": "ENGL",
+    "number": "203",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [
+      "Communication"
+    ],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [
+      "Galveston"
+    ],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGL 206",
@@ -50,7 +147,27 @@
     "description": "Introduction to some of the major literary and cultural forms of the twenty-first century. Course topics might include texts from a variety of national and cultural origins, different approaches to a relevant topic or representations of contemporary historical events. Students will explore how contemporary aesthetic and intellectual texts develop and express ideas about the human condition across cultures. Instructors teaching this class will choose texts, assessments and approaches that represent current scholarship and satisfy course learning objectives; also taught at Qatar campus",
     "prerequisites": null,
     "department": "English",
-    "satisfies_ucc": "Language, Philosophy and Culture"
+    "satisfies_ucc": "Language, Philosophy and Culture",
+    "prefix": "ENGL",
+    "number": "206",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [
+      "Language, Philosophy and Culture"
+    ],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [
+      "Qatar"
+    ],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGL 207",
@@ -59,7 +176,25 @@
     "description": "Introduction to digital culture(s); exposure to some methodologies for the interpretation and critique of digital media from the humanities. These may include but are not limited to approaches from critical data studies, media studies, digital humanities, and the history of science and technology. Students can expect to gain experience analyzing digital media and expect to develop critical thinking and intercultural competence while engaging in respectful discourse on complex topics related to digital cultures. Instructors teaching this class will choose texts, assessments and approaches that represent current scholarship and satisfy course learning objectives",
     "prerequisites": null,
     "department": "English",
-    "satisfies_ucc": "Language, Philosophy and Culture"
+    "satisfies_ucc": "Language, Philosophy and Culture",
+    "prefix": "ENGL",
+    "number": "207",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [
+      "Language, Philosophy and Culture"
+    ],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGL 210",
@@ -68,7 +203,28 @@
     "description": "(ENGL 2311) Technical and Professional Writing. Focus on writing for technical and professional rhetorical situations with an emphasis on document design, audience awareness, clarity of communication and collaborative teamwork. Instructors teaching this class will choose texts, assessments and approaches that represent current scholarship and satisfy course learning objectives; also taught at Galveston and Qatar campuses",
     "prerequisites": null,
     "department": "English",
-    "satisfies_ucc": "Communication"
+    "satisfies_ucc": "Communication",
+    "prefix": "ENGL",
+    "number": "210",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [
+      "Communication"
+    ],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [
+      "Galveston",
+      "Qatar"
+    ],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGL 212",
@@ -77,7 +233,27 @@
     "description": "Exploration of selected works of Shakespeare in text, performance and/or adaptation, with attention to various historical, cultural and/or political contexts informing Shakespeare’s texts and their study. Instructors teaching this class will choose texts, assessments and approaches that represent current scholarship and satisfy course learning objectives; also taught at Galveston campus",
     "prerequisites": null,
     "department": "English",
-    "satisfies_ucc": "Creative Arts"
+    "satisfies_ucc": "Creative Arts",
+    "prefix": "ENGL",
+    "number": "212",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [
+      "Creative Arts"
+    ],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [
+      "Galveston"
+    ],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGL 219",
@@ -86,7 +262,27 @@
     "description": "Exploration of the interrelationships of literature and other arts, including the exchange or adaptation of aesthetic principles, techniques and content among textual, visual and multimedia art forms, such as painting, sculpture, film, music, architecture, graphic and decorative arts. Instructors teaching this class will choose texts, assessments and approaches that represent current scholarship and satisfy course learning objectives; also taught at Qatar campus",
     "prerequisites": null,
     "department": "English",
-    "satisfies_ucc": "Creative Arts"
+    "satisfies_ucc": "Creative Arts",
+    "prefix": "ENGL",
+    "number": "219",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [
+      "Creative Arts"
+    ],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [
+      "Qatar"
+    ],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGL 220",
@@ -94,7 +290,23 @@
     "credit_hours": 3,
     "description": "An exploration of the graphic novel as a medium, with a focus on the form’s varieties, use of both textual and visual elements and impacts on our understanding of storytelling and artistic expression; analysis of texts in relation to social and cultural contexts, various theoretical lenses and/or scholarly engagements with graphic novels. Instructors teaching this class will choose texts, assessments and approaches that represent current scholarship and satisfy course learning objectives",
     "prerequisites": null,
-    "department": "English"
+    "department": "English",
+    "prefix": "ENGL",
+    "number": "220",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGL 227",
@@ -103,7 +315,25 @@
     "description": "(ENGL 2327) American Literature - The Beginnings to Civil War. This course is a survey introduction to American literature from the beginnings of the Americas to the Civil War examining writers, genres and movements of the period. Instructors teaching this class will choose texts, assessments and approaches that represent current scholarship and satisfy course learning objectives",
     "prerequisites": null,
     "department": "English",
-    "satisfies_ucc": "Language, Philosophy and Culture"
+    "satisfies_ucc": "Language, Philosophy and Culture",
+    "prefix": "ENGL",
+    "number": "227",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [
+      "Language, Philosophy and Culture"
+    ],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGL 228",
@@ -112,7 +342,25 @@
     "description": "(ENGL 2328) American Literature - Civil War to Present. This course is a survey introduction to American literature from the Civil War to the present examining writers, genres and movements of the period. Instructors teaching this class will choose texts, assessments and approaches that represent current scholarship and satisfy course learning objectives",
     "prerequisites": null,
     "department": "English",
-    "satisfies_ucc": "Language, Philosophy and Culture"
+    "satisfies_ucc": "Language, Philosophy and Culture",
+    "prefix": "ENGL",
+    "number": "228",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [
+      "Language, Philosophy and Culture"
+    ],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGL 231",
@@ -121,7 +369,25 @@
     "description": "(ENGL 2322) Survey of English Literature I. Literature of England from the early medieval period through the 18th century, with attention to various historical, cultural and/or political contexts informing the texts and their study. Instructors teaching this class will choose texts, assessments and approaches that represent current scholarship and satisfy course learning objectives",
     "prerequisites": null,
     "department": "English",
-    "satisfies_ucc": "Language, Philosophy and Culture"
+    "satisfies_ucc": "Language, Philosophy and Culture",
+    "prefix": "ENGL",
+    "number": "231",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [
+      "Language, Philosophy and Culture"
+    ],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGL 232",
@@ -130,7 +396,27 @@
     "description": "(ENGL 2323) Survey of English Literature II. Literature of Great Britain and its colonies from the late 18th century to the 21st century, with attention to various historical, cultural, political and/or critical contexts informing the texts and their study. Instructors teaching this class will choose texts, assessments and approaches that represent current scholarship and satisfy course learning objectives; also taught at Qatar campus",
     "prerequisites": null,
     "department": "English",
-    "satisfies_ucc": "Language, Philosophy and Culture"
+    "satisfies_ucc": "Language, Philosophy and Culture",
+    "prefix": "ENGL",
+    "number": "232",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [
+      "Language, Philosophy and Culture"
+    ],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [
+      "Qatar"
+    ],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGL 234",
@@ -138,7 +424,23 @@
     "credit_hours": 3,
     "description": "Introduction to the speculative and marvelous genres of literature; survey of genres such as science fiction, fantasy, horror, fairy tales and/or related media such as film with their respective genre concepts, narrative frameworks and significant authors and directors; examination of different methodological approaches and historical contexts. Instructors teaching this class will choose texts, assessments and approaches that represent current scholarship and satisfy course learning objectives",
     "prerequisites": null,
-    "department": "English"
+    "department": "English",
+    "prefix": "ENGL",
+    "number": "234",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGL 235",
@@ -146,7 +448,23 @@
     "credit_hours": 3,
     "description": "(ENGL 2307) Elements of Creative Writing. Initiation into the craft of creative writing in prose and poetry; extensive reading in the genres; peer workshops. Instructors teaching this class will choose texts, assessments and approaches that represent published creative work and satisfy course learning objectives",
     "prerequisites": null,
-    "department": "English"
+    "department": "English",
+    "prefix": "ENGL",
+    "number": "235",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGL 241",
@@ -154,7 +472,25 @@
     "credit_hours": 3,
     "description": "Focus on and practice in the writing of advanced academic and/or professional prose. May consider topics such as scholarly genres of writing and/or questions related to writing process, research, style, audience awareness, digital writing or ethics in scholarly discourse. Instructors teaching this class will choose texts, assessments and approaches that represent current scholarship and satisfy course learning objectives. Also taught at Galveston campus",
     "prerequisites": null,
-    "department": "English"
+    "department": "English",
+    "prefix": "ENGL",
+    "number": "241",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [
+      "Galveston"
+    ],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGL 253",
@@ -163,7 +499,29 @@
     "description": "Introduction to Cultural Studies and Popular Cultural. An introduction to the history, theories and methods of contemporary cultural studies. The course will explore key concepts in cultural theory to examine specific aspects of popular culture as well as cultural sites and practices so as to expand upon the analytical and critical thinking skills learned in ENGL 104 and 203",
     "prerequisites": "ENGL 104 ; Galveston campus.",
     "department": "English",
-    "satisfies_ucc": "Language, Philosophy and Culture"
+    "satisfies_ucc": "Language, Philosophy and Culture",
+    "prefix": "ENGL",
+    "number": "253",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [
+      "Language, Philosophy and Culture"
+    ],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [
+      "Galveston"
+    ],
+    "prerequisite_courses": [
+      "ENGL 104"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGL 285",
@@ -171,7 +529,23 @@
     "credit_hours": "0-4",
     "description": "Readings selected for specific need of major or minor in English",
     "prerequisites": null,
-    "department": "English"
+    "department": "English",
+    "prefix": "ENGL",
+    "number": "285",
+    "course_level": 200,
+    "credit_min": 0,
+    "credit_max": 4,
+    "is_variable_credit": true,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGL 289",
@@ -179,7 +553,23 @@
     "credit_hours": "1-4",
     "description": "Selected topics in an identified area of English. May be repeated for credit",
     "prerequisites": null,
-    "department": "English"
+    "department": "English",
+    "prefix": "ENGL",
+    "number": "289",
+    "course_level": 200,
+    "credit_min": 1,
+    "credit_max": 4,
+    "is_variable_credit": true,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": "May be repeated for credit",
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGL 291",
@@ -187,7 +577,26 @@
     "credit_hours": "0-3",
     "description": "Research conducted under the direction of faculty member in English",
     "prerequisites": "3 hours of 200-level literature; freshman or sophomore classification and approval of instructor.",
-    "department": "English"
+    "department": "English",
+    "prefix": "ENGL",
+    "number": "291",
+    "course_level": 200,
+    "credit_min": 0,
+    "credit_max": 3,
+    "is_variable_credit": true,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "freshman or sophomore classification",
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGL 292",
@@ -196,7 +605,25 @@
     "description": "Introduction to methodology, scope and practice of literature and medicine studies; analysis of literature and/or other texts dealing with health and illness; engagement with different disciplinary perspectives as a tool for critical thinking. Instructors teaching this class will choose texts, assessments and approaches that represent current scholarship and satisfy course learning objectives",
     "prerequisites": null,
     "department": "English",
-    "satisfies_ucc": "Language, Philosophy and Culture"
+    "satisfies_ucc": "Language, Philosophy and Culture",
+    "prefix": "ENGL",
+    "number": "292",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [
+      "Language, Philosophy and Culture"
+    ],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGL 303",
@@ -204,7 +631,28 @@
     "credit_hours": 3,
     "description": "A writing intensive introduction to the central methods of the discipline and the operations of the major at Texas A&M. Instructors teaching this class will choose texts, assessments and approaches that represent current scholarship and satisfy course learning objectives",
     "prerequisites": "ENGL 104 or concurrent enrollment; junior or senior classification or approval of instructor.",
-    "department": "English"
+    "department": "English",
+    "prefix": "ENGL",
+    "number": "303",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ENGL 104"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGL 304",
@@ -212,7 +660,26 @@
     "credit_hours": 3,
     "description": "Examination of a particular digital theme, genre or technology from a humanities perspective, such as introduction to making and/or interpreting digital materials; study of digital culture and/or digital archives. Instructors teaching this class will choose texts, assessments and approaches that represent current scholarship and satisfy course learning objectives. May be taken three times for credit",
     "prerequisites": "Junior or senior classification or approval of instructor.",
-    "department": "English"
+    "department": "English",
+    "prefix": "ENGL",
+    "number": "304",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": "May be taken three times for credit",
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification",
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGL 305",
@@ -220,7 +687,25 @@
     "credit_hours": 3,
     "description": "Examination of Texas literature, culture and multi-media; exploration of the development of Texas identities and responses to the rich cultural expressions within the state; topics vary with each section. Instructors teaching this class will choose texts, assessments and approaches that represent current scholarship and satisfy course learning objectives",
     "prerequisites": "Junior or senior classification.",
-    "department": "English"
+    "department": "English",
+    "prefix": "ENGL",
+    "number": "305",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGL 306",
@@ -229,7 +714,30 @@
     "description": "Examination of texts written in English that de-center the nation-state as the central way to organize cultural comparison; includes colonialism, economics, empire, globalization, migration, race and refugees. Instructors teaching this class will choose texts, assessments and approaches that represent current scholarship and satisfy course learning objectives",
     "prerequisites": "3 credits of literature at 200-level or above; junior or senior classification or approval of instructor; also taught at Qatar campus.",
     "department": "English",
-    "satisfies_ucc": "Language, Philosophy and Culture"
+    "satisfies_ucc": "Language, Philosophy and Culture",
+    "prefix": "ENGL",
+    "number": "306",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [
+      "Language, Philosophy and Culture"
+    ],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [
+      "Qatar"
+    ],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "junior or senior classification",
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGL 308",
@@ -237,7 +745,23 @@
     "credit_hours": 3,
     "description": "History of critical thought about art and culture from antiquity to the present; topics and readings span a variety of eras, approaches and artistic genres. Key themes and ideas in criticism may be presented in the context of historical figures or entire critical movements such as new criticism, structuralism and poststructuralism, historical materialism, feminism, race and ethnic studies and cultural studies, among others. Instructors teaching this class will choose texts, assessments and approaches that represent historic and current scholarship and satisfy course learning objectives",
     "prerequisites": "3 credits of literature at 200-level or above.",
-    "department": "English"
+    "department": "English",
+    "prefix": "ENGL",
+    "number": "308",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGL 313",
@@ -245,7 +769,23 @@
     "credit_hours": 3,
     "description": "Introductory study of Old and Middle English literature, exclusive of Chaucer, surveying major genres and topics. Instructors teaching this class will choose texts, assessments and approaches that represent current scholarship and satisfy course learning objectives",
     "prerequisites": "3 credits of literature at 200-level or above.",
-    "department": "English"
+    "department": "English",
+    "prefix": "ENGL",
+    "number": "313",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGL 314",
@@ -253,7 +793,23 @@
     "credit_hours": 3,
     "description": "Period course in the poetry, prose and drama of the intellectual and artistic movement known as the Renaissance, which flourished in England throughout the 16th and early 17th centuries. Additional attention will be given to historical, cultural and/or political contexts informing the texts and their study. Instructors teaching this class will choose texts, assessments and approaches that represent current scholarship and satisfy course learning objectives",
     "prerequisites": "3 credits of literature at 200-level or above.",
-    "department": "English"
+    "department": "English",
+    "prefix": "ENGL",
+    "number": "314",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGL 315",
@@ -261,7 +817,23 @@
     "credit_hours": 3,
     "description": "Period course in English poetry, prose and drama of the 17th century with attention to various historical, cultural and/or political contexts informing the texts and their study. Instructors teaching this class will choose texts, assessments and approaches that represent current scholarship and satisfy course learning objectives",
     "prerequisites": "3 credits of literature at 200-level or above.",
-    "department": "English"
+    "department": "English",
+    "prefix": "ENGL",
+    "number": "315",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGL 316",
@@ -269,7 +841,23 @@
     "credit_hours": 3,
     "description": "Period course studying literature written in English created during the “long” 18th century (1660-1820) with attention given to its cultural contexts. Instructors teaching this class will choose texts, assessments and approaches that represent current scholarship and satisfy course learning objectives",
     "prerequisites": "3 credits of literature at 200-level or above.",
-    "department": "English"
+    "department": "English",
+    "prefix": "ENGL",
+    "number": "316",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGL 317",
@@ -277,7 +865,23 @@
     "credit_hours": 3,
     "description": "Period course in early British, non-Shakespearean drama to 1642 with attention to various historical, cultural and/or political contexts informing early drama and its study. Instructors teaching this class will choose texts, assessments and approaches that represent current scholarship and satisfy course learning objectives",
     "prerequisites": "3 credits of literature at the 200-level or above.",
-    "department": "English"
+    "department": "English",
+    "prefix": "ENGL",
+    "number": "317",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGL 318",
@@ -285,7 +889,23 @@
     "credit_hours": 3,
     "description": "Exploration of historical and contemporary utopian literature through a variety of writers and texts. Topics may include but are not limited to: the relationship between utopia and dystopia; various critical theories related to utopia, dystopia and/or planning for the “good life”; myriad developments of the genre in relationship to developments of politics, history, culture and/or literary study. Instructors teaching this class will choose texts, assessments and approaches that represent current scholarship and satisfy course learning objectives",
     "prerequisites": "3 credits of literature at 200-level or above.",
-    "department": "English"
+    "department": "English",
+    "prefix": "ENGL",
+    "number": "318",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGL 320",
@@ -293,7 +913,25 @@
     "credit_hours": 3,
     "description": "Focus on the practice of principles and methods of technical and professional editing across print and digital media, including copyediting, comprehensive editing and editorial project management with attention to standards, style and design. Topics may include understanding rhetorical situations of editing projects; editing for organization, clarity, accuracy, grammar and usability; and collaboration with writers and editors. Students can expect to strengthen skills in critical thinking, written communication and professional collaboration while developing an understanding of the role of editors in contemporary workplaces. Instructors teaching this class will choose texts, assessments and approaches that represent current scholarship and satisfy course learning objectives",
     "prerequisites": "ENGL 210 .",
-    "department": "English"
+    "department": "English",
+    "prefix": "ENGL",
+    "number": "320",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ENGL 210"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGL 321",
@@ -301,7 +939,23 @@
     "credit_hours": 3,
     "description": "Representative texts in English generated throughout the British empire in the late 18th and early 19th centuries, with attention to the cultural and historical contexts that produced them. Instructors teaching this class will choose texts, assessments and approaches that represent current scholarship and satisfy course learning objectives",
     "prerequisites": "3 credits of literature at 200-level or above.",
-    "department": "English"
+    "department": "English",
+    "prefix": "ENGL",
+    "number": "321",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGL 322",
@@ -309,7 +963,23 @@
     "credit_hours": 3,
     "description": "Exploration of some representative works of literature by writers resident in Great Britain and its colonies during the Victorian period. Instructors teaching this class will choose texts, assessments and approaches that represent current scholarship and satisfy course learning objectives",
     "prerequisites": "3 credits of literature at 200-level or above.",
-    "department": "English"
+    "department": "English",
+    "prefix": "ENGL",
+    "number": "322",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGL 323",
@@ -317,7 +987,23 @@
     "credit_hours": 3,
     "description": "Period course in American literature and culture from the 1820s to the 1860s, covering writers who may include, but not limited to, Emerson, Hawthorne, Thoreau, Walker, Douglass, Melville, Poe, Whitman, Dickinson, Jacobs and others. Instructors teaching this class will choose texts, assessments and approaches that represent current scholarship and satisfy course learning objectives",
     "prerequisites": "3 credits of literature at 200-level or above.",
-    "department": "English"
+    "department": "English",
+    "prefix": "ENGL",
+    "number": "323",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGL 330",
@@ -326,7 +1012,29 @@
     "description": "Legend of King Arthur in the original language or translation from its Medieval origins to the present. Instructors teaching this class will choose texts, assessments and approaches that are represented in current scholarship and satisfy course learning objectives",
     "prerequisites": "Junior or senior classification; also taught at Galveston campus.",
     "department": "English",
-    "satisfies_ucc": "Language, Philosophy and Culture"
+    "satisfies_ucc": "Language, Philosophy and Culture",
+    "prefix": "ENGL",
+    "number": "330",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [
+      "Language, Philosophy and Culture"
+    ],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [
+      "Galveston"
+    ],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGL 331",
@@ -334,7 +1042,25 @@
     "credit_hours": 3,
     "description": "An exploration of the development of the fantasy genre which may include a survey of foundational texts (medieval romance, myth, fairy tales, etc.) and such topics as significant authors, movements, sub-genres and media. Instructors teaching this class will choose texts, assessments and approaches that represent current scholarship and satisfy course learning objectives",
     "prerequisites": "Junior or senior classification.",
-    "department": "English"
+    "department": "English",
+    "prefix": "ENGL",
+    "number": "331",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGL 334",
@@ -343,7 +1069,29 @@
     "description": "Origins and development of the science fiction genre. Instructors teaching this class will choose texts, assessments and approaches that represent current scholarship and satisfy course learning objectives",
     "prerequisites": "Junior or senior classification; also taught at Galveston campus.",
     "department": "English",
-    "satisfies_ucc": "Language, Philosophy and Culture"
+    "satisfies_ucc": "Language, Philosophy and Culture",
+    "prefix": "ENGL",
+    "number": "334",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [
+      "Language, Philosophy and Culture"
+    ],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [
+      "Galveston"
+    ],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGL 335",
@@ -352,7 +1100,30 @@
     "description": "Significance of the sea in fictional and factual accounts, such as novels, short stories, poems and narratives of sailors and seafaring life",
     "prerequisites": "Three credits of literature at 200 level or above; junior or senior classification or approval of instructor; Galveston campus; also taught at College Station campus.",
     "department": "English",
-    "satisfies_ucc": "Language, Philosophy and Culture"
+    "satisfies_ucc": "Language, Philosophy and Culture",
+    "prefix": "ENGL",
+    "number": "335",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [
+      "Language, Philosophy and Culture"
+    ],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [
+      "Galveston"
+    ],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "junior or senior classification",
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGL 336",
@@ -360,7 +1131,25 @@
     "credit_hours": 3,
     "description": "The Southwestern region of the United States is a complicated place of competing values and cultures and peoples. In this class we will read novels and view films and artwork by Southwestern writers and artists, and we will discuss the ways these works do — or do not — reflect the complex ways in which we define the Southwest and America. Instructors teaching this class will choose texts, assessments and approaches that represent current scholarship and satisfy course learning objectives",
     "prerequisites": "Junior or senior classification.",
-    "department": "English"
+    "department": "English",
+    "prefix": "ENGL",
+    "number": "336",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGL 337",
@@ -368,7 +1157,25 @@
     "credit_hours": 3,
     "description": "Study of writing, culture and genres of the American South based on reading and analysis of key texts by representative authors and scholars of Southern studies. Instructors teaching this class will choose texts, assessments and approaches that represent current scholarship and satisfy course learning objectives",
     "prerequisites": "Junior or senior classification.",
-    "department": "English"
+    "department": "English",
+    "prefix": "ENGL",
+    "number": "337",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGL 338",
@@ -377,7 +1184,29 @@
     "description": "Multi-ethnic study of American literature, including writings of Black Americans, American Indians, Jewish Americans, Latino/as and other ethnic groups. Instructors teaching this class will choose texts, assessments and approaches that represent current scholarship and satisfy course learning objectives",
     "prerequisites": "Junior or senior classification; also taught at Galveston campus.",
     "department": "English",
-    "satisfies_ucc": "Language, Philosophy and Culture"
+    "satisfies_ucc": "Language, Philosophy and Culture",
+    "prefix": "ENGL",
+    "number": "338",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [
+      "Language, Philosophy and Culture"
+    ],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [
+      "Galveston"
+    ],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGL 340",
@@ -385,7 +1214,23 @@
     "credit_hours": 3,
     "description": "Representative plays and performances from the late nineteenth century to the present",
     "prerequisites": "3 credits of literature at 200-level or above.",
-    "department": "English"
+    "department": "English",
+    "prefix": "ENGL",
+    "number": "340",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGL 342",
@@ -393,7 +1238,31 @@
     "credit_hours": 3,
     "description": "Study of field of rhetoric of health and medicine with specific attention to the study of gender, including issues in reproduction, expertise and illness; range of methods and methodological approaches within the field",
     "prerequisites": "Junior or senior classification. Cross Listing: COMM 342 and WGST 342 .",
-    "department": "English"
+    "department": "English",
+    "prefix": "ENGL",
+    "number": "342",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "COMM 342",
+      "WGST 342"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "COMM 342",
+      "WGST 342"
+    ],
+    "restrictions": [
+      "Junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGL 343",
@@ -401,7 +1270,23 @@
     "credit_hours": 3,
     "description": "An exploration of the history, development, theory and practice of fairy tales, including traditional tales from writers such as Jacob and Wilhelm Grimm and modern fairy tale retellings in text, which may include long form genres, film and/or other media. Instructors teaching this class will choose texts, assessments and approaches that represent current scholarship and satisfy course learning objectives",
     "prerequisites": "3 credits of literature at 200-level or above.",
-    "department": "English"
+    "department": "English",
+    "prefix": "ENGL",
+    "number": "343",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGL 345",
@@ -409,7 +1294,27 @@
     "credit_hours": 3,
     "description": "A different topic for prose writers or poets each term; may include — among other approaches — historical development of genres; connection between biography and artistic production; aesthetic theories and craft techniques. Instructors teaching this class will choose texts, assessments and approaches that represent published creative work and satisfy course learning objectives",
     "prerequisites": "ENGL 235 ; junior or senior classification.",
-    "department": "English"
+    "department": "English",
+    "prefix": "ENGL",
+    "number": "345",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ENGL 235"
+    ],
+    "restrictions": [
+      "junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGL 347",
@@ -417,7 +1322,28 @@
     "credit_hours": 3,
     "description": "Production of advanced, complete stories; peer workshops; extensive reading. Students may encounter major authors and varied prose styles in established literary fiction writing, and the course may cover creative nonfiction and fiction. Close reading, critical thinking and written communication will be prioritized. Instructors teaching this class will choose texts, assessments and approaches that represent published creative work and satisfy course learning objectives. May be taken two times for credit",
     "prerequisites": "ENGL 235 ; junior or senior classification or approval of instructor.",
-    "department": "English"
+    "department": "English",
+    "prefix": "ENGL",
+    "number": "347",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": "May be taken two times for credit",
+    "campuses": [],
+    "prerequisite_courses": [
+      "ENGL 235"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGL 348",
@@ -425,7 +1351,28 @@
     "credit_hours": 3,
     "description": "Production of advanced, complete poems; peer workshops; extensive reading of works that represent a cross section of poetic approaches and styles. Instructors teaching this class will choose texts, assessments and approaches that represent published creative work and satisfy course learning objectives. May be taken two times for credit",
     "prerequisites": "ENGL 235 ; junior or senior classification or approval of instructor.",
-    "department": "English"
+    "department": "English",
+    "prefix": "ENGL",
+    "number": "348",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": "May be taken two times for credit",
+    "campuses": [],
+    "prerequisite_courses": [
+      "ENGL 235"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGL 350",
@@ -433,7 +1380,25 @@
     "credit_hours": 3,
     "description": "This course explores some of the major cultural texts from the late nineteenth to mid-twentieth century. Students can expect to encounter materials that grapple with the vast historical and social changes occurring during the time and to consider how texts represent diverse viewpoints. Instructors teaching this class will choose texts, assessments and approaches that represent current scholarship and satisfy course learning objectives",
     "prerequisites": "Junior or senior classification.",
-    "department": "English"
+    "department": "English",
+    "prefix": "ENGL",
+    "number": "350",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGL 352",
@@ -442,7 +1407,27 @@
     "description": "Literature in English from 1945 to the present with attention to form and representation, thematic concerns and cultural implications. Students will develop their skills in close reading and literary scholarship. Instructors teaching this class will choose texts, assessments and approaches that represent current scholarship and satisfy course learning objectives",
     "prerequisites": "Junior or senior classification.",
     "department": "English",
-    "satisfies_ucc": "Language, Philosophy and Culture"
+    "satisfies_ucc": "Language, Philosophy and Culture",
+    "prefix": "ENGL",
+    "number": "352",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [
+      "Language, Philosophy and Culture"
+    ],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGL 353",
@@ -450,7 +1435,27 @@
     "credit_hours": 3,
     "description": "Exploration of a selection of major approaches to the theory and practice of oral and written rhetoric and discourse up to the end of the 19th century. Instructors teaching this class will choose texts, assessments and approaches that represent current scholarship and satisfy course learning objectives",
     "prerequisites": "Junior or senior classification; also taught at Galveston campus.",
-    "department": "English"
+    "department": "English",
+    "prefix": "ENGL",
+    "number": "353",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": "Exploration of a selection of major approaches to the theory and practice of oral and written rhetoric and discourse up to the end of the 19th century.",
+    "campuses": [
+      "Galveston"
+    ],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGL 354",
@@ -458,7 +1463,25 @@
     "credit_hours": 3,
     "description": "Study of 20th and 21st century rhetorical theories and theorists; focus on relationships among rhetoric and culture, such as philosophy of language, theories of the public, public discourse, theories of media and/or rhetoric’s relationship to embodiment, identity and/or community. Instructors teaching this class will choose texts, assessments and approaches that represent current scholarship and satisfy course learning objectives",
     "prerequisites": "Junior or senior classification.",
-    "department": "English"
+    "department": "English",
+    "prefix": "ENGL",
+    "number": "354",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGL 355",
@@ -466,7 +1489,25 @@
     "credit_hours": 3,
     "description": "Focus on analysis of textual styles from a rhetorical perspective; impact of culture and contexts on style; practice in analysis and/or imitation of thematically chosen texts. Instructors teaching this class will choose texts, assessments and approaches that represent current scholarship and satisfy course learning objectives",
     "prerequisites": "Junior or senior classification.",
-    "department": "English"
+    "department": "English",
+    "prefix": "ENGL",
+    "number": "355",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGL 357",
@@ -474,7 +1515,26 @@
     "credit_hours": 3,
     "description": "Examination of Native American literature from the 19th century to the present, with a focus on the formal and narrative techniques used by Native authors to translate Indigenous survival, governance, storytelling traditions and kinship networks into the novel form. Class material may also cover the way native literature responds to the mythologization of “The Indian” in American popular media. Instructors teaching this class will choose texts, assessments and approaches that represent current scholarship and satisfy course learning objectives",
     "prerequisites": "Junior or senior classification or approval of instructor.",
-    "department": "English"
+    "department": "English",
+    "prefix": "ENGL",
+    "number": "357",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification",
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGL 359",
@@ -482,7 +1542,27 @@
     "credit_hours": 3,
     "description": "Advanced study of major forms of prose or poetry, analysis of structure coupled with writing assignments illustrating principles of form in narrative and/or lyric modes. Instructors teaching this class will choose texts, assessments and approaches that represent published creative work and satisfy course learning objectives. May be taken three times for credit",
     "prerequisites": "ENGL 235 ; junior or senior classification.",
-    "department": "English"
+    "department": "English",
+    "prefix": "ENGL",
+    "number": "359",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": "May be taken three times for credit",
+    "campuses": [],
+    "prerequisite_courses": [
+      "ENGL 235"
+    ],
+    "restrictions": [
+      "junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGL 360",
@@ -491,7 +1571,27 @@
     "description": "Survey of historical and contemporary literature for children, including such forms as fairy tales, picture books, poetry, novels, film and/or other media. Instructors teaching this class will choose texts, assessments and approaches that represent current scholarship and satisfy course learning objectives",
     "prerequisites": "Junior or senior classification.",
     "department": "English",
-    "satisfies_ucc": "Language, Philosophy and Culture"
+    "satisfies_ucc": "Language, Philosophy and Culture",
+    "prefix": "ENGL",
+    "number": "360",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [
+      "Language, Philosophy and Culture"
+    ],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGL 361",
@@ -499,7 +1599,25 @@
     "credit_hours": 3,
     "description": "Survey of literature for adolescents, including works intended for young adults from a variety of sub-genres, which might include fantasy, dystopia, domestic fiction and the problem novel. Students identify common characteristics of literature published for young adults, construct literary arguments using select texts and appreciate young adult literature for its particular qualities. Instructors teaching this class will choose texts, assessments and approaches that represent current scholarship and satisfy course learning objectives",
     "prerequisites": "Junior or senior classification.",
-    "department": "English"
+    "department": "English",
+    "prefix": "ENGL",
+    "number": "361",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGL 372",
@@ -507,7 +1625,23 @@
     "credit_hours": 3,
     "description": "Exploration of the development of American poetic traditions, with an emphasis on the major poetry of 19th and 20th centuries",
     "prerequisites": "3 credits of literature at 200-level or above.",
-    "department": "English"
+    "department": "English",
+    "prefix": "ENGL",
+    "number": "372",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGL 373",
@@ -515,7 +1649,23 @@
     "credit_hours": 3,
     "description": "Exploration of American literature and culture from the Civil War to World War I, covering writers who may include Twain, James, Freeman, Jewett, Chesnutt, Crane, Dreiser, Wharton and others. Instructors teaching this class will choose texts, assessments and approaches that represent current scholarship and satisfy course learning objectives",
     "prerequisites": "3 credits of literature at 200-level or above.",
-    "department": "English"
+    "department": "English",
+    "prefix": "ENGL",
+    "number": "373",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGL 375",
@@ -523,7 +1673,23 @@
     "credit_hours": 3,
     "description": "An exploration of the development of the American novel; study of representative novels, topics and relevant histories from the early national period through the antebellum era until the end of the century. Instructors teaching this class will choose texts, assessments and approaches that represent current scholarship and satisfy course learning objectives",
     "prerequisites": "3 credits of literature at 200-level or above.",
-    "department": "English"
+    "department": "English",
+    "prefix": "ENGL",
+    "number": "375",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGL 376",
@@ -532,7 +1698,27 @@
     "description": "Selected novels by 20th and 21st century American writers; emphasis on varied literary movements and on thematic and formal innovations as reflections of/responses to transformations in American society and culture since 1900. Instructors teaching this class will choose texts, assessments and approaches that represent current scholarship and satisfy course learning objectives",
     "prerequisites": "Junior or senior classification.",
     "department": "English",
-    "satisfies_ucc": "Language, Philosophy and Culture"
+    "satisfies_ucc": "Language, Philosophy and Culture",
+    "prefix": "ENGL",
+    "number": "376",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [
+      "Language, Philosophy and Culture"
+    ],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGL 377",
@@ -540,7 +1726,23 @@
     "credit_hours": 3,
     "description": "Exploration of some representative works illustrating the development of the novel, by writers resident in Great Britain and its colonies, from its beginnings to the late nineteenth century. Instructors teaching this class will choose texts, assessments and approaches that represent current scholarship and satisfy course learning objectives",
     "prerequisites": "3 credits of literature at 200-level or above.",
-    "department": "English"
+    "department": "English",
+    "prefix": "ENGL",
+    "number": "377",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGL 378",
@@ -548,7 +1750,25 @@
     "credit_hours": 3,
     "description": "Exploration of some representative works illustrating the development of the novel by writers resident in Great Britain and its colonies (present or former) from the late nineteenth century forward. Students may encounter major authors and varied prose styles in the British literary tradition, including literature and criticism. Close reading, critical thinking and written communication will be prioritized. Instructors teaching this class will choose texts, assessments and approaches that represent current scholarship and satisfy course learning objectives",
     "prerequisites": "Junior or senior classification.",
-    "department": "English"
+    "department": "English",
+    "prefix": "ENGL",
+    "number": "378",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGL 386",
@@ -556,7 +1776,27 @@
     "credit_hours": 3,
     "description": "Advanced study and practice of creative nonfiction forms and principles of craft. Extensive reading, workshop and peer review. Students may encounter texts in literary nonfiction, memoir, lyric essay and other related nonfiction forms. Instructors teaching this class will choose texts, assessments and approaches that represent current creative publication and satisfy course learning objectives",
     "prerequisites": "ENGL 235 ; junior or senior classification.",
-    "department": "English"
+    "department": "English",
+    "prefix": "ENGL",
+    "number": "386",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ENGL 235"
+    ],
+    "restrictions": [
+      "junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGL 390",
@@ -564,7 +1804,25 @@
     "credit_hours": 3,
     "description": "Exploration of a significant topic or period in British literature; features topics such as Victorian fantasy literature, social identity in medieval Britain and Ireland and children in film. Instructors teaching this class will choose texts, assessments and approaches that represent current scholarship and satisfy course learning objectives. May be taken two times for credit",
     "prerequisites": "3 credits of literature at 200-level or above; junior or senior classification.",
-    "department": "English"
+    "department": "English",
+    "prefix": "ENGL",
+    "number": "390",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": "May be taken two times for credit",
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGL 391",
@@ -572,7 +1830,25 @@
     "credit_hours": 3,
     "description": "Theories of folklore and vernacular culture; exploration of the relationship between oral literature and the forms of vernacular culture, including recorded texts, film, festival and dance. Instructors teaching this class will choose texts, assessments and approaches that represent current scholarship and satisfy course learning objectives",
     "prerequisites": "Junior or senior classification.",
-    "department": "English"
+    "department": "English",
+    "prefix": "ENGL",
+    "number": "391",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGL 394",
@@ -580,7 +1856,25 @@
     "credit_hours": 3,
     "description": "Focus on a single genre (e.g., detective fiction, historical novel, Western fiction), including analysis of its history and development; exploration of the chosen genre's typical stylistic and/or thematic components. Students can expect to gain an understanding of the dynamics of genre as a shaping force on cultural texts. Instructors teaching this class will choose texts, assessments and approaches that represent historic and current scholarship and satisfy course learning objectives. May be taken two times for credit",
     "prerequisites": "3 credits of literature at 200-level or above; junior or senior classification.",
-    "department": "English"
+    "department": "English",
+    "prefix": "ENGL",
+    "number": "394",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": "May be taken two times for credit",
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGL 395",
@@ -588,7 +1882,25 @@
     "credit_hours": 3,
     "description": "Examination of a particular period, theme or genre within literature and medicine studies; analysis of literature and/or other texts dealing with health and illness; engagement with different disciplinary perspectives as a tool for critical thinking; topics will vary. Instructors teaching this class will choose texts, assessments and approaches that represent current scholarship and satisfy course learning objectives. May be taken two times for credit",
     "prerequisites": "3 credits of literature at the 200-level or above; junior or senior classification.",
-    "department": "English"
+    "department": "English",
+    "prefix": "ENGL",
+    "number": "395",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": "May be taken two times for credit",
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGL 396",
@@ -596,7 +1908,25 @@
     "credit_hours": 3,
     "description": "Exploration of a significant topic or period in American literature; features current faculty research on such topics as Asian-American women writers, American music and literature and American Gothic",
     "prerequisites": "3 credits of literature at 200-level or above; junior or senior classification.",
-    "department": "English"
+    "department": "English",
+    "prefix": "ENGL",
+    "number": "396",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGL 401",
@@ -604,7 +1934,25 @@
     "credit_hours": 3,
     "description": "Exposure to the discourses of contemporary theory in engagement with other academic disciplines; study of major theoretical schools, debates and critiques in the 20th and 21st centuries. Topics vary. Instructors teaching this class will choose texts, assessments and approaches that represent current scholarship and satisfy course learning objectives",
     "prerequisites": "3 credits of literature at the 300-level; junior or senior classification.",
-    "department": "English"
+    "department": "English",
+    "prefix": "ENGL",
+    "number": "401",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGL 403",
@@ -612,7 +1960,31 @@
     "credit_hours": 3,
     "description": "Language and gender from a sociolinguistic perspective; gender in the words and structures of language; gender representation and gendered language use in the media, and a variety of sociocultural contexts; language use in intimate relationships; computer-mediated discourse; language, sexuality, and sexual orientation",
     "prerequisites": "Junior or senior classification. Cross Listing: LING 403 and WGST 403 .",
-    "department": "English"
+    "department": "English",
+    "prefix": "ENGL",
+    "number": "403",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "LING 403",
+      "WGST 403"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "LING 403",
+      "WGST 403"
+    ],
+    "restrictions": [
+      "Junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGL 412",
@@ -620,7 +1992,25 @@
     "credit_hours": 3,
     "description": "Advanced study of a selected topic in Shakespeare with relation to myriad historical, cultural and/or political contexts in Shakespeare scholarship. Topics will vary. Instructors teaching this class will choose texts, assessments and approaches that represent current scholarship and satisfy course learning objectives",
     "prerequisites": "3 credits of literature at the 300-level; junior or senior classification.",
-    "department": "English"
+    "department": "English",
+    "prefix": "ENGL",
+    "number": "412",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGL 414",
@@ -628,7 +2018,25 @@
     "credit_hours": 3,
     "description": "Study of selected poetry, drama and prose works of John Milton, with attention to historical, political, cultural and critical contexts. May also consider significant literary and/or philosophical texts that influenced Milton’s writing, as well as texts Milton’s writing in turn influenced. Instructors teaching this class will choose texts, assessments and approaches that represent current scholarship and satisfy course learning objectives",
     "prerequisites": "3 credits of literature at the 300-level; junior or senior classification.",
-    "department": "English"
+    "department": "English",
+    "prefix": "ENGL",
+    "number": "414",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGL 415",
@@ -636,7 +2044,27 @@
     "credit_hours": 3,
     "description": "Exploration of a major literary author and representative works as a vehicle for emphasizing intensive analysis, scholarship and literary criticism. Instructors teaching this class will choose texts, assessments and approaches that represent current scholarship and satisfy course learning objectives. May be taken two times for credit",
     "prerequisites": "3 credits of literature at 300-level; junior or senior classification; also taught at Galveston campus.",
-    "department": "English"
+    "department": "English",
+    "prefix": "ENGL",
+    "number": "415",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": "May be taken two times for credit",
+    "campuses": [
+      "Galveston"
+    ],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGL 431",
@@ -644,7 +2072,27 @@
     "credit_hours": 3,
     "description": "Intensive study of selections from Chaucer’s works in Middle English. Instructors teaching this class will choose texts, assessments and approaches that represent current scholarship and satisfy course learning objectives",
     "prerequisites": "3 credits of literature at 300-level; junior or senior classification; also taught at Galveston campus.",
-    "department": "English"
+    "department": "English",
+    "prefix": "ENGL",
+    "number": "431",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [
+      "Galveston"
+    ],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGL 433",
@@ -652,7 +2100,31 @@
     "credit_hours": 3,
     "description": "The use of digital tools for conducting humanities research; theoretical ideas that inform the field; application of theory to the critical assessment of online digital projects in the field",
     "prerequisites": "Junior or senior classification. Cross Listing: DHUM 433 and HIST 433 .",
-    "department": "English"
+    "department": "English",
+    "prefix": "ENGL",
+    "number": "433",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "DHUM 433",
+      "HIST 433"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "DHUM 433",
+      "HIST 433"
+    ],
+    "restrictions": [
+      "Junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGL 434",
@@ -660,7 +2132,23 @@
     "credit_hours": 3,
     "description": "Exploration of significant topics, authors, movements, genres and media in science fiction and fantasy. Instructors teaching this class will choose texts, assessments and approaches that represent current scholarship and satisfy course learning objectives. May be taken two times for credit",
     "prerequisites": "3 credits of literature at the 300-level or above.",
-    "department": "English"
+    "department": "English",
+    "prefix": "ENGL",
+    "number": "434",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": "May be taken two times for credit",
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGL 435",
@@ -668,7 +2156,25 @@
     "credit_hours": 3,
     "description": "Advanced study of specified topics in a creative writing genre or genres. Instructors teaching this class will choose texts, assessments and approaches that represent published creative work and satisfy course learning objectives. May be taken two times for credit",
     "prerequisites": "3 credits of creative writing at the 300-level; junior or senior classification.",
-    "department": "English"
+    "department": "English",
+    "prefix": "ENGL",
+    "number": "435",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": "May be taken two times for credit",
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGL 460",
@@ -676,7 +2182,27 @@
     "credit_hours": 3,
     "description": "Analysis and practice of authoring in digital environments, including theoretical, ethical and stylistic issues, individual and collaborative approaches, audience concerns; environments and topics may include emergent technologies, rhetorical analysis, web design, text encoding, project management, usability, digitization, copyright and privacy, content authoring and accessibility. Instructors teaching this class will choose texts, assessments and approaches that represent current scholarship and satisfy course learning objectives",
     "prerequisites": "ENGL 210 ; junior or senior classification.",
-    "department": "English"
+    "department": "English",
+    "prefix": "ENGL",
+    "number": "460",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ENGL 210"
+    ],
+    "restrictions": [
+      "junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGL 461",
@@ -684,7 +2210,26 @@
     "credit_hours": 3,
     "description": "Points of view toward language study; traditional syntax; points of view toward rhetoric; Christensen's rhetoric of the paragraph; analysis of written discourse",
     "prerequisites": "Senior classification or approval of instructor.",
-    "department": "English"
+    "department": "English",
+    "prefix": "ENGL",
+    "number": "461",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Senior classification",
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGL 462",
@@ -692,7 +2237,25 @@
     "credit_hours": 3,
     "description": "Theories concerning the influence of socio-cultural context on expressive forms and how such forms are used to achieve social and communicative aims, ranging from cooperation to controversy. Instructors will select a cultural context with analysis of examples of written, verbal and visual rhetorics within that culture and its subcultures, illustrating the impact that expressive forms have on social life. Instructors teaching this class will choose texts, assessments and approaches that represent current scholarship and satisfy course learning objectives",
     "prerequisites": "Junior or senior classification.",
-    "department": "English"
+    "department": "English",
+    "prefix": "ENGL",
+    "number": "462",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGL 463",
@@ -700,7 +2263,26 @@
     "credit_hours": 3,
     "description": "Analysis and practice of writing about science in multiple genres for a variety of audiences; may include grant writing, scientific editing, medical writing, data visualization, environmental writing, information ethics and plagiarism, authorship and attribution, and ghostwriting. Instructors teaching this class will choose texts, assessments and approaches that represent current scholarship and satisfy course learning objectives",
     "prerequisites": "Junior or senior classification or approval of instructor.",
-    "department": "English"
+    "department": "English",
+    "prefix": "ENGL",
+    "number": "463",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification",
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGL 481",
@@ -708,7 +2290,27 @@
     "credit_hours": 3,
     "description": "Capstone seminar on significant figures, movements or issues with special attention to methods and materials of scholarship",
     "prerequisites": "ENGL 303 ; senior classification.",
-    "department": "English"
+    "department": "English",
+    "prefix": "ENGL",
+    "number": "481",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ENGL 303"
+    ],
+    "restrictions": [
+      "senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGL 484",
@@ -716,7 +2318,28 @@
     "credit_hours": "0-3",
     "description": "Directed internship in a public or private organization to provide students with on-the-job training and applied research experience appropriate to career objectives. May be taken three times for credit. Must be taken on a satisfactory/unsatisfactory basis",
     "prerequisites": "Approval of department head; junior or senior classification; also taught at Galveston campus.",
-    "department": "English"
+    "department": "English",
+    "prefix": "ENGL",
+    "number": "484",
+    "course_level": 400,
+    "credit_min": 0,
+    "credit_max": 3,
+    "is_variable_credit": true,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": "May be taken three times for credit.",
+    "campuses": [
+      "Galveston"
+    ],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "junior or senior classification",
+      "Approval of department head"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGL 485",
@@ -724,7 +2347,25 @@
     "credit_hours": "0-3",
     "description": "Readings selected for specific need of major or minor in English; also taught at Galveston campus",
     "prerequisites": null,
-    "department": "English"
+    "department": "English",
+    "prefix": "ENGL",
+    "number": "485",
+    "course_level": 400,
+    "credit_min": 0,
+    "credit_max": 3,
+    "is_variable_credit": true,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [
+      "Galveston"
+    ],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGL 489",
@@ -732,7 +2373,25 @@
     "credit_hours": "1-4",
     "description": "Selected topics in an identified area of English language and literature; also taught at Galveston campus. May be repeated for credit",
     "prerequisites": null,
-    "department": "English"
+    "department": "English",
+    "prefix": "ENGL",
+    "number": "489",
+    "course_level": 400,
+    "credit_min": 1,
+    "credit_max": 4,
+    "is_variable_credit": true,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": "May be repeated for credit",
+    "campuses": [
+      "Galveston"
+    ],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGL 491",
@@ -740,7 +2399,28 @@
     "credit_hours": "0-3",
     "description": "Research conducted under the direction of faculty member in English. May be taken three times for credit",
     "prerequisites": "12 credits of English, including 3 at 300-level; junior or senior classification and approval of instructor; also taught at Qatar campus.",
-    "department": "English"
+    "department": "English",
+    "prefix": "ENGL",
+    "number": "491",
+    "course_level": 400,
+    "credit_min": 0,
+    "credit_max": 3,
+    "is_variable_credit": true,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": "May be taken three times for credit",
+    "campuses": [
+      "Qatar"
+    ],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "junior or senior classification",
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGL 497",
@@ -748,6 +2428,24 @@
     "credit_hours": "0-3",
     "description": "Directed independent studies in the English language and English or American literature",
     "prerequisites": "Junior or senior classification either as Honors student or with overall GPR of 3.5 and letter of approval from head of student's major department. May be repeated for credit.",
-    "department": "English"
+    "department": "English",
+    "prefix": "ENGL",
+    "number": "497",
+    "course_level": 400,
+    "credit_min": 0,
+    "credit_max": 3,
+    "is_variable_credit": true,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": "May be repeated for credit.",
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   }
 ]

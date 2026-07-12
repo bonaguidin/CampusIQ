@@ -5,7 +5,25 @@
     "credit_hours": 1,
     "description": "Critical thinking skills and problem solving in physics: time management and teaming skills",
     "prerequisites": "Physics majors; non-majors requires approval of instructor.",
-    "department": "Physics"
+    "department": "Physics",
+    "prefix": "PHYS",
+    "number": "101",
+    "course_level": 100,
+    "credit_min": 1,
+    "credit_max": 1,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/phys/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "PHYS 102",
@@ -13,7 +31,23 @@
     "credit_hours": 1,
     "description": "Introduction to life as a physics major. Introduction to research in physics and astronomy. Student-led organizations and informal physics programs in the department. Development of career skills",
     "prerequisites": "First-semester transfer and change-of-major students.",
-    "department": "Physics"
+    "department": "Physics",
+    "prefix": "PHYS",
+    "number": "102",
+    "course_level": 100,
+    "credit_min": 1,
+    "credit_max": 1,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/phys/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "PHYS 104",
@@ -22,7 +56,25 @@
     "description": "This team-taught, interdisciplinary course builds scientific literacy by examining contemporary issues — current questions, discoveries and challenges at the intersection of science and society. Topics may include the Big Bang, evolution, genetics, human reproduction and health, vaccines, drugs, artificial intelligence, cryptography and cybersecurity. Students will learn to evaluate scientific claims and critically analyze how science is presented in the news, on television and on social media. Cross Listing: ARSC 104 and BIOL 104",
     "prerequisites": null,
     "department": "Physics",
-    "satisfies_ucc": "Life and Physical Sciences"
+    "satisfies_ucc": "Life and Physical Sciences",
+    "prefix": "PHYS",
+    "number": "104",
+    "course_level": 100,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [
+      "Life and Physical Sciences"
+    ],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/phys/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "PHYS 123",
@@ -31,7 +83,27 @@
     "description": "Physics needed to be an effective policy maker or world leader but appropriate for any citizen, since all citizens need to understand the world in which they live and work; fundamental principles of physics made comprehensible and usable by those not in science- or math-related fields",
     "prerequisites": "Basic math skills; also taught at Galveston campus.",
     "department": "Physics",
-    "satisfies_ucc": "Life and Physical Sciences"
+    "satisfies_ucc": "Life and Physical Sciences",
+    "prefix": "PHYS",
+    "number": "123",
+    "course_level": 100,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [
+      "Life and Physical Sciences"
+    ],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [
+      "Galveston"
+    ],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/phys/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "PHYS 125",
@@ -39,7 +111,23 @@
     "credit_hours": 3,
     "description": "Modern physics in action with hands-on physics experience in simple experiments for non-physics majors; introduction to thermodynamics and soft matter physics; heat, temperature, thermodynamic efficiency, phase transitions, mechanical properties of soft matter, heat transfer mechanisms; physical measurements",
     "prerequisites": null,
-    "department": "Physics"
+    "department": "Physics",
+    "prefix": "PHYS",
+    "number": "125",
+    "course_level": 100,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/phys/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "PHYS 148",
@@ -47,7 +135,23 @@
     "credit_hours": 3,
     "description": "The basic level of concepts of quantum mechanics such as wave-particle duality, complementarity, quantum interference and entanglement, and their applications to fields such as quantum communication and quantum computing",
     "prerequisites": "High school physics and calculus.",
-    "department": "Physics"
+    "department": "Physics",
+    "prefix": "PHYS",
+    "number": "148",
+    "course_level": 100,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/phys/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "PHYS 150",
@@ -55,7 +159,23 @@
     "credit_hours": 3,
     "description": "Physics-oriented introductory programming; basics of programming and applications of programming for physics; programming in the context of physics, such as variables, expressions, flow control, functions and data visualization, applied to physics topics such as energy minimization, Newtonian dynamics and chaos",
     "prerequisites": null,
-    "department": "Physics"
+    "department": "Physics",
+    "prefix": "PHYS",
+    "number": "150",
+    "course_level": 100,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/phys/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "PHYS 201",
@@ -64,7 +184,27 @@
     "description": "(PHYS 1301 and 1101, 1401) College Physics. Fundamentals of classical mechanics, heat, and sound. Primarily for architecture, education, premedical, predental, and preveterinary medical students; also taught at Galveston campus",
     "prerequisites": null,
     "department": "Physics",
-    "satisfies_ucc": "Life and Physical Sciences"
+    "satisfies_ucc": "Life and Physical Sciences",
+    "prefix": "PHYS",
+    "number": "201",
+    "course_level": 200,
+    "credit_min": 4,
+    "credit_max": 4,
+    "is_variable_credit": false,
+    "ucc_attributes": [
+      "Life and Physical Sciences"
+    ],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [
+      "Galveston"
+    ],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/phys/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "PHYS 202",
@@ -73,7 +213,29 @@
     "description": "(PHYS 1302 and 1102, 1402) College Physics. Continuation of PHYS 201 . Fundamentals of classical electricity and light; introduction to contemporary physics",
     "prerequisites": "PHYS 201 ; also taught at Galveston campus.",
     "department": "Physics",
-    "satisfies_ucc": "Life and Physical Sciences"
+    "satisfies_ucc": "Life and Physical Sciences",
+    "prefix": "PHYS",
+    "number": "202",
+    "course_level": 200,
+    "credit_min": 4,
+    "credit_max": 4,
+    "is_variable_credit": false,
+    "ucc_attributes": [
+      "Life and Physical Sciences"
+    ],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [
+      "Galveston"
+    ],
+    "prerequisite_courses": [
+      "PHYS 201"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/phys/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "PHYS 204",
@@ -81,7 +243,23 @@
     "credit_hours": 3,
     "description": "Preparation of grades 6-12 science teachers to teach physics by building understanding of motion, forces, energy, waves, electricity and atomic physics; inquiry-based teaching, addressing misconceptions, designing lessons and making abstract ideas clear; studio sessions combine lecture and lab to support both physics knowledge and teaching",
     "prerequisites": null,
-    "department": "Physics"
+    "department": "Physics",
+    "prefix": "PHYS",
+    "number": "204",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/phys/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "PHYS 205",
@@ -89,7 +267,25 @@
     "credit_hours": 4,
     "description": "General survey physics course for K-8 preservice teachers integrating physics content and laboratory activities relevant to physics-related subject matter included in the current Texas and national standards for elementary school science; includes aspects of mechanics, waves, electricity, magnetism and modern physics",
     "prerequisites": "Major in interdisciplinary studies or interdisciplinary technology or approval of instructor.",
-    "department": "Physics"
+    "department": "Physics",
+    "prefix": "PHYS",
+    "number": "205",
+    "course_level": 200,
+    "credit_min": 4,
+    "credit_max": 4,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/phys/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "PHYS 206",
@@ -98,7 +294,33 @@
     "description": "(PHYS 2325, PHYS 2425*) Newtonian Mechanics for Engineering and Science. Calculus-based introductory Newtonian mechanics; laws of physical motion for solution of science and engineering problems",
     "prerequisites": "Grade of C or better in MATH 151 or MATH 171 , or equivalent; also taught at Galveston and Qatar campuses.",
     "department": "Physics",
-    "satisfies_ucc": "Life and Physical Sciences"
+    "satisfies_ucc": "Life and Physical Sciences",
+    "prefix": "PHYS",
+    "number": "206",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [
+      "Life and Physical Sciences"
+    ],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [
+      "Galveston",
+      "Qatar"
+    ],
+    "prerequisite_courses": [
+      "MATH 151",
+      "MATH 171"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/phys/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "PHYS 207",
@@ -107,7 +329,35 @@
     "description": "(PHYS 2326, PHYS 2426*) Electricity and Magnetism for Engineering and Science. Calculus-based electricity and magnetism; electromagnetic phenomena; basic laws of electricity and magnetism; science and engineering problems involving charges, electromagnetic fields, and electrical circuits",
     "prerequisites": "Grade of C or better in PHYS 206 ; grade of C or better in MATH 152 or MATH 172 or equivalent; also taught at Galveston and Qatar campuses.",
     "department": "Physics",
-    "satisfies_ucc": "Life and Physical Sciences"
+    "satisfies_ucc": "Life and Physical Sciences",
+    "prefix": "PHYS",
+    "number": "207",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [
+      "Life and Physical Sciences"
+    ],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [
+      "Galveston",
+      "Qatar"
+    ],
+    "prerequisite_courses": [
+      "PHYS 206",
+      "MATH 152",
+      "MATH 172"
+    ],
+    "restrictions": [
+      "Grade of C or better",
+      "grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/phys/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "PHYS 221",
@@ -115,7 +365,32 @@
     "credit_hours": 3,
     "description": "Wave motion and sound, geometrical and physical optics, kinetic theory of gases, laws of thermodynamics",
     "prerequisites": "PHYS 207 or PHYS 208, or concurrent enrollment; MATH 221 , MATH 251 , or MATH 253 , or concurrent enrollment; MATH 308 or concurrent enrollment; also taught at Qatar campus.",
-    "department": "Physics"
+    "department": "Physics",
+    "prefix": "PHYS",
+    "number": "221",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [
+      "Qatar"
+    ],
+    "prerequisite_courses": [
+      "PHYS 207",
+      "PHYS 208",
+      "MATH 221",
+      "MATH 251",
+      "MATH 253",
+      "MATH 308"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/phys/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "PHYS 222",
@@ -123,7 +398,29 @@
     "credit_hours": 3,
     "description": "Special relativity; concepts of waves and particles; introduction to quantum physics, atomic physics and other areas of modern physics",
     "prerequisites": "PHYS 207 or PHYS 208; MATH 308 or concurrent enrollment; also taught at Qatar campus.",
-    "department": "Physics"
+    "department": "Physics",
+    "prefix": "PHYS",
+    "number": "222",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [
+      "Qatar"
+    ],
+    "prerequisite_courses": [
+      "PHYS 207",
+      "PHYS 208",
+      "MATH 308"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/phys/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "PHYS 225",
@@ -131,7 +428,28 @@
     "credit_hours": 3,
     "description": "Linear circuit theory and applications of solid-state diodes, bipolar and field-effect transistors, operational amplifiers and digital systems",
     "prerequisites": "PHYS 207 and PHYS 227 , or PHYS 208; MATH 308 .",
-    "department": "Physics"
+    "department": "Physics",
+    "prefix": "PHYS",
+    "number": "225",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "PHYS 207",
+      "PHYS 227",
+      "PHYS 208",
+      "MATH 308"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/phys/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "PHYS 226",
@@ -140,7 +458,31 @@
     "description": "(PHYS 2125, PHYS 2425*) Physics of Motion Laboratory for the Sciences. The first semester laboratory to accompany a two-semester course sequence in introductory physics; topics include material covered in a typical calculus-based introductory physics course on the principles of mechanics and motion",
     "prerequisites": "MATH 151 or MATH 171 ; concurrent enrollment in PHYS 206 ; also taught at Galveston campus.",
     "department": "Physics",
-    "satisfies_ucc": "Life and Physical Sciences"
+    "satisfies_ucc": "Life and Physical Sciences",
+    "prefix": "PHYS",
+    "number": "226",
+    "course_level": 200,
+    "credit_min": 1,
+    "credit_max": 1,
+    "is_variable_credit": false,
+    "ucc_attributes": [
+      "Life and Physical Sciences"
+    ],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [
+      "Galveston"
+    ],
+    "prerequisite_courses": [
+      "MATH 151",
+      "MATH 171",
+      "PHYS 206"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/phys/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "PHYS 227",
@@ -149,7 +491,33 @@
     "description": "(PHYS 2126, PHYS 2426*) Electricity and Magnetism Laboratory for the Sciences. The second semester laboratory to accompany a two-semester course sequence in introductory physics; topics include material covered in a typical calculus-based introductory physics course on the principles of electricity and magnetism",
     "prerequisites": "MATH 152 or MATH 172 ; PHYS 206 or PHYS 218; concurrent enrollment in PHYS 207 ; also taught at Galveston campus.",
     "department": "Physics",
-    "satisfies_ucc": "Life and Physical Sciences"
+    "satisfies_ucc": "Life and Physical Sciences",
+    "prefix": "PHYS",
+    "number": "227",
+    "course_level": 200,
+    "credit_min": 1,
+    "credit_max": 1,
+    "is_variable_credit": false,
+    "ucc_attributes": [
+      "Life and Physical Sciences"
+    ],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [
+      "Galveston"
+    ],
+    "prerequisite_courses": [
+      "MATH 152",
+      "MATH 172",
+      "PHYS 206",
+      "PHYS 218",
+      "PHYS 207"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/phys/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "PHYS 285",
@@ -157,7 +525,25 @@
     "credit_hours": "0-4",
     "description": "Special work in laboratory or theory to meet individual requirements in cases not covered by regular curriculum; intended for use as lower-level credit",
     "prerequisites": "Approval of instructor.",
-    "department": "Physics"
+    "department": "Physics",
+    "prefix": "PHYS",
+    "number": "285",
+    "course_level": 200,
+    "credit_min": 0,
+    "credit_max": 4,
+    "is_variable_credit": true,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/phys/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "PHYS 289",
@@ -165,7 +551,25 @@
     "credit_hours": "0-4",
     "description": "Selected topics in an identified area of physics. May be repeated for credit",
     "prerequisites": "Approval of instructor.",
-    "department": "Physics"
+    "department": "Physics",
+    "prefix": "PHYS",
+    "number": "289",
+    "course_level": 200,
+    "credit_min": 0,
+    "credit_max": 4,
+    "is_variable_credit": true,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": "May be repeated for credit",
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/phys/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "PHYS 291",
@@ -173,7 +577,26 @@
     "credit_hours": "0-4",
     "description": "Research conducted under the direction of faculty member in physics. May be repeated 2 times for credit",
     "prerequisites": "Freshman or sophomore classification and approval of instructor.",
-    "department": "Physics"
+    "department": "Physics",
+    "prefix": "PHYS",
+    "number": "291",
+    "course_level": 200,
+    "credit_min": 0,
+    "credit_max": 4,
+    "is_variable_credit": true,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": "May be repeated 2 times for credit",
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Freshman or sophomore classification",
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/phys/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "PHYS 302",
@@ -181,7 +604,29 @@
     "credit_hours": 3,
     "description": "Classical mechanics of particles and rigid bodies; review of Newtonian mechanics and foundations of Lagrangian and Hamiltonian formalism",
     "prerequisites": "PHYS 309 and PHYS 331 ; PHYS 332 or concurrent enrollment, or approval of instructor.",
-    "department": "Physics"
+    "department": "Physics",
+    "prefix": "PHYS",
+    "number": "302",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "PHYS 309",
+      "PHYS 331",
+      "PHYS 332"
+    ],
+    "restrictions": [
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/phys/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "PHYS 303",
@@ -189,7 +634,25 @@
     "credit_hours": 3,
     "description": "Applications of Lagrangian and Hamiltonian methods to selected problems of classical mechanics",
     "prerequisites": "PHYS 302 .",
-    "department": "Physics"
+    "department": "Physics",
+    "prefix": "PHYS",
+    "number": "303",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "PHYS 302"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/phys/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "PHYS 304",
@@ -197,7 +660,28 @@
     "credit_hours": 3,
     "description": "Electrostatics; dielectrics; electrical current and circuits; magnetic fields and materials; induction; Maxwell's equations",
     "prerequisites": "PHYS 331 ; PHYS 332 or concurrent enrollment, or approval of instructor.",
-    "department": "Physics"
+    "department": "Physics",
+    "prefix": "PHYS",
+    "number": "304",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "PHYS 331",
+      "PHYS 332"
+    ],
+    "restrictions": [
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/phys/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "PHYS 305",
@@ -205,7 +689,25 @@
     "credit_hours": 3,
     "description": "Radiation and optics. Electromagnetic waves; radiation; reflection and refraction; interference; diffraction; special relativity applied to electrodynamics",
     "prerequisites": "PHYS 304 .",
-    "department": "Physics"
+    "department": "Physics",
+    "prefix": "PHYS",
+    "number": "305",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "PHYS 304"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/phys/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "PHYS 309",
@@ -213,7 +715,28 @@
     "credit_hours": 3,
     "description": "Special relativity; concepts of waves and particles; introductory quantum mechanics and statistical physics; nuclear physics; physics as a basis of modern technologies and our understanding of the universe",
     "prerequisites": "PHYS 221 ; MATH 308 ; also taught at Qatar campus.",
-    "department": "Physics"
+    "department": "Physics",
+    "prefix": "PHYS",
+    "number": "309",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [
+      "Qatar"
+    ],
+    "prerequisite_courses": [
+      "PHYS 221",
+      "MATH 308"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/phys/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "PHYS 327",
@@ -221,7 +744,26 @@
     "credit_hours": 2,
     "description": "Laboratory experiments in modern physics and physical optics with an introduction to current, state-of-the-art recording techniques",
     "prerequisites": "PHYS 225 ; PHYS 309 .",
-    "department": "Physics"
+    "department": "Physics",
+    "prefix": "PHYS",
+    "number": "327",
+    "course_level": 300,
+    "credit_min": 2,
+    "credit_max": 2,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "PHYS 225",
+      "PHYS 309"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/phys/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "PHYS 328",
@@ -229,7 +771,25 @@
     "credit_hours": 1,
     "description": "Laboratory experiments in modern physics and physical optics with an introduction to current, state-of-the-art recording techniques",
     "prerequisites": "PHYS 327 or concurrent enrollment.",
-    "department": "Physics"
+    "department": "Physics",
+    "prefix": "PHYS",
+    "number": "328",
+    "course_level": 300,
+    "credit_min": 1,
+    "credit_max": 1,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "PHYS 327"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/phys/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "PHYS 331",
@@ -237,7 +797,28 @@
     "credit_hours": 3,
     "description": "Vector analysis methods with applications for advanced electricity and magnetism; tensor notation in classical mechanics and electricity and magnetism; linear algebra with applications for quantum mechanics; series expansions and accuracy of series approximations; Fourier series and transforms",
     "prerequisites": "PHYS 221 and MATH 308 ; or approval of instructor.",
-    "department": "Physics"
+    "department": "Physics",
+    "prefix": "PHYS",
+    "number": "331",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "PHYS 221",
+      "MATH 308"
+    ],
+    "restrictions": [
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/phys/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "PHYS 332",
@@ -245,7 +826,25 @@
     "credit_hours": 3,
     "description": "Methods to solve important equations of theoretical physics, including Laplace equation, wave equation, heat equation and Schrödinger equation, emphasizing the effects of boundary conditions; complex variables, complex analysis, with an introduction to contour integration",
     "prerequisites": "PHYS 331 ; physics majors.",
-    "department": "Physics"
+    "department": "Physics",
+    "prefix": "PHYS",
+    "number": "332",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "PHYS 331"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/phys/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "PHYS 401",
@@ -253,7 +852,25 @@
     "credit_hours": 3,
     "description": "Introduction to computational and simulational techniques widely used in physics applications and research, including trajectory integration, wave motion analysis, molecular dynamics, Monte Carlo methods, statistical mechanics of spin systems, phase transitions, quantum evolution, bound state problems, and variational methods",
     "prerequisites": "PHYS 332 ; knowledge of a high level language.",
-    "department": "Physics"
+    "department": "Physics",
+    "prefix": "PHYS",
+    "number": "401",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "PHYS 332"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/phys/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "PHYS 408",
@@ -261,7 +878,25 @@
     "credit_hours": 3,
     "description": "Basic concepts and principles of thermodynamics; introduction to methods of statistical mechanics to calculate properties of systems in thermodynamic equilibrium",
     "prerequisites": "PHYS 412 .",
-    "department": "Physics"
+    "department": "Physics",
+    "prefix": "PHYS",
+    "number": "408",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "PHYS 412"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/phys/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "PHYS 412",
@@ -269,7 +904,29 @@
     "credit_hours": 3,
     "description": "Postulates of wave mechanics; wave packets; harmonic oscillator; central field problem; hydrogen atom; approximation methods",
     "prerequisites": "PHYS 302 ; PHYS 309 ; PHYS 332 ; junior or senior classification.",
-    "department": "Physics"
+    "department": "Physics",
+    "prefix": "PHYS",
+    "number": "412",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "PHYS 302",
+      "PHYS 309",
+      "PHYS 332"
+    ],
+    "restrictions": [
+      "junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/phys/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "PHYS 414",
@@ -277,7 +934,25 @@
     "credit_hours": 3,
     "description": "Continuation of PHYS 412 . Electron spin; addition of angular momenta; atomic structure; time dependent perturbations; collision theory; application of quantum mechanics to atomic, solid state, nuclear or high energy physics",
     "prerequisites": "PHYS 412 .",
-    "department": "Physics"
+    "department": "Physics",
+    "prefix": "PHYS",
+    "number": "414",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "PHYS 412"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/phys/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "PHYS 415",
@@ -285,7 +960,27 @@
     "credit_hours": 3,
     "description": "Matter at the smallest scales and fundamental interactions between them; physics of atomic nuclei; physics of hadrons, quarks, leptons; fundamental strong and weak interactions; gauge bosons; state-of-the-art nuclear and particle physics; how knowledge was obtained; experimental confirmation of theoretical ideas; modern tools and instruments; foundations of nuclear technology; future perspectives",
     "prerequisites": "Grade of C or better in PHYS 309 .",
-    "department": "Physics"
+    "department": "Physics",
+    "prefix": "PHYS",
+    "number": "415",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "PHYS 309"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/phys/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "PHYS 416",
@@ -293,7 +988,26 @@
     "credit_hours": 3,
     "description": "A survey of solid state physics; an introduction to crystal structures and the physics of electrons, lattice vibrations and photons; applications to semiconductors; magnetism; superconductivity; physics of nanostructures; brief introduction to selected current topics in condensed matter physics",
     "prerequisites": "PHYS 304 and PHYS 412 .",
-    "department": "Physics"
+    "department": "Physics",
+    "prefix": "PHYS",
+    "number": "416",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "PHYS 304",
+      "PHYS 412"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/phys/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "PHYS 418",
@@ -301,7 +1015,27 @@
     "credit_hours": 3,
     "description": "A broad spectrum of elementary particle physics along with historical and recent publication, covering symmetry in quarks and leptons, fundamental interactions, relativistic kinematics, Feynman diagrams, Dirac equation, cross-sections for particle reactions, unification of fundamental forces, accelerators and detectors and other current topics",
     "prerequisites": "Grade of C or better in PHYS 309 or equivalent.",
-    "department": "Physics"
+    "department": "Physics",
+    "prefix": "PHYS",
+    "number": "418",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "PHYS 309"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/phys/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "PHYS 419",
@@ -309,7 +1043,28 @@
     "credit_hours": 3,
     "description": "Basic concepts of light-matter interaction, optics of semiconductors, nanostructures with quantum confinement and their interaction with light; physical principles of selected state-of-the-art optoelectronic devices; emerging concepts and technologies; examples of modern, state-of-the-art devices and emerging technologies",
     "prerequisites": "Grade of C or better in PHYS 309 or PHYS 222 .",
-    "department": "Physics"
+    "department": "Physics",
+    "prefix": "PHYS",
+    "number": "419",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "PHYS 309",
+      "PHYS 222"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/phys/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "PHYS 425",
@@ -317,7 +1072,25 @@
     "credit_hours": 2,
     "description": "Experiments in nuclear, atomic, and molecular physics using modern instrumentation and equipment of current research",
     "prerequisites": "PHYS 327 or equivalent.",
-    "department": "Physics"
+    "department": "Physics",
+    "prefix": "PHYS",
+    "number": "425",
+    "course_level": 400,
+    "credit_min": 2,
+    "credit_max": 2,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "PHYS 327"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/phys/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "PHYS 426",
@@ -325,7 +1098,25 @@
     "credit_hours": 2,
     "description": "Exercises of increasing complexity that utilize electronics-based techniques of experimental physics (lab-built amplifiers, synchronous detectors, tuned LRC circuits); measuring electron spin resonance and nuclear magnetic resonance (NMR) absorption signals via marginal oscillator techniques; performing pre-set experiments on optical pumping of spin states in rubidium gas and on pulsed NMR",
     "prerequisites": "PHYS 327 or equivalent.",
-    "department": "Physics"
+    "department": "Physics",
+    "prefix": "PHYS",
+    "number": "426",
+    "course_level": 400,
+    "credit_min": 2,
+    "credit_max": 2,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "PHYS 327"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/phys/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "PHYS 485",
@@ -333,7 +1124,27 @@
     "credit_hours": "0-12",
     "description": "Special work in laboratory or theory to meet individual requirements in cases not covered by regular curriculum",
     "prerequisites": "Approval of instructor; also taught at Galveston campus.",
-    "department": "Physics"
+    "department": "Physics",
+    "prefix": "PHYS",
+    "number": "485",
+    "course_level": 400,
+    "credit_min": 0,
+    "credit_max": 12,
+    "is_variable_credit": true,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [
+      "Galveston"
+    ],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/phys/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "PHYS 489",
@@ -341,7 +1152,27 @@
     "credit_hours": "0-4",
     "description": "Selected topics in an identified field of physics. May be repeated for credit",
     "prerequisites": "Approval of instructor; also taught at Qatar campus.",
-    "department": "Physics"
+    "department": "Physics",
+    "prefix": "PHYS",
+    "number": "489",
+    "course_level": 400,
+    "credit_min": 0,
+    "credit_max": 4,
+    "is_variable_credit": true,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": "May be repeated for credit",
+    "campuses": [
+      "Qatar"
+    ],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/phys/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "PHYS 491",
@@ -349,6 +1180,27 @@
     "credit_hours": "0-4",
     "description": "Research conducted under the direction of faculty member in physics. May be repeated for credit. Registration in multiple sections of this course is possible within a given semester provided that the per semester credit hour limit is not exceeded",
     "prerequisites": "Junior or senior classification and approval of instructor; also taught at Qatar campus.",
-    "department": "Physics"
+    "department": "Physics",
+    "prefix": "PHYS",
+    "number": "491",
+    "course_level": 400,
+    "credit_min": 0,
+    "credit_max": 4,
+    "is_variable_credit": true,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": "May be repeated for credit.",
+    "campuses": [
+      "Qatar"
+    ],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification",
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/phys/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   }
 ]

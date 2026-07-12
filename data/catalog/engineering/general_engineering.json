@@ -5,7 +5,23 @@
     "credit_hours": 4,
     "description": "Introductory course about current and potential energy sources, the link between energy and wealth, and the consequences of action or inaction concerning energy and the environment",
     "prerequisites": null,
-    "department": "Engineering"
+    "department": "Engineering",
+    "prefix": "ENGR",
+    "number": "101",
+    "course_level": 100,
+    "credit_min": 4,
+    "credit_max": 4,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engr/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGR 102",
@@ -13,7 +29,28 @@
     "credit_hours": 2,
     "description": "Introduction to the design and development of computer applications for engineers; computation to enhance problem solving abilities; basic concepts of software design through the implementation and debugging of student-written programs; introduction to engineering majors, career exploration, engineering practice within realistic constraints, e.g. economic, environmental, ethical, health and safety, and sustainability; pathways to success in engineering",
     "prerequisites": "Grade of C or better in MATH 151 or MATH 150 , or concurrent enrollment; admission to the college of engineering.",
-    "department": "Engineering"
+    "department": "Engineering",
+    "prefix": "ENGR",
+    "number": "102",
+    "course_level": 100,
+    "credit_min": 2,
+    "credit_max": 2,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "MATH 151",
+      "MATH 150"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engr/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGR 112",
@@ -21,7 +58,28 @@
     "credit_hours": 2,
     "description": "Continuation of ENGR 111. Topics include, depending on the major, emphasis on computer applications and programming and solids modeling using CAD tools or other software; fundamentals of engineering science; advanced graphic skills",
     "prerequisites": "ENGR 111; MATH 151 or concurrent enrollment; admission to the College of Engineering; also taught at Galveston campus.",
-    "department": "Engineering"
+    "department": "Engineering",
+    "prefix": "ENGR",
+    "number": "112",
+    "course_level": 100,
+    "credit_min": 2,
+    "credit_max": 2,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [
+      "Galveston"
+    ],
+    "prerequisite_courses": [
+      "ENGR 111",
+      "MATH 151"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engr/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGR 181",
@@ -29,7 +87,25 @@
     "credit_hours": 1,
     "description": "Co-curricular experiences related to academic success, undergraduate research and service in preparation for careers in research and technology leadership",
     "prerequisites": "Admitted to engineering honors; freshman or sophomore classification.",
-    "department": "Engineering"
+    "department": "Engineering",
+    "prefix": "ENGR",
+    "number": "181",
+    "course_level": 100,
+    "credit_min": 1,
+    "credit_max": 1,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "freshman or sophomore classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engr/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGR 251",
@@ -37,7 +113,29 @@
     "credit_hours": 3,
     "description": "Fundamentals of engineering leadership and business; organizational dynamics; self-awareness",
     "prerequisites": "Grade of C or better in ENGR 102 , and ENGR 216/PHYS 216 or PHYS 216/ENGR 216 ; acceptance into the Zachry Leadership Program.",
-    "department": "Engineering"
+    "department": "Engineering",
+    "prefix": "ENGR",
+    "number": "251",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ENGR 102",
+      "ENGR 216",
+      "PHYS 216"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engr/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGR 270",
@@ -45,7 +143,28 @@
     "credit_hours": 1,
     "description": "Project course using team approach to engage students in open-ended community service projects involving non-profit agencies; includes project management, understanding the complete design process, awareness of the customer in engineering design, and the ability to communicate effectively. May be taken six times for credit",
     "prerequisites": "ENGR 102 or approval of instructor; freshman or sophomore classification in an engineering major.",
-    "department": "Engineering"
+    "department": "Engineering",
+    "prefix": "ENGR",
+    "number": "270",
+    "course_level": 200,
+    "credit_min": 1,
+    "credit_max": 1,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": "May be taken six times for credit",
+    "campuses": [],
+    "prerequisite_courses": [
+      "ENGR 102"
+    ],
+    "restrictions": [
+      "freshman or sophomore classification",
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engr/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGR 281",
@@ -53,7 +172,25 @@
     "credit_hours": 0,
     "description": "Selected topics related to peer mentoring and team building while participating in co-curricular activities; emphasis on building supportive relationships on campus; provides practical experience in being a member of a project involving campus or community-based engagement; for those serving as a Coach (i.e., student leader providing light mentoring to the residents) in the Engineering Honors Living Learning Community (Engineering Honors Community of Scholars or ECOS)",
     "prerequisites": "Appointment to be a Coach in ECOS; approval of instructor.",
-    "department": "Engineering"
+    "department": "Engineering",
+    "prefix": "ENGR",
+    "number": "281",
+    "course_level": 200,
+    "credit_min": 0,
+    "credit_max": 0,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engr/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGR 285",
@@ -61,7 +198,26 @@
     "credit_hours": "0-4",
     "description": "Special problems in any area of engineering",
     "prerequisites": "Freshman or sophomore classification; approval of department head.",
-    "department": "Engineering"
+    "department": "Engineering",
+    "prefix": "ENGR",
+    "number": "285",
+    "course_level": 200,
+    "credit_min": 0,
+    "credit_max": 4,
+    "is_variable_credit": true,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Freshman or sophomore classification",
+      "approval of department head"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engr/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGR 289",
@@ -69,7 +225,25 @@
     "credit_hours": "0-4",
     "description": "Selected topics in an identified area of engineering. May be repeated for credit",
     "prerequisites": "Approval of instructor.",
-    "department": "Engineering"
+    "department": "Engineering",
+    "prefix": "ENGR",
+    "number": "289",
+    "course_level": 200,
+    "credit_min": 0,
+    "credit_max": 4,
+    "is_variable_credit": true,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": "May be repeated for credit",
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engr/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGR 291",
@@ -77,7 +251,26 @@
     "credit_hours": "0-4",
     "description": "Research conducted under the direction of faculty member in the college of engineering. May be repeated three times for credit",
     "prerequisites": "Freshman or sophomore classification and approval of instructor.",
-    "department": "Engineering"
+    "department": "Engineering",
+    "prefix": "ENGR",
+    "number": "291",
+    "course_level": 200,
+    "credit_min": 0,
+    "credit_max": 4,
+    "is_variable_credit": true,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": "May be repeated three times for credit",
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Freshman or sophomore classification",
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engr/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGR 301",
@@ -85,7 +278,23 @@
     "credit_hours": "0-18",
     "description": "For students in approved programs abroad. May be repeated for credit",
     "prerequisites": "Admission to approved program; approval of study abroad coordinator.",
-    "department": "Engineering"
+    "department": "Engineering",
+    "prefix": "ENGR",
+    "number": "301",
+    "course_level": 300,
+    "credit_min": 0,
+    "credit_max": 18,
+    "is_variable_credit": true,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": "May be repeated for credit",
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engr/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGR 350",
@@ -93,7 +302,28 @@
     "credit_hours": 3,
     "description": "Fundamental leadership and business topics relevant to engineering and technical careers; business model development; business strategy; leadership theory; empathy",
     "prerequisites": "Grade of C or better in ENGR 251 ; acceptance into the Zachry Leadership Program; junior or senior classification or approval by instructor.",
-    "department": "Engineering"
+    "department": "Engineering",
+    "prefix": "ENGR",
+    "number": "350",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ENGR 251"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engr/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGR 351",
@@ -101,7 +331,27 @@
     "credit_hours": 3,
     "description": "Exploration of engineering and business contributions to society; political, cultural, societal and economic forces' impact on engineering; using creativity and imagination to solve engineering and societal challenges",
     "prerequisites": "Acceptance into the Zachry Leadership Program; ENGR 350 ; junior or senior classification or approval by instructor.",
-    "department": "Engineering"
+    "department": "Engineering",
+    "prefix": "ENGR",
+    "number": "351",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ENGR 350"
+    ],
+    "restrictions": [
+      "junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engr/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGR 381",
@@ -109,7 +359,25 @@
     "credit_hours": 0,
     "description": "Selected topics related to leadership and management theory and practice in the context of co-curricular activities, involving multidisciplinary teams; provides practical experience in leading projects involving community-based engagement and residence-based programming; for those serving as Fellows, student leaders in the Engineering Honors Living Learning Community (Engineering Honors Community of Scholars or ECOS)",
     "prerequisites": "Appointment to be a Fellow in ECOS; approval of instructor.",
-    "department": "Engineering"
+    "department": "Engineering",
+    "prefix": "ENGR",
+    "number": "381",
+    "course_level": 300,
+    "credit_min": 0,
+    "credit_max": 0,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engr/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGR 385",
@@ -117,7 +385,25 @@
     "credit_hours": "1-3",
     "description": "Special problems in engineering for cooperative education students; problems related to student's work assignment culminating in a research paper; three hours may be used as technical elective, and one additional hour may be used as free elective; a total of 4 hours may be used toward graduation",
     "prerequisites": "Approval of department head.",
-    "department": "Engineering"
+    "department": "Engineering",
+    "prefix": "ENGR",
+    "number": "385",
+    "course_level": 300,
+    "credit_min": 1,
+    "credit_max": 3,
+    "is_variable_credit": true,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Approval of department head"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engr/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGR 399",
@@ -125,7 +411,23 @@
     "credit_hours": 0,
     "description": "Participation in an approved high-impact learning practice within the Engineering Honors (EH) program which includes the EH Living Learning Community (ECOS); reflection on professional outcomes; documentation and self-assessment of learning experience",
     "prerequisites": null,
-    "department": "Engineering"
+    "department": "Engineering",
+    "prefix": "ENGR",
+    "number": "399",
+    "course_level": 300,
+    "credit_min": 0,
+    "credit_max": 0,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engr/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGR 401",
@@ -133,7 +435,26 @@
     "credit_hours": 3,
     "description": "Instruction and practice in the design process applied to an interdisciplinary design project including establish the customer need; determine requirements in terms of function (what) and performance (how well); develop alternative design concepts; perform trade-off studies among performance, cost and schedule; embodiment and detail design; iterate the above steps; major interdisciplinary design project",
     "prerequisites": "Senior classification and approval of instructor.",
-    "department": "Engineering"
+    "department": "Engineering",
+    "prefix": "ENGR",
+    "number": "401",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Senior classification",
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engr/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGR 402",
@@ -141,7 +462,27 @@
     "credit_hours": 3,
     "description": "Product detail and design development process including case studies; may include project management, marketing considerations, manufacturing detailed design specifications; failure modes, applications of codes and standards, selection of design margins; product (component) development guidelines; intellectual property, product liability and ethical responsibility",
     "prerequisites": "ENGR 401 ; junior or senior classification.",
-    "department": "Engineering"
+    "department": "Engineering",
+    "prefix": "ENGR",
+    "number": "402",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ENGR 401"
+    ],
+    "restrictions": [
+      "junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engr/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGR 410",
@@ -149,7 +490,26 @@
     "credit_hours": 3,
     "description": "Intercultural models and their application to engineering design in diverse, multinational and multidisciplinary settings; engineering design project working in international teams of students, faculty and industry experts; applying engineering skills to the project; includes the study and application of intercultural models, global enterprise fundamentals and remote collaboration technologies; required for the International Engineering Certificate",
     "prerequisites": "Junior or senior classification or approval of instructor.",
-    "department": "Engineering"
+    "department": "Engineering",
+    "prefix": "ENGR",
+    "number": "410",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification",
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engr/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGR 450",
@@ -157,7 +517,28 @@
     "credit_hours": 3,
     "description": "Exploration of personal leadership qualities and perspective; case studies in leadership in engineering enterprises; business etiquette and personal marketing",
     "prerequisites": "Grade of C or better in ENGR 351 ; acceptance into the Zachry Leadership Program; junior or senior classification or approval by instructor.",
-    "department": "Engineering"
+    "department": "Engineering",
+    "prefix": "ENGR",
+    "number": "450",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ENGR 351"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engr/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGR 451",
@@ -165,7 +546,28 @@
     "credit_hours": 3,
     "description": "Intersection of engineering, business, citizenship and leadership",
     "prerequisites": "Grade of C or better in ENGR 450 ; acceptance into the Zachry Leadership Program; junior or senior classification or approval by instructor.",
-    "department": "Engineering"
+    "department": "Engineering",
+    "prefix": "ENGR",
+    "number": "451",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ENGR 450"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engr/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGR 462",
@@ -173,7 +575,26 @@
     "credit_hours": 1,
     "description": "Designed to engage with successful technology entrepreneurs from across the nation; learn about the characteristics of successful entrepreneurs and their strategies in launching and sustaining businesses on technology innovation; network with highly successful entrepreneurs and develop relations valuable to professional careers",
     "prerequisites": "Junior or senior classification or approval of instructor.",
-    "department": "Engineering"
+    "department": "Engineering",
+    "prefix": "ENGR",
+    "number": "462",
+    "course_level": 400,
+    "credit_min": 1,
+    "credit_max": 1,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification",
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engr/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGR 484",
@@ -181,7 +602,25 @@
     "credit_hours": "0-6",
     "description": "International Engineering Internship. May be taken for credit up to six hours",
     "prerequisites": "Junior or senior classification.",
-    "department": "Engineering"
+    "department": "Engineering",
+    "prefix": "ENGR",
+    "number": "484",
+    "course_level": 400,
+    "credit_min": 0,
+    "credit_max": 6,
+    "is_variable_credit": true,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": "May be taken for credit up to six hours",
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engr/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGR 485",
@@ -189,7 +628,25 @@
     "credit_hours": "0-4",
     "description": "Directed individual study of problems in any area of engineering. May be taken 3 times for credit",
     "prerequisites": "Junior or senior classification; approval of the college.",
-    "department": "Engineering"
+    "department": "Engineering",
+    "prefix": "ENGR",
+    "number": "485",
+    "course_level": 400,
+    "credit_min": 0,
+    "credit_max": 4,
+    "is_variable_credit": true,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": "May be taken 3 times for credit",
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engr/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGR 489",
@@ -197,7 +654,23 @@
     "credit_hours": "0-4",
     "description": "Selected topics in an identified field of engineering. May be repeated for credit",
     "prerequisites": null,
-    "department": "Engineering"
+    "department": "Engineering",
+    "prefix": "ENGR",
+    "number": "489",
+    "course_level": 400,
+    "credit_min": 0,
+    "credit_max": 4,
+    "is_variable_credit": true,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": "May be repeated for credit",
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engr/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGR 491",
@@ -205,7 +678,26 @@
     "credit_hours": "0-4",
     "description": "Research conducted under the direction of faculty member in the College of Engineering. May be repeated 3 times for credit. Registration in multiple sections of this course is possible within a given semester provided that the per semester credit hour limit is not exceeded",
     "prerequisites": "Junior or senior classification and approval of instructor.",
-    "department": "Engineering"
+    "department": "Engineering",
+    "prefix": "ENGR",
+    "number": "491",
+    "course_level": 400,
+    "credit_min": 0,
+    "credit_max": 4,
+    "is_variable_credit": true,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": "May be repeated 3 times for credit.",
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification",
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engr/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "ENGR 499",
@@ -213,6 +705,22 @@
     "credit_hours": 0,
     "description": "Participation in an approved high-impact learning practice within the Grand Challenge Scholars program (GCSP); reflection on professional outcomes; documentation and self-assessment of learning experience",
     "prerequisites": null,
-    "department": "Engineering"
+    "department": "Engineering",
+    "prefix": "ENGR",
+    "number": "499",
+    "course_level": 400,
+    "credit_min": 0,
+    "credit_max": 0,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engr/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   }
 ]

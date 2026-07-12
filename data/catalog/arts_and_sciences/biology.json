@@ -5,7 +5,23 @@
     "credit_hours": 0,
     "description": "Introduction to the study of biology at Texas A&M University; gain knowledge of departmental and campus resources to assist and enhance the pursuit of a degree in biology, microbiology, molecular and cellular biology or zoology",
     "prerequisites": "First-year and first-time-in-college freshman majoring in BIOL, MBIO, BMCB and ZOOL.",
-    "department": "Biology"
+    "department": "Biology",
+    "prefix": "BIOL",
+    "number": "100",
+    "course_level": 100,
+    "credit_min": 0,
+    "credit_max": 0,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/biol/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "BIOL 101",
@@ -14,7 +30,25 @@
     "description": "Structure, physiology and development of plants with an emphasis on seed plants. (Not open to students who have taken BIOL 111 and BIOL 112 or BIOL 113 .); includes laboratory that reinforces and provides supplemental information related to the lecture topics",
     "prerequisites": null,
     "department": "Biology",
-    "satisfies_ucc": "Life and Physical Sciences"
+    "satisfies_ucc": "Life and Physical Sciences",
+    "prefix": "BIOL",
+    "number": "101",
+    "course_level": 100,
+    "credit_min": 4,
+    "credit_max": 4,
+    "is_variable_credit": false,
+    "ucc_attributes": [
+      "Life and Physical Sciences"
+    ],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/biol/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "BIOL 104",
@@ -23,7 +57,25 @@
     "description": "This team-taught, interdisciplinary course builds scientific literacy by examining contemporary issues — current questions, discoveries and challenges at the intersection of science and society. Topics may include the Big Bang, evolution, genetics, human reproduction and health, vaccines, drugs, artificial intelligence, cryptography and cybersecurity. Students will learn to evaluate scientific claims and critically analyze how science is presented in the news, on television and on social media. Cross Listing: ARSC 104 and PHYS 104",
     "prerequisites": null,
     "department": "Biology",
-    "satisfies_ucc": "Life and Physical Sciences"
+    "satisfies_ucc": "Life and Physical Sciences",
+    "prefix": "BIOL",
+    "number": "104",
+    "course_level": 100,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [
+      "Life and Physical Sciences"
+    ],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/biol/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "BIOL 107",
@@ -32,7 +84,25 @@
     "description": "(BIOL 1313 and 1113, 1413) Zoology. Survey of animal life with respect to cell organization, genetics, evolution, diversity of invertebrates/vertebrates, anatomy/physiology, and interaction of animals with their environment; includes laboratory that reinforces and provides supplemental information related to lecture topics. (Not open to students who have taken BIOL 111 and BIOL 112 or BIOL 113 )",
     "prerequisites": null,
     "department": "Biology",
-    "satisfies_ucc": "Life and Physical Sciences"
+    "satisfies_ucc": "Life and Physical Sciences",
+    "prefix": "BIOL",
+    "number": "107",
+    "course_level": 100,
+    "credit_min": 4,
+    "credit_max": 4,
+    "is_variable_credit": false,
+    "ucc_attributes": [
+      "Life and Physical Sciences"
+    ],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/biol/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "BIOL 111",
@@ -41,7 +111,27 @@
     "description": "(BIOL 1306 and 1106, 1406) Introductory Biology I. First half of an introdutory two-semester survey of contemporary biology that covers the chemical basis of life, structure and biology of the cell, molecular biology and genetics; includes laboratory that reinforces and provides supplemental information related to the lecture topics; also taught at Galveston campus",
     "prerequisites": null,
     "department": "Biology",
-    "satisfies_ucc": "Life and Physical Sciences"
+    "satisfies_ucc": "Life and Physical Sciences",
+    "prefix": "BIOL",
+    "number": "111",
+    "course_level": 100,
+    "credit_min": 4,
+    "credit_max": 4,
+    "is_variable_credit": false,
+    "ucc_attributes": [
+      "Life and Physical Sciences"
+    ],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [
+      "Galveston"
+    ],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/biol/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "BIOL 112",
@@ -50,7 +140,29 @@
     "description": "(BIOL 1307 and 1107, 1407) Introductory Biology II. The second half of an introductory two-semester survey of contemporary biology that covers evolution, history of life, diversity and form and function of organisms; includes laboratory that reinforces and provides supplemental information related to the lecture topics",
     "prerequisites": "BIOL 111 ; also taught at Galveston campus.",
     "department": "Biology",
-    "satisfies_ucc": "Life and Physical Sciences"
+    "satisfies_ucc": "Life and Physical Sciences",
+    "prefix": "BIOL",
+    "number": "112",
+    "course_level": 100,
+    "credit_min": 4,
+    "credit_max": 4,
+    "is_variable_credit": false,
+    "ucc_attributes": [
+      "Life and Physical Sciences"
+    ],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [
+      "Galveston"
+    ],
+    "prerequisite_courses": [
+      "BIOL 111"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/biol/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "BIOL 113",
@@ -59,7 +171,25 @@
     "description": "(BIOL 1308, BIOL 1408) Essentials in Biology. One-semester biology for non-majors; overview of essential biological concepts and their application to real world and contemporary issues; topics include evolution, biodiversity, cellular, molecular and forensic biology, genetics and heredity to scientific literacy, human impact on the environment, genetically modified organisms and emerging diseases",
     "prerequisites": null,
     "department": "Biology",
-    "satisfies_ucc": "Life and Physical Sciences"
+    "satisfies_ucc": "Life and Physical Sciences",
+    "prefix": "BIOL",
+    "number": "113",
+    "course_level": 100,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [
+      "Life and Physical Sciences"
+    ],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/biol/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "BIOL 206",
@@ -67,7 +197,29 @@
     "credit_hours": 4,
     "description": "(BIOL 2320 and 2120, BIOL 2321 and 2121, BIOL 2420, BIOL 2421) Introductory Microbiology. Basic microbiology of prokaryotes and eukaryotes; main topics include morphology, physiology, genetics, taxonomy, ecology, medically important species and immunology; mandatory laboratory designed to give hands-on experience and to reinforce basic principles",
     "prerequisites": "BIOL 101 , BIOL 107 , BIOL 111 , or BIOL 113 ; CHEM 119 . May not be used for credit by biology, molecular and cell biology, microbiology, zoology, predentistry or premedicine majors.",
-    "department": "Biology"
+    "department": "Biology",
+    "prefix": "BIOL",
+    "number": "206",
+    "course_level": 200,
+    "credit_min": 4,
+    "credit_max": 4,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": "May not be used for credit by biology, molecular and cell biology, microbiology, zoology, predentistry or premedicine majors.",
+    "campuses": [],
+    "prerequisite_courses": [
+      "BIOL 101",
+      "BIOL 107",
+      "BIOL 111",
+      "BIOL 113",
+      "CHEM 119"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/biol/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "BIOL 213",
@@ -75,7 +227,26 @@
     "credit_hours": 3,
     "description": "This course covers how cells are built, powered and regulated. Topics include macromolecules; membranes and transport; energy production and conversion; genome organization and evolution; DNA structure and replication; gene expression and regulation; intracellular trafficking; cytoskeleton; cell communication and electrical signaling; cell division and cancer. Additional topics may be presented based on time and instructor expertise. The course emphasizes evidence-based reasoning, quantitative skills and core experimental methods",
     "prerequisites": "BIOL 112 and CHEM 120 .",
-    "department": "Biology"
+    "department": "Biology",
+    "prefix": "BIOL",
+    "number": "213",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "BIOL 112",
+      "CHEM 120"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/biol/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "BIOL 214",
@@ -83,7 +254,25 @@
     "credit_hours": 3,
     "description": "A genetically-based introduction to the study of ecology and evolution; emphasis on the interactions of organisms with each other and with their environment",
     "prerequisites": "BIOL 112 .",
-    "department": "Biology"
+    "department": "Biology",
+    "prefix": "BIOL",
+    "number": "214",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "BIOL 112"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/biol/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "BIOL 285",
@@ -91,7 +280,25 @@
     "credit_hours": "1-4",
     "description": "Problems in various phases of plant, animal and microbial science",
     "prerequisites": "Freshman or sophomore classification; approval of ranking professor in field chosen and Undergraduate Advising Office.",
-    "department": "Biology"
+    "department": "Biology",
+    "prefix": "BIOL",
+    "number": "285",
+    "course_level": 200,
+    "credit_min": 1,
+    "credit_max": 4,
+    "is_variable_credit": true,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Freshman or sophomore classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/biol/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "BIOL 289",
@@ -99,7 +306,25 @@
     "credit_hours": "1-4",
     "description": "Selected topics in an identified area of biology. May be repeated for credit",
     "prerequisites": "Approval of instructor.",
-    "department": "Biology"
+    "department": "Biology",
+    "prefix": "BIOL",
+    "number": "289",
+    "course_level": 200,
+    "credit_min": 1,
+    "credit_max": 4,
+    "is_variable_credit": true,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": "May be repeated for credit",
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/biol/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "BIOL 291",
@@ -107,7 +332,25 @@
     "credit_hours": "0-4",
     "description": "Active research of basic nature under the supervision of a Department of Biology faculty member. May be repeated for credit",
     "prerequisites": "Freshman or sophomore classification and approval of faculty member.",
-    "department": "Biology"
+    "department": "Biology",
+    "prefix": "BIOL",
+    "number": "291",
+    "course_level": 200,
+    "credit_min": 0,
+    "credit_max": 4,
+    "is_variable_credit": true,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": "May be repeated for credit",
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Freshman or sophomore classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/biol/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "BIOL 302",
@@ -115,7 +358,28 @@
     "credit_hours": 1,
     "description": "Development of job search skills; utilization of career resources; self-assessment of career interests and career objectives; strategies for professional correspondence and networking; business etiquette and interviewing techniques; insight into life science career opportunities",
     "prerequisites": "Junior or senior classification; department of biology majors only; or approval of instructor.",
-    "department": "Biology"
+    "department": "Biology",
+    "prefix": "BIOL",
+    "number": "302",
+    "course_level": 300,
+    "credit_min": 1,
+    "credit_max": 1,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification",
+      "approval of instructor",
+      "department of biology majors only",
+      "majors only"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/biol/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "BIOL 318",
@@ -123,7 +387,27 @@
     "credit_hours": 4,
     "description": "Classification, phylogeny, comparative anatomy, and biology of chordates; diversity, protochordates, vertebrate skeletons, shark and cat anatomy studied in laboratory",
     "prerequisites": "BIOL 214 or approval of instructor.",
-    "department": "Biology"
+    "department": "Biology",
+    "prefix": "BIOL",
+    "number": "318",
+    "course_level": 300,
+    "credit_min": 4,
+    "credit_max": 4,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "BIOL 214"
+    ],
+    "restrictions": [
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/biol/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "BIOL 319",
@@ -131,7 +415,27 @@
     "credit_hours": 4,
     "description": "Integrated approach to cellular, neural, skeletal, muscular anatomy and physiology; includes some histology, histopathology, radiology and clinical correlations",
     "prerequisites": "BIOL 111 and BIOL 112 , or BIOL 107 .",
-    "department": "Biology"
+    "department": "Biology",
+    "prefix": "BIOL",
+    "number": "319",
+    "course_level": 300,
+    "credit_min": 4,
+    "credit_max": 4,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "BIOL 111",
+      "BIOL 112",
+      "BIOL 107"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/biol/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "BIOL 320",
@@ -139,7 +443,27 @@
     "credit_hours": 4,
     "description": "Continuation of BIOL 319 . Integrated approach to endocrine, cardiovascular, respiratory, digestive, urinary, reproductive and developmental anatomy and physiology; includes some histology, histopathology, radiology and clinical correlations",
     "prerequisites": "BIOL 319 or approval of instructor.",
-    "department": "Biology"
+    "department": "Biology",
+    "prefix": "BIOL",
+    "number": "320",
+    "course_level": 300,
+    "credit_min": 4,
+    "credit_max": 4,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "BIOL 319"
+    ],
+    "restrictions": [
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/biol/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "BIOL 335",
@@ -147,7 +471,27 @@
     "credit_hours": 4,
     "description": "Morphology, taxonomy, natual history and phylogeny of invertebrate animals, with emphasis on biodiversity; class includes both lecture and lab. Labs include study of preserved material and demonstration of living animals in aquaria and terraria",
     "prerequisites": "BIOL 214 or approval of instructor.",
-    "department": "Biology"
+    "department": "Biology",
+    "prefix": "BIOL",
+    "number": "335",
+    "course_level": 300,
+    "credit_min": 4,
+    "credit_max": 4,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "BIOL 214"
+    ],
+    "restrictions": [
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/biol/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "BIOL 349",
@@ -155,7 +499,32 @@
     "credit_hours": 3,
     "description": "Comprehensive analysis of bioinformatics tools applicable to eukaryotic organisms; theoretical background of computational algorithms, with an emphasis on application of computational tools related to modern molecular biological research",
     "prerequisites": "BIOL 213 ; GENE 301 , GENE 302 , GENE 303 , BIMS 320/GENE 320 , or GENE 320/BIMS 320 recommended; or approval of instructor.",
-    "department": "Biology"
+    "department": "Biology",
+    "prefix": "BIOL",
+    "number": "349",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "BIOL 213",
+      "GENE 301",
+      "GENE 302",
+      "GENE 303",
+      "BIMS 320",
+      "GENE 320"
+    ],
+    "restrictions": [
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/biol/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "BIOL 350",
@@ -163,7 +532,25 @@
     "credit_hours": 3,
     "description": "Hands-on approach to obtaining, organizing and analyzing genome-related data; emphasis on asking and answering biologically relevant questions by designing and performing experiments using computers; understanding biology from a computational perspective",
     "prerequisites": "Junior or senior classification in life sciences, engineering, mathematics, chemistry.",
-    "department": "Biology"
+    "department": "Biology",
+    "prefix": "BIOL",
+    "number": "350",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/biol/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "BIOL 351",
@@ -171,7 +558,33 @@
     "credit_hours": 4,
     "description": "Introduction to modern microbiology with emphasis on prokaryotes; includes microbial cell structure, function, and physiology; genetics, evolution, and taxonomy; bacteriophage and viruses; pathogenesis and immunity; and ecology and biotechnology; includes laboratory experience with microbial growth and identification",
     "prerequisites": "BIOL 112 ; CHEM 257 , or CHEM 227 and CHEM 237 , or CHEM 231 ; or approval of instructor; also taught at Galveston campus.",
-    "department": "Biology"
+    "department": "Biology",
+    "prefix": "BIOL",
+    "number": "351",
+    "course_level": 300,
+    "credit_min": 4,
+    "credit_max": 4,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [
+      "Galveston"
+    ],
+    "prerequisite_courses": [
+      "BIOL 112",
+      "CHEM 257",
+      "CHEM 227",
+      "CHEM 237",
+      "CHEM 231"
+    ],
+    "restrictions": [
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/biol/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "BIOL 352",
@@ -179,7 +592,27 @@
     "credit_hours": 4,
     "description": "Practical experience in handling, isolation and identification of pathogenic microorganisms using biochemical tests and rapid identification techniques",
     "prerequisites": "BIOL 351 or approval of instructor.",
-    "department": "Biology"
+    "department": "Biology",
+    "prefix": "BIOL",
+    "number": "352",
+    "course_level": 300,
+    "credit_min": 4,
+    "credit_max": 4,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "BIOL 351"
+    ],
+    "restrictions": [
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/biol/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "BIOL 354",
@@ -187,7 +620,25 @@
     "credit_hours": 3,
     "description": "Survey the genetics, ecology and evolution of microbes, review their role in defining the environment of the earth and their impact on all forms of life on earth",
     "prerequisites": "BIOL 351 .",
-    "department": "Biology"
+    "department": "Biology",
+    "prefix": "BIOL",
+    "number": "354",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "BIOL 351"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/biol/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "BIOL 357",
@@ -195,7 +646,27 @@
     "credit_hours": 3,
     "description": "Analysis of ecosystems at organismal, population, interspecific and community levels",
     "prerequisites": "BIOL 214 or approval of instructor.",
-    "department": "Biology"
+    "department": "Biology",
+    "prefix": "BIOL",
+    "number": "357",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "BIOL 214"
+    ],
+    "restrictions": [
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/biol/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "BIOL 388",
@@ -203,7 +674,29 @@
     "credit_hours": 4,
     "description": "Introduction to how animals function, including basics of neurophysiology, endocrinology, muscular, cardiovascular, respiratory, ormoregulatory, and metabolic physiology; broadly comparative in scope and encompassing adaptation of physiological systems to diverse environments; the laboratory stresses techniques used for monitoring and investigating physiological mechanisms and responses to environmental changes",
     "prerequisites": "BIOL 214 , CHEM 228 , or CHEM 258 , or approval of instructor.",
-    "department": "Biology"
+    "department": "Biology",
+    "prefix": "BIOL",
+    "number": "388",
+    "course_level": 300,
+    "credit_min": 4,
+    "credit_max": 4,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "BIOL 214",
+      "CHEM 228",
+      "CHEM 258"
+    ],
+    "restrictions": [
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/biol/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "BIOL 400",
@@ -211,7 +704,28 @@
     "credit_hours": 6,
     "description": "Advanced field-intensive course conducted at multiple biological field stations located throughout Costa Rica; exposure to a wide variety of tropical ecological principles using largely observational and some sampling techniques; experience with amazing diversity of wildlife and habitats from hot, humid low land rainforests to the high elevations of the Talamanca páramo; development of a variety of natural history skills needed to understand the complex interactions of plants and animals in tropical environments; requires detailed journal of ecological principles observed while in Costa Rica to be used as basis for final written report; opportunities to experience the unique and friendly culture of one of Central America's most successful countries and discover how anthropogenic activities affect biodiversity",
     "prerequisites": "Junior or senior classification; approval of instructor; BIOL 357 preferred.",
-    "department": "Biology"
+    "department": "Biology",
+    "prefix": "BIOL",
+    "number": "400",
+    "course_level": 400,
+    "credit_min": 6,
+    "credit_max": 6,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "BIOL 357"
+    ],
+    "restrictions": [
+      "Junior or senior classification",
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/biol/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "BIOL 401",
@@ -219,7 +733,28 @@
     "credit_hours": 1,
     "description": "Reading scientific papers and writing short synopses of papers with a focus on learning how to think and write like a scientist; fills the current Writing Intensive \"W\" course requirement for biology",
     "prerequisites": "BIOL 213 or CHEM 228 ; junior or senior classification.",
-    "department": "Biology"
+    "department": "Biology",
+    "prefix": "BIOL",
+    "number": "401",
+    "course_level": 400,
+    "credit_min": 1,
+    "credit_max": 1,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "BIOL 213",
+      "CHEM 228"
+    ],
+    "restrictions": [
+      "junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/biol/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "BIOL 402",
@@ -227,7 +762,28 @@
     "credit_hours": 1,
     "description": "Interpretation of scientific papers; analysis of how research findings are communicated to lay audiences; creation of synopses of research findings for the general public",
     "prerequisites": "BIOL 213 or CHEM 228 ; junior or senior classification.",
-    "department": "Biology"
+    "department": "Biology",
+    "prefix": "BIOL",
+    "number": "402",
+    "course_level": 400,
+    "credit_min": 1,
+    "credit_max": 1,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "BIOL 213",
+      "CHEM 228"
+    ],
+    "restrictions": [
+      "junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/biol/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "BIOL 403",
@@ -235,7 +791,29 @@
     "credit_hours": 1,
     "description": "Focus on reading and analyzing brief nonfiction stories about medicine; exploration of different perspectives and experiences with illness and medicine",
     "prerequisites": "BIOL 213 or CHEM 228 ; junior or senior classification or approval of instructor.",
-    "department": "Biology"
+    "department": "Biology",
+    "prefix": "BIOL",
+    "number": "403",
+    "course_level": 400,
+    "credit_min": 1,
+    "credit_max": 1,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "BIOL 213",
+      "CHEM 228"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/biol/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "BIOL 405",
@@ -243,7 +821,27 @@
     "credit_hours": 3,
     "description": "Basic principles of endocrinology including structure and functions of hormones in vertebrates; hormonal control of growth, metabolism, osmoregulation, and reproduction; endocrine techniques and mechanism of hormone action",
     "prerequisites": "BIOL 214 ; CHEM 227 or CHEM 257 .",
-    "department": "Biology"
+    "department": "Biology",
+    "prefix": "BIOL",
+    "number": "405",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "BIOL 214",
+      "CHEM 227",
+      "CHEM 257"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/biol/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "BIOL 407",
@@ -251,7 +849,27 @@
     "credit_hours": 3,
     "description": "Examination of the basic mechanisms of biological timing; in depth study of clocks in model organisms and the relationship between clocks and human health and disease",
     "prerequisites": "BICH 431/GENE 431 , BIOL 213 or GENE 431/BICH 431 .",
-    "department": "Biology"
+    "department": "Biology",
+    "prefix": "BIOL",
+    "number": "407",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "BICH 431",
+      "GENE 431",
+      "BIOL 213"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/biol/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "BIOL 411",
@@ -259,7 +877,27 @@
     "credit_hours": 3,
     "description": "Underlying technical basis for synthetic biology; tools used to generate recombinant molecules; genetic circuitry and modules applied to bacteria; design and fabrication of genes, biological components and entire organisms; survey actual and theoretical applications",
     "prerequisites": "BIOL 351 or BICH 431/GENE 431 .",
-    "department": "Biology"
+    "department": "Biology",
+    "prefix": "BIOL",
+    "number": "411",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "BIOL 351",
+      "BICH 431",
+      "GENE 431"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/biol/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "BIOL 413",
@@ -267,7 +905,29 @@
     "credit_hours": 3,
     "description": "Structure, function, and biogenesis of cells and their components; interpretation of dynamic processes of cells, including protein trafficking, motility, signaling and proliferation",
     "prerequisites": "BIOL 213 , GENE 302 , or GENE 303 ; BICH 410 or BICH 440 .",
-    "department": "Biology"
+    "department": "Biology",
+    "prefix": "BIOL",
+    "number": "413",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "BIOL 213",
+      "GENE 302",
+      "GENE 303",
+      "BICH 410",
+      "BICH 440"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/biol/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "BIOL 414",
@@ -275,7 +935,28 @@
     "credit_hours": 3,
     "description": "Concepts of development in systems ranging from bacteriophage to the mammalian embryo; use of recombinant DNA technology and embryo engineering to unravel the relationships between growth and differentiation, morphogenesis and commitment, aging and cancer",
     "prerequisites": "BIOL 213 or GENE 302 ; BICH 410 or BICH 440 .",
-    "department": "Biology"
+    "department": "Biology",
+    "prefix": "BIOL",
+    "number": "414",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "BIOL 213",
+      "GENE 302",
+      "BICH 410",
+      "BICH 440"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/biol/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "BIOL 423",
@@ -283,7 +964,28 @@
     "credit_hours": 2,
     "description": "Modern methods of study of cell structure and cell function",
     "prerequisites": "BICH 410 and BIOL 413 , or concurrent enrollment or approval of instructor.",
-    "department": "Biology"
+    "department": "Biology",
+    "prefix": "BIOL",
+    "number": "423",
+    "course_level": 400,
+    "credit_min": 2,
+    "credit_max": 2,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "BICH 410",
+      "BIOL 413"
+    ],
+    "restrictions": [
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/biol/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "BIOL 425",
@@ -291,7 +993,27 @@
     "credit_hours": 3,
     "description": "This course will explore the molecular aspects of plant growth, development, reproduction and evolution, with an emphasis on gene manipulation and the practical applications of plant molecular biology",
     "prerequisites": "GENE 302 or equivalent, or approval of instructor.",
-    "department": "Biology"
+    "department": "Biology",
+    "prefix": "BIOL",
+    "number": "425",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "GENE 302"
+    ],
+    "restrictions": [
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/biol/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "BIOL 428",
@@ -299,7 +1021,33 @@
     "credit_hours": 3,
     "description": "Cell biology, molecular biology and biophysics of neurons as it pertains to their fundamental role in the physiological basis of behavior; study of how neurons create, maintain and exploit electrical signals for information coding and transmission; principles of electrical and chemical signaling between neurons, and the role of intracellular signaling for signal modulation and synaptic plasticity; exploration of a broad range of state-of-the-art molecular tools currently used to study the nervous system, and the cellular basis for many of the most common neurological disorders affecting humans as well as the strategies and therapies for their treatment",
     "prerequisites": "BIOL 213 and PSYC 235, or approval of instructor. Cross Listing: NRSC 428/BIOL 428 .",
-    "department": "Biology"
+    "department": "Biology",
+    "prefix": "BIOL",
+    "number": "428",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "NRSC 428",
+      "BIOL 428"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "BIOL 213",
+      "PSYC 235",
+      "NRSC 428",
+      "BIOL 428"
+    ],
+    "restrictions": [
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/biol/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "BIOL 430",
@@ -307,7 +1055,26 @@
     "credit_hours": 4,
     "description": "Still and video photography and photomicrography, computerbased digital image analysis and processing of biological images; theory and principles of light and electron microscopy including transmission and scanning electron microscopy; optical contrast methods for light microscopy including phase contrast, DIC, polarizing light and confocal laser scanning microscopy",
     "prerequisites": "Junior classification or approval of instructor.",
-    "department": "Biology"
+    "department": "Biology",
+    "prefix": "BIOL",
+    "number": "430",
+    "course_level": 400,
+    "credit_min": 4,
+    "credit_max": 4,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior classification",
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/biol/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "BIOL 435",
@@ -315,7 +1082,38 @@
     "credit_hours": 1,
     "description": "Study of modern methods and tools used to investigate nervous system structure and function",
     "prerequisites": "BIOL 213 ; BIOL 319 , BIOL 320 , BIOL 388 , BIOL 413 , BIOL 428 , BIOL 434/NRSC 434 , NRSC 235, NRSC 335, NRSC 428/BIOL 428 , NRSC 434/BIOL 434 , or PBSI 235 , or approval of instructor.",
-    "department": "Biology"
+    "department": "Biology",
+    "prefix": "BIOL",
+    "number": "435",
+    "course_level": 400,
+    "credit_min": 1,
+    "credit_max": 1,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "BIOL 213",
+      "BIOL 319",
+      "BIOL 320",
+      "BIOL 388",
+      "BIOL 413",
+      "BIOL 428",
+      "BIOL 434",
+      "NRSC 434",
+      "NRSC 235",
+      "NRSC 335",
+      "NRSC 428",
+      "PBSI 235"
+    ],
+    "restrictions": [
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/biol/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "BIOL 438",
@@ -323,7 +1121,31 @@
     "credit_hours": 3,
     "description": "Structure and function of prokaryotic cells, with emphasis on evolutionary adaptations to different environmental, developmental, and pathogenic selections pressures; formation of teamsa and preparation of presentations on specific topics in microbiology",
     "prerequisites": "BIOL 351 ; BIOL 406/GENE 406 or concurrent enrollment; BICH 410 , BICH 431/GENE 431 and GENE 302 strongly recommended.",
-    "department": "Biology"
+    "department": "Biology",
+    "prefix": "BIOL",
+    "number": "438",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "BIOL 351",
+      "BIOL 406",
+      "GENE 406",
+      "BICH 410",
+      "BICH 431",
+      "GENE 431",
+      "GENE 302"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/biol/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "BIOL 440",
@@ -331,7 +1153,27 @@
     "credit_hours": 4,
     "description": "Introduction to biology of common organisms inhabiting bays, beaches and near-shore oceanic waters with special reference to Gulf of Mexico biota; emphasis on classification, distribution, history, ecology, physiology, mutualism, predation, major community types and economic aspects of marine organisms",
     "prerequisites": "BIOL 214 or approval of instructor.",
-    "department": "Biology"
+    "department": "Biology",
+    "prefix": "BIOL",
+    "number": "440",
+    "course_level": 400,
+    "credit_min": 4,
+    "credit_max": 4,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "BIOL 214"
+    ],
+    "restrictions": [
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/biol/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "BIOL 443",
@@ -339,7 +1181,27 @@
     "credit_hours": 3,
     "description": "Analysis of the earliest stages of animal evolution by integrating various scientific fields such as genomics, paleontology, metabolism, morphology, environment, development and behavior; includes hands-on exploration of fossils and modern animals to understand how evolution shaped our world",
     "prerequisites": "BIOL 214 ; junior or senior classification.",
-    "department": "Biology"
+    "department": "Biology",
+    "prefix": "BIOL",
+    "number": "443",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "BIOL 214"
+    ],
+    "restrictions": [
+      "junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/biol/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "BIOL 445",
@@ -347,7 +1209,28 @@
     "credit_hours": 3,
     "description": "Structure, composition and life cycles of viruses; methods used to study viruses; their interaction with host cells; mechanisms of pathogenicity and cellular transformation; responses of the host to viral infection, and vaccine applications; in-depth study of the life cycles of the major classes of viruses and discussion of emerging viruses",
     "prerequisites": "BIOL 213 or BIOL 351 or approval of instructor.",
-    "department": "Biology"
+    "department": "Biology",
+    "prefix": "BIOL",
+    "number": "445",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "BIOL 213",
+      "BIOL 351"
+    ],
+    "restrictions": [
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/biol/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "BIOL 454",
@@ -355,7 +1238,27 @@
     "credit_hours": 3,
     "description": "Introduction to basic immunological concepts and principles of serology",
     "prerequisites": "BIOL 351 or equivalent or approval of instructor.",
-    "department": "Biology"
+    "department": "Biology",
+    "prefix": "BIOL",
+    "number": "454",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "BIOL 351"
+    ],
+    "restrictions": [
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/biol/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "BIOL 455",
@@ -363,7 +1266,25 @@
     "credit_hours": 2,
     "description": "Practical application of serological principles which include precipitation, agglutination and blood banking principles; techniques in tissue culture and hybridoma technology also included",
     "prerequisites": "BIOL 454 or registration therein.",
-    "department": "Biology"
+    "department": "Biology",
+    "prefix": "BIOL",
+    "number": "455",
+    "course_level": 400,
+    "credit_min": 2,
+    "credit_max": 2,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "BIOL 454"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/biol/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "BIOL 456",
@@ -371,7 +1292,27 @@
     "credit_hours": 3,
     "description": "Microbiology, epidemiology and pathology of human pathogens with an emphasis on bacterial agents",
     "prerequisites": "BIOL 351 or approval of instructor.",
-    "department": "Biology"
+    "department": "Biology",
+    "prefix": "BIOL",
+    "number": "456",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "BIOL 351"
+    ],
+    "restrictions": [
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/biol/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "BIOL 461",
@@ -379,7 +1320,28 @@
     "credit_hours": 1,
     "description": "Understanding of antimicrobial agents, limitations of use, biosynthesis and regulation, and challenges in development as new therapeutics",
     "prerequisites": "BICH 410 or BICH 440 and BIOL 351 or VTPB 405 .",
-    "department": "Biology"
+    "department": "Biology",
+    "prefix": "BIOL",
+    "number": "461",
+    "course_level": 400,
+    "credit_min": 1,
+    "credit_max": 1,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "BICH 410",
+      "BICH 440",
+      "BIOL 351",
+      "VTPB 405"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/biol/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "BIOL 466",
@@ -387,7 +1349,27 @@
     "credit_hours": 3,
     "description": "Evolutionary patterns, mechanisms and processes at the organismal, chromosomal and molecular levels; modes of adaptation and the behavior of genes in populations",
     "prerequisites": "GENE 302 or approval of instructor.",
-    "department": "Biology"
+    "department": "Biology",
+    "prefix": "BIOL",
+    "number": "466",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "GENE 302"
+    ],
+    "restrictions": [
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/biol/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "BIOL 467",
@@ -395,7 +1377,33 @@
     "credit_hours": 3,
     "description": "Examines how behavior contributes to survival and reproduction, and how evolutionary history and ecological circumstance interact to shape the expression of behavior; focus on integrative nature of behavior; how the interaction of evolutionary processes, mechanistic constraints, and ecological demands determine behavioral strategies",
     "prerequisites": "BIOL 214 , BIOL 357 , BIOL 388 , BIOL 405 , BIOL 434/NRSC 434 , or BIOL 466 , or approval of instructor.",
-    "department": "Biology"
+    "department": "Biology",
+    "prefix": "BIOL",
+    "number": "467",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "BIOL 214",
+      "BIOL 357",
+      "BIOL 388",
+      "BIOL 405",
+      "BIOL 434",
+      "NRSC 434",
+      "BIOL 466"
+    ],
+    "restrictions": [
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/biol/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "BIOL 468",
@@ -403,7 +1411,30 @@
     "credit_hours": 3,
     "description": "This course offers an innovative exploration of fundamental concepts in biology through their portrayal in film, highlighting the intersection of scientific discovery, medicine and society. Students will engage with primary scientific literature to develop a firsthand understanding of the discovery process underlying topics such as neurodegenerative disease, genetic engineering, addiction and disease transmission. Class discussions will connect these foundational insights to critical analyses of how such themes are represented in film, encouraging students to evaluate both the processes of scientific discovery and their societal implications. Through this dual approach, the course fosters scientific literacy, ethical reasoning and a deeper appreciation for the relationship between science and society",
     "prerequisites": "BIOL 111 , BIOL 112 and BIOL 213 ; junior or senior classification; or approval of instructor.",
-    "department": "Biology"
+    "department": "Biology",
+    "prefix": "BIOL",
+    "number": "468",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "BIOL 111",
+      "BIOL 112",
+      "BIOL 213"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/biol/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "BIOL 480",
@@ -411,7 +1442,25 @@
     "credit_hours": 1,
     "description": "Attend presentations given by renowned scientists from various fields of biology; learn about new developments in science; stay abreast of current and trending research topics",
     "prerequisites": "Senior classification; majors in BIOL, MICRO, BMCB and ZOOL.",
-    "department": "Biology"
+    "department": "Biology",
+    "prefix": "BIOL",
+    "number": "480",
+    "course_level": 400,
+    "credit_min": 1,
+    "credit_max": 1,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/biol/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "BIOL 481",
@@ -419,7 +1468,23 @@
     "credit_hours": 1,
     "description": "Recent advances",
     "prerequisites": "Senior undergraduate majors in biology, microbiology, botany or zoology.",
-    "department": "Biology"
+    "department": "Biology",
+    "prefix": "BIOL",
+    "number": "481",
+    "course_level": 400,
+    "credit_min": 1,
+    "credit_max": 1,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/biol/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "BIOL 484",
@@ -427,7 +1492,23 @@
     "credit_hours": "0-4",
     "description": "Directed internship in a private firm or public agency to provide research experience appropriate to the student's degree program and career objectives. May be taken two times",
     "prerequisites": "Approval of internship agency and advising office.",
-    "department": "Biology"
+    "department": "Biology",
+    "prefix": "BIOL",
+    "number": "484",
+    "course_level": 400,
+    "credit_min": 0,
+    "credit_max": 4,
+    "is_variable_credit": true,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": "May be taken two times",
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/biol/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "BIOL 485",
@@ -435,7 +1516,25 @@
     "credit_hours": "1-12",
     "description": "Problems in various phases of plant, animal and bacteriological science",
     "prerequisites": "Junior classification; approval of ranking professor in field chosen and Undergraduate Advising Office.",
-    "department": "Biology"
+    "department": "Biology",
+    "prefix": "BIOL",
+    "number": "485",
+    "course_level": 400,
+    "credit_min": 1,
+    "credit_max": 12,
+    "is_variable_credit": true,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/biol/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "BIOL 489",
@@ -443,7 +1542,23 @@
     "credit_hours": "1-4",
     "description": "Selected topics in an identified area of biology. May be repeated once for credit",
     "prerequisites": null,
-    "department": "Biology"
+    "department": "Biology",
+    "prefix": "BIOL",
+    "number": "489",
+    "course_level": 400,
+    "credit_min": 1,
+    "credit_max": 4,
+    "is_variable_credit": true,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": "May be repeated once for credit",
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/biol/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "BIOL 491",
@@ -451,7 +1566,23 @@
     "credit_hours": "0-4",
     "description": "Active research of basic nature under the supervision of a Department of Biology faculty member. May be taken two times. Registration in multiple sections of this course is possible within a given semester provided that the per semester credit hour limit is not exceeded",
     "prerequisites": "Approval of departmental faculty member.",
-    "department": "Biology"
+    "department": "Biology",
+    "prefix": "BIOL",
+    "number": "491",
+    "course_level": 400,
+    "credit_min": 0,
+    "credit_max": 4,
+    "is_variable_credit": true,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": "May be taken two times.",
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/biol/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "BIOL 492",
@@ -459,7 +1590,27 @@
     "credit_hours": 1,
     "description": "Basic aspects of the biotechnology business; includes key aspects of biotechnology patents, the main steps in preclinical drug development and company structure and funding",
     "prerequisites": "BIOL 213 or equivalent; CHEM 227 and CHEM 228 .",
-    "department": "Biology"
+    "department": "Biology",
+    "prefix": "BIOL",
+    "number": "492",
+    "course_level": 400,
+    "credit_min": 1,
+    "credit_max": 1,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "BIOL 213",
+      "CHEM 227",
+      "CHEM 228"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/biol/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "BIOL 495",
@@ -467,7 +1618,32 @@
     "credit_hours": 2,
     "description": "Culmination of capstone research experience; formalization of research results in written and oral forms; introduction to primary genres or scientific writing; apply principles of rhetoric and composition to diverse methods of professional communication",
     "prerequisites": "BIOL 452, BICH 464/GENE 464 , BIOL 400 , BIOL 493 or BIOL 491 or approval of instructor.",
-    "department": "Biology"
+    "department": "Biology",
+    "prefix": "BIOL",
+    "number": "495",
+    "course_level": 400,
+    "credit_min": 2,
+    "credit_max": 2,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "BIOL 452",
+      "BICH 464",
+      "GENE 464",
+      "BIOL 400",
+      "BIOL 493",
+      "BIOL 491"
+    ],
+    "restrictions": [
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/biol/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "BIOL 496",
@@ -475,6 +1651,33 @@
     "credit_hours": 1,
     "description": "Fraud in science, how to recognize it, and how to avoid committing fraud; includes the basis of ethics and plagiarism, negotiation techniques and conflict management, the regulations and ethics covering animal and human experiments, record-keeping, data management and peer review",
     "prerequisites": "BIOL 491 , NRSC 491 , BICH 491 , GENE 491 , BIMS 491 , CHEM 491 , BIOL 351 , or BICH 410 , or approval of instructor.",
-    "department": "Biology"
+    "department": "Biology",
+    "prefix": "BIOL",
+    "number": "496",
+    "course_level": 400,
+    "credit_min": 1,
+    "credit_max": 1,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "BIOL 491",
+      "NRSC 491",
+      "BICH 491",
+      "GENE 491",
+      "BIMS 491",
+      "CHEM 491",
+      "BIOL 351",
+      "BICH 410"
+    ],
+    "restrictions": [
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/biol/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   }
 ]

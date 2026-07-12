@@ -6,7 +6,27 @@
     "description": "A general overview of the human body. The scientific method is used to introduce students to the fundamentals of stress, exercise, nutrition, disease and drug use. Interdisciplinary focus on wellness and longevity. Integrated physical activity experiences centering on principles and applications of the scientific basis of conditioning; also taught at Galveston campus",
     "prerequisites": null,
     "department": "Kinesiology",
-    "satisfies_ucc": "Life and Physical Sciences"
+    "satisfies_ucc": "Life and Physical Sciences",
+    "prefix": "KINE",
+    "number": "120",
+    "course_level": 100,
+    "credit_min": 1,
+    "credit_max": 1,
+    "is_variable_credit": false,
+    "ucc_attributes": [
+      "Life and Physical Sciences"
+    ],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [
+      "Galveston"
+    ],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/kine/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "KINE 121",
@@ -14,7 +34,23 @@
     "credit_hours": 2,
     "description": "Individual assessment of physical fitness and motor ability profiles through participation in standardized fitness tests. Examine societal factors and personal behaviors that influence health, physical activity and overall quality of life",
     "prerequisites": "Kinesiology major.",
-    "department": "Kinesiology"
+    "department": "Kinesiology",
+    "prefix": "KINE",
+    "number": "121",
+    "course_level": 100,
+    "credit_min": 2,
+    "credit_max": 2,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/kine/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "KINE 175",
@@ -22,7 +58,23 @@
     "credit_hours": 1,
     "description": "Explores the fundamental principles of partnering; explores the properties of momentum, weight sharing, contact improvisation, breath, timing and trust; develops movement phrases on the principles of impromptu and partnering",
     "prerequisites": null,
-    "department": "Kinesiology"
+    "department": "Kinesiology",
+    "prefix": "KINE",
+    "number": "175",
+    "course_level": 100,
+    "credit_min": 1,
+    "credit_max": 1,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/kine/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "KINE 199",
@@ -30,7 +82,25 @@
     "credit_hours": 1,
     "description": "(Any 1-hour PHED activity course) Physical Activity. Selection from an assortment of team sports, individual sports, skill acquisition and/or fitness formats designed to improve and encourage lifetime activity, fitness and wellness; also taught at Galveston campus",
     "prerequisites": null,
-    "department": "Kinesiology"
+    "department": "Kinesiology",
+    "prefix": "KINE",
+    "number": "199",
+    "course_level": 100,
+    "credit_min": 1,
+    "credit_max": 1,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [
+      "Galveston"
+    ],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/kine/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "KINE 210",
@@ -39,7 +109,25 @@
     "description": "Examine and appreciate movement as expressed by every culture, recognizing that movement is shaped by practical and artistic contexts. Through application, examine how dance is used to advance personal and social expression through design, patterning, connoted meaning and interconnected form. Dance is analyzed through multiple activities, including attending and critiquing a live dance performance, to enhance perspective, experience and appreciation of dance movement",
     "prerequisites": null,
     "department": "Kinesiology",
-    "satisfies_ucc": "Creative Arts"
+    "satisfies_ucc": "Creative Arts",
+    "prefix": "KINE",
+    "number": "210",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [
+      "Creative Arts"
+    ],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/kine/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "KINE 213",
@@ -47,7 +135,23 @@
     "credit_hours": 3,
     "description": "(PHED 1301) Foundations of Kinesiology. History, principles, objectives, current concepts of kinesiology",
     "prerequisites": null,
-    "department": "Kinesiology"
+    "department": "Kinesiology",
+    "prefix": "KINE",
+    "number": "213",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/kine/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "KINE 223",
@@ -56,7 +160,27 @@
     "description": "Overview of the human body systems. Interdisciplinary focus on wellness, exercise, nutrition, disease and drug use. Integrated kinesthetic lessons with physical activity and lab experiences that center on the scientific principles and application of conditioning. Through a variety of topics that relate to health, wellness and exercise, students will collect data, evaluate the information and formulate plans based on the findings. Application based experiences will be completed using a blend of equipment, software and technology to collect and evaluate data; also taught at Galveston campus",
     "prerequisites": null,
     "department": "Kinesiology",
-    "satisfies_ucc": "Life and Physical Sciences"
+    "satisfies_ucc": "Life and Physical Sciences",
+    "prefix": "KINE",
+    "number": "223",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [
+      "Life and Physical Sciences"
+    ],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [
+      "Galveston"
+    ],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/kine/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "KINE 282",
@@ -65,7 +189,27 @@
     "description": "Explore the dimensions of wellness across worldwide cultures; analyze, compare and contrast wellness choices and their impact on the individual and society; investigate a global region and its wellness practices; integrate physical activity experiences that are centered on the history and culture of a focus activity that originated outside the United States; also taught at Galveston campus",
     "prerequisites": null,
     "department": "Kinesiology",
-    "satisfies_ucc": "Social and Behavioral Sciences"
+    "satisfies_ucc": "Social and Behavioral Sciences",
+    "prefix": "KINE",
+    "number": "282",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [
+      "Social and Behavioral Sciences"
+    ],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [
+      "Galveston"
+    ],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/kine/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "KINE 285",
@@ -73,7 +217,26 @@
     "credit_hours": "0-4",
     "description": "Work on a specified topic with the intent of promoting independent reading, research and study; supplement existing course offerings or subjects nor presently covered",
     "prerequisites": "Freshman or sophomore classification; approval of instructor.",
-    "department": "Kinesiology"
+    "department": "Kinesiology",
+    "prefix": "KINE",
+    "number": "285",
+    "course_level": 200,
+    "credit_min": 0,
+    "credit_max": 4,
+    "is_variable_credit": true,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Freshman or sophomore classification",
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/kine/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "KINE 289",
@@ -81,7 +244,23 @@
     "credit_hours": "0-4",
     "description": "Selected topics in an identified area of kinesiology. May be repeated for credit",
     "prerequisites": null,
-    "department": "Kinesiology"
+    "department": "Kinesiology",
+    "prefix": "KINE",
+    "number": "289",
+    "course_level": 200,
+    "credit_min": 0,
+    "credit_max": 4,
+    "is_variable_credit": true,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": "May be repeated for credit",
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/kine/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "KINE 291",
@@ -89,7 +268,26 @@
     "credit_hours": "0-4",
     "description": "Research conducted under the direction of faculty member in kinesiology. May be repeated 4 times for credit",
     "prerequisites": "Freshman or sophomore classification and approval of instructor.",
-    "department": "Kinesiology"
+    "department": "Kinesiology",
+    "prefix": "KINE",
+    "number": "291",
+    "course_level": 200,
+    "credit_min": 0,
+    "credit_max": 4,
+    "is_variable_credit": true,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": "May be repeated 4 times for credit",
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Freshman or sophomore classification",
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/kine/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "KINE 305",
@@ -97,7 +295,25 @@
     "credit_hours": 3,
     "description": "Optimal nutritional intake in support of peak performance in sport and dance; food as fuel and which fuels are most important to specific sport/dance activities; the role nutritional supplements can play; fluid balance; weight management for athletes and dancers",
     "prerequisites": "Junior or senior classification.",
-    "department": "Kinesiology"
+    "department": "Kinesiology",
+    "prefix": "KINE",
+    "number": "305",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/kine/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "KINE 307",
@@ -105,7 +321,26 @@
     "credit_hours": 3,
     "description": "Comprehensive study of biological, neurological, and physiological changes that influence motor behavior across the human lifespan; focus on heredity, neural development, physical growth, motor skill changes, and the impact of sociocultural settings; application of ecological and information processing models, and use of assessment tools to evaluate motor development in typical and atypical populations from prenatal stages through older adulthood",
     "prerequisites": "Junior or senior classification or approval of instructor.",
-    "department": "Kinesiology"
+    "department": "Kinesiology",
+    "prefix": "KINE",
+    "number": "307",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification",
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/kine/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "KINE 308",
@@ -113,7 +348,25 @@
     "credit_hours": 3,
     "description": "Philosophy of outdoor education in a physical education program; designing and implementing outdoor adventure activities in an experiential and interdisciplinary manner for reinforcing the Texas Essential Knowledge and Skills",
     "prerequisites": "Junior or senior classification or instructor approval.",
-    "department": "Kinesiology"
+    "department": "Kinesiology",
+    "prefix": "KINE",
+    "number": "308",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/kine/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "KINE 311",
@@ -121,7 +374,25 @@
     "credit_hours": 3,
     "description": "Appreciation of rhythms and dance movements in a cultural context; analysis of dance performance; basic understanding of the various dance components",
     "prerequisites": "Approval of instructor.",
-    "department": "Kinesiology"
+    "department": "Kinesiology",
+    "prefix": "KINE",
+    "number": "311",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/kine/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "KINE 318",
@@ -129,7 +400,25 @@
     "credit_hours": 3,
     "description": "Overview of the profession of athletic training; comprehensive analysis of the theories and practices in preventing, recognizing and treating common athletic injuries",
     "prerequisites": "Junior or senior classification.",
-    "department": "Kinesiology"
+    "department": "Kinesiology",
+    "prefix": "KINE",
+    "number": "318",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/kine/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "KINE 334",
@@ -137,7 +426,28 @@
     "credit_hours": 2,
     "description": "An overview of the knowledge, skills, and expectations associated with being a competent personal trainer or fitness professional; fundamentals in addressing an individual’s health, medical and fitness status, along with comprehending fitness concepts including nutrition, bioenergetics, biomechanics and applied anatomy",
     "prerequisites": "Grade of C or better in KINE 215/CTSE 215 .",
-    "department": "Kinesiology"
+    "department": "Kinesiology",
+    "prefix": "KINE",
+    "number": "334",
+    "course_level": 300,
+    "credit_min": 2,
+    "credit_max": 2,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "KINE 215",
+      "CTSE 215"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/kine/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "KINE 335",
@@ -145,7 +455,28 @@
     "credit_hours": 2,
     "description": "An overview of the knowledge, skills and expectations associated with being a competent group fitness instructor; creation, application and adaptation of a variety of group fitness classes based on population size, skill level, equipment available and facility space; basic business practices and professional certification procedures that are required of a fitness professional",
     "prerequisites": "Grade of C or better in KINE 215/CTSE 215 .",
-    "department": "Kinesiology"
+    "department": "Kinesiology",
+    "prefix": "KINE",
+    "number": "335",
+    "course_level": 300,
+    "credit_min": 2,
+    "credit_max": 2,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "KINE 215",
+      "CTSE 215"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/kine/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "KINE 340",
@@ -153,7 +484,28 @@
     "credit_hours": 3,
     "description": "Current principles and procedures essential to strength training and conditioning practices; emphasis on development and practical applications of scientific based anaerobic conditioning, flexibility, mobility, muscular strength, power and aerobic endurance program designs",
     "prerequisites": "Junior or senior classification; grade of C or better in BIOL 320 or concurrent enrollment.",
-    "department": "Kinesiology"
+    "department": "Kinesiology",
+    "prefix": "KINE",
+    "number": "340",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "BIOL 320"
+    ],
+    "restrictions": [
+      "Junior or senior classification",
+      "grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/kine/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "KINE 341",
@@ -161,7 +513,27 @@
     "credit_hours": 1,
     "description": "An overview of the knowledge, skills, and expectations associated with being a competent certified strength and conditioning specialist (CSCS); emphasis on fundamentals associated with development and practical application of anaerobic conditioning, flexibility, mobility, muscular strength, power, and aerobic endurance training programs",
     "prerequisites": "Grade of C or better in KINE 340 or concurrent enrollment.",
-    "department": "Kinesiology"
+    "department": "Kinesiology",
+    "prefix": "KINE",
+    "number": "341",
+    "course_level": 300,
+    "credit_min": 1,
+    "credit_max": 1,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "KINE 340"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/kine/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "KINE 343",
@@ -169,7 +541,30 @@
     "credit_hours": 3,
     "description": "Functional human anatomy; study of anatomy and how the musculoskeletal system interacts to cause movement, specifically in the context of resistance training",
     "prerequisites": "Grade of C or better in BIOL 319 ; grade of C or better in BIOL 320 or concurrent enrollment; junior or senior classification.",
-    "department": "Kinesiology"
+    "department": "Kinesiology",
+    "prefix": "KINE",
+    "number": "343",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "BIOL 319",
+      "BIOL 320"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "Grade of C or better",
+      "grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/kine/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "KINE 386",
@@ -177,7 +572,29 @@
     "credit_hours": 3,
     "description": "Scientific physiological principles as they relate to sport and exercise in the preparation of current and future coaches; emphasis on cognitive, physiological knowledge and practical applications necessary to earn a creditable national certification; safely and effectively train athletic, fitness and general populations",
     "prerequisites": "KINE 121 and KINE 213 ; grade of C or better in KINE 302.",
-    "department": "Kinesiology"
+    "department": "Kinesiology",
+    "prefix": "KINE",
+    "number": "386",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "KINE 121",
+      "KINE 213",
+      "KINE 302"
+    ],
+    "restrictions": [
+      "grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/kine/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "KINE 404",
@@ -185,7 +602,26 @@
     "credit_hours": 3,
     "description": "Mental aspects of coaching for performance improvement in athletic and exercise settings; focus on coaching applications of theoretical concepts including individual differences, motivation, team and group dynamics, leadership, performance enhancement, positive and negative health behaviors and youth development",
     "prerequisites": "Junior or senior classification, or approval of instructor.",
-    "department": "Kinesiology"
+    "department": "Kinesiology",
+    "prefix": "KINE",
+    "number": "404",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification",
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/kine/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "KINE 406",
@@ -193,7 +629,30 @@
     "credit_hours": 3,
     "description": "Learning and control in the psychomotor domain focusing on the study of neurophysiological processes involved in physical or motor activity, sensorimotor interactions, and diseases/disabilities limiting motor activity; instruction of central and peripheral neural anatomy, muscular anatomy, and function, as related to the performer and instructional techniques (body training, practice, exercise) that influence motor skill learning at the level of cognitive, neural, and muscular processes",
     "prerequisites": "Grade of C or better in BIOL 319 and PHYS 201 ; concurrent enrollment BIOL 320 ; junior or senior classification.",
-    "department": "Kinesiology"
+    "department": "Kinesiology",
+    "prefix": "KINE",
+    "number": "406",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "BIOL 319",
+      "PHYS 201",
+      "BIOL 320"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/kine/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "KINE 407",
@@ -201,7 +660,28 @@
     "credit_hours": 1,
     "description": "Study of control and learning of physical or motor activity; collection of behavioral and neurophysiological measures of human performance, muscle activity, sensorimotor interactions, cognitive processes; assessment of the influence of instructions, body training and practice on skill performance; development of graphing and scientific writing skills",
     "prerequisites": "Junior or senior classification; grade of C or better or concurrent enrollment in KINE 406 .",
-    "department": "Kinesiology"
+    "department": "Kinesiology",
+    "prefix": "KINE",
+    "number": "407",
+    "course_level": 400,
+    "credit_min": 1,
+    "credit_max": 1,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "KINE 406"
+    ],
+    "restrictions": [
+      "Junior or senior classification",
+      "grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/kine/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "KINE 425",
@@ -209,7 +689,26 @@
     "credit_hours": 3,
     "description": "Comprehensive examination of the conceptual and theoretical aspects of measurement and evaluation in the field of kinesiology; emphasis on the application of statistical techniques germane to measurement and evaluation",
     "prerequisites": "Junior or senior classification; or approval of instructor for non-majors.",
-    "department": "Kinesiology"
+    "department": "Kinesiology",
+    "prefix": "KINE",
+    "number": "425",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification",
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/kine/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "KINE 426",
@@ -217,7 +716,32 @@
     "credit_hours": 3,
     "description": "An integrated, mechanistic study of biomechanics of human motion during physical activity and exercise; biology and mechanical properties of the human movement system including bones, tendons, ligaments, cartilage, skeletal muscles, joints and whole body systems investigated",
     "prerequisites": "Grade of C or better in KINE 121 , KINE 213 , PHYS 201 , BIOL 319 , and BIOL 320 ; junior or senior classification.",
-    "department": "Kinesiology"
+    "department": "Kinesiology",
+    "prefix": "KINE",
+    "number": "426",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "KINE 121",
+      "KINE 213",
+      "PHYS 201",
+      "BIOL 319",
+      "BIOL 320"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/kine/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "KINE 427",
@@ -225,7 +749,32 @@
     "credit_hours": 3,
     "description": "Focused on anatomy and physiology of human tissue injury, degeneration, and regeneration including biochemistry and molecular biology of corresponding cell signaling events; comparative physiology to describe composite tissue regeneration with particular emphasis placed upon the role of the immune system and tripartite crosstalk of muscles, blood vessels, and nerves; overview of therapeutic modality physics and physiology pertaining to human tissue regeneration",
     "prerequisites": "Grade of C or better in KINE 121 , KINE 213 , BIOL 319 , BIOL 320 , and PHYS 201 ; junior or senior classification.",
-    "department": "Kinesiology"
+    "department": "Kinesiology",
+    "prefix": "KINE",
+    "number": "427",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "KINE 121",
+      "KINE 213",
+      "BIOL 319",
+      "BIOL 320",
+      "PHYS 201"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/kine/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "KINE 428",
@@ -233,7 +782,28 @@
     "credit_hours": 1,
     "description": "Applied development of the mechanistic concepts of biomechanics of human motion during physical activity, performance and exercise; investigation of the biological and mechanical properties of the human movement system including bones, tendons, ligaments, cartilage, skeletal muscles, joints and whole body system",
     "prerequisites": "Grade of C or better in KINE 426 or concurrent enrollment; junior or senior classification.",
-    "department": "Kinesiology"
+    "department": "Kinesiology",
+    "prefix": "KINE",
+    "number": "428",
+    "course_level": 400,
+    "credit_min": 1,
+    "credit_max": 1,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "KINE 426"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/kine/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "KINE 429",
@@ -241,7 +811,34 @@
     "credit_hours": 3,
     "description": "Kinesiology for individuals with handicapping conditions; emphasis on cognitive recognition of such handicaps as postural deviations, emotional disturbances, convulsive disorders, vision and auditory problems, and other learning disability conditions",
     "prerequisites": "Grade of C or better in HEFB 222/KNFB 222 or KNFB 222/HEFB 222 ; grade of C or better in BIOL 107 or BIOL 111 ; grade of C or better in PHYS 201 or CHEM 119 ; junior or senior classification.",
-    "department": "Kinesiology"
+    "department": "Kinesiology",
+    "prefix": "KINE",
+    "number": "429",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "HEFB 222",
+      "KNFB 222",
+      "BIOL 107",
+      "BIOL 111",
+      "PHYS 201",
+      "CHEM 119"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "Grade of C or better",
+      "grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/kine/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "KINE 433",
@@ -249,7 +846,32 @@
     "credit_hours": 3,
     "description": "Physiological bases of exercise and physical conditioning; measurement of metabolic efficiency during exercise, neuromuscular efficiency and body composition",
     "prerequisites": "Grade of C or better in KINE 121 , KINE 213 , PHYS 201 , BIOL 319 , and BIOL 320 ; junior or senior classification.",
-    "department": "Kinesiology"
+    "department": "Kinesiology",
+    "prefix": "KINE",
+    "number": "433",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "KINE 121",
+      "KINE 213",
+      "PHYS 201",
+      "BIOL 319",
+      "BIOL 320"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/kine/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "KINE 435",
@@ -257,7 +879,28 @@
     "credit_hours": 1,
     "description": "Assessment of systemic physiological responses to exercise; contemporary laboratory equipment used to assess physiological responses to aerobic and anaerobic exercise; emphasis on physiology relating to bioenergetics/ fuel utilization, skeletal muscle function, and cardio-respiratory responses to exercise",
     "prerequisites": "Grade of C or better in KINE 433 or concurrent enrollment; junior or senior classification.",
-    "department": "Kinesiology"
+    "department": "Kinesiology",
+    "prefix": "KINE",
+    "number": "435",
+    "course_level": 400,
+    "credit_min": 1,
+    "credit_max": 1,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "KINE 433"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/kine/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "KINE 439",
@@ -265,7 +908,28 @@
     "credit_hours": 4,
     "description": "Theory and techniques for evaluation of human performance and cardiovascular disease risk factors in healthy and diseased populations; exercise prescription for disease prevention and rehabilitation",
     "prerequisites": "Grade of C or better in KINE 433 or concurrent enrollment; junior or senior classification.",
-    "department": "Kinesiology"
+    "department": "Kinesiology",
+    "prefix": "KINE",
+    "number": "439",
+    "course_level": 400,
+    "credit_min": 4,
+    "credit_max": 4,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "KINE 433"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/kine/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "KINE 460",
@@ -273,7 +937,26 @@
     "credit_hours": 1,
     "description": "Overview of professional expectations, professional preparation (including resume development), and compliance with industry standards; synthesis of knowledge prior to a strength and conditioning internship",
     "prerequisites": "Approval of instructor and admission to internship program; junior or senior classification.",
-    "department": "Kinesiology"
+    "department": "Kinesiology",
+    "prefix": "KINE",
+    "number": "460",
+    "course_level": 400,
+    "credit_min": 1,
+    "credit_max": 1,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "junior or senior classification",
+      "Approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/kine/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "KINE 483",
@@ -281,7 +964,26 @@
     "credit_hours": 3,
     "description": "Participation and study in the areas of fitness assessment, exercise and/or sport programming, and fitness/sport administration; acquisition and practice of professional and/or clinical skills in kinesiology and/or coaching",
     "prerequisites": "Senior classification; approval of instructor.",
-    "department": "Kinesiology"
+    "department": "Kinesiology",
+    "prefix": "KINE",
+    "number": "483",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Senior classification",
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/kine/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "KINE 484",
@@ -289,7 +991,27 @@
     "credit_hours": "0-12",
     "description": "Supervised internship with corporate fitness centers, rehabilitation centers, hospitals, recreation centers and similar agencies and organizations",
     "prerequisites": "Grade of C or better in KINE 483 ; completion of all coursework.",
-    "department": "Kinesiology"
+    "department": "Kinesiology",
+    "prefix": "KINE",
+    "number": "484",
+    "course_level": 400,
+    "credit_min": 0,
+    "credit_max": 12,
+    "is_variable_credit": true,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "KINE 483"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/kine/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "KINE 485",
@@ -297,7 +1019,26 @@
     "credit_hours": "0-4",
     "description": "Special problems in kinesiology assigned to individual students or to groups",
     "prerequisites": "Junior or senior classification; approval of instructor.",
-    "department": "Kinesiology"
+    "department": "Kinesiology",
+    "prefix": "KINE",
+    "number": "485",
+    "course_level": 400,
+    "credit_min": 0,
+    "credit_max": 4,
+    "is_variable_credit": true,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification",
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/kine/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "KINE 489",
@@ -305,7 +1046,25 @@
     "credit_hours": "0-4",
     "description": "Selected topics in an identified area of kinesiology; also taught at Galveston campus. May be repeated for credit",
     "prerequisites": null,
-    "department": "Kinesiology"
+    "department": "Kinesiology",
+    "prefix": "KINE",
+    "number": "489",
+    "course_level": 400,
+    "credit_min": 0,
+    "credit_max": 4,
+    "is_variable_credit": true,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": "May be repeated for credit",
+    "campuses": [
+      "Galveston"
+    ],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/kine/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "KINE 491",
@@ -313,6 +1072,25 @@
     "credit_hours": "0-4",
     "description": "Research conducted under the direction of faculty member in kinesiology. May be repeated 4 times for credit",
     "prerequisites": "Junior or senior classification and approval of instructor.",
-    "department": "Kinesiology"
+    "department": "Kinesiology",
+    "prefix": "KINE",
+    "number": "491",
+    "course_level": 400,
+    "credit_min": 0,
+    "credit_max": 4,
+    "is_variable_credit": true,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": "May be repeated 4 times for credit",
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification",
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/kine/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   }
 ]

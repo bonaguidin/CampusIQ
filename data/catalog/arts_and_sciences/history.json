@@ -6,7 +6,25 @@
     "description": "(HIST 2311) Western Civilization to 1660. CONTENT. Ancient civilizations, Greek, Roman and Asian; Christianity; medieval civilization in west, eastern Europe; political, social and intellectual developments from earliest human cultures to 1660. Course content is selected to align with the course description and the current state of scholarship in the field. The presentation of course content fosters critical thinking in the context of scholarly consensus and debate, rather than instructors’ views, values or beliefs. Instructors may assign different readings and/or topics that fit within the course description and meet the learning objectives. BENEFITS. History teaches evaluation and synthesis of evidence, development of persuasive arguments in written and oral form, expansion of understandings of historical contexts that have contributed to human complexity past and present, including but not limited to the formation of group and individual identities, social and political dynamics, and debates about values and rights. Applying this knowledge produces more informed citizens, who are proficient in the abilities required by today’s workforce",
     "prerequisites": null,
     "department": "History",
-    "satisfies_ucc": "Language, Philosophy and Culture"
+    "satisfies_ucc": "Language, Philosophy and Culture",
+    "prefix": "HIST",
+    "number": "101",
+    "course_level": 100,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [
+      "Language, Philosophy and Culture"
+    ],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 102",
@@ -15,7 +33,25 @@
     "description": "(HIST 2312) Western Civilization Since 1660. CONTENT. Religious, dynastic and imperial developments; Industrial Revolution; western democracies; rise of nationalism and communism; central and eastern Europe; intellectual revolution; World Wars I and II and the contemporary world. Course content is selected to align with the course description and the current state of scholarship in the field. The presentation of course content fosters critical thinking in the context of scholarly consensus and debate, rather than instructors’ views, values or beliefs. Instructors may assign different readings and/or topics that fit within the course description and meet the learning objectives. BENEFITS. History teaches evaluation and synthesis of evidence, development of persuasive arguments in written and oral form, expansion of understandings of historical contexts that have contributed to human complexity past and present, including but not limited to the formation of group and individual identities, social and political dynamics, and debates about values and rights. Applying this knowledge produces more informed citizens, who are proficient in the abilities required by today’s workforce",
     "prerequisites": null,
     "department": "History",
-    "satisfies_ucc": "Language, Philosophy and Culture"
+    "satisfies_ucc": "Language, Philosophy and Culture",
+    "prefix": "HIST",
+    "number": "102",
+    "course_level": 100,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [
+      "Language, Philosophy and Culture"
+    ],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 103",
@@ -24,7 +60,25 @@
     "description": "(HIST 2321) World History to 1500. CONTENT. Development of major world societies in the premodern era; emergence of agrarian-based modes of production, political states, religious economy and a global division of systems; Eurasian world system and the civilizations of Africa and the Americas. Course content is selected to align with the course description and the current state of scholarship in the field. The presentation of course content fosters critical thinking in the context of scholarly consensus and debate, rather than instructors’ views, values or beliefs. Instructors may assign different readings and/or topics that fit within the course description and meet the learning objectives. BENEFITS. History teaches evaluation and synthesis of evidence, development of persuasive arguments in written and oral form, expansion of understandings of historical contexts that have contributed to human complexity past and present, including but not limited to the formation of group and individual identities, social and political dynamics, and debates about values and rights. Applying this knowledge produces more informed citizens, who are proficient in the abilities required by today’s workforce",
     "prerequisites": null,
     "department": "History",
-    "satisfies_ucc": "Language, Philosophy and Culture"
+    "satisfies_ucc": "Language, Philosophy and Culture",
+    "prefix": "HIST",
+    "number": "103",
+    "course_level": 100,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [
+      "Language, Philosophy and Culture"
+    ],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 104",
@@ -33,7 +87,25 @@
     "description": "(HIST 2322) World History Since 1500. CONTENT. Formations of major world societies and their interactions in the modern era; emergence of the modern world economy and a global division of labor. Themes include, but are not limited to, changes in devotional practices (Reformations); premodern empires; trade and global exchanges; political revolutions and their global impacts; industrialization and resultant ideologies; imperialism, colonialism and reactions in Africa, Asia and Latin America; world wars; genocides; socialist experimentation; and the Cold War. Course content is selected to align with the course description and the current state of scholarship in the field. The presentation of course content fosters critical thinking in the context of scholarly consensus and debate, rather than instructors’ views, values or beliefs. Instructors may assign different readings and/or topics that fit within the course description and meet the learning objectives. BENEFITS. History teaches evaluation and synthesis of evidence, development of persuasive arguments in written and oral form, expansion of understandings of historical contexts that have contributed to human complexity past and present, including but not limited to the formation of group and individual identities, social and political dynamics, and debates about values and rights. Applying this knowledge produces more informed citizens, who are proficient in the abilities required by today’s workforce",
     "prerequisites": null,
     "department": "History",
-    "satisfies_ucc": "Language, Philosophy and Culture"
+    "satisfies_ucc": "Language, Philosophy and Culture",
+    "prefix": "HIST",
+    "number": "104",
+    "course_level": 100,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [
+      "Language, Philosophy and Culture"
+    ],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 105",
@@ -42,7 +114,28 @@
     "description": "(HIST 1301) History of the United States to 1877. CONTENT. History of United States from colonial origins through Reconstruction, examining major political, economic and social developments. Themes include but are not limited to the Revolution, Constitution, nationalism, sectionalism and Civil War. Course content is selected to align with the course description and the current state of scholarship in the field. The presentation of course content fosters critical thinking in the context of scholarly consensus and debate, rather than instructors’ views, values or beliefs. Instructors may assign different readings and/or topics that fit within the course description and meet the learning objectives. BENEFITS. History teaches evaluation and synthesis of evidence, development of persuasive arguments in written and oral form, expansion of understandings of historical contexts that have contributed to human complexity past and present, including but not limited to the formation of group and individual identities, social and political dynamics, and debates about values and rights. Applying this knowledge produces more informed citizens, who are proficient in the abilities required by today’s workforce. Also taught at Galveston and Qatar campuses",
     "prerequisites": null,
     "department": "History",
-    "satisfies_ucc": "American History"
+    "satisfies_ucc": "American History",
+    "prefix": "HIST",
+    "number": "105",
+    "course_level": 100,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [
+      "American History"
+    ],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [
+      "Galveston",
+      "Qatar"
+    ],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 106",
@@ -51,7 +144,28 @@
     "description": "(HIST 1302) History of the United States Since 1877. CONTENT. History of United States since Reconstruction, examining major political, economic and social developments. Themes include but are not limited to industrialization, progressivism, emergence as a world power, World Wars I and II, the New Deal and contemporary America. Course content is selected to align with the course description and the current state of scholarship in the field. The presentation of course content fosters critical thinking in the context of scholarly consensus and debate, rather than instructors’ views, values or beliefs. Instructors may assign different readings and/or topics that fit within the course description and meet the learning objectives. BENEFITS. History teaches evaluation and synthesis of evidence, development of persuasive arguments in written and oral form, expansion of understandings of historical contexts that have contributed to human complexity past and present, including but not limited to the formation of group and individual identities, social and political dynamics, and debates about values and rights. Applying this knowledge produces more informed citizens, who are proficient in the abilities required by today’s workforce. Also taught at Galveston and Qatar campuses",
     "prerequisites": null,
     "department": "History",
-    "satisfies_ucc": "American History"
+    "satisfies_ucc": "American History",
+    "prefix": "HIST",
+    "number": "106",
+    "course_level": 100,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [
+      "American History"
+    ],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [
+      "Galveston",
+      "Qatar"
+    ],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 201",
@@ -59,7 +173,23 @@
     "credit_hours": 3,
     "description": "Examination of the methods, practices, and approaches of Public History; exploration of how historians work with and influence the development of museums, libraries, and archives; historic markers, historic sites, and monuments; exhibits, artwork, and oral history; television, film, and podcasts/radio, digital maps, virtual reality, and programming",
     "prerequisites": null,
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "201",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 202",
@@ -67,7 +197,23 @@
     "credit_hours": 3,
     "description": "Introduction to classic transformative texts in the history of the arts, sciences, and humanities; interdisciplinary methods and approaches within the humanities; key ethical and moral debates across the human experience. Cross Listing: ARSC 202 and PHIL 202",
     "prerequisites": null,
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "202",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 209",
@@ -75,7 +221,23 @@
     "credit_hours": 3,
     "description": "History of prominent legal trials in the United States; role of the media in legal discourse; overview of changing ideas about crime, punishment, and justice; examination of trials as a mirror onto social, political, and cultural trends",
     "prerequisites": null,
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "209",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 210",
@@ -84,7 +246,25 @@
     "description": "CONTENT. Russian history, culture and society from origins to the present; rise of the Russian Empire; autocracy; modernization without liberalization; reforms, reaction, revolution; development of Communist regime; continuity from Imperial to Soviet period in industrialization, bureaucracy and treatment of peasants, nationalities and intellectual opposition; Gorbachev and a new \"revolution.\" Course content is selected to align with the course description and the current state of scholarship in the field. The presentation of course content fosters critical thinking in the context of scholarly consensus and debate, rather than instructors’ views, values or beliefs. Instructors may assign different readings and/or topics that fit within the course description and meet the learning objectives. BENEFITS. History teaches evaluation and synthesis of evidence, development of persuasive arguments in written and oral form, expansion of understandings of historical contexts that have contributed to human complexity past and present, including but not limited to the formation of group and individual identities, social and political dynamics, and debates about values and rights. Applying this knowledge produces more informed citizens, who are proficient in the abilities required by today’s workforce",
     "prerequisites": null,
     "department": "History",
-    "satisfies_ucc": "Language, Philosophy and Culture"
+    "satisfies_ucc": "Language, Philosophy and Culture",
+    "prefix": "HIST",
+    "number": "210",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [
+      "Language, Philosophy and Culture"
+    ],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 213",
@@ -93,7 +273,25 @@
     "description": "CONTENT. Political, social, economic and cultural history of the British Isles from pre-history to the 18th century. Themes include but are not limited to British, Saxon and Norman origins; national development; struggles between church and state; crown and nobles; nobles and commons; development of Parliament; social and economic developments; Reformation and Civil War; interactions with the wider world. Course content is selected to align with the course description and the current state of scholarship in the field. The presentation of course content fosters critical thinking in the context of scholarly consensus and debate, rather than instructors’ views, values or beliefs. Instructors may assign different readings and/or topics that fit within the course description and meet the learning objectives. BENEFITS. History teaches evaluation and synthesis of evidence, development of persuasive arguments in written and oral form, expansion of understandings of historical contexts that have contributed to human complexity past and present, including but not limited to the formation of group and individual identities, social and political dynamics, and debates about values and rights. Applying this knowledge produces more informed citizens, who are proficient in the abilities required by today’s workforce",
     "prerequisites": null,
     "department": "History",
-    "satisfies_ucc": "Language, Philosophy and Culture"
+    "satisfies_ucc": "Language, Philosophy and Culture",
+    "prefix": "HIST",
+    "number": "213",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [
+      "Language, Philosophy and Culture"
+    ],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 214",
@@ -102,7 +300,25 @@
     "description": "CONTENT. Political, social, economic and cultural history of the British Isles since the 18th century. Themes include but are not limited to agrarian and Industrial Revolutions; relations with Ireland; evolution of democracy; struggles with France and Napoleon; social legislation in the 20th century; growth of Empire until World War II; interactions with the wider world and domestic developments since World War II. Course content is selected to align with the course description and the current state of scholarship in the field. The presentation of course content fosters critical thinking in the context of scholarly consensus and debate, rather than instructors’ views, values or beliefs. Instructors may assign different readings and/or topics that fit within the course description and meet the learning objectives. BENEFITS. History teaches evaluation and synthesis of evidence, development of persuasive arguments in written and oral form, expansion of understandings of historical contexts that have contributed to human complexity past and present, including but not limited to the formation of group and individual identities, social and political dynamics, and debates about values and rights. Applying this knowledge produces more informed citizens, who are proficient in the abilities required by today’s workforce",
     "prerequisites": null,
     "department": "History",
-    "satisfies_ucc": "Language, Philosophy and Culture"
+    "satisfies_ucc": "Language, Philosophy and Culture",
+    "prefix": "HIST",
+    "number": "214",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [
+      "Language, Philosophy and Culture"
+    ],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 220",
@@ -111,7 +327,25 @@
     "description": "CONTENT. History of Christianity from its inception until the beginnings of European colonial expansion in the first half of the 16th century. Themes include the teachings of Jesus and his disciples; the growth of Christianity as it spread throughout the Mediterranean basin into Mesopotamia, Africa, Northern Europe and central Asia; variations in doctrinal development and religious practice in diverse social, political and geographical situations. Course content is selected to align with the course description and the current state of scholarship in the field. The presentation of course content fosters critical thinking in the context of scholarly consensus and debate, rather than instructors’ views, values or beliefs. Instructors may assign different readings and/or topics that fit within the course description and meet the learning objectives. BENEFITS. History teaches evaluation and synthesis of evidence, development of persuasive arguments in written and oral form, expansion of understandings of historical contexts that have contributed to human complexity past and present, including but not limited to the formation of group and individual identities, social and political dynamics, and debates about values and rights. Applying this knowledge produces more informed citizens, who are proficient in the abilities required by today’s workforce. Cross Listing: CLAS 220 and RELS 220",
     "prerequisites": null,
     "department": "History",
-    "satisfies_ucc": "Language, Philosophy and Culture"
+    "satisfies_ucc": "Language, Philosophy and Culture",
+    "prefix": "HIST",
+    "number": "220",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [
+      "Language, Philosophy and Culture"
+    ],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 225",
@@ -120,7 +354,25 @@
     "description": "CONTENT. History of the American Revolution. Themes include but are not limited to cultural conflict; loyalists; civil war dimensions; ideological debates; British perspectives; experiences of African slaves, American Indians and women; the revolution’s impact on political, social, cultural and economic developments in the United States through the end of the 18th century. Course content is selected to align with the course description and the current state of scholarship in the field. The presentation of course content fosters critical thinking in the context of scholarly consensus and debate, rather than instructors’ views, values or beliefs. Instructors may assign different readings and/or topics that fit within the course description and meet the learning objectives. BENEFITS. History teaches evaluation and synthesis of evidence, development of persuasive arguments in written and oral form, expansion of understandings of historical contexts that have contributed to human complexity past and present, including but not limited to the formation of group and individual identities, social and political dynamics, and debates about values and rights. Applying this knowledge produces more informed citizens, who are proficient in the abilities required by today’s workforce",
     "prerequisites": null,
     "department": "History",
-    "satisfies_ucc": "American History"
+    "satisfies_ucc": "American History",
+    "prefix": "HIST",
+    "number": "225",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [
+      "American History"
+    ],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 226",
@@ -129,7 +381,27 @@
     "description": "(HIST 2301) History of Texas. CONTENT. History of Texas from pre-Columbian cultures to Spanish and other European settlements, Mexican era and Texas independence, through annexation and development of Texas as a modern-day state. Themes include, but are not limited to, military conflicts and contributions; land tenure, labor, family dynamics; Texas’ multiple borders and migration; socio-cultural interactions; changing legal structure; education; farming and ranching; oil discoveries and industrialization; Texas’ music, sports and popular culture. Emphasis placed on challenges and triumphs of Texans of all types throughout the years. Course content is selected to align with the course description and the current state of scholarship in the field. The presentation of course content fosters critical thinking in the context of scholarly consensus and debate, rather than instructors’ views, values or beliefs. Instructors may assign different readings and/or topics that fit within the course description and meet the learning objectives. BENEFITS. History teaches evaluation and synthesis of evidence, development of persuasive arguments in written and oral form, expansion of understandings of historical contexts that have contributed to human complexity past and present, including but not limited to the formation of group and individual identities, social and political dynamics, and debates about values and rights. Applying this knowledge produces more informed citizens, who are proficient in the abilities required by today’s workforce. Also taught at Galveston campus",
     "prerequisites": null,
     "department": "History",
-    "satisfies_ucc": "American History"
+    "satisfies_ucc": "American History",
+    "prefix": "HIST",
+    "number": "226",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [
+      "American History"
+    ],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [
+      "Galveston"
+    ],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 230",
@@ -138,7 +410,27 @@
     "description": "CONTENT. The evolution of American military history from the colonial period to the present, examining the causes, conduct and consequences of war and the armed forces’ relationship to society, politics and culture. Themes include but are not limited to the Revolutionary War, Civil War, world wars, Cold War conflicts and 21st-century operations. Emphasis on political and military leadership, soldiers' experiences with war and the changing character of warfare in shaping the United States’ military institutions and national identity. Course content is selected to align with the course description and the current state of scholarship in the field. The presentation of course content fosters critical thinking in the context of scholarly consensus and debate, rather than instructors’ views, values or beliefs. Instructors may assign different readings and/or topics that fit within the course description and meet the learning objectives. BENEFITS. History teaches evaluation and synthesis of evidence, development of persuasive arguments in written and oral form, expansion of understandings of historical contexts that have contributed to human complexity past and present, including but not limited to the formation of group and individual identities, social and political dynamics, and debates about values and rights. Applying this knowledge produces more informed citizens, who are proficient in the abilities required by today’s workforce. Also taught at Qatar campus",
     "prerequisites": null,
     "department": "History",
-    "satisfies_ucc": "American History"
+    "satisfies_ucc": "American History",
+    "prefix": "HIST",
+    "number": "230",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [
+      "American History"
+    ],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [
+      "Qatar"
+    ],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 231",
@@ -146,7 +438,23 @@
     "credit_hours": 3,
     "description": "Rise of fascism in Europe and East Asia; causes and consequences of World War Two; strategies, tactics, and battles in the European and Pacific theaters; civilian lives and the homefront for Allied and Axis powers",
     "prerequisites": null,
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "231",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 232",
@@ -155,7 +463,27 @@
     "description": "CONTENT. The history of American sea power from colonial beginnings to the present, examining the U.S. Navy’s evolution as a profession of arms, maritime strategy, technology and the relationship between sea power and national policy. Themes include but are not limited to privateering, naval warfare, commerce, exploration and global presence from the Age of Sail through modern carrier and submarine forces. Emphasis on how maritime strength shaped America’s security, economy and role in world affairs. Course content is selected to align with the course description and the current state of scholarship in the field. The presentation of course content fosters critical thinking in the context of scholarly consensus and debate, rather than instructors’ views, values or beliefs. Instructors may assign different readings and/or topics that fit within the course description and meet the learning objectives. BENEFITS. History teaches evaluation and synthesis of evidence, development of persuasive arguments in written and oral form, expansion of understandings of historical contexts that have contributed to human complexity past and present, including but not limited to the formation of group and individual identities, social and political dynamics, and debates about values and rights. Applying this knowledge produces more informed citizens, who are proficient in the abilities required by today’s workforce. Also taught at Galveston campus",
     "prerequisites": null,
     "department": "History",
-    "satisfies_ucc": "American History"
+    "satisfies_ucc": "American History",
+    "prefix": "HIST",
+    "number": "232",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [
+      "American History"
+    ],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [
+      "Galveston"
+    ],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 234",
@@ -164,7 +492,25 @@
     "description": "CONTENT. European military history from the Thirty Years’ War to the end of the Cold War, examining the development of warfare, strategy, technology and state power in shaping modern Europe. Themes include but are not limited to the rise of professional armies, the Napoleonic Wars, the World Wars and the evolution of total war and nuclear deterrence in the Cold War era. Emphasis on the interaction between military institutions, political change and the social impact of conflict. Course content is selected to align with the course description and the current state of scholarship in the field. The presentation of course content fosters critical thinking in the context of scholarly consensus and debate, rather than instructors’ views, values or beliefs. Instructors may assign different readings and/or topics that fit within the course description and meet the learning objectives. BENEFITS. History teaches evaluation and synthesis of evidence, development of persuasive arguments in written and oral form, expansion of understandings of historical contexts that have contributed to human complexity past and present, including but not limited to the formation of group and individual identities, social and political dynamics, and debates about values and rights. Applying this knowledge produces more informed citizens, who are proficient in the abilities required by today’s workforce",
     "prerequisites": null,
     "department": "History",
-    "satisfies_ucc": "Language, Philosophy and Culture"
+    "satisfies_ucc": "Language, Philosophy and Culture",
+    "prefix": "HIST",
+    "number": "234",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [
+      "Language, Philosophy and Culture"
+    ],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 240",
@@ -173,7 +519,27 @@
     "description": "CONTENT. Examination of the relationship between food, imperialism and colonization in historical context. Topics include but are not limited to foodways, culture and society; environmental impact of colonial agriculture; sugar and slavery; food production and labor; food security; protest; food chains; and consumerism. Course content is selected to align with the course description and the current state of scholarship in the field. The presentation of course content fosters critical thinking in the context of scholarly consensus and debate, rather than instructors’ views, values or beliefs. Instructors may assign different readings and/or topics that fit within the course description and meet the learning objectives. BENEFITS. History teaches evaluation and synthesis of evidence, development of persuasive arguments in written and oral form, expansion of understandings of historical contexts that have contributed to human complexity past and present, including but not limited to the formation of group and individual identities, social and political dynamics, and debates about values and rights. Applying this knowledge produces more informed citizens, who are proficient in the abilities required by today’s workforce. Also taught at Galveston campus",
     "prerequisites": null,
     "department": "History",
-    "satisfies_ucc": "Language, Philosophy and Culture"
+    "satisfies_ucc": "Language, Philosophy and Culture",
+    "prefix": "HIST",
+    "number": "240",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [
+      "Language, Philosophy and Culture"
+    ],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [
+      "Galveston"
+    ],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 241",
@@ -181,7 +547,23 @@
     "credit_hours": 3,
     "description": "Sport in politics, culture, and region; race, place, gender, and identity in athletic history; sports as an expression of nationalism, globalism, commerce, and media",
     "prerequisites": null,
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "241",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 242",
@@ -190,7 +572,27 @@
     "description": "Development of American maritime history from colonial times to the present; Galveston campus",
     "prerequisites": null,
     "department": "History",
-    "satisfies_ucc": "Language, Philosophy and Culture"
+    "satisfies_ucc": "Language, Philosophy and Culture",
+    "prefix": "HIST",
+    "number": "242",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [
+      "Language, Philosophy and Culture"
+    ],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [
+      "Galveston"
+    ],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 258",
@@ -199,7 +601,27 @@
     "description": "CONTENT. Native North American history from earliest habitation to the present; addresses widely varying Indigenous groups; themes include but are not limited to cultural exchange, colonial conflict, U.S. Indian policy, resistance and revitalization, sovereignty and self-determination, activism. Course content is selected to align with the course description and the current state of scholarship in the field. The presentation of course content fosters critical thinking in the context of scholarly consensus and debate, rather than instructors’ views, values or beliefs. Instructors may assign different readings and/or topics that fit within the course description and meet the learning objectives. BENEFITS. History teaches evaluation and synthesis of evidence, development of persuasive arguments in written and oral form, expansion of understandings of historical contexts that have contributed to human complexity past and present, including but not limited to the formation of group and individual identities, social and political dynamics, and debates about values and rights. Applying this knowledge produces more informed citizens, who are proficient in the abilities required by today’s workforce. Also taught at Qatar campus",
     "prerequisites": null,
     "department": "History",
-    "satisfies_ucc": "American History"
+    "satisfies_ucc": "American History",
+    "prefix": "HIST",
+    "number": "258",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [
+      "American History"
+    ],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [
+      "Qatar"
+    ],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 280",
@@ -207,7 +629,23 @@
     "credit_hours": 3,
     "description": "CONTENT. Sophomore seminar. Instructors select different topics and assign distinct readings to meet the learning objectives. All sections address issues related to the work of the professional historian, including archival research, types of historical evidence, analysis and argumentation and the principles and methods of analytical narrative. Course content is selected to align with the course description and the current state of scholarship in the field. The presentation of course content fosters critical thinking in the context of scholarly consensus and debate, rather than instructors’ views, values or beliefs. BENEFITS. History teaches evaluation and synthesis of evidence, development of persuasive arguments in written and oral form, expansion of understandings of historical contexts that have contributed to human complexity past and present, including but not limited to the formation of group and individual identities, social and political dynamics, and debates about values and rights. Applying this knowledge produces more informed citizens, who are proficient in the abilities required by today’s workforce",
     "prerequisites": "History majors.",
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "280",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 285",
@@ -215,7 +653,25 @@
     "credit_hours": "0-3",
     "description": "Selected fields of history not covered in depth by other courses. Reports and extensive reading required",
     "prerequisites": "Approval of department head.",
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "285",
+    "course_level": 200,
+    "credit_min": 0,
+    "credit_max": 3,
+    "is_variable_credit": true,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Approval of department head"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 289",
@@ -223,7 +679,25 @@
     "credit_hours": 3,
     "description": "Selected topics in an identified area of history. May be repeated for credit",
     "prerequisites": "Approval of instructor.",
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "289",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": "May be repeated for credit",
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 291",
@@ -231,7 +705,26 @@
     "credit_hours": "0-3",
     "description": "Research conducted under the direction of faculty member in history",
     "prerequisites": "24 hours if history, with 12 or more at 200-level or above; freshman or sophomore classification and approval of instructor.",
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "291",
+    "course_level": 200,
+    "credit_min": 0,
+    "credit_max": 3,
+    "is_variable_credit": true,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "freshman or sophomore classification",
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 303",
@@ -239,7 +732,25 @@
     "credit_hours": 3,
     "description": "Relationships between past and present; role of change in political, social and cultural contexts across time; social and public functions of historical research; contested relationship between professional historians, politicians and states, cultural institutions, the media and the general public",
     "prerequisites": "Junior or senior classification or approval from instructor.",
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "303",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 304",
@@ -248,7 +759,28 @@
     "description": "CONTENT. Origins and development of Indigenous, Spanish and Mexican history of Greater Southwest; exploration and conquest; Spanish entradas into Southwest; rise of institutions and colonial society; economic history; examination of social and cultural relations including gender; Mexican independence; Mexico's far northern frontier, 1821-1848. Course content is selected to align with the course description and the current state of scholarship in the field. The presentation of course content fosters critical thinking in the context of scholarly consensus and debate, rather than instructors’ views, values or beliefs. Instructors may assign different readings and/or topics that fit within the course description and meet the learning objectives. BENEFITS. History teaches evaluation and synthesis of evidence, development of persuasive arguments in written and oral form, expansion of understandings of historical contexts that have contributed to human complexity past and present, including but not limited to the formation of group and individual identities, social and political dynamics, and debates about values and rights. Applying this knowledge produces more informed citizens, who are proficient in the abilities required by today’s workforce",
     "prerequisites": "Junior or senior classification or approval of instructor.",
     "department": "History",
-    "satisfies_ucc": "American History"
+    "satisfies_ucc": "American History",
+    "prefix": "HIST",
+    "number": "304",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [
+      "American History"
+    ],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification",
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 305",
@@ -256,7 +788,25 @@
     "credit_hours": 3,
     "description": "Social, economic and political evolution of Chicanas/os from 1848 to present; includes current issues, legacies of violence, land tenure systems, racial discrimination, changing class relations, gender, civil rights, immigration, identity, and culture",
     "prerequisites": "Junior or senior classification.",
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "305",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 307",
@@ -264,7 +814,26 @@
     "credit_hours": 3,
     "description": "Latinx communities from the nineteenth century to the present in the U.S.; Mexican Americans, Puerto Ricans, Cubans, and Central and South Americans; differences in historical experiences; role of race, class, politics, immigration, gender and sexuality; cultural identity as expressed in art, literature, folklore and religion; contemporary social, political and economic issues",
     "prerequisites": "Junior or senior classification or approval of instructor.",
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "307",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification",
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 308",
@@ -272,7 +841,26 @@
     "credit_hours": 3,
     "description": "CONTENT. Examination of the role of indigenous populations in the history and formation of the U.S. South; cultural values and social practices; impact of European settlement and African slavery; trade patterns, imperial wars and removal policies; citizenship, recognition and enrollment politics. Course content is selected to align with the course description and the current state of scholarship in the field. The presentation of course content fosters critical thinking in the context of scholarly consensus and debate, rather than instructors’ views, values or beliefs. Instructors may assign different readings and/or topics that fit within the course description and meet the learning objectives. BENEFITS. History teaches evaluation and synthesis of evidence, development of persuasive arguments in written and oral form, expansion of understandings of historical contexts that have contributed to human complexity past and present, including but not limited to the formation of group and individual identities, social and political dynamics, and debates about values and rights. Applying this knowledge produces more informed citizens, who are proficient in the abilities required by today’s workforce",
     "prerequisites": "Junior or senior classification or approval of instructor.",
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "308",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification",
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 316",
@@ -280,7 +868,25 @@
     "credit_hours": 3,
     "description": "The experience of Latino/a labor in the United States, from the 19th through the early 21st century; role of gender, race and ethnicity and policy on labor experiences and labor relations; intersections of labor and migration, globalization",
     "prerequisites": "Junior or senior classification.",
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "316",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 317",
@@ -288,7 +894,25 @@
     "credit_hours": 3,
     "description": "History of American agricultural settlement and development from the colonial period to the present; labor, technology, the environment, politics and government policy; regional variations; farmer rebellions; rural society and culture",
     "prerequisites": "Junior or senior classification.",
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "317",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 319",
@@ -296,7 +920,23 @@
     "credit_hours": 3,
     "description": "The sources and persistence of ethnic identity in 19th and 20th century America; its interaction with religion, politics, languages, education and social mobility; various nativist and anti-immigrant movements; contrasts and continuities between contemporary immigration patterns and those of earlier eras",
     "prerequisites": null,
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "319",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 320",
@@ -304,7 +944,25 @@
     "credit_hours": 3,
     "description": "Introduction to the comparative study of the civilizations and cultures that bordered on the Atlantic Ocean; examination of culture and economic exchanges and adaptations, migrations, empire-building, and the emergence of new societies and cultures",
     "prerequisites": "Junior or senior classification.",
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "320",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 321",
@@ -312,7 +970,26 @@
     "credit_hours": 3,
     "description": "CONTENT. Examination of the origins and course of the revolutions that transformed the Atlantic Empires of Great Britain, France and Spain in the late 18th and 19th centuries, including the American, French, Haitian and Spanish revolutions as well as the Latin American independence movements; disruption of old political and economic orders; creation of independent states in the Americas; dynamics of sovereignty, rights and citizenship; social and cultural developments. Course content is selected to align with the course description and the current state of scholarship in the field. The presentation of course content fosters critical thinking in the context of scholarly consensus and debate, rather than instructors’ views, values or beliefs. Instructors may assign different readings and/or topics that fit within the course description and meet the learning objectives. BENEFITS. History teaches evaluation and synthesis of evidence, development of persuasive arguments in written and oral form, expansion of understandings of historical contexts that have contributed to human complexity past and present, including but not limited to the formation of group and individual identities, social and political dynamics, and debates about values and rights. Applying this knowledge produces more informed citizens, who are proficient in the abilities required by today’s workforce",
     "prerequisites": "Junior or senior classification or approval of instructor.",
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "321",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification",
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 322",
@@ -320,7 +997,26 @@
     "credit_hours": 3,
     "description": "Introduction to the people and places of the Iberian World, ca. 1500-1900; social, political and economical relations between Spain, Portugal, Asia and the Americas; emergence of a shared culture and cross-cultural exchange",
     "prerequisites": "Junior or senior classification or approval of instructor.",
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "322",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification",
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 323",
@@ -328,7 +1024,25 @@
     "credit_hours": 3,
     "description": "Asian migration to the Americas; East Asian, Southeast Asian, South Asian and Pacific Islander American perspectives; role of race, class, gender, and sexuality; civil movements for immigration and citizenship rights; cultural expression and identity formation",
     "prerequisites": "Junior or senior classification.",
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "323",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 326",
@@ -336,7 +1050,25 @@
     "credit_hours": 3,
     "description": "History of the Caribbean region from human settlement to the present; Indigenous peoples; European colonization; colonial societies; challenges to the imperial plantation model; emancipation; independence and decolonization",
     "prerequisites": "Junior or senior classification.",
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "326",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 330",
@@ -344,7 +1076,31 @@
     "credit_hours": 3,
     "description": "Survey of women in classical Greece and Rome; emphases on female occupations and family relationships, legal and political status, traditional values, notorious women, how women were viewed and how they viewed themselves",
     "prerequisites": "Junior or senior classification. Cross Listing: CLAS 330 and WGST 330 .",
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "330",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "CLAS 330",
+      "WGST 330"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "CLAS 330",
+      "WGST 330"
+    ],
+    "restrictions": [
+      "Junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 331",
@@ -352,7 +1108,26 @@
     "credit_hours": 3,
     "description": "History of the European, North African and Middle Eastern states of the Mediterranean region in the medieval period; emphasis on political, religious, cultural, social, economic, environmental, scientific, institutional and diplomatic issues of the area and its hinterlands",
     "prerequisites": "Junior or senior classification or approval of instructor.",
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "331",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification",
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 334",
@@ -360,7 +1135,25 @@
     "credit_hours": 3,
     "description": "Cultural, economic, and political processes that shaped European civilization (east and west); the Napoleon era; industrialization and urbanization; liberalism and socialism; empire and revolution; cultural developments",
     "prerequisites": "Junior or senior classification.",
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "334",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 336",
@@ -368,7 +1161,26 @@
     "credit_hours": 3,
     "description": "CONTENT. Examines Europe’s transformations from the aftermath of World War I to the present. Themes include but are not limited to the rise and fall of fascist and communist regimes; interwar crises; World War II and the Holocaust; postwar reconstruction; decolonization; the Cold War; European integration; migration and identity; memory politics; and the legacies of 1989. Course content is selected to align with the course description and the current state of scholarship in the field. The presentation of course content fosters critical thinking in the context of scholarly consensus and debate, rather than instructors’ views, values or beliefs. Instructors may assign different readings and/or topics that fit within the course description and meet the learning objectives. BENEFITS. History teaches evaluation and synthesis of evidence, development of persuasive arguments in written and oral form, expansion of understandings of historical contexts that have contributed to human complexity past and present, including but not limited to the formation of group and individual identities, social and political dynamics, and debates about values and rights. Applying this knowledge produces more informed citizens, who are proficient in the abilities required by today’s workforce",
     "prerequisites": "Junior or senior classification or approval of instructor.",
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "336",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification",
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 337",
@@ -376,7 +1188,25 @@
     "credit_hours": 3,
     "description": "War and social change in Europe during the twentieth century; relationships between front lines and home fronts; government and civil society; gender and war; ethnic and national identities in Eastern, Central, and Western Europe",
     "prerequisites": "Junior or senior classification.",
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "337",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 339",
@@ -384,7 +1214,25 @@
     "credit_hours": 3,
     "description": "Eastern Europe from the late middle ages to the present; Ottoman, Habsburg, Russian and Soviet Empires; origins of modern East European nation-states; world wars; rise of nationalism; experience of communism and the Cold War; collapse of communism; post-communist democratic and economic transitions",
     "prerequisites": "Junior or senior classification.",
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "339",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 340",
@@ -392,7 +1240,25 @@
     "credit_hours": 3,
     "description": "History of communism and the movements and states it inspired across the globe; communism’s intellectual origins and development throughout the world; everyday life; state violence and communism at war; race, gender, nationalism and environmental impacts; the decline, collapse and reinvention of communism; contested legacies and relevance of communism today",
     "prerequisites": "Junior or senior classification.",
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "340",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 341",
@@ -400,7 +1266,25 @@
     "credit_hours": 3,
     "description": "Spanish and Portuguese colonization in the Americas; encounters between Indigenous, African and European peoples; everyday lives of individual women and men in the Iberian colonies; cultural, social, economic and political developments within colonial Latin America",
     "prerequisites": "Junior or senior classification.",
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "341",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 342",
@@ -408,7 +1292,25 @@
     "credit_hours": 3,
     "description": "Political history of independent South American nations since independence with emphasis upon ABC countries; economic, social and cultural development; foreign relations",
     "prerequisites": "Junior or senior classification.",
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "342",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 343",
@@ -416,7 +1318,26 @@
     "credit_hours": 3,
     "description": "Cultural, diplomatic and economic relations in the Western Hemisphere in historical perspective",
     "prerequisites": "Junior or senior classification or approval of instructor.",
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "343",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification",
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 348",
@@ -424,7 +1345,25 @@
     "credit_hours": 3,
     "description": "Survey of the Middle East since 1800; introduction to Islam and Islamic civilization; decline of the Ottoman Empire; European imperialism; rise of nationalist movements; Zionism and the emergence of Israel; Arab-Israeli conflict; impact of oil; revolution in Iran and Islamic resurgence",
     "prerequisites": "Junior or senior classification.",
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "348",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 359",
@@ -432,7 +1371,23 @@
     "credit_hours": 3,
     "description": "History of American attitudes toward nature: use of land, water, timber, oil, coal, wildlife and other natural resources in the United States; conservation movement and significant conflicts over resources; changing perception of the physical environment",
     "prerequisites": null,
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "359",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 360",
@@ -440,7 +1395,23 @@
     "credit_hours": 3,
     "description": "Impact of energy upon industrial America; emphasis on relationship between energy and industrial development, emergence of state and federal energy policies, role of energy in foreign policy, growth of energy-oriented industries and impact of energy development on the environment",
     "prerequisites": null,
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "360",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 362",
@@ -448,7 +1419,23 @@
     "credit_hours": 3,
     "description": "The ideas of the great scientists and their impact on society; the Newtonian Revolution; Lavoisier and the new chemistry; Darwin and evolutionary thought; Enrico Fermi, Robert Oppenheimer and the development of nuclear energy",
     "prerequisites": null,
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "362",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 363",
@@ -456,7 +1443,23 @@
     "credit_hours": 3,
     "description": "The major developments in the physical and life sciences from colonial times to the present; the lives and scientific contributions of such famous American scientists as Benjamin Franklin, Joseph Henry, Thomas Edison and J. Robert Oppenheimer",
     "prerequisites": null,
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "363",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 367",
@@ -464,7 +1467,25 @@
     "credit_hours": 3,
     "description": "Colonization of North America and the Caribbean; interactions between diverse Indigenous, African and European peoples; development of colonial societies and the creation of an Atlantic world",
     "prerequisites": "Junior or senior classification.",
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "367",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 368",
@@ -472,7 +1493,23 @@
     "credit_hours": 3,
     "description": "Impact of French and Indian War; British colonial policy 1763-1775; War for Independence; Confederation crisis; Constitution-making and ratification; development of political parties; problem of foreign entanglements; War of 1812; conflict of nationalist and sectionalist tendencies; historiography and interpretation",
     "prerequisites": null,
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "368",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 369",
@@ -480,7 +1517,23 @@
     "credit_hours": 3,
     "description": "Jacksonian democracy; impact of nationalism and sectionalism; manifest destiny and Mexican War; slavery controversy; expansion",
     "prerequisites": null,
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "369",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 370",
@@ -488,7 +1541,23 @@
     "credit_hours": 3,
     "description": "Survey of background and causes of the war; military, political, economic, and diplomatic aspects of the war; life behind the lines; Reconstruction and post-war adjustments, 1861-1877",
     "prerequisites": null,
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "370",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 371",
@@ -496,7 +1565,26 @@
     "credit_hours": 3,
     "description": "CONTENT. Examination of the Gilded Age, the period between the end of the Civil War in 1865 and the dawn of the new century in 1900. Topics include, but are not limited to, the technological revolution; the age of industry; reactions to modernism; labor movements; politics in the 1870s and 1880s; the rise of Jim Crow; urbanization; immigration and nativism; new women; moral reformers; the Spanish-American War and its aftermath. Course content is selected to align with the course description and the current state of scholarship in the field. The presentation of course content fosters critical thinking in the context of scholarly consensus and debate, rather than instructors’ views, values or beliefs. Instructors may assign different readings and/or topics that fit within the course description and meet the learning objectives. BENEFITS. History teaches evaluation and synthesis of evidence, development of persuasive arguments in written and oral form, expansion of understandings of historical contexts that have contributed to human complexity past and present, including but not limited to the formation of group and individual identities, social and political dynamics, and debates about values and rights. Applying this knowledge produces more informed citizens, who are proficient in the abilities required by today’s workforce",
     "prerequisites": "Junior or senior classification or approval of instructor.",
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "371",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification",
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 372",
@@ -504,7 +1592,23 @@
     "credit_hours": 3,
     "description": "Emergence of Progressivism; reform in the cities and states; reforms and foreign policies of the Theodore Roosevelt, William Howard Taft and Woodrow Wilson administrations; World War I and aftermath; Harding-Coolidge normalcy; the Jazz Age; Hoover and the Great Crash",
     "prerequisites": null,
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "372",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 373",
@@ -512,7 +1616,25 @@
     "credit_hours": 3,
     "description": "The United States, 1929-1945; cultural, social, economic, and political developments in the nation; global diplomacy and military strategy; also taught at Galveston campus",
     "prerequisites": null,
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "373",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [
+      "Galveston"
+    ],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 374",
@@ -520,7 +1642,25 @@
     "credit_hours": 3,
     "description": "The United States since World War II; political, economic, cultural and social changes and role as a world leader; also taught at Galveston campus",
     "prerequisites": null,
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "374",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [
+      "Galveston"
+    ],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 376",
@@ -528,7 +1668,25 @@
     "credit_hours": 3,
     "description": "History of fundamental scientific principles through biography; Galileo, Newton, Darwin, Mendel, Curie, Einstein, Pauling, and others",
     "prerequisites": "Junior or senior classification.",
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "376",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 377",
@@ -536,7 +1694,31 @@
     "credit_hours": 3,
     "description": "Black women’s history from the precolonial era to the present; emphasis on the cultural, political, legal, economic, sexual, social, and religious factors that shaped their experiences across the African Diaspora and the world",
     "prerequisites": "Junior or senior classification. Cross Listing: AFST 377 and WGST 377 .",
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "377",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "AFST 377",
+      "WGST 377"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "AFST 377",
+      "WGST 377"
+    ],
+    "restrictions": [
+      "Junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 378",
@@ -544,7 +1726,25 @@
     "credit_hours": 3,
     "description": "History and cultures of the Black Diaspora in Latin America from colonization through the twentieth century; social, political, cultural, and economic impact of Africans and their descendants on the region; emphasis on race, culture, citizenship, and identity",
     "prerequisites": "Junior or senior classification.",
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "378",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 379",
@@ -552,7 +1752,25 @@
     "credit_hours": 3,
     "description": "History of modern Korea; South Korea; North Korea; Korea through imperialism, decolonization, a civil war, dictatorship, and democratization; emphasis on cultural, social, economic, and political developments",
     "prerequisites": "Junior or senior classification.",
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "379",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 380",
@@ -560,7 +1778,25 @@
     "credit_hours": 3,
     "description": "Examination of the origins, development, and legacies of the largest contiguous empire in history; exploration of the environmental context, notable rulers, Mongol warfare, imperial governance and administration, interactions between the Mongols and rival nomadic groups, trade, gender and the role of women, religious and ideological policies, and long-term impacts",
     "prerequisites": "Junior or senior classiﬁcation; or approval of instructor.",
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "380",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 381",
@@ -568,7 +1804,26 @@
     "credit_hours": 3,
     "description": "Examination of history of renewable and non-renewable energy sources and their impact on the environment; focuses on the research of scientists and the scientific-technological, political, economic, and cultural issues that emerged in the 1800s-2000s; investigation of whether production and consumption of non-renewable fossil fuel energy sources are compatible or in conflict with the scientific community’s environmental concerns",
     "prerequisites": "Junior or senior classification or approval of instructor.",
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "381",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification",
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 390",
@@ -576,7 +1831,26 @@
     "credit_hours": 3,
     "description": "CONTENT. Examination of medicine and health in the U.S., from colonial times to present; social history of medicine; experiences of patients and providers; medical ethics; U.S. health systems. This upper-level elective course focuses on the history of health and sickness in the United States, guided by questions about the meaning of health and sickness, changing ideas of illness over time and changing medical institutions and patient experiences. Themes explored may include public health, the development of medical professions and institutions, medical expertise and authority, disease and diagnosis, health and politics and the relationship between health care and broader structures of inequality, identity and access in American society. Instructors may assign different readings and/or topics that fit within the course description and meet the learning objectives. BENEFITS. History teaches evaluation and synthesis of evidence, development of persuasive arguments in written and oral form, expansion of understandings of historical contexts that have contributed to human complexity past and present, including but not limited to the formation of group and individual identities, social and political dynamics and debates about values and rights. Applying this knowledge produces more informed citizens, who are proficient in the abilities required by today’s workforce",
     "prerequisites": "Junior or senior classification or approval of instructor.",
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "390",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification",
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 391",
@@ -584,7 +1858,25 @@
     "credit_hours": 3,
     "description": "CONTENT. History of World War I; diplomacy and the causes of the conflict; conduct of the war; experience of the war on the home fronts; historical controversies in interpreting the major issues of the war; how the war affected the world, exploring foundational impacts on major diplomatic, social, cultural, political and economic changes of the 20th century that continue to reverberate today. Instructors may assign different readings and/or topics that fit within the course description and meet the learning objectives. BENEFITS. History teaches evaluation and synthesis of evidence, development of persuasive arguments in written and oral form, expansion of understandings of historical contexts that have contributed to human complexity past and present, including but not limited to the formation of group and individual identities, social and political dynamics and debates about values and rights. Applying this knowledge produces more informed citizens, who are proficient in the abilities required by today’s workforce",
     "prerequisites": "Junior or senior classiﬁcation or approval of instructor.",
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "391",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 401",
@@ -592,7 +1884,31 @@
     "credit_hours": 3,
     "description": "Comparative history of human slavery; slavery in the Ancient World, Asia, Africa; varieties of modern slavery in the New World since 1500; abolition of slavery and continuing forms of human bondage in the contemporary world",
     "prerequisites": "Junior or senior classification. Cross Listing: AFST 401 and ASIA 401 .",
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "401",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "AFST 401",
+      "ASIA 401"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "AFST 401",
+      "ASIA 401"
+    ],
+    "restrictions": [
+      "Junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 402",
@@ -600,7 +1916,23 @@
     "credit_hours": 3,
     "description": "Germany from the late eighteenth century to the present; cultural, social and political developments in national and transnational context",
     "prerequisites": null,
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "402",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 404",
@@ -608,7 +1940,25 @@
     "credit_hours": 3,
     "description": "Examines Germany from the end of World War II to the end of the 20th century; includes political, social, cultural, and economic life in divided and occupied Germany; covers Germany since reunification in 1990",
     "prerequisites": "Junior or senior classification.",
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "404",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 405",
@@ -616,7 +1966,25 @@
     "credit_hours": 3,
     "description": "History of the Nazi Holocaust; Third Reich; Jewish Ghetto life and concentration camps; role of the military, S.S. and German business; lessons and legacies; also taught at Galveston campus",
     "prerequisites": null,
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "405",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [
+      "Galveston"
+    ],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 406",
@@ -624,7 +1992,26 @@
     "credit_hours": 3,
     "description": "CONTENT. Social, cultural, economic and political dynamics in continental France and the French Caribbean between 1750 and 1815. Themes include, but are not limited to, changing relationships between church and state; development of human and social rights; race and slavery; expansion of civil institutions during the Napoleonic Consulate and Empire; and changes in military practices. Course content is selected to align with the course description and the current state of scholarship in the field. The presentation of course content fosters critical thinking in the context of scholarly consensus and debate, rather than instructors’ views, values or beliefs. Instructors may assign different readings and/or topics that fit within the course description and meet the learning objectives. BENEFITS. History teaches evaluation and synthesis of evidence, development of persuasive arguments in written and oral form, expansion of understandings of historical contexts that have contributed to human complexity past and present, including but not limited to the formation of group and individual identities, social and political dynamics, and debates about values and rights. Applying this knowledge produces more informed citizens, who are proficient in the abilities required by today’s workforce",
     "prerequisites": "Junior or senior classification or approval of instructor.",
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "406",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification",
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 407",
@@ -632,7 +2019,26 @@
     "credit_hours": 3,
     "description": "CONTENT. Social, cultural, economic and political dynamics in continental France and the French Empire since 1815. Themes include, but are not limited to, changing relationships between church and state; industrialization and its impact on social status and political ideologies; political revolutions; imperialism in Africa and Indochina; global world wars; and decolonization. Course content is selected to align with the course description and the current state of scholarship in the field. The presentation of course content fosters critical thinking in the context of scholarly consensus and debate, rather than instructors’ views, values or beliefs. Instructors may assign different readings and/or topics that fit within the course description and meet the learning objectives. BENEFITS. History teaches evaluation and synthesis of evidence, development of persuasive arguments in written and oral form, expansion of understandings of historical contexts that have contributed to human complexity past and present, including but not limited to the formation of group and individual identities, social and political dynamics, and debates about values and rights. Applying this knowledge produces more informed citizens, who are proficient in the abilities required by today’s workforce",
     "prerequisites": "Junior or senior classification or approval of instructor.",
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "407",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification",
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 410",
@@ -640,7 +2046,23 @@
     "credit_hours": 3,
     "description": "Origins and Christianization of Russia; establishment and decline of Kievan Rus' state; Mongol conquest and domination of Russia; rise of Moscow, establishment of tsardom, expansion of state in sixteenth and seventeenth centuries; Peter the Great's reforms; emergence of Russian Empire as a major power; era of Catherine the Great",
     "prerequisites": null,
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "410",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 411",
@@ -648,7 +2070,23 @@
     "credit_hours": 3,
     "description": "The last century of the autocratic Romanov dynasty and the social, intellectual, economic and political forces that ended it; political culture, society in transition, international affairs and revolutionary groups in an era of reform, counter-reform, reaction and industrialization",
     "prerequisites": null,
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "411",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 412",
@@ -656,7 +2094,26 @@
     "credit_hours": 3,
     "description": "CONTENT. The evolution of the Soviet experiment, beginning with the late Russian Empire and the war and revolution that ended it; the Bolshevik Party's seizure of power; the resulting socialist revolution; Stalin and Stalinism; Soviet society and everyday life; culture and the arts; Soviet involvement in World War II and the Cold War; opposition, dissent, reform and collapse of the USSR; post-Soviet developments and rise of Putin; the legacy and continued relevance of the Soviet experiment today. Course content is selected to align with the course description and the current state of scholarship in the field. The presentation of course content fosters critical thinking in the context of scholarly consensus and debate, rather than instructors’ views, values or beliefs. Instructors may assign different readings and/or topics that fit within the course description and meet the learning objectives. BENEFITS. History teaches evaluation and synthesis of evidence, development of persuasive arguments in written and oral form, expansion of understandings of historical contexts that have contributed to human complexity past and present, including but not limited to the formation of group and individual identities, social and political dynamics, and debates about values and rights. Applying this knowledge produces more informed citizens, who are proficient in the abilities required by today’s workforce",
     "prerequisites": "Junior or senior classification or approval of instructor.",
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "412",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification",
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 418",
@@ -664,7 +2121,31 @@
     "credit_hours": 3,
     "description": "Political, social, cultural and religious histories of significant figures, groups, schools of thought and movements in western Afro-Eurasia from the Assyrian Empire to the later Roman Empire; developments in political theory, literature, sociology, arts, architecture, music, philosophy, law, sciences and education",
     "prerequisites": "Junior or senior classification. Cross Listing: CLAS 418 and RELS 418 .",
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "418",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "CLAS 418",
+      "RELS 418"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "CLAS 418",
+      "RELS 418"
+    ],
+    "restrictions": [
+      "Junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 432",
@@ -672,7 +2153,25 @@
     "credit_hours": 3,
     "description": "History of Ireland from the creation of the United Kingdom through the end of the twentieth century; British-Irish relations; agrarian unrest and violence; famine; political, cultural, and religious developments",
     "prerequisites": "Junior or senior classification.",
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "432",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 433",
@@ -680,7 +2179,31 @@
     "credit_hours": 3,
     "description": "The use of digital tools for conducting humanities research; theoretical ideas that inform the field; application of theory to the critical assessment of online digital projects in the field",
     "prerequisites": "Junior or senior classification. Cross Listing: DHUM 433 and ENGL 433 .",
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "433",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "DHUM 433",
+      "ENGL 433"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "DHUM 433",
+      "ENGL 433"
+    ],
+    "restrictions": [
+      "Junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 436",
@@ -688,7 +2211,23 @@
     "credit_hours": 3,
     "description": "Social, political, economic, cultural and religious developments, Puritanism and the Revolution of the 1640s, the Restoration, establishment of constitutional monarchy after 1688, Great Britain's rise as an imperial power",
     "prerequisites": null,
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "436",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 437",
@@ -696,7 +2235,25 @@
     "credit_hours": 3,
     "description": "Political, social, economical, intellectual, cultural, and imperial history of Britain in the eighteenth century",
     "prerequisites": "Junior or senior classification.",
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "437",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 438",
@@ -704,7 +2261,26 @@
     "credit_hours": 3,
     "description": "Political, social, economic, cultural, intellectual and military history of Great Britain from 1815 to 1914",
     "prerequisites": "Junior or senior classification or approval of instructor.",
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "438",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification",
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 439",
@@ -712,7 +2288,26 @@
     "credit_hours": 3,
     "description": "Constitutional, political, economic, military, social and cultural history of Great Britain since 1900",
     "prerequisites": "Junior or senior classification or approval of instructor.",
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "439",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification",
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 441",
@@ -720,7 +2315,23 @@
     "credit_hours": 3,
     "description": "Political, economic and social development of Mexico since independence and her relation to other world powers",
     "prerequisites": null,
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "441",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 442",
@@ -728,7 +2339,25 @@
     "credit_hours": 3,
     "description": "Origins; military campaigns in Europe, North Africa, Asia, and the Pacific; European, Japanese, Asian, and American home fronts; collapse of Germany; atomic warfare; legacies",
     "prerequisites": "Junior or senior classification.",
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "442",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 443",
@@ -736,7 +2365,23 @@
     "credit_hours": 3,
     "description": "American military experience from colonial days to 1901; causes, nature and effect of the wars in which the United States has participated",
     "prerequisites": null,
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "443",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 444",
@@ -744,7 +2389,23 @@
     "credit_hours": 3,
     "description": "American military experience from 1901 to present; causes, nature and effect of wars in which the United States has participated; effect of war on American history",
     "prerequisites": null,
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "444",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 445",
@@ -752,7 +2413,25 @@
     "credit_hours": 3,
     "description": "Military thought and theory, 1700 to the present",
     "prerequisites": "Junior or senior classification.",
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "445",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 447",
@@ -760,7 +2439,26 @@
     "credit_hours": 3,
     "description": "How political and social conditions in American history have produced fundamental constitutional principles, changes and practices; historical evolution of written and unwritten Constitution; state law, legal theory, legal profession and private law through the Civil War and Reconstruction",
     "prerequisites": "Junior or senior classification or approval of instructor.",
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "447",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification",
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 448",
@@ -768,7 +2466,25 @@
     "credit_hours": 3,
     "description": "Analysis of themes in American legal and constitutional history since 1865; examination of social, cultural, and political context surrounding major Supreme Court decisions; social impact of laws and Supreme Court decisions; investigation of legal activities such as moot court and amicus curiae briefs",
     "prerequisites": "Junior or senior classification.",
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "448",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 449",
@@ -776,7 +2492,25 @@
     "credit_hours": 3,
     "description": "Political, cultural and economic development of Brazil since independence; slavery and race relations; relation to other world powers",
     "prerequisites": "Junior classification.",
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "449",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 451",
@@ -784,7 +2518,26 @@
     "credit_hours": 3,
     "description": "Focus on the aftermath of slavery and defeat in those parts of North America where slavery dominated the economy, politics and demographics; transformations in race, culture and politics in such regions and emergence of new identities since Reconstruction; debates over the geographic and cultural roots of the American South",
     "prerequisites": "Junior or senior classification or approval of instructor.",
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "451",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification",
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 452",
@@ -792,7 +2545,25 @@
     "credit_hours": 3,
     "description": "The causes and consequences of revolutionary activity; battlefields and homefronts during the War for Independence; social, political and economic impact of the Revolution on diverse peoples and communities both in the new United States and abroad; historical memory of the American Revolution",
     "prerequisites": "Junior or senior classification.",
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "452",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 453",
@@ -800,7 +2571,25 @@
     "credit_hours": 3,
     "description": "Patterns of westward expansion and settlement; Native American history and culture; global immigration to the region; Western political, economic, social, and environmental developments; the American West in popular culture",
     "prerequisites": "Junior or senior classification.",
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "453",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 458",
@@ -808,7 +2597,23 @@
     "credit_hours": 3,
     "description": "History of childhood and family in American history; examination of how region, race, ethnicity, class and gender shape children's and the family's experiences; consideration of how social, cultural, economic, and political structures shape ideas about and activities of children and families in America",
     "prerequisites": null,
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "458",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 460",
@@ -816,7 +2621,26 @@
     "credit_hours": 3,
     "description": "CONTENT. Examination of the evolution of social and political thought and its influence on American institutions and culture since 1877. Themes include, but are not limited to, access to and content of higher education; sports as sites of participation and fandom; music as an industry and cultural product; religion and its relationship to American politics; advertising as both an economic engine and a reflection of cultural priorities. Course content is selected to align with the course description and the current state of scholarship in the field. The presentation of course content fosters critical thinking in the context of scholarly consensus and debate, rather than instructors’ views, values or beliefs. Instructors may assign different readings and/or topics that fit within the course description and meet the learning objectives. BENEFITS. History teaches evaluation and synthesis of evidence, development of persuasive arguments in written and oral form, expansion of understandings of historical contexts that have contributed to human complexity past and present, including but not limited to the formation of group and individual identities, social and political dynamics, and debates about values and rights. Applying this knowledge produces more informed citizens, who are proficient in the abilities required by today’s workforce",
     "prerequisites": "Junior or senior classification or approval of instructor.",
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "460",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification",
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 462",
@@ -824,7 +2648,26 @@
     "credit_hours": 3,
     "description": "History of U.S. foreign relations and policies to 1913",
     "prerequisites": "Junior or senior classification or approval of instructor.",
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "462",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification",
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 463",
@@ -832,7 +2675,26 @@
     "credit_hours": 3,
     "description": "History of U.S. foreign relations and policies since 1913",
     "prerequisites": "Junior or senior classification or approval of instructor.",
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "463",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification",
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 464",
@@ -840,7 +2702,23 @@
     "credit_hours": 3,
     "description": "General survey of world politics since close of World War I; problems and ideologies of great powers of Europe and factors and conditions which explain present political tendencies and policies",
     "prerequisites": null,
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "464",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 470",
@@ -848,7 +2726,23 @@
     "credit_hours": 3,
     "description": "Management strategy and structure of the modern corporation in 19th and 20th century America and the corporation's changing roles in American society",
     "prerequisites": null,
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "470",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 471",
@@ -856,7 +2750,25 @@
     "credit_hours": 3,
     "description": "World history for future social studies instructors; politics, economics, religion, and culture in global context; instructional methods and pedagogical philosophy for prospective elementary-level educators",
     "prerequisites": "Junior or senior classification.",
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "471",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 472",
@@ -864,7 +2776,25 @@
     "credit_hours": 3,
     "description": "Exploration of the use of computers for historical research; creating data out of historical source material; computer programming skills for digitizing, querying, and sharing historical texts",
     "prerequisites": "Junior or senior classification.",
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "472",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 474",
@@ -872,7 +2802,25 @@
     "credit_hours": 3,
     "description": "Analysis of a specific instance of historical ethnic conflict; examination of the social, political, religious, and economic factors contributing to that historical conflict; discussion of structural factors influencing ethnic, national and other group efforts to advance claims to separate identity and self-government; case study will vary by semester",
     "prerequisites": "Junior or senior classification.",
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "474",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 475",
@@ -880,7 +2828,25 @@
     "credit_hours": 3,
     "description": "Empires in their formative, medieval, early modern and modern periods within a comparative framework with a case-study approach; geographic range varies; politics, religion, culture, literature, arts, economics, environment, race, gender, identity formation, technology, class, medicine, sciences, philosophy, labor, violence, agriculture, immigration, slavery, diplomacy and industrialization. May be taken 3 times for credit",
     "prerequisites": "Junior or senior classification.",
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "475",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": "May be taken 3 times for credit",
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 478",
@@ -888,7 +2854,23 @@
     "credit_hours": 3,
     "description": "History of immigration in post-1945 Europe; experiences of migrants to Europe; migrant participation in workforce; backlash to immigration; migrants’ cultural contributions to Europe; transformation of Europe and European identity",
     "prerequisites": "Junior or senior classiﬁcation.",
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "478",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 481",
@@ -896,7 +2878,29 @@
     "credit_hours": 3,
     "description": "CONTENT. Capstone seminar. Instructors select different topics and assign distinct readings to meet the learning objectives. All sections include the use of primary source materials related to the topic of the seminar; problems of bibliography, historiography and historical method; scholarship concerning a particular issue, event, period or people in history; and instruction and experience in historical writing. Course content is selected to align with the course description and the current state of scholarship in the field. The presentation of course content fosters critical thinking in the context of scholarly consensus and debate, rather than instructors’ views, values or beliefs. BENEFITS. History teaches evaluation and synthesis of evidence, development of persuasive arguments in written and oral form, expansion of understandings of historical contexts that have contributed to human complexity past and present, including but not limited to the formation of group and individual identities, social and political dynamics, and debates about values and rights. Applying this knowledge produces more informed citizens, who are proficient in the abilities required by today’s workforce. May be repeated for credit",
     "prerequisites": "Grade of C or better in HIST 280 ; 21 credits of history, 9 of which must be 300-level or above; senior classification or approval of instructor.",
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "481",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": "May be repeated for credit",
+    "campuses": [],
+    "prerequisite_courses": [
+      "HIST 280"
+    ],
+    "restrictions": [
+      "senior classification",
+      "approval of instructor",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 484",
@@ -904,7 +2908,25 @@
     "credit_hours": "0-3",
     "description": "Internship in a public or private organization to provide students with opportunities to develop career readiness through communication, professional responsibility and research experience appropriate to career objectives. Students are encouraged to take responsibility for their own learning by seeking out possible internship opportunities, designed to enhance understanding of established professional standards and protocols, that best suit their career interests and schedules and to consult with the internship coordinator sooner rather than later, before ﬁnalizing any internship arrangement. May be taken three times for credit. Must be taken on a satisfactory/unsatisfactory basis",
     "prerequisites": "Junior or senior classification and approval of internship coordinator.",
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "484",
+    "course_level": 400,
+    "credit_min": 0,
+    "credit_max": 3,
+    "is_variable_credit": true,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": "May be taken three times for credit.",
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 485",
@@ -912,7 +2934,27 @@
     "credit_hours": "0-3",
     "description": "Selected fields of history not covered in depth by other courses. Reports and extensive reading required",
     "prerequisites": "Approval of instructor and academic advisor; also taught at Galveston campus.",
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "485",
+    "course_level": 400,
+    "credit_min": 0,
+    "credit_max": 3,
+    "is_variable_credit": true,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [
+      "Galveston"
+    ],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 489",
@@ -920,7 +2962,23 @@
     "credit_hours": "1-4",
     "description": "Selected topics in an identified area of history. May be repeated for credit",
     "prerequisites": null,
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "489",
+    "course_level": 400,
+    "credit_min": 1,
+    "credit_max": 4,
+    "is_variable_credit": true,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": "May be repeated for credit",
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 491",
@@ -928,7 +2986,26 @@
     "credit_hours": "0-3",
     "description": "Research conducted under the direction of faculty member in history",
     "prerequisites": "24 hours of history, with 12 or more at 300-level or above; junior or senior classification; approval of instructor and academic advisor.",
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "491",
+    "course_level": 400,
+    "credit_min": 0,
+    "credit_max": 3,
+    "is_variable_credit": true,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "junior or senior classification",
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   },
   {
     "code": "HIST 497",
@@ -936,6 +3013,24 @@
     "credit_hours": "1-3",
     "description": "Directed independent studies for upper division Honors students, regardless of academic major, in selected aspects of history",
     "prerequisites": "Junior or senior classification either as Honors student or with overall GPR of 3.25 and letter of approval from head of student's major department, approval of History department head, and approval of both instructor of record and History academic advisor.",
-    "department": "History"
+    "department": "History",
+    "prefix": "HIST",
+    "number": "497",
+    "course_level": 400,
+    "credit_min": 1,
+    "credit_max": 3,
+    "is_variable_credit": true,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-06-20"
   }
 ]
