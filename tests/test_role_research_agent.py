@@ -153,6 +153,16 @@ def test_blank_role_returns_none_without_calling_client():
     assert client.calls == []
 
 
+def test_missing_tavily_key_logs_a_distinct_warning_not_a_silent_fallback(monkeypatch, caplog):
+    monkeypatch.delenv("TAVILY_API_KEY", raising=False)
+
+    with caplog.at_level("WARNING", logger="CampusIQ_career.features.role_research_agent"):
+        result = agent._tavily_client()
+
+    assert result is None
+    assert any("TAVILY_API_KEY not set" in record.message for record in caplog.records)
+
+
 def test_cache_hit_on_second_call_skips_the_agent():
     client = FakeClient([_tool_call_message(), _final_message(VALID_PAYLOAD)])
 

@@ -121,6 +121,11 @@ def _known_soc_codes() -> frozenset[str]:
 def _tavily_client() -> TavilyClient | None:
     api_key = os.getenv("TAVILY_API_KEY")
     if not api_key or not api_key.strip():
+        # Distinct from a Tavily request failure (which logs per-call inside
+        # _run_web_search's except clause) -- a missing key is a config
+        # problem, not "the web had nothing," and would otherwise look
+        # identical to any other cause of static_fallback in the logs.
+        logger.warning("TAVILY_API_KEY not set, skipping web_search")
         return None
     return TavilyClient(api_key=api_key.strip())
 
