@@ -18,7 +18,10 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 from CampusIQ_career.ai.errors import AIConfigError
-from CampusIQ_career.ai.openrouter_client import OpenRouterClient
+from CampusIQ_career.ai.openrouter_client import (
+    DEEPSEEK_R1_REASONING_TIMEOUT_SECONDS,
+    OpenRouterClient,
+)
 from CampusIQ_career.features.orchestrator import run_feature
 
 load_dotenv()
@@ -46,11 +49,7 @@ def load_student_profile(student_slug: str) -> dict:
 
 def build_client() -> OpenRouterClient:
     try:
-        # DeepSeek R1's reasoning traces routinely run 100-200s+ (confirmed via
-        # real validation calls) — the library default of 30s is too short for
-        # this bridge specifically. Scoped here, not in openrouter_client.py,
-        # since other callers may have different latency tolerances.
-        return OpenRouterClient(timeout=300.0)
+        return OpenRouterClient(timeout=DEEPSEEK_R1_REASONING_TIMEOUT_SECONDS)
     except AIConfigError as exc:
         # Surface as a FeatureResult-shaped failure so the frontend's single
         # "failed" branch handles both "AI call failed" and "server misconfigured"

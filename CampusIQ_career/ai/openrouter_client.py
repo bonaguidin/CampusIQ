@@ -12,6 +12,12 @@ from .types import AIMessage, AIResponse, AgentRole
 
 OPENROUTER_CHAT_COMPLETIONS_URL = "https://openrouter.ai/api/v1/chat/completions"
 
+# DeepSeek R1's reasoning traces routinely run 100-200s+ (confirmed via real
+# validation calls) -- the class default below is too short for any caller
+# that actually invokes the "career"/"academic" DeepSeek R1 roles. Callers
+# making real (non-mock) calls should pass this explicitly.
+DEEPSEEK_R1_REASONING_TIMEOUT_SECONDS = 300.0
+
 
 class OpenRouterClient:
     def __init__(

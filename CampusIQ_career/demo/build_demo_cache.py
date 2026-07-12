@@ -93,8 +93,13 @@ def _make_client(mock: bool):
     if mock:
         return _MockClient()
     from CampusIQ_career.ai import OpenRouterClient  # local import by design
+    from CampusIQ_career.ai.openrouter_client import DEEPSEEK_R1_REASONING_TIMEOUT_SECONDS
 
-    return OpenRouterClient()  # raises AIConfigError if OPENROUTER_API_KEY unset
+    # Real calls run the DeepSeek R1 career/academic roles end to end, which
+    # routinely take 100-200s+ -- match api.py's build_client() timeout
+    # rather than the library's 30s default. Raises AIConfigError if
+    # OPENROUTER_API_KEY is unset.
+    return OpenRouterClient(timeout=DEEPSEEK_R1_REASONING_TIMEOUT_SECONDS)
 
 
 def build(only: Sequence[str] | None, mock: bool) -> int:
