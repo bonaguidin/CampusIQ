@@ -16,13 +16,63 @@ Dallas AI Group 6 | 2026 Summer Cohort.
 ## Setup
 
 ```bash
-# 1. Install dependencies
+# 1. Install backend dependencies
 uv sync
 
 # 2. Configure your API key
 cp .env.example .env
 # then edit .env and replace "your-key-here" with your actual key
+
+# 3. Install frontend dependencies
+cd frontend
+npm install
+cd ..
 ```
+
+---
+
+## Running the app
+
+The app is two processes — a Python backend and a React frontend — run in
+separate terminals. Both need to be running for the dashboard's live
+analysis calls (FIT/GAP/PROFESSOR_COMMENTS) to work.
+
+**Terminal 1 — backend** (FastAPI bridge, port 8000):
+
+```bash
+uv run uvicorn CampusIQ_career.api:app --reload --port 8000
+```
+
+**Terminal 2 — frontend** (Vite dev server):
+
+```bash
+cd frontend
+npm run dev
+```
+
+Vite prints a local URL (typically `http://localhost:5173`). Open it in a
+browser — you'll land on the login page with a student dropdown
+(mock/profile-select auth, no real credentials). Pick a student to enter
+the dashboard. The Vite dev server proxies `/api/*` requests to
+`localhost:8000` (configured in `frontend/vite.config.ts`), which is why
+the backend has to be running too.
+
+### Node version
+
+The frontend requires **Node.js 20+** (pinned in `frontend/.nvmrc` and
+`frontend/package.json`'s `engines` field). If you use
+[nvm](https://github.com/nvm-sh/nvm), run `nvm use` from the `frontend/`
+directory to switch automatically, or `nvm use 20` from anywhere.
+
+Running `npm run dev` on an older Node version (e.g. 16 or 18) fails with
+a cryptic error rather than a clear version check:
+
+```
+TypeError: crypto$2.getRandomValues is not a function
+```
+
+If you see this, it means your active Node is too old — run `node --version`
+to check, then switch to Node 20+ and retry.
 
 ---
 
