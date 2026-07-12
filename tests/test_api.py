@@ -81,6 +81,50 @@ def test_analyze_fit_success(client, monkeypatch):
     assert fake.calls[0]["role"] == "career"
 
 
+def test_analyze_shift_success(client, monkeypatch):
+    fake = FakeClient(
+        """
+        {
+          "summary": "AI tooling fluency is increasingly expected in this role family.",
+          "data": {
+            "role_evolution_summary": "AI tooling fluency is increasingly expected in this role family.",
+            "task_shifts": [
+              {
+                "task": "Manual data entry",
+                "changing": "Increasingly automated by AI tools.",
+                "meaning": "Less time on rote entry, more on interpretation."
+              }
+            ],
+            "durable_skills": [
+              {
+                "task": "Stakeholder communication",
+                "reason": "AI cannot replace judgment-driven, relationship-based work."
+              }
+            ],
+            "adjacent_paths": [
+              {
+                "path": "Data Analyst",
+                "relevance": "Builds on existing Excel and SQL foundation.",
+                "driver": "Growing demand for analytics-literate generalists."
+              }
+            ],
+            "ai_fluency_guidance": ["Learn to prompt and evaluate AI tool output critically."]
+          }
+        }
+        """
+    )
+    monkeypatch.setattr(api, "build_client", lambda: fake)
+
+    response = client.post("/api/students/jordanReyes/analyze/shift")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["feature"] == "SHIFT"
+    assert body["status"] == "success"
+    assert body["data"]["task_shifts"][0]["task"] == "Manual data entry"
+    assert fake.calls[0]["role"] == "career"
+
+
 def test_analyze_professor_comments_success(client, monkeypatch):
     fake = FakeClient(
         """

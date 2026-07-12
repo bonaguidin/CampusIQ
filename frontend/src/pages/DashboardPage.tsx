@@ -5,6 +5,7 @@ import { AcademicSnapshot } from '../components/AcademicSnapshot';
 import { CareerPanel } from '../components/CareerPanel';
 import { GapAnalysisPanel } from '../components/GapAnalysisPanel';
 import { FitAnalysisPanel } from '../components/FitAnalysisPanel';
+import { ShiftAnalysisPanel } from '../components/ShiftAnalysisPanel';
 import type { ProfileCompleteness } from '../types/student';
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -373,6 +374,7 @@ export function DashboardPage() {
                   <>
                     <GapAnalysisPanel />
                     <FitAnalysisPanel />
+                    <ShiftAnalysisPanel />
                     <CareerPanel career={career} />
                   </>
                 ) : (

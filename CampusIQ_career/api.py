@@ -2,10 +2,8 @@
 
 This is the first HTTP entrypoint for the project — no web framework existed
 before this file (pyproject.toml had no FastAPI/Flask/uvicorn), so FastAPI was
-added as a new dependency. Scope is intentionally narrow: two endpoints for the
-two demo-critical features (GAP, PROFESSOR_COMMENTS). FIT/SHIFT are skipped per
-the architecture doc's priority call, not because they're harder to add later —
-run_feature() already supports them, wiring more routes is a small follow-up.
+added as a new dependency. Covers all four feature runners (GAP, FIT, SHIFT,
+PROFESSOR_COMMENTS) — each route is a thin wrapper around run_feature().
 
 Student identity here is the dashboard "slug" (e.g. "jordanReyes"), matching
 frontend/src/data/dataAdapter.ts's `/data/student_${slug}.json` convention —
@@ -72,6 +70,13 @@ def analyze_fit(student_slug: str) -> dict:
     profile = load_student_profile(student_slug)
     client = build_client()
     return run_feature("FIT", profile, client)
+
+
+@app.post("/api/students/{student_slug}/analyze/shift")
+def analyze_shift(student_slug: str) -> dict:
+    profile = load_student_profile(student_slug)
+    client = build_client()
+    return run_feature("SHIFT", profile, client)
 
 
 @app.post("/api/students/{student_slug}/analyze/professor-comments")

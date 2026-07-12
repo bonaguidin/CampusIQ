@@ -6,6 +6,7 @@ import type {
   FeatureResult,
   FitAnalysisData,
   GapAnalysisData,
+  ShiftAnalysisData,
   ProfessorCommentAnalysisData,
 } from '../types/analysis';
 
@@ -23,6 +24,10 @@ export function analyzeGap(slug: string): Promise<FeatureResult<GapAnalysisData>
 
 export function analyzeFit(slug: string): Promise<FeatureResult<FitAnalysisData>> {
   return postAnalysis(`/api/students/${encodeURIComponent(slug)}/analyze/fit`);
+}
+
+export function analyzeShift(slug: string): Promise<FeatureResult<ShiftAnalysisData>> {
+  return postAnalysis(`/api/students/${encodeURIComponent(slug)}/analyze/shift`);
 }
 
 export function analyzeProfessorComments(
