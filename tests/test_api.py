@@ -1,3 +1,5 @@
+import json
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -183,7 +185,21 @@ def test_analyze_gap_missing_api_key_returns_503(client, monkeypatch):
     assert response.status_code == 503
 
 
-def test_analyze_gap_malformed_ai_json_returns_failed_status(client, monkeypatch):
+def test_analyze_gap_malformed_ai_json_returns_failed_status(client, monkeypatch, tmp_path):
+    # Isolate from the real production cache dir (frontend/public/data) --
+    # jordanReyes's real cache now has a genuine "success" GAP entry from the
+    # demo regeneration work (build_demo_cache.py), which collided with this
+    # test's "no fallback available" assumption: run_feature_with_fallback
+    # would find that real success entry and serve it, masking the malformed-
+    # JSON live failure this test exists to check. That was a test-isolation
+    # bug, not a production one -- this fixture cache deliberately has no GAP
+    # entry for jordanReyes, so load_cached_feature_result() misses and the
+    # live failure passes through unchanged, exactly as the test name
+    # describes, regardless of what the real cache holds now or later.
+    (tmp_path / "analysis_jordanReyes.json").write_text(
+        json.dumps({"results": {}}), encoding="utf-8"
+    )
+    monkeypatch.setattr(api, "CACHED_ANALYSIS_DIR", tmp_path)
     monkeypatch.setattr(api, "build_client", lambda: FakeClient("{not-json"))
 
     response = client.post("/api/students/jordanReyes/analyze/gap")
