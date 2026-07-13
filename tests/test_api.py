@@ -1,4 +1,6 @@
 import json
+import threading
+from concurrent.futures import ThreadPoolExecutor
 
 import pytest
 from fastapi.testclient import TestClient
@@ -6,6 +8,22 @@ from fastapi.testclient import TestClient
 from CampusIQ_career import api
 from CampusIQ_career.ai.errors import AIConfigError
 from CampusIQ_career.ai.types import AIResponse
+
+
+TEST_PROXY_SECRET = "test-proxy-secret"
+PROXY_HEADERS = {api.PROXY_SECRET_HEADER: TEST_PROXY_SECRET}
+
+
+def make_test_config(**overrides):
+    values = {
+        "proxy_secret": TEST_PROXY_SECRET,
+        "allowed_origins": ("https://frontend.example",),
+        "rate_limit_requests": 100,
+        "rate_limit_window_seconds": 60.0,
+        "max_concurrent_ai_requests": 2,
+    }
+    values.update(overrides)
+    return api.APIConfig(**values)
 
 
 class FakeClient:
@@ -20,7 +38,143 @@ class FakeClient:
 
 @pytest.fixture
 def client():
-    return TestClient(api.app)
+    return TestClient(api.create_app(make_test_config()), headers=PROXY_HEADERS)
+
+
+def test_public_health_route_requires_no_proxy_credential():
+    response = TestClient(api.create_app(make_test_config())).get("/health")
+
+    assert response.status_code == 200
+    assert response.json() == {"status": "ok"}
+
+
+@pytest.mark.parametrize("headers", [{}, {api.PROXY_SECRET_HEADER: "wrong-secret"}])
+def test_missing_or_incorrect_proxy_credential_is_rejected_before_client_build(headers, monkeypatch):
+    built = False
+
+    def unexpected_build():
+        nonlocal built
+        built = True
+        raise AssertionError("paid client must not be constructed")
+
+    monkeypatch.setattr(api, "build_client", unexpected_build)
+    test_client = TestClient(api.create_app(make_test_config()))
+
+    response = test_client.post("/api/students/jordanReyes/analyze/gap", headers=headers)
+
+    assert response.status_code == 401
+    assert response.json() == {"detail": "Unauthorized."}
+    assert built is False
+
+
+def test_unconfigured_backend_proxy_authentication_fails_closed(monkeypatch):
+    monkeypatch.setattr(api, "build_client", lambda: pytest.fail("client must not be built"))
+    config = make_test_config(proxy_secret="")
+
+    response = TestClient(api.create_app(config)).post("/api/students/jordanReyes/analyze/gap")
+
+    assert response.status_code == 503
+    assert response.json() == {"detail": "Backend proxy authentication is not configured."}
+
+
+def test_proxy_secret_is_not_logged_on_authentication_failure(caplog):
+    secret = "do-not-log-this-secret"
+    config = make_test_config(proxy_secret=secret)
+
+    with caplog.at_level("DEBUG"):
+        response = TestClient(api.create_app(config)).post(
+            "/api/students/jordanReyes/analyze/gap",
+            headers={api.PROXY_SECRET_HEADER: "wrong-secret"},
+        )
+
+    assert response.status_code == 401
+    assert secret not in caplog.text
+    assert "wrong-secret" not in caplog.text
+
+
+def test_cors_allows_only_explicit_configured_origin():
+    test_client = TestClient(api.create_app(make_test_config()))
+    allowed = test_client.options(
+        "/api/students/jordanReyes/analyze/gap",
+        headers={
+            "Origin": "https://frontend.example",
+            "Access-Control-Request-Method": "POST",
+            "Access-Control-Request-Headers": api.PROXY_SECRET_HEADER,
+        },
+    )
+    denied = test_client.options(
+        "/api/students/jordanReyes/analyze/gap",
+        headers={
+            "Origin": "https://attacker.example",
+            "Access-Control-Request-Method": "POST",
+        },
+    )
+
+    assert allowed.headers["access-control-allow-origin"] == "https://frontend.example"
+    assert "access-control-allow-origin" not in denied.headers
+
+
+def test_rate_limiter_rejects_excess_and_expires_old_state(monkeypatch):
+    builds = 0
+
+    def counted_build():
+        nonlocal builds
+        builds += 1
+        return FakeClient('{"data": {}}')
+
+    monkeypatch.setattr(api, "build_client", counted_build)
+    limited = TestClient(
+        api.create_app(make_test_config(rate_limit_requests=1, rate_limit_window_seconds=10.0)),
+        headers=PROXY_HEADERS,
+    )
+
+    first = limited.post("/api/students/jordanReyes/analyze/fit")
+    second = limited.post("/api/students/jordanReyes/analyze/fit")
+
+    assert first.status_code == 200
+    assert second.status_code == 429
+    assert builds == 1
+    limiter = api.SlidingWindowRateLimiter(limit=1, window_seconds=10.0)
+    assert limiter.allow(now=0.0) is True
+    assert limiter.allow(now=5.0) is False
+    assert limiter.allow(now=11.0) is True
+
+
+def test_concurrency_limit_rejects_excess_live_work_and_releases_slot(monkeypatch):
+    entered = threading.Event()
+    release = threading.Event()
+    monkeypatch.setattr(api, "build_client", lambda: object())
+
+    def blocking_run(*args, **kwargs):
+        entered.set()
+        release.wait(timeout=5)
+        return {"feature": "FIT", "status": "success", "summary": "ok", "data": {}, "errors": []}
+
+    monkeypatch.setattr(api, "run_feature_with_fallback", blocking_run)
+    app = api.create_app(make_test_config(max_concurrent_ai_requests=1))
+
+    def request_analysis():
+        return TestClient(app, headers=PROXY_HEADERS).post("/api/students/jordanReyes/analyze/fit")
+
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        first_future = pool.submit(request_analysis)
+        assert entered.wait(timeout=2)
+        second = request_analysis()
+        release.set()
+        first = first_future.result(timeout=5)
+
+    assert first.status_code == 200
+    assert second.status_code == 429
+
+    monkeypatch.setattr(api, "run_feature_with_fallback", lambda *args, **kwargs: (_ for _ in ()).throw(RuntimeError("boom")))
+    failed = request_analysis()
+    assert failed.status_code == 502
+    monkeypatch.setattr(
+        api,
+        "run_feature_with_fallback",
+        lambda *args, **kwargs: {"feature": "FIT", "status": "success", "summary": "ok", "data": {}, "errors": []},
+    )
+    assert request_analysis().status_code == 200
 
 
 def test_analyze_gap_success(client, monkeypatch):

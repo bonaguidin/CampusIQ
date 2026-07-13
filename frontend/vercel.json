@@ -1,11 +1,15 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "//": "Lives in frontend/ ; set Vercel Project 'Root Directory' = frontend. Vite build (npm run build) -> dist, auto-detected.",
+  "//": "Set the Vercel project Root Directory to frontend. The browser calls same-origin /api routes; api/proxy.mjs adds the server-only backend credential.",
+  "functions": {
+    "api/proxy.mjs": {
+      "maxDuration": 300
+    }
+  },
   "rewrites": [
     {
-      "//": "Proxy API calls to the FastAPI backend (Render/Railway). Replace the host with your deployed backend URL. Frontend calls relative /api/* so no frontend env var is needed.",
-      "source": "/api/:path*",
-      "destination": "https://campusiq-kxfy.onrender.com/api/:path*"
+      "source": "/api/students/:student/analyze/:feature",
+      "destination": "/api/proxy?student=:student&feature=:feature"
     },
     {
       "//": "SPA fallback: send client-side routes (e.g. /dashboard) to index.html. Real static files (/assets/*, /data/*.json) are served from the filesystem first, so this does not clobber them.",

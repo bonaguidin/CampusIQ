@@ -10,6 +10,7 @@ Dallas AI Group 6 | 2026 Summer Cohort.
 - [uv](https://docs.astral.sh/uv/getting-started/installation/) — Python package manager
 - Node.js 20+ for the React/Vite frontend
 - An OpenRouter API key for the primary Campus IQ AI path
+- A shared `CAMPUSIQ_PROXY_SECRET` for the Vite/Vercel server-side proxy and backend
 
 ---
 
@@ -35,7 +36,7 @@ cd ..
 
 The app is two processes — a Python backend and a React frontend — run in
 separate terminals. Both need to be running for the dashboard's live
-analysis calls (FIT/GAP/PROFESSOR_COMMENTS) to work.
+analysis calls (FIT/GAP/SHIFT/PROFESSOR_COMMENTS) to work.
 
 **Terminal 1 — backend** (FastAPI bridge, port 8000):
 
@@ -54,8 +55,48 @@ Vite prints a local URL (typically `http://localhost:5173`). Open it in a
 browser — you'll land on the login page with a student dropdown
 (mock/profile-select auth, no real credentials). Pick a student to enter
 the dashboard. The Vite dev server proxies `/api/*` requests to
-`localhost:8000` (configured in `frontend/vite.config.ts`), which is why
-the backend has to be running too.
+`localhost:8000` and attaches `CAMPUSIQ_PROXY_SECRET` server-side (configured
+in `frontend/vite.config.ts`). The secret is deliberately not `VITE_`-prefixed
+and is never available to browser modules.
+
+## Secure demo deployment
+
+The active frontend is React + Vite. In production the browser calls a
+same-origin Vercel Function, `frontend/api/proxy.mjs`; it does not call Render
+directly. The function validates the requested student/feature route, forwards
+it to Render, and adds `X-CampusIQ-Proxy-Secret` from server-only environment
+configuration. Render rejects missing or incorrect credentials with HTTP 401
+using constant-time comparison.
+
+Configure these in **Vercel** and redeploy:
+
+```bash
+CAMPUSIQ_BACKEND_URL=https://your-render-service.example
+CAMPUSIQ_PROXY_SECRET=<same-strong-random-value-as-render>
+```
+
+Configure these in **Render** and restart/redeploy:
+
+```bash
+CAMPUSIQ_PROXY_SECRET=<same-strong-random-value-as-vercel>
+CAMPUSIQ_ALLOWED_ORIGINS=https://your-vercel-domain.example
+CAMPUSIQ_RATE_LIMIT_REQUESTS=10
+CAMPUSIQ_RATE_LIMIT_WINDOW_SECONDS=60
+CAMPUSIQ_MAX_CONCURRENT_AI_REQUESTS=2
+OPENROUTER_API_KEY=<server-only-key>
+TAVILY_API_KEY=<server-only-key>
+```
+
+The rate limit is a bounded sliding window shared by trusted proxy requests in
+one backend process. The concurrency semaphore is also per process. Neither is
+globally distributed across multiple Render instances; use a shared external
+limiter before scaling horizontally. CORS allows only explicitly configured
+browser origins and is defense in depth, not authentication. `/health` is the
+only intentionally public backend route.
+
+The Vercel function is configured for a 300-second maximum duration. Confirm
+that the selected Vercel plan supports that duration, or lower the live-model
+timeout to the plan limit before deployment.
 
 ### Node version
 

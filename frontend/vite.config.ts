@@ -1,14 +1,24 @@
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 
 // https://vite.dev/config/
-export default defineConfig({
-  plugins: [react()],
-  server: {
-    // Bridges to the FastAPI orchestrator (CampusIQ_career/api.py), run separately
-    // via `uv run uvicorn CampusIQ_career.api:app --reload --port 8000`.
-    proxy: {
-      '/api': 'http://localhost:8000',
+export default defineConfig(({ mode }) => {
+  // This value is consumed only by the Node-based Vite development proxy. It is
+  // deliberately not VITE_-prefixed and is never exposed to browser modules.
+  const env = loadEnv(mode, '..', 'CAMPUSIQ_')
+  const proxySecret = env.CAMPUSIQ_PROXY_SECRET
+
+  return {
+    plugins: [react()],
+    server: {
+      proxy: {
+        '/api': {
+          target: 'http://localhost:8000',
+          ...(proxySecret
+            ? { headers: { 'X-CampusIQ-Proxy-Secret': proxySecret } }
+            : {}),
+        },
+      },
     },
-  },
+  }
 })
