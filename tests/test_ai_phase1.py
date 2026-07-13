@@ -143,6 +143,79 @@ def test_complete_message_still_raises_ai_request_error_on_network_failure(monke
         client.complete_message(messages=[{"role": "user", "content": "hello"}], model="test-model")
 
 
+def test_standard_messages_serialize_exactly_without_mutating_input():
+    message = {"role": "user", "content": "hello", "internal": "discard me"}
+    original = dict(message)
+
+    serialized = OpenRouterClient._message_to_dict(message)
+
+    assert serialized == {"role": "user", "content": "hello"}
+    assert message == original
+
+
+def test_assistant_tool_calls_and_empty_content_survive_serialization():
+    message = {
+        "role": "assistant",
+        "content": "",
+        "tool_calls": [
+            {
+                "id": "call_123",
+                "type": "function",
+                "function": {"name": "search_roles", "arguments": '{"query":"analyst"}'},
+            }
+        ],
+    }
+    original_tool_calls = message["tool_calls"]
+
+    serialized = OpenRouterClient._message_to_dict(message)
+
+    assert serialized == message
+    assert serialized["tool_calls"] is not original_tool_calls
+
+
+def test_tool_result_id_survives_and_none_optional_fields_are_omitted():
+    message = {
+        "role": "tool",
+        "content": '{"results":[]}',
+        "tool_call_id": "call_123",
+        "name": None,
+        "tool_calls": None,
+    }
+
+    assert OpenRouterClient._message_to_dict(message) == {
+        "role": "tool",
+        "content": '{"results":[]}',
+        "tool_call_id": "call_123",
+    }
+
+
+def test_assistant_tool_calls_may_omit_none_content():
+    message = {
+        "role": "assistant",
+        "content": None,
+        "tool_calls": [{"id": "call_123", "function": {"name": "search_roles", "arguments": "{}"}}],
+    }
+
+    assert OpenRouterClient._message_to_dict(message) == {
+        "role": "assistant",
+        "tool_calls": message["tool_calls"],
+    }
+
+
+@pytest.mark.parametrize(
+    ("message", "match"),
+    [
+        ({"role": "assistant", "content": "", "tool_calls": "bad"}, "tool_calls"),
+        ({"role": "tool", "content": "{}"}, "tool_call_id"),
+        ({"role": "tool", "content": "{}", "tool_call_id": 123}, "tool_call_id"),
+        ({"role": "user", "content": None}, "content.*or tool calls"),
+    ],
+)
+def test_malformed_tool_message_fields_are_rejected_explicitly(message, match):
+    with pytest.raises(AIConfigError, match=match):
+        OpenRouterClient._message_to_dict(message)
+
+
 def test_complete_unaffected_by_complete_message_addition(monkeypatch):
     # Guards against the refactor of complete()'s internals into _send()
     # changing complete()'s existing text-extraction behavior.

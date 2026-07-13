@@ -5,6 +5,7 @@ import pytest
 
 from CampusIQ_career.ai.errors import AIConfigError, AIRequestError, AIResponseParseError
 from CampusIQ_career.ai.model_config import OPENROUTER_DEEPSEEK_V4_FLASH, get_model_for_role
+from CampusIQ_career.ai.openrouter_client import OpenRouterClient
 from CampusIQ_career.features import role_research_agent as agent
 
 
@@ -55,6 +56,28 @@ class FakeClient:
         return response
 
 
+class FakeHTTPResponse:
+    def __init__(self, payload):
+        self.payload = payload
+
+    def raise_for_status(self):
+        return None
+
+    def json(self):
+        return self.payload
+
+
+class SequencedHTTPSession:
+    def __init__(self, messages):
+        self.messages = list(messages)
+        self.calls = []
+
+    def post(self, *args, **kwargs):
+        self.calls.append({"args": args, "kwargs": kwargs})
+        message = self.messages.pop(0)
+        return FakeHTTPResponse({"choices": [{"message": message}]})
+
+
 VALID_PAYLOAD = {
     "soc_code": "15-1252.00",
     "soc_title": "Software Developers",
@@ -92,6 +115,28 @@ def test_successful_lookup_with_mocked_tool_calls_returns_correct_schema():
     # second call must include the tool result as a "tool" message
     tool_messages = [m for m in client.calls[1]["messages"] if m.get("role") == "tool"]
     assert len(tool_messages) == 1
+
+
+def test_real_openrouter_serializer_preserves_tool_relationship_in_second_request(monkeypatch):
+    session = SequencedHTTPSession([_tool_call_message("call_123"), _final_message(VALID_PAYLOAD)])
+    client = OpenRouterClient(api_key="test-key", session=session)
+    monkeypatch.setattr(agent, "_run_web_search", lambda arguments: '{"results":[]}')
+
+    result = agent.get_role_requirements("Software Engineering Intern", client=client)
+
+    assert result == EXPECTED_VALID_RESULT
+    assert len(session.calls) == 2
+    second_messages = session.calls[1]["kwargs"]["json"]["messages"]
+    assert second_messages[:2] == [
+        {"role": "system", "content": agent._SYSTEM_PROMPT},
+        {"role": "user", "content": "Target role: Software Engineering Intern"},
+    ]
+    assistant = second_messages[2]
+    tool = second_messages[3]
+    assert assistant["tool_calls"][0]["id"] == "call_123"
+    assert tool["tool_call_id"] == "call_123"
+    assert tool["tool_call_id"] == assistant["tool_calls"][0]["id"]
+    assert tool["content"] == '{"results":[]}'
 
 
 def test_well_formed_soc_code_outside_the_static_allowlist_is_accepted():

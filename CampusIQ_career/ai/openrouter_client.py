@@ -1,5 +1,6 @@
 """OpenRouter client for Campus IQ AI calls."""
 
+import copy
 import os
 from typing import Any, Mapping, Sequence
 
@@ -187,9 +188,33 @@ class OpenRouterClient:
         if isinstance(message, Mapping):
             role = message.get("role")
             content = message.get("content")
-            if not isinstance(role, str) or not isinstance(content, str):
-                raise AIConfigError("Each AI message must include string 'role' and 'content'.")
-            return {"role": role, "content": content}
+            if not isinstance(role, str):
+                raise AIConfigError("Each AI message must include a string 'role'.")
+
+            serialized: dict[str, Any] = {"role": role}
+            if content is not None:
+                if not isinstance(content, str):
+                    raise AIConfigError("AI message 'content' must be a string or None.")
+                serialized["content"] = content
+
+            tool_calls = message.get("tool_calls")
+            if tool_calls is not None:
+                if not isinstance(tool_calls, list) or not all(isinstance(call, Mapping) for call in tool_calls):
+                    raise AIConfigError("AI message 'tool_calls' must be a list of objects.")
+                serialized["tool_calls"] = copy.deepcopy(tool_calls)
+
+            for field in ("tool_call_id", "name"):
+                value = message.get(field)
+                if value is not None:
+                    if not isinstance(value, str):
+                        raise AIConfigError(f"AI message '{field}' must be a string.")
+                    serialized[field] = value
+
+            if "content" not in serialized and "tool_calls" not in serialized:
+                raise AIConfigError("Each AI message must include string 'content' or tool calls.")
+            if role == "tool" and "tool_call_id" not in serialized:
+                raise AIConfigError("Tool messages must include string 'tool_call_id'.")
+            return serialized
         raise AIConfigError("AI messages must be AIMessage objects or mappings.")
 
     @staticmethod
