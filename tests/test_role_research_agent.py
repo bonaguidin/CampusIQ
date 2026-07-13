@@ -336,6 +336,16 @@ def test_stale_or_malformed_cache_entry_is_treated_as_a_miss(tmp_path):
     assert len(client.calls) == 2  # agent was actually invoked, cache miss was honored
 
 
+def test_system_prompt_constrains_soc_code_to_entry_level_occupations():
+    # Guards against a real, observed bias: without this, the model drifts
+    # toward manager/supervisor-tier SOC codes for intern-level roles (e.g.
+    # "Human Resources Managers" instead of "Human Resources Specialists"
+    # for an HR internship). This must survive future prompt edits.
+    prompt = agent._SYSTEM_PROMPT
+    assert "entry-level" in prompt
+    assert "Managers" in prompt and "Supervisors" in prompt and "Directors" in prompt
+
+
 def test_role_research_model_resolves_to_deepseek_v4_flash_by_default(monkeypatch):
     monkeypatch.delenv("CAMPUSIQ_MODEL_ROLE_RESEARCH", raising=False)
 

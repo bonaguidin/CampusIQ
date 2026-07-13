@@ -87,6 +87,14 @@ _SYSTEM_PROMPT = (
     '"nice_to_have_skills": ["string", ...], '
     '"must_have_certifications": ["string", ...], '
     '"nice_to_have_certifications": ["string", ...]}\n'
+    "These target roles are always entry-level internship, student, or "
+    "volunteer positions -- never career-stage placements. Choose the SOC "
+    "code for the entry-level individual-contributor occupation the intern "
+    "would be training toward, not a management, supervisory, or "
+    "director-tier occupation. If your best match is a manager/supervisor "
+    "occupation (e.g. an 11-xxxx code, or any title containing "
+    '"Managers", "Supervisors", or "Directors"), pick the corresponding '
+    "specialist, analyst, technician, or associate occupation instead.\n"
     "Use an empty list for any category with nothing to report. Once you are "
     "ready to answer, respond with the JSON object directly instead of "
     "calling another tool."
