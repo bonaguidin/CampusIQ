@@ -5,6 +5,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any, Mapping
 
+from . import role_research_agent
 from .base import CareerFeatureRunner
 from .market_data import get_market_requirements
 
@@ -12,6 +13,16 @@ from .market_data import get_market_requirements
 # job-market API for the demo (SOC code + must-have / nice-to-have skills & certs
 # per target role). Keyed by the exact target_role strings in the student JSON.
 ROLE_REQUIREMENTS_PATH = Path(__file__).resolve().parents[2] / "data" / "role_requirements.json"
+
+# Skill/certification fields merged from the agent when it succeeds. SOC
+# code/title are deliberately excluded here -- they always come from the
+# static file, never the agent (see role_requirements_for).
+_SKILL_CERT_FIELDS = (
+    "must_have_skills",
+    "nice_to_have_skills",
+    "must_have_certifications",
+    "nice_to_have_certifications",
+)
 
 
 @lru_cache(maxsize=1)
@@ -22,6 +33,39 @@ def _load_role_requirements() -> Mapping[str, Any]:
     except (OSError, ValueError):
         return {}
     return {key: value for key, value in data.items() if not key.startswith("_")}
+
+
+def _merge_requirements(
+    static_entry: Mapping[str, Any] | None, agent_result: Mapping[str, Any] | None
+) -> dict[str, Any] | None:
+    """soc_code/soc_title always come from static_entry (the agent's own SOC
+    guess has proven unstable across runs and is never used as a lookup key
+    anywhere downstream, so there is nothing to gain from it). Skills/certs
+    come from the agent when it succeeded, falling back field-by-field to
+    static_entry -- an agent empty list for one field does not clobber a
+    populated static list for that same field (observed for Operations
+    Intern's nice_to_have_certifications)."""
+    if static_entry is None:
+        # No static SOC record to anchor to -- can't build a result even if
+        # the agent found something, since soc_code/soc_title must come from
+        # here. Every current target_roles string has a static entry, so
+        # this is a future-role safety net, not a live path today.
+        return None
+
+    merged: dict[str, Any] = {
+        "soc_code": static_entry.get("soc_code"),
+        "soc_title": static_entry.get("soc_title"),
+    }
+    if agent_result is not None:
+        merged["requirements_source"] = "agent"
+        for field in _SKILL_CERT_FIELDS:
+            agent_value = agent_result.get(field)
+            merged[field] = agent_value if agent_value else static_entry.get(field, [])
+    else:
+        merged["requirements_source"] = "static"
+        for field in _SKILL_CERT_FIELDS:
+            merged[field] = static_entry.get(field, [])
+    return merged
 
 
 class GapRunner(CareerFeatureRunner):
@@ -78,14 +122,25 @@ class GapRunner(CareerFeatureRunner):
         }
 
     def role_requirements_for(self, target_roles: Any) -> dict[str, Any]:
-        """Match each target role against the static lookup and return the
-        SOC-code + must-have / nice-to-have skills & certs for the roles found.
-        Unmatched roles are reported so the AI does not silently assume coverage."""
+        """Match each target role against the live research agent, and
+        return the SOC-code + must-have / nice-to-have skills & certs for
+        the roles found. Unmatched roles are reported so the AI does not
+        silently assume coverage.
+
+        soc_code/soc_title always come from the static
+        data/role_requirements.json file; the agent's own SOC guess has
+        proven unstable across runs and is never used as a lookup key
+        anywhere downstream, so it is deliberately discarded. Skills/certs
+        come from the agent when it succeeds (field-by-field, so an agent
+        empty list doesn't clobber a populated static list), else from the
+        static file. requirements_source records which path supplied the
+        skills/certs ("agent" or "static")."""
         lookup = _load_role_requirements()
         matched: dict[str, Any] = {}
         unmatched: list[str] = []
         for role in target_roles or []:
-            requirements = lookup.get(role)
+            agent_result = role_research_agent.get_role_requirements(role)
+            requirements = _merge_requirements(lookup.get(role), agent_result)
             if requirements:
                 matched[role] = requirements
             else:

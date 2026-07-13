@@ -3,6 +3,7 @@ from copy import deepcopy
 import pytest
 
 from CampusIQ_career.ai.types import AIResponse
+from CampusIQ_career.features import gap as gap_module
 from CampusIQ_career.features import run_career_feature
 from CampusIQ_career.features.fit import FitRunner
 from CampusIQ_career.features.gap import GapRunner
@@ -118,6 +119,122 @@ def test_gap_success_with_mocked_ai_json():
     assert result["data"]["readiness_score"] == 6
     assert client.calls[0]["role"] == "career"
     assert "GAP Prompt" in client.calls[0]["messages"][1]["content"]
+
+
+_GAP_SUCCESS_JSON = """
+{
+  "summary": "Your main readiness gap is analytics depth.",
+  "data": {
+    "readiness_score": 6,
+    "strengths": ["Excel", "presentation"],
+    "must_have_gaps": ["SQL"],
+    "nice_to_have_gaps": ["dashboarding"],
+    "recommended_next_steps": ["Build a small SQL project"]
+  }
+}
+"""
+
+
+def _live_agent_requirements():
+    # soc_code/soc_title are deliberately implausible/unlike the static
+    # entry -- their presence here proves they're discarded, not just
+    # coincidentally matching.
+    return {
+        "soc_code": "13-1111.00-LIVE",
+        "soc_title": "Live-Researched Management Analysts",
+        "must_have_skills": ["Live-researched must-have skill"],
+        "nice_to_have_skills": [],
+        "must_have_certifications": [],
+        "nice_to_have_certifications": [],
+    }
+
+
+def test_role_requirements_for_uses_agent_skills_but_static_soc_code(monkeypatch):
+    agent_data = _live_agent_requirements()
+    monkeypatch.setattr(
+        gap_module.role_research_agent,
+        "get_role_requirements",
+        lambda role: agent_data if role == "Business Analyst Intern" else None,
+    )
+
+    result = GapRunner(client=FakeClient("{}")).role_requirements_for(["Business Analyst Intern"])
+    entry = result["Business Analyst Intern"]
+
+    # soc_code/soc_title always come from the static file, never the agent.
+    assert entry["soc_code"] == "13-1111.00"
+    assert entry["soc_title"] == "Management Analysts"
+    # must_have_skills comes from the agent (non-empty agent list wins).
+    assert entry["must_have_skills"] == ["Live-researched must-have skill"]
+    assert entry["requirements_source"] == "agent"
+
+
+def test_role_requirements_for_agent_empty_list_does_not_clobber_populated_static_list(monkeypatch):
+    # Operations Intern's static entry has a non-empty
+    # nice_to_have_certifications; an agent result with an empty list for
+    # that field must not blank it out.
+    agent_data = dict(_live_agent_requirements(), nice_to_have_certifications=[])
+    monkeypatch.setattr(gap_module.role_research_agent, "get_role_requirements", lambda role: agent_data)
+
+    result = GapRunner(client=FakeClient("{}")).role_requirements_for(["Operations Intern"])
+    entry = result["Operations Intern"]
+
+    assert entry["nice_to_have_certifications"] == ["Six Sigma Yellow Belt"]
+    assert entry["must_have_skills"] == ["Live-researched must-have skill"]  # agent's non-empty list still wins
+    assert entry["requirements_source"] == "agent"
+
+
+def test_role_requirements_for_falls_back_to_static_when_agent_returns_none(monkeypatch):
+    monkeypatch.setattr(gap_module.role_research_agent, "get_role_requirements", lambda role: None)
+
+    result = GapRunner(client=FakeClient("{}")).role_requirements_for(["Business Analyst Intern"])
+
+    assert result["Business Analyst Intern"]["soc_code"] == "13-1111.00"
+    assert "Excel modeling" in result["Business Analyst Intern"]["must_have_skills"]
+    assert result["Business Analyst Intern"]["requirements_source"] == "static"
+
+
+def test_gap_run_produces_identical_feature_result_shape_regardless_of_role_requirements_source(monkeypatch):
+    monkeypatch.setattr(
+        gap_module.role_research_agent,
+        "get_role_requirements",
+        lambda role: _live_agent_requirements() if role == "Business Analyst Intern" else None,
+    )
+    agent_result = GapRunner(client=FakeClient(_GAP_SUCCESS_JSON)).run(sample_student())
+
+    monkeypatch.setattr(gap_module.role_research_agent, "get_role_requirements", lambda role: None)
+    fallback_result = GapRunner(client=FakeClient(_GAP_SUCCESS_JSON)).run(sample_student())
+
+    assert agent_result.keys() == fallback_result.keys()
+    assert agent_result["status"] == fallback_result["status"] == "success"
+    assert agent_result["data"] == fallback_result["data"]
+    assert agent_result["summary"] == fallback_result["summary"]
+
+
+def test_role_requirements_for_reports_unmatched_when_agent_and_static_both_miss(monkeypatch):
+    monkeypatch.setattr(gap_module.role_research_agent, "get_role_requirements", lambda role: None)
+
+    result = GapRunner(client=FakeClient("{}")).role_requirements_for(["Quantum Widget Intern"])
+
+    assert result == {"_unmatched_roles": ["Quantum Widget Intern"]}
+
+
+def test_role_requirements_for_handles_mixed_agent_and_static_results_across_roles(monkeypatch):
+    agent_data = _live_agent_requirements()
+    monkeypatch.setattr(
+        gap_module.role_research_agent,
+        "get_role_requirements",
+        lambda role: agent_data if role == "Business Analyst Intern" else None,
+    )
+
+    result = GapRunner(client=FakeClient("{}")).role_requirements_for(
+        ["Business Analyst Intern", "Operations Intern"]
+    )
+
+    assert result["Business Analyst Intern"]["soc_code"] == "13-1111.00"
+    assert result["Business Analyst Intern"]["must_have_skills"] == ["Live-researched must-have skill"]
+    assert result["Operations Intern"]["soc_code"] == "13-1199.00"
+    assert result["Operations Intern"]["requirements_source"] == "static"
+    assert "_unmatched_roles" not in result
 
 
 def test_shift_success_with_mocked_ai_json():

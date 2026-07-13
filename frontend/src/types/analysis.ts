@@ -51,6 +51,36 @@ export interface FitAnalysisData {
   overall_fit_summary: string;
 }
 
+// ── SHIFT (trend-aware guidance) — shift.py output_contract ─────────────────
+// Types match ShiftRunner.output_contract field-for-field (task_shifts,
+// durable_skills, adjacent_paths, ai_fluency_guidance) — not yet confirmed
+// against real (non-mocked) model output, same caveat as GAP.
+
+export interface ShiftTaskShift {
+  task: string;
+  changing: string;
+  meaning: string;
+}
+
+export interface ShiftDurableSkill {
+  task: string;
+  reason: string;
+}
+
+export interface ShiftAdjacentPath {
+  path: string;
+  relevance: string;
+  driver: string;
+}
+
+export interface ShiftAnalysisData {
+  role_evolution_summary: string;
+  task_shifts: ShiftTaskShift[];
+  durable_skills: ShiftDurableSkill[];
+  adjacent_paths: ShiftAdjacentPath[];
+  ai_fluency_guidance: string[];
+}
+
 // ── PROFESSOR_COMMENTS (academic.py output_contract) ─────────────────────────
 
 export type ThemeCategory = 'strength' | 'concern' | 'praise' | 'flag';

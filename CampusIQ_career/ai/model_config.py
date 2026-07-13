@@ -16,6 +16,11 @@ OPENROUTER_GEMINI_2_5_FLASH = "TODO_OPENROUTER_MODEL_GEMINI_2_5_FLASH"
 # PROFESSOR_COMMENTS, 51/51 tests passing) — safe as a hardcoded default.
 OPENROUTER_DEEPSEEK_R1 = "deepseek/deepseek-r1-0528"
 
+# Flash-tier model for the role-research agent's tool-calling lookup loop
+# (web_search rounds) -- kept cheap/fast since deepseek-r1-0528 above still
+# handles final FIT/GAP/SHIFT narrative synthesis.
+OPENROUTER_DEEPSEEK_V4_FLASH = "deepseek/deepseek-v4-flash"
+
 
 MODEL_BY_ROLE: Mapping[AgentRole, str] = {
     "orchestrator": OPENROUTER_GEMINI_2_5_PRO,
@@ -24,6 +29,7 @@ MODEL_BY_ROLE: Mapping[AgentRole, str] = {
     "parsing": OPENROUTER_QWEN3_32B,
     "chat": OPENROUTER_GEMINI_2_5_FLASH,
     "report": OPENROUTER_GEMINI_2_5_PRO,
+    "role_research": OPENROUTER_DEEPSEEK_V4_FLASH,
 }
 
 
@@ -34,6 +40,7 @@ ENV_BY_ROLE: Mapping[AgentRole, str] = {
     "parsing": "CAMPUSIQ_MODEL_PARSING",
     "chat": "CAMPUSIQ_MODEL_CHAT",
     "report": "CAMPUSIQ_MODEL_REPORT",
+    "role_research": "CAMPUSIQ_MODEL_ROLE_RESEARCH",
 }
 
 

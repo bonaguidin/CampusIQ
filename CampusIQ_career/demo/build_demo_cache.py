@@ -17,6 +17,10 @@ Usage:
 
     # Limit to specific students by slug:
     uv run python -m CampusIQ_career.demo.build_demo_cache --only priyaNair marcusWebb
+
+    # Limit to specific features (e.g. to retry a timed-out feature without
+    # re-running/overwriting the others' already-good cached entries):
+    uv run python -m CampusIQ_career.demo.build_demo_cache --only ethanBrooks --feature GAP SHIFT
 """
 
 from __future__ import annotations
@@ -93,11 +97,84 @@ def _make_client(mock: bool):
     if mock:
         return _MockClient()
     from CampusIQ_career.ai import OpenRouterClient  # local import by design
+    from CampusIQ_career.ai.openrouter_client import DEEPSEEK_R1_REASONING_TIMEOUT_SECONDS
 
-    return OpenRouterClient()  # raises AIConfigError if OPENROUTER_API_KEY unset
+    # Real calls run the DeepSeek R1 career/academic roles end to end, which
+    # routinely take 100-200s+ -- match api.py's build_client() timeout
+    # rather than the library's 30s default. Raises AIConfigError if
+    # OPENROUTER_API_KEY is unset.
+    return OpenRouterClient(timeout=DEEPSEEK_R1_REASONING_TIMEOUT_SECONDS)
 
 
-def build(only: Sequence[str] | None, mock: bool) -> int:
+def _load_existing_analysis(out_path: Path) -> Mapping[str, Any] | None:
+    """Load a previously-cached analysis_<slug>.json, or None if unavailable.
+
+    Returning None (missing file, unreadable, malformed JSON) causes the
+    caller to fall back to writing the fresh result in full -- the same as
+    today's behavior for a student's first-ever cache run.
+    """
+    if not out_path.exists():
+        return None
+    try:
+        data = json.loads(out_path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    return data if isinstance(data, Mapping) else None
+
+
+def _merge_analysis(existing: Mapping[str, Any] | None, fresh: Mapping[str, Any]) -> dict[str, Any]:
+    """Merge a fresh (possibly feature-subset) result into an existing cache file.
+
+    Only the feature keys actually present in ``fresh["results"]`` (i.e. the
+    features requested this run) replace the corresponding entries in
+    ``existing["results"]``; every other feature's cached entry is carried
+    over untouched. Top-level status/summary/errors are recomputed over the
+    merged result set using the exact same functions run_career_analysis()
+    uses for a single full run, so a merged file is indistinguishable in
+    shape from one produced in one pass.
+
+    If there's no existing file to merge into (first-ever run for this
+    student), the fresh result is returned as-is -- unchanged from the
+    pre-merge behavior.
+    """
+    if existing is None:
+        return dict(fresh)
+
+    from CampusIQ_career.features.orchestrator import (
+        DEFAULT_CAREER_FEATURES,
+        build_summary,
+        collect_errors,
+        summarize_status,
+    )
+
+    existing_results = existing.get("results", {})
+    if not isinstance(existing_results, Mapping):
+        existing_results = {}
+
+    merged_results = dict(existing_results)
+    merged_results.update(fresh.get("results", {}))
+
+    # Canonical FIT/GAP/SHIFT ordering where possible, any other feature keys
+    # (e.g. a future PROFESSOR_COMMENTS entry) appended after, in whatever
+    # order they were encountered.
+    ordered_features = [f for f in DEFAULT_CAREER_FEATURES if f in merged_results]
+    ordered_features += [f for f in merged_results if f not in ordered_features]
+    ordered_results = {f: merged_results[f] for f in ordered_features}
+
+    status = summarize_status([result["status"] for result in ordered_results.values()])
+
+    return {
+        "analysis_type": fresh.get("analysis_type", "career"),
+        "status": status,
+        "student_id": fresh.get("student_id"),
+        "features_requested": ordered_features,
+        "results": ordered_results,
+        "summary": build_summary(status, ordered_results),
+        "errors": collect_errors(ordered_results),
+    }
+
+
+def build(only: Sequence[str] | None, mock: bool, feature: Sequence[str] | None) -> int:
     from CampusIQ_career.features.orchestrator import run_career_analysis
 
     if not _STUDENTS_DIR.exists():
@@ -119,15 +196,17 @@ def build(only: Sequence[str] | None, mock: bool) -> int:
     failures = 0
     for path in student_files:
         slug = _slug_from_filename(path)
+        out_path = _OUTPUT_DIR / f"analysis_{slug}.json"
         try:
             profile = json.loads(path.read_text(encoding="utf-8"))
-            result = run_career_analysis(profile, client)
+            fresh = run_career_analysis(profile, client, features=feature)
         except Exception as exc:  # keep going; one bad student shouldn't kill the cache
             failures += 1
             print(f"  [FAIL] {slug}: {exc}", file=sys.stderr)
             continue
 
-        out_path = _OUTPUT_DIR / f"analysis_{slug}.json"
+        existing = _load_existing_analysis(out_path)
+        result = _merge_analysis(existing, fresh)
         out_path.write_text(json.dumps(result, indent=2, sort_keys=True), encoding="utf-8")
         status = result.get("status", "?")
         print(f"  [{status:>15}] {slug} -> {out_path.relative_to(_REPO_ROOT)}")
@@ -143,8 +222,10 @@ def main(argv: Sequence[str] | None = None) -> int:
                         help="Use placeholder output instead of calling OpenRouter.")
     parser.add_argument("--only", nargs="*", default=None,
                         help="Limit to these student slugs (e.g. priyaNair).")
+    parser.add_argument("--feature", nargs="*", default=None,
+                        help="Limit to these features (e.g. GAP SHIFT). Defaults to all three if omitted.")
     args = parser.parse_args(argv)
-    return build(only=args.only, mock=args.mock)
+    return build(only=args.only, mock=args.mock, feature=args.feature)
 
 
 if __name__ == "__main__":

@@ -27,3 +27,6 @@ frontend/dist/
 
 # Scraper intermediate files
 /tmp/*.pkl
+
+# Role-research agent cache (generated, per-environment)
+data/.cache/

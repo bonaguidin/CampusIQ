@@ -11,6 +11,7 @@ AgentRole = Literal[
     "parsing",
     "chat",
     "report",
+    "role_research",
 ]
 
 

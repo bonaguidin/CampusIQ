@@ -1,5 +1,6 @@
 """OpenRouter client for Campus IQ AI calls."""
 
+import copy
 import os
 from typing import Any, Mapping, Sequence
 
@@ -11,6 +12,12 @@ from .types import AIMessage, AIResponse, AgentRole
 
 
 OPENROUTER_CHAT_COMPLETIONS_URL = "https://openrouter.ai/api/v1/chat/completions"
+
+# DeepSeek R1's reasoning traces routinely run 100-200s+ (confirmed via real
+# validation calls) -- the class default below is too short for any caller
+# that actually invokes the "career"/"academic" DeepSeek R1 roles. Callers
+# making real (non-mock) calls should pass this explicitly.
+DEEPSEEK_R1_REASONING_TIMEOUT_SECONDS = 300.0
 
 
 class OpenRouterClient:
@@ -39,6 +46,64 @@ class OpenRouterClient:
         temperature: float | None = None,
         extra_body: Mapping[str, Any] | None = None,
     ) -> AIResponse:
+        raw, selected_model = self._send(
+            messages=messages,
+            role=role,
+            model=model,
+            max_tokens=max_tokens,
+            temperature=temperature,
+            extra_body=extra_body,
+        )
+        text = self.extract_text(raw)
+        return AIResponse(text=text, raw=raw, model=selected_model)
+
+    def complete_message(
+        self,
+        *,
+        messages: Sequence[AIMessage | Mapping[str, Any]],
+        role: AgentRole | str | None = None,
+        model: str | None = None,
+        max_tokens: int | None = None,
+        temperature: float | None = None,
+        extra_body: Mapping[str, Any] | None = None,
+        timeout: float | None = None,
+    ) -> Mapping[str, Any]:
+        """Like complete(), but returns the raw assistant message unparsed.
+
+        Skips extract_text() so tool-calling callers doing their own
+        tool_calls parsing don't hit AIResponseParseError when the assistant
+        responds with tool_calls and null/empty content -- a normal shape for
+        tool-calling turns that complete()'s text-only contract can't
+        represent.
+        """
+        raw, _selected_model = self._send(
+            messages=messages,
+            role=role,
+            model=model,
+            max_tokens=max_tokens,
+            temperature=temperature,
+            extra_body=extra_body,
+            timeout=timeout,
+        )
+        try:
+            message = raw["choices"][0]["message"]
+        except (KeyError, IndexError, TypeError) as exc:
+            raise AIResponseParseError("OpenRouter response is missing choices[0].message.") from exc
+        if not isinstance(message, Mapping):
+            raise AIResponseParseError("OpenRouter response message must be an object.")
+        return message
+
+    def _send(
+        self,
+        *,
+        messages: Sequence[AIMessage | Mapping[str, Any]],
+        role: AgentRole | str | None = None,
+        model: str | None = None,
+        max_tokens: int | None = None,
+        temperature: float | None = None,
+        extra_body: Mapping[str, Any] | None = None,
+        timeout: float | None = None,
+    ) -> tuple[Mapping[str, Any], str]:
         selected_model = self._select_model(role=role, model=model)
         body: dict[str, Any] = {
             "model": selected_model,
@@ -59,15 +124,14 @@ class OpenRouterClient:
                     "Content-Type": "application/json",
                 },
                 json=body,
-                timeout=self.timeout,
+                timeout=timeout if timeout is not None else self.timeout,
             )
             response.raise_for_status()
         except requests.RequestException as exc:
             raise AIRequestError(f"OpenRouter request failed: {exc}") from exc
 
         raw = self._response_json(response)
-        text = self.extract_text(raw)
-        return AIResponse(text=text, raw=raw, model=selected_model)
+        return raw, selected_model
 
     def raw_complete(
         self,
@@ -124,9 +188,33 @@ class OpenRouterClient:
         if isinstance(message, Mapping):
             role = message.get("role")
             content = message.get("content")
-            if not isinstance(role, str) or not isinstance(content, str):
-                raise AIConfigError("Each AI message must include string 'role' and 'content'.")
-            return {"role": role, "content": content}
+            if not isinstance(role, str):
+                raise AIConfigError("Each AI message must include a string 'role'.")
+
+            serialized: dict[str, Any] = {"role": role}
+            if content is not None:
+                if not isinstance(content, str):
+                    raise AIConfigError("AI message 'content' must be a string or None.")
+                serialized["content"] = content
+
+            tool_calls = message.get("tool_calls")
+            if tool_calls is not None:
+                if not isinstance(tool_calls, list) or not all(isinstance(call, Mapping) for call in tool_calls):
+                    raise AIConfigError("AI message 'tool_calls' must be a list of objects.")
+                serialized["tool_calls"] = copy.deepcopy(tool_calls)
+
+            for field in ("tool_call_id", "name"):
+                value = message.get(field)
+                if value is not None:
+                    if not isinstance(value, str):
+                        raise AIConfigError(f"AI message '{field}' must be a string.")
+                    serialized[field] = value
+
+            if "content" not in serialized and "tool_calls" not in serialized:
+                raise AIConfigError("Each AI message must include string 'content' or tool calls.")
+            if role == "tool" and "tool_call_id" not in serialized:
+                raise AIConfigError("Tool messages must include string 'tool_call_id'.")
+            return serialized
         raise AIConfigError("AI messages must be AIMessage objects or mappings.")
 
     @staticmethod

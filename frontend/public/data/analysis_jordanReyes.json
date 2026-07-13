@@ -1,0 +1,179 @@
+{
+  "analysis_type": "career",
+  "errors": [],
+  "features_requested": [
+    "FIT",
+    "GAP",
+    "SHIFT"
+  ],
+  "results": {
+    "FIT": {
+      "data": {
+        "overall_fit_summary": "Finance Intern is your strongest near-term match due to your accounting project work, though Business Analyst roles remain viable with additional data skills development.",
+        "role_matches": [
+          {
+            "fit_level": "medium",
+            "missing_signals": [
+              "Experience with financial modeling beyond basic equations",
+              "Exposure to industry software like QuickBooks or SAP"
+            ],
+            "rationale": "Your Accounting Practice Workbook project shows hands-on experience with financial statements and Excel, aligning with core finance tasks. DFW employers specifically seek interns who can apply basic accounting principles.",
+            "role": "Finance Intern",
+            "supporting_signals": [
+              "DFW finance internships prioritize Excel proficiency and financial statement literacy",
+              "Local postings emphasize debit/credit understanding for entry-level roles"
+            ]
+          },
+          {
+            "fit_level": "medium",
+            "missing_signals": [
+              "Data visualization experience (e.g., Tableau/Power BI)",
+              "Quantitative analysis beyond introductory business math"
+            ],
+            "rationale": "Your Market Brief project demonstrates market research and PowerPoint storytelling skills relevant to business analysis. DFW employers value these competencies for translating data into actionable insights.",
+            "role": "Business Analyst Intern",
+            "supporting_signals": [
+              "DFW entry-level BA roles highlight market research and presentation skills",
+              "Local job ads consistently request PowerPoint proficiency"
+            ]
+          },
+          {
+            "fit_level": "low",
+            "missing_signals": [
+              "Process mapping or workflow documentation experience",
+              "Coursework/projects in logistics or inventory management"
+            ],
+            "rationale": "While you have operations interest and team collaboration skills, your projects lack direct process optimization experience. DFW operations roles prioritize candidates with workflow documentation or efficiency analysis exposure.",
+            "role": "Operations Intern",
+            "supporting_signals": [
+              "DFW operations internships emphasize problem-solving with Excel",
+              "Local employers seek interns who understand supply chain fundamentals"
+            ]
+          }
+        ]
+      },
+      "errors": [],
+      "feature": "FIT",
+      "status": "success",
+      "summary": "As a freshman Business Administration student, you bring foundational Excel skills, financial statement knowledge, and presentation experience from class projects. The DFW market seeks these core business skills for internships but expects more applied experience and specialized tools."
+    },
+    "GAP": {
+      "data": {
+        "must_have_gaps": [
+          {
+            "gap": "Critical Thinking (skill)",
+            "how_to_close": "Enroll in critical thinking-focused courses like logic or philosophy before fall 2026",
+            "why_it_matters": "O*NET importance score of 78 - foundational for analyzing business problems"
+          },
+          {
+            "gap": "Active Listening (skill)",
+            "how_to_close": "Practice through communication-intensive courses and student organization participation",
+            "why_it_matters": "O*NET importance score of 78 - essential for stakeholder communication"
+          },
+          {
+            "gap": "Administration & Management Knowledge",
+            "how_to_close": "Complete BUSN 101 course focusing on organizational structures and management principles",
+            "why_it_matters": "O*NET importance score of 84 - crucial for business process understanding"
+          },
+          {
+            "gap": "English Language Knowledge",
+            "how_to_close": "Concentrate on ENGL 104 coursework and practice business writing techniques",
+            "why_it_matters": "O*NET importance score of 93 - fundamental for documentation and reporting"
+          }
+        ],
+        "nice_to_have_gaps": [
+          {
+            "gap": "Active Learning",
+            "how_to_close": "Join business case competitions to practice iterative problem-solving",
+            "why_it_helps": "Improves adaptability to new business environments and tools"
+          },
+          {
+            "gap": "Google Data Analytics Certificate",
+            "how_to_close": "Complete your in-progress certification modules by Summer 2026",
+            "why_it_helps": "Differentiates you in data-driven internship applications"
+          },
+          {
+            "gap": "Operations Process Knowledge",
+            "how_to_close": "Develop a personal project analyzing campus operations workflows",
+            "why_it_helps": "Relevant for Operations Intern role context"
+          }
+        ],
+        "readiness_score": 2,
+        "recommended_next_steps": [
+          "Complete ENGL 104 with focus on business writing (closes English Language gap)",
+          "Maximize BUSN 101 projects to build administration knowledge (closes Management gap)",
+          "Join Debate Club or Model UN to develop active listening through structured practice",
+          "Finalize Google Data Analytics Certificate modules by August 2026",
+          "Create an operations analysis project documenting campus systems by fall 2026"
+        ],
+        "strengths": [
+          "Proficiency in Excel: Frame as practical application through your Accounting Practice Workbook project and business case work",
+          "Presentation skills: Highlight through your market brief project delivery and PowerPoint storytelling experience",
+          "Bloomberg Market Concepts certification: Position as early industry knowledge acquisition in financial markets"
+        ]
+      },
+      "errors": [],
+      "feature": "GAP",
+      "status": "success",
+      "summary": "As a freshman, you've started building foundational business skills but have significant gaps in core competencies required for your target roles. Based on O*NET standards for Business Analyst roles, your most urgent need is developing critical thinking, active listening, and administration knowledge through focused coursework. Consistent effort in closing these gaps will strengthen your readiness by graduation."
+    },
+    "SHIFT": {
+      "data": {
+        "adjacent_paths": [
+          {
+            "driver": "DFW companies need professionals who can bridge data science outputs and business decisions",
+            "path": "Business Intelligence Analyst",
+            "relevance": "Leverages your Excel skills and interest in analytics while introducing AI-powered visualization tools"
+          },
+          {
+            "driver": "Operations teams increasingly seek staff who can implement automation while managing human factors",
+            "path": "Process Automation Specialist",
+            "relevance": "Builds on your operations interest through optimizing workflows with AI tools"
+          }
+        ],
+        "ai_fluency_guidance": [
+          "What you can already say: 'I use AI tools for brainstorming solutions and accelerating research, helping me quickly explore multiple angles for business problems while maintaining critical evaluation of outputs.'",
+          "What to build toward: Complete a business-specific AI certification (like Google's AI for Business) and document one case study applying AI tools to optimize a finance or operations workflow in your coursework."
+        ],
+        "durable_skills": [
+          {
+            "reason": "Understanding nuanced business needs requires human empathy and active listening",
+            "task": "Stakeholder requirement gathering"
+          },
+          {
+            "reason": "Aligning teams with conflicting priorities demands interpersonal negotiation",
+            "task": "Cross-functional collaboration"
+          },
+          {
+            "reason": "Translating data insights into actionable plans requires business context AI lacks",
+            "task": "Strategic recommendations"
+          },
+          {
+            "reason": "Unforeseen operational disruptions need human adaptability beyond AI training data",
+            "task": "Crisis problem-solving"
+          }
+        ],
+        "role_evolution_summary": "Business roles are rapidly integrating AI for data processing and forecasting, shifting human focus toward strategic interpretation and stakeholder communication. For your target internships, the biggest change is AI handling routine analytics while elevating the value of contextual decision-making.",
+        "task_shifts": [
+          {
+            "changing": "AI now automates pulling data from multiple sources into standardized reports",
+            "meaning": "Your ability to interpret patterns and identify business implications becomes more crucial",
+            "task": "Data aggregation and basic reporting"
+          },
+          {
+            "changing": "AI algorithms generate predictive models faster than manual methods",
+            "meaning": "You'll need stronger critical thinking to validate outputs against real-world business constraints",
+            "task": "Forecasting and trend projections"
+          }
+        ]
+      },
+      "errors": [],
+      "feature": "SHIFT",
+      "status": "success",
+      "summary": "Focus on strengthening your critical thinking and communication skills while gradually building AI fluency through business applications. Your foundation in Excel and business fundamentals positions you well to learn how AI enhances\u2014not replaces\u2014roles in finance and operations. Employers value your ability to interpret insights more than technical AI expertise."
+    }
+  },
+  "status": "success",
+  "student_id": "601",
+  "summary": "Career analysis completed successfully for 3 feature(s)."
+}
