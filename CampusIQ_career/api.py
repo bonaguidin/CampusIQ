@@ -304,7 +304,12 @@ def analyze_professor_comments(request: Request, student_slug: str) -> dict:
 
 def create_app(config: APIConfig | None = None) -> FastAPI:
     active_config = config or APIConfig.from_env()
-    application = FastAPI(title="Campus IQ AI Bridge")
+    application = FastAPI(
+        title="Campus IQ AI Bridge",
+        docs_url=None,
+        redoc_url=None,
+        openapi_url=None,
+    )
     application.state.api_config = active_config
     application.state.rate_limiter = SlidingWindowRateLimiter(
         active_config.rate_limit_requests, active_config.rate_limit_window_seconds

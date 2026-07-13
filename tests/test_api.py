@@ -88,10 +88,14 @@ def write_gap_cache(
 
 
 def test_public_health_route_requires_no_proxy_credential():
-    response = TestClient(api.create_app(make_test_config())).get("/health")
+    test_client = TestClient(api.create_app(make_test_config()))
+    response = test_client.get("/health")
 
     assert response.status_code == 200
     assert response.json() == {"status": "ok"}
+    assert test_client.get("/docs").status_code == 404
+    assert test_client.get("/redoc").status_code == 404
+    assert test_client.get("/openapi.json").status_code == 404
 
 
 @pytest.mark.parametrize("headers", [{}, {api.PROXY_SECRET_HEADER: "wrong-secret"}])
