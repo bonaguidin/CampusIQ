@@ -1,6 +1,5 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "//": "Set the Vercel project Root Directory to frontend. The browser calls same-origin /api routes; api/proxy.mjs adds the server-only backend credential.",
   "functions": {
     "api/proxy.mjs": {
       "maxDuration": 300
