@@ -9,11 +9,16 @@ On the final round, the ``tools`` param is withheld so the model can't just
 keep asking for more searches indefinitely -- it must synthesize a final
 answer from what it already has.
 
-This module never raises: any failure (timeout, malformed JSON, unknown SOC
+This module never raises: any failure (timeout, malformed JSON, malformed SOC
 code, request/config error) returns ``None`` so ``gap.py`` can fall back to
 the static ``data/role_requirements.json`` lookup silently. The module's one
 log line records which path (``cache`` / ``agent`` / ``static_fallback``)
 served a given lookup, so fallback frequency is visible during demo testing.
+
+A validated agent result carries a ``soc_source`` field: ``"agent"`` (accepted
+on format alone) or ``"agent_onet_corroborated"`` (its SOC code also appears
+in the small real-O*NET catalog at data/reference/onet_soc_requirements.json
+-- positive corroboration only, never used to reject).
 """
 
 from __future__ import annotations
@@ -21,6 +26,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import re
 import time
 from pathlib import Path
 from typing import Any, Mapping
@@ -48,8 +54,13 @@ _LOOKUP_TIMEOUT_SECONDS = 25.0
 # slow search doesn't eat the whole per-round model-call budget.
 _TAVILY_TIMEOUT_SECONDS = 15.0
 
-_ROLE_REQUIREMENTS_PATH = Path(__file__).resolve().parents[2] / "data" / "role_requirements.json"
+# Genuinely O*NET-sourced (O*NET 30.3, O*NET-SOC 2019), but only 10
+# occupations -- far too narrow to use for rejection. Used solely as a soft
+# corroboration signal on soc_source; see _validate_schema.
+_ONET_CATALOG_PATH = Path(__file__).resolve().parents[2] / "data" / "reference" / "onet_soc_requirements.json"
 _CACHE_PATH = Path(__file__).resolve().parents[2] / "data" / ".cache" / "role_research_cache.json"
+
+_SOC_CODE_PATTERN = re.compile(r"^\d{2}-\d{4}\.\d{2}$")
 
 _WEB_SEARCH_TOOL: Mapping[str, Any] = {
     "type": "function",
@@ -98,28 +109,23 @@ _LIST_KEYS = (
 )
 
 
-def _known_soc_codes() -> frozenset[str]:
-    """SOC codes already curated in data/role_requirements.json.
+def _onet_corroborated_codes() -> frozenset[str]:
+    """SOC codes present in the small genuinely-O*NET-sourced catalog.
 
-    Used to reject hallucinated soc_code values from the agent. An empty
-    result (file missing/unreadable) disables this check rather than
-    rejecting every agent response -- see _validate_schema.
+    Positive-only corroboration signal for soc_source -- an empty result
+    (file missing/unreadable) just means nothing gets corroborated, not that
+    everything is rejected. The catalog is far too narrow (10 occupations)
+    to use as a gate; most legitimate SOC codes simply won't be in it.
     """
     try:
-        with _ROLE_REQUIREMENTS_PATH.open("r", encoding="utf-8") as handle:
+        with _ONET_CATALOG_PATH.open("r", encoding="utf-8") as handle:
             data = json.load(handle)
     except (OSError, ValueError):
         return frozenset()
-    if not isinstance(data, Mapping):
+    roles = data.get("roles") if isinstance(data, Mapping) else None
+    if not isinstance(roles, Mapping):
         return frozenset()
-    return frozenset(
-        entry["soc_code"]
-        for key, entry in data.items()
-        if not key.startswith("_")
-        and isinstance(entry, Mapping)
-        and isinstance(entry.get("soc_code"), str)
-        and entry["soc_code"]
-    )
+    return frozenset(code for code in roles if isinstance(code, str))
 
 
 def _tavily_client() -> TavilyClient | None:
@@ -169,7 +175,13 @@ def _execute_tool_call(name: str, arguments: Mapping[str, Any]) -> str:
     return json.dumps({"error": f"Unknown tool '{name}'."})
 
 
-def _validate_schema(data: Any, known_soc_codes: frozenset[str]) -> dict[str, Any] | None:
+def _validate_schema(data: Any) -> dict[str, Any] | None:
+    """Validate shape and soc_code *format* only -- not membership in any
+    curated allowlist. A well-formed but previously-unseen SOC code (the
+    agent doing real, correct research beyond the static file's 14
+    hand-picked roles) must be accepted, not discarded to static fallback.
+    See soc_source (added by callers) for how much to trust a given code.
+    """
     if not isinstance(data, Mapping):
         return None
     if any(key not in data for key in _REQUIRED_KEYS):
@@ -177,9 +189,7 @@ def _validate_schema(data: Any, known_soc_codes: frozenset[str]) -> dict[str, An
 
     soc_code = data.get("soc_code")
     soc_title = data.get("soc_title")
-    if not isinstance(soc_code, str) or not soc_code.strip():
-        return None
-    if known_soc_codes and soc_code not in known_soc_codes:
+    if not isinstance(soc_code, str) or not _SOC_CODE_PATTERN.match(soc_code.strip()):
         return None
     if not isinstance(soc_title, str) or not soc_title.strip():
         return None
@@ -190,11 +200,16 @@ def _validate_schema(data: Any, known_soc_codes: frozenset[str]) -> dict[str, An
         if not isinstance(value, list) or not all(isinstance(item, str) for item in value):
             return None
         validated[key] = value
+    if isinstance(data.get("soc_source"), str):
+        # Preserves a cached entry's original provenance on re-validation
+        # (_read_cache) -- freshly parsed agent JSON never has this key, so
+        # _run_tool_loop sets it explicitly after calling this function.
+        validated["soc_source"] = data["soc_source"]
     return validated
 
 
 def _run_tool_loop(role: str, client: OpenRouterClient) -> dict[str, Any] | None:
-    known_soc_codes = _known_soc_codes()
+    onet_codes = _onet_corroborated_codes()
     messages: list[dict[str, Any]] = [
         {"role": "system", "content": _SYSTEM_PROMPT},
         {"role": "user", "content": f"Target role: {role}"},
@@ -241,7 +256,12 @@ def _run_tool_loop(role: str, client: OpenRouterClient) -> dict[str, Any] | None
                 parsed = parse_ai_json_response(content)
             except AIResponseParseError:
                 return None
-            return _validate_schema(parsed, known_soc_codes)
+            validated = _validate_schema(parsed)
+            if validated is not None:
+                validated["soc_source"] = (
+                    "agent_onet_corroborated" if validated["soc_code"] in onet_codes else "agent"
+                )
+            return validated
 
         if is_final_round:
             # No tools were offered this round, so any tool_calls here are
@@ -287,7 +307,7 @@ def _read_cache(role: str) -> dict[str, Any] | None:
     # Re-validate on read (not just at write time): a stale cache entry from
     # a prior schema version, or a hand-edited file, must be treated as a
     # miss rather than returned as trusted data.
-    return _validate_schema(entry, _known_soc_codes())
+    return _validate_schema(entry)
 
 
 def _write_cache(role: str, requirements: dict[str, Any]) -> None:

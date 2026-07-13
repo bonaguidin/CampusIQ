@@ -169,6 +169,7 @@ def test_role_requirements_for_falls_back_to_static_when_agent_returns_none(monk
 
     assert result["Business Analyst Intern"]["soc_code"] == "13-1111.00"
     assert "Excel modeling" in result["Business Analyst Intern"]["must_have_skills"]
+    assert result["Business Analyst Intern"]["soc_source"] == "static"
 
 
 def test_gap_run_produces_identical_feature_result_shape_regardless_of_role_requirements_source(monkeypatch):

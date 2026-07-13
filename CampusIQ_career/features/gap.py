@@ -86,12 +86,21 @@ class GapRunner(CareerFeatureRunner):
 
         The agent is tried first per role (it returns None on any failure,
         per its own fallback contract); a None result falls through to the
-        exact same static-file lookup this used before the agent existed."""
+        exact same static-file lookup this used before the agent existed.
+
+        Every matched role carries a soc_source field recording which path
+        served it -- the agent already tags its own results ("agent" /
+        "agent_onet_corroborated"); a static-fallback result is tagged
+        "static" here so provenance is inspectable on the returned dict
+        instead of only inferable from the (gitignored) agent cache."""
         lookup = _load_role_requirements()
         matched: dict[str, Any] = {}
         unmatched: list[str] = []
         for role in target_roles or []:
-            requirements = role_research_agent.get_role_requirements(role) or lookup.get(role)
+            requirements = role_research_agent.get_role_requirements(role)
+            if requirements is None:
+                static_entry = lookup.get(role)
+                requirements = dict(static_entry, soc_source="static") if static_entry else None
             if requirements:
                 matched[role] = requirements
             else:

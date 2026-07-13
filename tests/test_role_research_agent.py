@@ -63,6 +63,23 @@ VALID_PAYLOAD = {
     "must_have_certifications": [],
     "nice_to_have_certifications": ["AWS Certified Cloud Practitioner"],
 }
+# 15-1252.00 (Software Developers) is not one of the 10 occupations in the
+# small real-O*NET catalog, so a fresh agent result for it is expected to
+# come back tagged "agent" (format-valid, uncorroborated), not
+# "agent_onet_corroborated".
+EXPECTED_VALID_RESULT = dict(VALID_PAYLOAD, soc_source="agent")
+
+# 13-2051.00 (Financial and Investment Analysts) IS one of the 10 occupations
+# in data/reference/onet_soc_requirements.json -- used to test the
+# corroborated-source tag.
+ONET_CORROBORATED_PAYLOAD = dict(VALID_PAYLOAD, soc_code="13-2051.00", soc_title="Financial and Investment Analysts")
+
+# 17-2072.00 (Electronics Engineers) is well-formed, not in the static 14
+# curated role_requirements.json entries, and not in the small O*NET
+# catalog either -- this is the shape of the real-world case (e.g. the
+# agent's actual "Embedded Systems Intern" answer) that the old allowlist
+# guard used to silently discard.
+NOVEL_SOC_PAYLOAD = dict(VALID_PAYLOAD, soc_code="17-2072.00", soc_title="Electronics Engineers, Except Computer")
 
 
 def test_successful_lookup_with_mocked_tool_calls_returns_correct_schema():
@@ -70,15 +87,43 @@ def test_successful_lookup_with_mocked_tool_calls_returns_correct_schema():
 
     result = agent.get_role_requirements("Software Engineering Intern", client=client)
 
-    assert result == VALID_PAYLOAD
+    assert result == EXPECTED_VALID_RESULT
     assert len(client.calls) == 2
     # second call must include the tool result as a "tool" message
     tool_messages = [m for m in client.calls[1]["messages"] if m.get("role") == "tool"]
     assert len(tool_messages) == 1
 
 
-def test_hallucinated_soc_code_returns_none():
-    bad_payload = dict(VALID_PAYLOAD, soc_code="99-9999.99")
+def test_well_formed_soc_code_outside_the_static_allowlist_is_accepted():
+    # Core regression test for the guard change: this used to return None
+    # because "17-2072.00" isn't one of the 14 codes in
+    # data/role_requirements.json. The agent did real, valid research beyond
+    # that curated list, and that must no longer be discarded.
+    client = FakeClient([_final_message(NOVEL_SOC_PAYLOAD)])
+
+    result = agent.get_role_requirements("Embedded Systems Intern", client=client)
+
+    assert result == dict(NOVEL_SOC_PAYLOAD, soc_source="agent")
+
+
+def test_soc_code_present_in_onet_catalog_is_corroborated():
+    client = FakeClient([_final_message(ONET_CORROBORATED_PAYLOAD)])
+
+    result = agent.get_role_requirements("Finance Intern", client=client)
+
+    assert result["soc_source"] == "agent_onet_corroborated"
+
+
+def test_soc_code_absent_from_onet_catalog_is_uncorroborated():
+    client = FakeClient([_final_message(VALID_PAYLOAD)])
+
+    result = agent.get_role_requirements("Software Engineering Intern", client=client)
+
+    assert result["soc_source"] == "agent"
+
+
+def test_malformed_soc_code_format_returns_none():
+    bad_payload = dict(VALID_PAYLOAD, soc_code="not-a-code")
     client = FakeClient([_final_message(bad_payload)])
 
     result = agent.get_role_requirements("Software Engineering Intern", client=client)
@@ -164,7 +209,7 @@ def test_final_round_forces_answer_when_model_would_otherwise_keep_requesting_to
 
     result = agent.get_role_requirements("Software Engineering Intern", client=client)
 
-    assert result == VALID_PAYLOAD
+    assert result == EXPECTED_VALID_RESULT
     assert len(client.calls) == 4
     final_call_kwargs = client.calls[-1]
     # tools must be structurally withheld, not just hoped-away
@@ -176,7 +221,7 @@ def test_final_round_forces_answer_when_model_would_otherwise_keep_requesting_to
 
 
 def test_final_round_forced_answer_failing_schema_validation_still_returns_none():
-    bad_payload = dict(VALID_PAYLOAD, soc_code="99-9999.99")
+    bad_payload = dict(VALID_PAYLOAD, soc_code="not-a-code")
     client = FakeClient(
         [
             _tool_call_message("call_0"),
@@ -249,12 +294,12 @@ def test_cache_hit_on_second_call_skips_the_agent():
     client = FakeClient([_tool_call_message(), _final_message(VALID_PAYLOAD)])
 
     first = agent.get_role_requirements("Software Engineering Intern", client=client)
-    assert first == VALID_PAYLOAD
+    assert first == EXPECTED_VALID_RESULT
     calls_after_first = len(client.calls)
 
     second = agent.get_role_requirements("Software Engineering Intern", client=client)
 
-    assert second == VALID_PAYLOAD
+    assert second == EXPECTED_VALID_RESULT
     assert len(client.calls) == calls_after_first  # no new client calls on the cache hit
 
 
@@ -267,8 +312,8 @@ def test_cache_is_not_written_on_fallback_result():
     assert not agent._CACHE_PATH.exists()
 
 
-def test_cache_is_not_written_on_hallucinated_soc_code():
-    bad_payload = dict(VALID_PAYLOAD, soc_code="99-9999.99")
+def test_cache_is_not_written_on_malformed_soc_code():
+    bad_payload = dict(VALID_PAYLOAD, soc_code="not-a-code")
     client = FakeClient([_final_message(bad_payload)])
 
     result = agent.get_role_requirements("Software Engineering Intern", client=client)
@@ -287,7 +332,7 @@ def test_stale_or_malformed_cache_entry_is_treated_as_a_miss(tmp_path):
 
     result = agent.get_role_requirements("Software Engineering Intern", client=client)
 
-    assert result == VALID_PAYLOAD
+    assert result == EXPECTED_VALID_RESULT
     assert len(client.calls) == 2  # agent was actually invoked, cache miss was honored
 
 
