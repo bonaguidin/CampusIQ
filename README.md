@@ -98,6 +98,29 @@ The Vercel function is configured for a 300-second maximum duration. Confirm
 that the selected Vercel plan supports that duration, or lower the live-model
 timeout to the plan limit before deployment.
 
+### Cache and live-generation behavior
+
+The five committed demo cache files cover FIT, GAP, and SHIFT. An authenticated
+individual-feature request returns a matching successful cache entry before
+constructing an OpenRouter client or taking a live-AI concurrency slot. Cache
+entries are checked against the requested student ID, feature name, success
+status, empty error list, and current feature output contract. A malformed,
+failed, mismatched, or stale entry is treated as a cache miss.
+
+There is no whole-student analysis HTTP endpoint. `PROFESSOR_COMMENTS` has no
+committed cache and therefore requires live OpenRouter configuration. Unknown
+students return 404. On any other cache miss, live generation requires
+`OPENROUTER_API_KEY`; GAP role research may additionally use Tavily before
+falling back to its static role requirements.
+
+### Current demo boundaries
+
+- Canvas data and profile-select authentication are mocked for the demo.
+- Supabase remains planned; there is no active Supabase runtime client or schema.
+- Adzuna/JSearch job-posting integration remains planned and is not executable.
+- PDF/DOCX export is not implemented in the active application.
+- Registered AI features are FIT, GAP, SHIFT, and PROFESSOR_COMMENTS.
+
 ### Node version
 
 The frontend requires **Node.js 20+** (pinned in `frontend/.nvmrc` and

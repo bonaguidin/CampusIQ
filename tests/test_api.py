@@ -1,6 +1,7 @@
 import json
 import threading
 from concurrent.futures import ThreadPoolExecutor
+from contextlib import contextmanager
 
 import pytest
 from fastapi.testclient import TestClient
@@ -39,6 +40,51 @@ class FakeClient:
 @pytest.fixture
 def client():
     return TestClient(api.create_app(make_test_config()), headers=PROXY_HEADERS)
+
+
+@pytest.fixture(autouse=True)
+def isolated_analysis_cache(tmp_path, monkeypatch):
+    monkeypatch.setattr(api, "CACHED_ANALYSIS_DIR", tmp_path)
+
+
+def write_gap_cache(
+    cache_dir,
+    *,
+    slug="jordanReyes",
+    student_id=601,
+    result_feature="GAP",
+    result_status="success",
+    overall_status="success",
+):
+    result = {
+        "feature": result_feature,
+        "status": result_status,
+        "summary": "Cached GAP result.",
+        "data": {
+            "readiness_score": 7,
+            "strengths": [],
+            "must_have_gaps": [],
+            "nice_to_have_gaps": [],
+            "recommended_next_steps": [],
+        },
+        "errors": [] if result_status == "success" else ["cached failure"],
+    }
+    path = cache_dir / f"analysis_{slug}.json"
+    path.write_text(
+        json.dumps(
+            {
+                "analysis_type": "career",
+                "status": overall_status,
+                "student_id": student_id,
+                "features_requested": ["GAP"],
+                "results": {"GAP": result},
+                "summary": "Cached analysis.",
+                "errors": [],
+            }
+        ),
+        encoding="utf-8",
+    )
+    return path
 
 
 def test_public_health_route_requires_no_proxy_credential():
@@ -339,6 +385,73 @@ def test_analyze_gap_missing_api_key_returns_503(client, monkeypatch):
     assert response.status_code == 503
 
 
+def test_cached_success_without_api_key_skips_live_client_and_concurrency(client, monkeypatch, tmp_path):
+    write_gap_cache(tmp_path, overall_status="partial_success")
+    monkeypatch.setattr(api, "build_client", lambda: pytest.fail("live client must not be built"))
+
+    class RejectAllConcurrency:
+        @contextmanager
+        def slot(self):
+            raise AssertionError("cache hit must not consume live concurrency")
+            yield
+
+    client.app.state.ai_concurrency = RejectAllConcurrency()
+
+    response = client.post("/api/students/jordanReyes/analyze/gap")
+
+    assert response.status_code == 200
+    assert response.json()["status"] == "success"
+    assert response.json()["summary"] == "Cached GAP result."
+
+
+@pytest.mark.parametrize(
+    "cache_variant",
+    ["missing", "failed", "student_mismatch", "feature_mismatch", "malformed"],
+)
+def test_invalid_or_missing_cache_with_no_api_key_returns_503(
+    cache_variant, client, monkeypatch, tmp_path
+):
+    if cache_variant == "failed":
+        write_gap_cache(tmp_path, result_status="failed")
+    elif cache_variant == "student_mismatch":
+        write_gap_cache(tmp_path, student_id=999)
+    elif cache_variant == "feature_mismatch":
+        write_gap_cache(tmp_path, result_feature="FIT")
+    elif cache_variant == "malformed":
+        (tmp_path / "analysis_jordanReyes.json").write_text("{not-json", encoding="utf-8")
+
+    def unavailable_client():
+        raise api.HTTPException(status_code=503, detail="OPENROUTER_API_KEY is required.")
+
+    monkeypatch.setattr(api, "build_client", unavailable_client)
+
+    response = client.post("/api/students/jordanReyes/analyze/gap")
+
+    assert response.status_code == 503
+
+
+def test_unknown_student_never_receives_another_students_cache(client, monkeypatch, tmp_path):
+    write_gap_cache(tmp_path, slug="doesNotExist", student_id=601)
+    monkeypatch.setattr(api, "build_client", lambda: pytest.fail("unknown student stops first"))
+
+    response = client.post("/api/students/doesNotExist/analyze/gap")
+
+    assert response.status_code == 404
+
+
+def test_authentication_and_rate_limit_still_apply_to_cache_hits(monkeypatch, tmp_path):
+    write_gap_cache(tmp_path)
+    app = api.create_app(make_test_config(rate_limit_requests=1))
+    unauthenticated = TestClient(app).post("/api/students/jordanReyes/analyze/gap")
+    authenticated = TestClient(app, headers=PROXY_HEADERS)
+    first = authenticated.post("/api/students/jordanReyes/analyze/gap")
+    second = authenticated.post("/api/students/jordanReyes/analyze/gap")
+
+    assert unauthenticated.status_code == 401
+    assert first.status_code == 200
+    assert second.status_code == 429
+
+
 def test_analyze_gap_malformed_ai_json_returns_failed_status(client, monkeypatch, tmp_path):
     # Isolate from the real production cache dir (frontend/public/data) --
     # jordanReyes's real cache now has a genuine "success" GAP entry from the
@@ -373,7 +486,7 @@ def test_run_feature_with_fallback_cache_miss_returns_live_failure(monkeypatch):
         "errors": ["OpenRouter request failed: timed out"],
     }
     monkeypatch.setattr(api, "run_feature", lambda feature, profile, client: live_failure)
-    monkeypatch.setattr(api, "load_cached_feature_result", lambda student_slug, feature_name: None)
+    monkeypatch.setattr(api, "load_cached_feature_result", lambda *args: None)
 
     result = api.run_feature_with_fallback("GAP", "noCacheStudent", profile={}, client=None)
 
@@ -396,7 +509,7 @@ def test_run_feature_with_fallback_cached_success_is_served(monkeypatch):
         "errors": [],
     }
     monkeypatch.setattr(api, "run_feature", lambda feature, profile, client: live_failure)
-    monkeypatch.setattr(api, "load_cached_feature_result", lambda student_slug, feature_name: cached_success)
+    monkeypatch.setattr(api, "load_cached_feature_result", lambda *args: cached_success)
 
     result = api.run_feature_with_fallback("GAP", "jordanReyes", profile={}, client=None)
 
@@ -420,7 +533,7 @@ def test_run_feature_with_fallback_cached_failure_is_not_served_as_success(monke
         "errors": ["OpenRouter request failed: HTTPSConnectionPool read timed out (300.0)"],
     }
     monkeypatch.setattr(api, "run_feature", lambda feature, profile, client: live_failure)
-    monkeypatch.setattr(api, "load_cached_feature_result", lambda student_slug, feature_name: cached_failure)
+    monkeypatch.setattr(api, "load_cached_feature_result", lambda *args: cached_failure)
 
     result = api.run_feature_with_fallback("GAP", "ethanBrooks", profile={}, client=None)
 
@@ -442,7 +555,7 @@ def test_run_feature_with_fallback_cached_status_missing_fails_closed(monkeypatc
     # Schema-drift case: a cached entry with no recognizable "status" at all.
     cached_malformed = {"feature": "GAP", "data": {}}
     monkeypatch.setattr(api, "run_feature", lambda feature, profile, client: live_failure)
-    monkeypatch.setattr(api, "load_cached_feature_result", lambda student_slug, feature_name: cached_malformed)
+    monkeypatch.setattr(api, "load_cached_feature_result", lambda *args: cached_malformed)
 
     result = api.run_feature_with_fallback("GAP", "someStudent", profile={}, client=None)
 

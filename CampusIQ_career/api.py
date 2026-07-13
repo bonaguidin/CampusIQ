@@ -31,7 +31,7 @@ from CampusIQ_career.ai.openrouter_client import (
     OpenRouterClient,
 )
 from CampusIQ_career.features.base import FeatureResult
-from CampusIQ_career.features.orchestrator import run_feature
+from CampusIQ_career.features.orchestrator import RUNNERS, run_feature
 
 load_dotenv()
 
@@ -145,6 +145,8 @@ router = APIRouter()
 
 
 def load_student_profile(student_slug: str) -> dict:
+    if not student_slug.isalnum() or len(student_slug) > 64:
+        raise HTTPException(status_code=404, detail=f"Unknown student '{student_slug}'.")
     path = STUDENTS_DIR / f"student_{student_slug}.json"
     if not path.exists():
         raise HTTPException(status_code=404, detail=f"Unknown student '{student_slug}'.")
@@ -161,16 +163,49 @@ def build_client() -> OpenRouterClient:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
 
 
-def load_cached_feature_result(student_slug: str, feature_name: str) -> dict | None:
-    """Look up a pre-generated result for one feature, or None if unavailable.
+def _matches_contract(value: object, contract: object) -> bool:
+    if isinstance(contract, dict):
+        return isinstance(value, dict) and all(
+            key in value and _matches_contract(value[key], expected)
+            for key, expected in contract.items()
+        )
+    if isinstance(contract, list):
+        if not isinstance(value, list):
+            return False
+        return not contract or all(_matches_contract(item, contract[0]) for item in value)
+    if isinstance(contract, int):
+        return isinstance(value, (int, float)) and not isinstance(value, bool)
+    if isinstance(contract, str):
+        return isinstance(value, str)
+    return False
+
+
+def _valid_cached_feature_result(feature_name: str, result: object) -> bool:
+    runner = RUNNERS.get(feature_name)
+    if runner is None or not isinstance(result, dict):
+        return False
+    return (
+        result.get("feature") == feature_name
+        and result.get("status") == "success"
+        and isinstance(result.get("summary"), str)
+        and result.get("errors") == []
+        and _matches_contract(result.get("data"), runner.output_contract)
+    )
+
+
+def load_cached_feature_result(
+    student_slug: str, feature_name: str, expected_student_id: object | None = None
+) -> dict | None:
+    """Return a schema-compatible successful result for this student/feature.
 
     Cache files are built by CampusIQ_career/demo/build_demo_cache.py, which
     only writes FIT/GAP/SHIFT (PROFESSOR_COMMENTS is never included) -- so a
-    None return for that feature is expected, not a bug. The returned dict may
-    itself have status="failed" baked in (build_demo_cache.py writes whatever
-    run_career_analysis() produced, including failures) -- callers must check
-    status before treating this as a good result.
+    None return for that feature is expected. Malformed files, student-ID or
+    feature mismatches, failed entries, nonempty errors, and stale data shapes
+    are cache misses rather than trusted responses.
     """
+    if not student_slug.isalnum() or len(student_slug) > 64 or feature_name not in RUNNERS:
+        return None
     cache_path = CACHED_ANALYSIS_DIR / f"analysis_{student_slug}.json"
     if not cache_path.exists():
         return None
@@ -178,7 +213,15 @@ def load_cached_feature_result(student_slug: str, feature_name: str) -> dict | N
         cached = json.loads(cache_path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
         return None
-    return cached.get("results", {}).get(feature_name)
+    if not isinstance(cached, dict):
+        return None
+    if expected_student_id is not None and str(cached.get("student_id")) != str(expected_student_id):
+        return None
+    results = cached.get("results")
+    if not isinstance(results, dict):
+        return None
+    result = results.get(feature_name)
+    return result if _valid_cached_feature_result(feature_name, result) else None
 
 
 def run_feature_with_fallback(feature_name: str, student_slug: str, profile: dict, client: OpenRouterClient) -> dict:
@@ -198,7 +241,8 @@ def run_feature_with_fallback(feature_name: str, student_slug: str, profile: dic
     if result.get("status") != "failed":
         return result
 
-    cached = load_cached_feature_result(student_slug, feature_name)
+    student_id = profile.get("student", {}).get("id")
+    cached = load_cached_feature_result(student_slug, feature_name, student_id)
     if cached is None:
         return result
     if cached.get("status") == "success":
@@ -214,7 +258,12 @@ def run_feature_with_fallback(feature_name: str, student_slug: str, profile: dic
 
 
 def _run_protected_feature(request: Request, feature_name: str, student_slug: str) -> dict:
+    """Serve a validated cache hit, otherwise run live work within capacity."""
     profile = load_student_profile(student_slug)
+    student_id = profile.get("student", {}).get("id")
+    cached = load_cached_feature_result(student_slug, feature_name, student_id)
+    if cached is not None:
+        return cached
     try:
         with request.app.state.ai_concurrency.slot():
             client = build_client()
