@@ -136,6 +136,9 @@ _GAP_SUCCESS_JSON = """
 
 
 def _live_agent_requirements():
+    # soc_code/soc_title are deliberately implausible/unlike the static
+    # entry -- their presence here proves they're discarded, not just
+    # coincidentally matching.
     return {
         "soc_code": "13-1111.00-LIVE",
         "soc_title": "Live-Researched Management Analysts",
@@ -146,7 +149,7 @@ def _live_agent_requirements():
     }
 
 
-def test_role_requirements_for_uses_agent_data_when_available(monkeypatch):
+def test_role_requirements_for_uses_agent_skills_but_static_soc_code(monkeypatch):
     agent_data = _live_agent_requirements()
     monkeypatch.setattr(
         gap_module.role_research_agent,
@@ -155,11 +158,29 @@ def test_role_requirements_for_uses_agent_data_when_available(monkeypatch):
     )
 
     result = GapRunner(client=FakeClient("{}")).role_requirements_for(["Business Analyst Intern"])
+    entry = result["Business Analyst Intern"]
 
-    assert result["Business Analyst Intern"] == agent_data
-    # Prove the static file was never consulted for this role: the static
-    # entry's SOC code is different from the agent's.
-    assert result["Business Analyst Intern"]["soc_code"] != "13-1111.00"
+    # soc_code/soc_title always come from the static file, never the agent.
+    assert entry["soc_code"] == "13-1111.00"
+    assert entry["soc_title"] == "Management Analysts"
+    # must_have_skills comes from the agent (non-empty agent list wins).
+    assert entry["must_have_skills"] == ["Live-researched must-have skill"]
+    assert entry["requirements_source"] == "agent"
+
+
+def test_role_requirements_for_agent_empty_list_does_not_clobber_populated_static_list(monkeypatch):
+    # Operations Intern's static entry has a non-empty
+    # nice_to_have_certifications; an agent result with an empty list for
+    # that field must not blank it out.
+    agent_data = dict(_live_agent_requirements(), nice_to_have_certifications=[])
+    monkeypatch.setattr(gap_module.role_research_agent, "get_role_requirements", lambda role: agent_data)
+
+    result = GapRunner(client=FakeClient("{}")).role_requirements_for(["Operations Intern"])
+    entry = result["Operations Intern"]
+
+    assert entry["nice_to_have_certifications"] == ["Six Sigma Yellow Belt"]
+    assert entry["must_have_skills"] == ["Live-researched must-have skill"]  # agent's non-empty list still wins
+    assert entry["requirements_source"] == "agent"
 
 
 def test_role_requirements_for_falls_back_to_static_when_agent_returns_none(monkeypatch):
@@ -169,7 +190,7 @@ def test_role_requirements_for_falls_back_to_static_when_agent_returns_none(monk
 
     assert result["Business Analyst Intern"]["soc_code"] == "13-1111.00"
     assert "Excel modeling" in result["Business Analyst Intern"]["must_have_skills"]
-    assert result["Business Analyst Intern"]["soc_source"] == "static"
+    assert result["Business Analyst Intern"]["requirements_source"] == "static"
 
 
 def test_gap_run_produces_identical_feature_result_shape_regardless_of_role_requirements_source(monkeypatch):
@@ -209,8 +230,10 @@ def test_role_requirements_for_handles_mixed_agent_and_static_results_across_rol
         ["Business Analyst Intern", "Operations Intern"]
     )
 
-    assert result["Business Analyst Intern"] == agent_data
+    assert result["Business Analyst Intern"]["soc_code"] == "13-1111.00"
+    assert result["Business Analyst Intern"]["must_have_skills"] == ["Live-researched must-have skill"]
     assert result["Operations Intern"]["soc_code"] == "13-1199.00"
+    assert result["Operations Intern"]["requirements_source"] == "static"
     assert "_unmatched_roles" not in result
 
 
