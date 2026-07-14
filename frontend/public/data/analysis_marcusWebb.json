@@ -4,7 +4,8 @@
   "features_requested": [
     "FIT",
     "GAP",
-    "SHIFT"
+    "SHIFT",
+    "PROFESSOR_COMMENTS"
   ],
   "results": {
     "FIT": {
@@ -134,6 +135,90 @@
       "status": "success",
       "summary": "You have solid foundations in psychology and interpersonal skills that align well with mentorship roles, but significant gaps in human resources fundamentals prevent immediate readiness for People Operations positions. The most critical need is gaining core HR knowledge through structured coursework before graduation in 2028."
     },
+    "PROFESSOR_COMMENTS": {
+      "data": {
+        "overall_summary": "Professors consistently highlight challenges with thesis precision and connecting analyses to course materials. They've flagged recurring statistical misunderstandings needing attention while commending your engagement with political processes. These patterns suggest focusing on foundational clarity and conceptual reinforcement.",
+        "themes": [
+          {
+            "category": "concern",
+            "summary": "Multiple professors note your thesis statements lack sharpness and directness, particularly in introductory sections.",
+            "supporting_references": [
+              {
+                "course_code": "PBSI 211",
+                "course_name": "Stereotyping, Prejudice, and Discrimination",
+                "paraphrase": "Suggested refining the thesis sharpness in your research paper introduction."
+              },
+              {
+                "course_code": "PBSI 209",
+                "course_name": "Psychology of Culture and Diversity",
+                "paraphrase": "Highlighted recurring unclear thesis statements in essays."
+              },
+              {
+                "course_code": "POLS 206",
+                "course_name": "American National Government",
+                "paraphrase": "Recommended stating arguments more directly upfront in policy analysis."
+              }
+            ],
+            "theme": "Thesis Statement Clarity"
+          },
+          {
+            "category": "flag",
+            "summary": "Recurring conceptual mix-ups in statistical methods require targeted support.",
+            "supporting_references": [
+              {
+                "course_code": "STAT 201",
+                "course_name": "Elementary Statistical Methods",
+                "paraphrase": "Identified persistent misunderstandings in probability distributions."
+              },
+              {
+                "course_code": "STAT 201",
+                "course_name": "Elementary Statistical Methods",
+                "paraphrase": "Noted repeated hypothesis-testing errors needing intervention."
+              }
+            ],
+            "theme": "Conceptual Understanding in Statistics"
+          },
+          {
+            "category": "concern",
+            "summary": "Professors indicate your work sometimes lacks explicit ties to course materials and theoretical frameworks.",
+            "supporting_references": [
+              {
+                "course_code": "PBSI 211",
+                "course_name": "Stereotyping, Prejudice, and Discrimination",
+                "paraphrase": "Encouraged stronger links between reflections and assigned readings."
+              },
+              {
+                "course_code": "PBSI 209",
+                "course_name": "Psychology of Culture and Diversity",
+                "paraphrase": "Suggested tighter integration of case studies with course concepts."
+              }
+            ],
+            "theme": "Connecting Analysis to Course Frameworks"
+          },
+          {
+            "category": "strength",
+            "summary": "Demonstrated effective understanding of political systems and procedures.",
+            "supporting_references": [
+              {
+                "course_code": "POLS 206",
+                "course_name": "American National Government",
+                "paraphrase": "Recognized your solid grasp of legislative sequences."
+              },
+              {
+                "course_code": "POLS 206",
+                "course_name": "American National Government",
+                "paraphrase": "Noted strong engagement with federalism case studies."
+              }
+            ],
+            "theme": "Engagement with Government Processes"
+          }
+        ]
+      },
+      "errors": [],
+      "feature": "PROFESSOR_COMMENTS",
+      "status": "success",
+      "summary": "Analysis identifies recurring concerns about thesis clarity and conceptual understanding, along with strengths in political science engagement."
+    },
     "SHIFT": {
       "data": {
         "adjacent_paths": [
@@ -197,5 +282,5 @@
   },
   "status": "success",
   "student_id": "604",
-  "summary": "Career analysis completed successfully for 3 feature(s)."
+  "summary": "Career analysis completed successfully for 4 feature(s)."
 }

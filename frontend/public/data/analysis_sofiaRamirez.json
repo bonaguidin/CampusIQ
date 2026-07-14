@@ -4,7 +4,8 @@
   "features_requested": [
     "FIT",
     "GAP",
-    "SHIFT"
+    "SHIFT",
+    "PROFESSOR_COMMENTS"
   ],
   "results": {
     "FIT": {
@@ -117,6 +118,93 @@
       "status": "success",
       "summary": "You've built a solid foundation in lab techniques and scientific concepts through coursework and projects, but significant gaps remain in core competencies required for your target roles. The most critical priority is developing communication skills, which are essential across all positions."
     },
+    "PROFESSOR_COMMENTS": {
+      "data": {
+        "overall_summary": "Your professors consistently recognize your ability to grasp technical concepts and execute core tasks accurately across disciplines. However, they repeatedly note you need to deepen your analysis by explicitly connecting details to broader contexts and theories. Pay particular attention to procedural precision in lab work, where minor oversights are affecting outcomes.",
+        "themes": [
+          {
+            "category": "concern",
+            "summary": "You consistently present accurate information but often stop short of explaining broader significance or connecting details to underlying theories.",
+            "supporting_references": [
+              {
+                "course_code": "BIOL 213",
+                "course_name": "Molecular Cell Biology",
+                "paraphrase": "Should explain why cell signaling pathways matter functionally rather than just describing them"
+              },
+              {
+                "course_code": "CHEM 227",
+                "course_name": "Organic Chemistry I",
+                "paraphrase": "Needs to explicitly connect synthesis results back to proposed mechanisms"
+              },
+              {
+                "course_code": "PHYS 201",
+                "course_name": "College Physics I",
+                "paraphrase": "Should link experimental results back to initial hypotheses"
+              },
+              {
+                "course_code": "HIST 105",
+                "course_name": "History of the United States",
+                "paraphrase": "Requires stronger integration of historical context into arguments"
+              },
+              {
+                "course_code": "CHEM 237",
+                "course_name": "Organic Chemistry I Laboratory",
+                "paraphrase": "Needs to explicitly connect distillation results to boiling point theory"
+              }
+            ],
+            "theme": "Contextualization Gap"
+          },
+          {
+            "category": "strength",
+            "summary": "You demonstrate strong foundational skills in executing precise technical work across scientific disciplines.",
+            "supporting_references": [
+              {
+                "course_code": "BIOL 213",
+                "course_name": "Molecular Cell Biology",
+                "paraphrase": "Shows solid recall of molecular mechanisms"
+              },
+              {
+                "course_code": "CHEM 227",
+                "course_name": "Organic Chemistry I",
+                "paraphrase": "Correctly diagrams reaction mechanisms"
+              },
+              {
+                "course_code": "PHYS 201",
+                "course_name": "College Physics I",
+                "paraphrase": "Collects physics lab data effectively"
+              },
+              {
+                "course_code": "CHEM 237",
+                "course_name": "Organic Chemistry I Laboratory",
+                "paraphrase": "Achieves correct Rf values and distillation curves"
+              }
+            ],
+            "theme": "Technical Accuracy"
+          },
+          {
+            "category": "concern",
+            "summary": "In lab settings, minor oversights in measurements and labeling occasionally undermine otherwise strong technical work.",
+            "supporting_references": [
+              {
+                "course_code": "CHEM 227",
+                "course_name": "Organic Chemistry I",
+                "paraphrase": "Missed electron flow notation and stereochemistry details"
+              },
+              {
+                "course_code": "CHEM 237",
+                "course_name": "Organic Chemistry I Laboratory",
+                "paraphrase": "Requires more precise mass measurements and clearer labeling"
+              }
+            ],
+            "theme": "Procedural Precision"
+          }
+        ]
+      },
+      "errors": [],
+      "feature": "PROFESSOR_COMMENTS",
+      "status": "success",
+      "summary": "Professors consistently acknowledge your technical accuracy while urging deeper contextualization and attention to detail."
+    },
     "SHIFT": {
       "data": {
         "adjacent_paths": [
@@ -180,5 +268,5 @@
   },
   "status": "success",
   "student_id": "605",
-  "summary": "Career analysis completed successfully for 3 feature(s)."
+  "summary": "Career analysis completed successfully for 4 feature(s)."
 }

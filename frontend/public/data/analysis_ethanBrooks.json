@@ -4,7 +4,8 @@
   "features_requested": [
     "FIT",
     "GAP",
-    "SHIFT"
+    "SHIFT",
+    "PROFESSOR_COMMENTS"
   ],
   "results": {
     "FIT": {
@@ -123,6 +124,76 @@
       "status": "success",
       "summary": "As a freshman in computer engineering, you've built solid foundations in Python and teamwork through coursework and projects. However, you need to develop core technical competencies like programming languages (Java, C++), data structures, and specialized hardware skills for your target internships. Prioritize building deeper technical projects beyond class requirements this year."
     },
+    "PROFESSOR_COMMENTS": {
+      "data": {
+        "overall_summary": "Your professors consistently recognize your strong technical understanding across subjects, particularly in executing core tasks correctly. However, multiple instructors have noted recurring patterns where you omit important details in documentation, presentation, or explanatory steps. Addressing these completeness aspects would strengthen your work.",
+        "themes": [
+          {
+            "category": "strength",
+            "summary": "You consistently demonstrate solid grasp of core concepts and techniques across technical subjects.",
+            "supporting_references": [
+              {
+                "course_code": "ENGR 102",
+                "course_name": "Engineering Lab I: Computation",
+                "paraphrase": "Dr. Patel acknowledged your functional code and solid project execution."
+              },
+              {
+                "course_code": "MATH 151",
+                "course_name": "Engineering Mathematics I",
+                "paraphrase": "Dr. Castillo noted your correct application of derivative rules."
+              },
+              {
+                "course_code": "CHEM 107",
+                "course_name": "General Chemistry for Engineering Students",
+                "paraphrase": "Dr. Williams recognized your strength in stoichiometry problems."
+              },
+              {
+                "course_code": "CHEM 117",
+                "course_name": "General Chemistry for Engineering Students Laboratory",
+                "paraphrase": "Dr. Lee highlighted your solid calculations and well-organized data."
+              },
+              {
+                "course_code": "ENGL 104",
+                "course_name": "Composition and Rhetoric",
+                "paraphrase": "Dr. Martinez commended your strong rhetorical awareness."
+              }
+            ],
+            "theme": "Strong Conceptual Understanding"
+          },
+          {
+            "category": "concern",
+            "summary": "You frequently omit necessary explanatory details or presentation elements that impact work completeness.",
+            "supporting_references": [
+              {
+                "course_code": "ENGR 102",
+                "course_name": "Engineering Lab I: Computation",
+                "paraphrase": "Dr. Patel suggested adding code comments and documenting testing processes."
+              },
+              {
+                "course_code": "MATH 151",
+                "course_name": "Engineering Mathematics I",
+                "paraphrase": "Dr. Castillo observed skipped simplification steps affecting credit."
+              },
+              {
+                "course_code": "CHEM 117",
+                "course_name": "General Chemistry for Engineering Students Laboratory",
+                "paraphrase": "Dr. Lee noted missing graph labels and insufficient decimal precision."
+              },
+              {
+                "course_code": "ENGL 104",
+                "course_name": "Composition and Rhetoric",
+                "paraphrase": "Dr. Martinez recommended sharpening thesis statements for clarity."
+              }
+            ],
+            "theme": "Insufficient Detail in Documentation"
+          }
+        ]
+      },
+      "errors": [],
+      "feature": "PROFESSOR_COMMENTS",
+      "status": "success",
+      "summary": "Analysis identifies recurring strengths in core understanding and consistent concerns about presentation details."
+    },
     "SHIFT": {
       "data": {
         "adjacent_paths": [
@@ -186,5 +257,5 @@
   },
   "status": "success",
   "student_id": "603",
-  "summary": "Career analysis completed successfully for 3 feature(s)."
+  "summary": "Career analysis completed successfully for 4 feature(s)."
 }

@@ -4,7 +4,8 @@
   "features_requested": [
     "FIT",
     "GAP",
-    "SHIFT"
+    "SHIFT",
+    "PROFESSOR_COMMENTS"
   ],
   "results": {
     "FIT": {
@@ -117,6 +118,90 @@
       "status": "success",
       "summary": "As a freshman, you've started building foundational business skills but have significant gaps in core competencies required for your target roles. Based on O*NET standards for Business Analyst roles, your most urgent need is developing critical thinking, active listening, and administration knowledge through focused coursework. Consistent effort in closing these gaps will strengthen your readiness by graduation."
     },
+    "PROFESSOR_COMMENTS": {
+      "data": {
+        "overall_summary": "Your professors consistently note your strong grasp of fundamental concepts across subjects, particularly in thesis development and procedural understanding. However, multiple instructors have raised concerns about technical precision in quantitative work and encouraged deeper analytical exploration. Several also emphasize the need to more consistently apply critical insights to your own work.",
+        "themes": [
+          {
+            "category": "concern",
+            "summary": "You sometimes overlook specific technical requirements in quantitative subjects, leading to avoidable errors.",
+            "supporting_references": [
+              {
+                "course_code": "ACCT 229",
+                "course_name": "Foundations of Accounting I",
+                "paraphrase": "Noted repeated issues with contra accounts and debit/credit assignments across assignments."
+              },
+              {
+                "course_code": "MATH 140",
+                "course_name": "Mathematics for Business and Social Sciences",
+                "paraphrase": "Highlighted arithmetic errors and insufficient work shown on problems despite correct setups."
+              }
+            ],
+            "theme": "Attention to Technical Detail"
+          },
+          {
+            "category": "concern",
+            "summary": "Your work sometimes stops at surface-level understanding rather than exploring deeper implications or connections.",
+            "supporting_references": [
+              {
+                "course_code": "BUSN 101",
+                "course_name": "Freshman Business Initiative",
+                "paraphrase": "Suggested moving beyond general self-awareness to specific application plans."
+              },
+              {
+                "course_code": "POLS 206",
+                "course_name": "American National Government",
+                "paraphrase": "Encouraged deeper policy analysis and stronger evidence connections in multiple assignments."
+              }
+            ],
+            "theme": "Depth of Analysis"
+          },
+          {
+            "category": "strength",
+            "summary": "You consistently demonstrate solid grasp of core concepts and frameworks across disciplines.",
+            "supporting_references": [
+              {
+                "course_code": "ENGL 104",
+                "course_name": "Composition and Rhetoric",
+                "paraphrase": "Recognized strong thesis development in essay writing."
+              },
+              {
+                "course_code": "POLS 206",
+                "course_name": "American National Government",
+                "paraphrase": "Acknowledged clear understanding of legislative processes and policy fundamentals."
+              },
+              {
+                "course_code": "MATH 140",
+                "course_name": "Mathematics for Business and Social Sciences",
+                "paraphrase": "Praised effective problem setup approaches before calculations."
+              }
+            ],
+            "theme": "Foundational Comprehension"
+          },
+          {
+            "category": "concern",
+            "summary": "You receive consistent encouragement to apply the same critical standards to your own work that you demonstrate when evaluating others.",
+            "supporting_references": [
+              {
+                "course_code": "BUSN 101",
+                "course_name": "Freshman Business Initiative",
+                "paraphrase": "Advised translating self-awareness into concrete action steps."
+              },
+              {
+                "course_code": "ENGL 104",
+                "course_name": "Composition and Rhetoric",
+                "paraphrase": "Suggested applying peer-review level scrutiny to your own arguments."
+              }
+            ],
+            "theme": "Self-Application of Feedback"
+          }
+        ]
+      },
+      "errors": [],
+      "feature": "PROFESSOR_COMMENTS",
+      "status": "success",
+      "summary": "Professors note your strong foundational understanding but highlight recurring concerns about attention to detail and analytical depth."
+    },
     "SHIFT": {
       "data": {
         "adjacent_paths": [
@@ -175,5 +260,5 @@
   },
   "status": "success",
   "student_id": "601",
-  "summary": "Career analysis completed successfully for 3 feature(s)."
+  "summary": "Career analysis completed successfully for 4 feature(s)."
 }
