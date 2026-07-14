@@ -198,9 +198,11 @@ def load_cached_feature_result(
 ) -> dict | None:
     """Return a schema-compatible successful result for this student/feature.
 
-    Cache files are built by CampusIQ_career/demo/build_demo_cache.py, which
-    only writes FIT/GAP/SHIFT (PROFESSOR_COMMENTS is never included) -- so a
-    None return for that feature is expected. Malformed files, student-ID or
+    Cache files are built by CampusIQ_career/demo/build_demo_cache.py. A
+    feature only has a cache entry if that build run included it (via
+    --feature) for this student, so a None return simply means that
+    combination hasn't been cached -- it is looked up generically here rather
+    than assuming a fixed set of features. Malformed files, student-ID or
     feature mismatches, failed entries, nonempty errors, and stale data shapes
     are cache misses rather than trusted responses.
     """
