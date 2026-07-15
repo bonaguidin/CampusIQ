@@ -1,0 +1,185 @@
+/* Ask Campus IQ — embedded Overview panel. Uses the app's design tokens so it
+   reads as native. Co-located CSS (imported by ChatPanel.tsx) so index.css is
+   untouched. */
+
+.chat-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  padding: var(--sp-5) var(--sp-6);
+  margin-bottom: var(--sp-6);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--maroon);
+  border-radius: var(--radius);
+}
+
+.chat-header {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-bottom: var(--sp-3);
+  border-bottom: 1px solid var(--line);
+}
+
+.chat-title {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  color: var(--ink);
+}
+
+.chat-sub {
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  color: var(--pending);
+}
+
+.chat-messages {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  max-height: 360px;
+  overflow-y: auto;
+  padding-right: var(--sp-2);
+}
+
+.chat-empty-lead {
+  margin: 0 0 var(--sp-3);
+  font-family: var(--font-ui);
+  font-size: var(--text-base);
+  color: var(--ink);
+}
+
+.chat-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.chat-chip {
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  color: var(--maroon);
+  background: var(--maroon-tint);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: var(--sp-2) var(--sp-3);
+  cursor: pointer;
+  text-align: left;
+}
+
+.chat-chip:hover:not(:disabled) {
+  border-color: var(--maroon);
+}
+
+.chat-chip:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.chat-msg {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  max-width: 88%;
+}
+
+.chat-msg--user {
+  align-self: flex-end;
+  align-items: flex-end;
+}
+
+.chat-msg--assistant {
+  align-self: flex-start;
+}
+
+.chat-msg-role {
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--pending);
+}
+
+.chat-msg-body {
+  font-family: var(--font-ui);
+  font-size: var(--text-base);
+  line-height: 1.5;
+  color: var(--ink);
+  white-space: pre-wrap;
+  word-break: break-word;
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.chat-msg--assistant .chat-msg-body {
+  background: var(--paper);
+}
+
+.chat-msg--user .chat-msg-body {
+  background: var(--maroon);
+  border-color: var(--maroon);
+  color: #fff;
+}
+
+.chat-input-row {
+  display: flex;
+  gap: var(--sp-2);
+}
+
+.chat-input {
+  flex: 1;
+  font-family: var(--font-ui);
+  font-size: var(--text-base);
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: var(--sp-3) var(--sp-4);
+}
+
+.chat-input:focus {
+  outline: none;
+  border-color: var(--maroon);
+  box-shadow: 0 0 0 3px var(--maroon-tint);
+}
+
+.chat-error {
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  color: var(--error);
+}
+
+.chat-typing {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.chat-typing span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--pending);
+  animation: chat-blink 1.2s infinite ease-in-out;
+}
+
+.chat-typing span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.chat-typing span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes chat-blink {
+  0%,
+  80%,
+  100% {
+    opacity: 0.25;
+  }
+  40% {
+    opacity: 1;
+  }
+}

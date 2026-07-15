@@ -20,6 +20,7 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterator
+from pydantic import BaseModel
 
 from dotenv import load_dotenv
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Request
@@ -32,6 +33,7 @@ from CampusIQ_career.ai.openrouter_client import (
 )
 from CampusIQ_career.features.base import FeatureResult
 from CampusIQ_career.features.orchestrator import RUNNERS, run_feature
+
 
 load_dotenv()
 
@@ -302,6 +304,75 @@ def analyze_shift(request: Request, student_slug: str) -> dict:
 )
 def analyze_professor_comments(request: Request, student_slug: str) -> dict:
     return _run_protected_feature(request, "PROFESSOR_COMMENTS", student_slug)
+
+# ── Chat: conversational advisor grounded in the full student record ─────────
+
+MAX_CHAT_HISTORY = 12 
+CHAT_CONTEXT_FEATURES = ("GAP", "FIT", "SHIFT")
+
+
+class ChatMessage(BaseModel):
+    role: str
+    content: str
+
+
+class ChatRequest(BaseModel):
+    message: str
+    history: list[ChatMessage] = []
+
+
+def load_analysis_bundle(student_slug: str) -> dict:
+    """Best-effort cached FIT/GAP/SHIFT results, for chat context only."""
+    if not student_slug.isalnum() or len(student_slug) > 64:
+        return {}
+    path = CACHED_ANALYSIS_DIR / f"analysis_{student_slug}.json"
+    if not path.exists():
+        return {}
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+    results = data.get("results") if isinstance(data, dict) else None
+    if not isinstance(results, dict):
+        return {}
+    return {k: results[k] for k in CHAT_CONTEXT_FEATURES if k in results}
+
+
+def build_chat_messages(profile: dict, analysis: dict, body: ChatRequest) -> list[dict]:
+    name = profile.get("student", {}).get("name", "the student")
+    system = (
+        f"You are Campus IQ, a warm, concise academic and career advisor speaking directly "
+        f"with {name}. You have their full academic and career profile plus prior FIT/GAP/SHIFT "
+        "analysis. Answer specifically using that data — cite concrete courses, grades, target "
+        "roles, skills, or gaps when relevant. If something is not in the data, say so rather "
+        "than inventing it. Keep replies short, direct, and encouraging.\n\n"
+        f"STUDENT PROFILE (JSON):\n{json.dumps(profile, sort_keys=True)}\n\n"
+        f"PRIOR ANALYSIS (FIT/GAP/SHIFT JSON):\n{json.dumps(analysis, sort_keys=True)}"
+    )
+    messages = [{"role": "system", "content": system}]
+    for turn in body.history[-MAX_CHAT_HISTORY:]:
+        role = turn.role if turn.role in ("user", "assistant") else "user"
+        if isinstance(turn.content, str) and turn.content.strip():
+            messages.append({"role": role, "content": turn.content})
+    messages.append({"role": "user", "content": body.message})
+    return messages
+
+
+@router.post("/api/students/{student_slug}/chat", dependencies=[Depends(authorize_proxy_request)])
+def chat(request: Request, student_slug: str, body: ChatRequest) -> dict:
+    if not body.message or not body.message.strip():
+        raise HTTPException(status_code=400, detail="Message is required.")
+    profile = load_student_profile(student_slug)
+    analysis = load_analysis_bundle(student_slug)
+    messages = build_chat_messages(profile, analysis, body)
+    try:
+        client = build_client()
+        response = client.complete(messages=messages, role="chat", model="@preset/chat")
+    except HTTPException:
+        raise
+    except Exception as exc:  # noqa: BLE001 — surface any live failure uniformly
+        raise HTTPException(status_code=502, detail="Chat service is unavailable.") from exc
+    return {"reply": response.text, "model": response.model}
 
 
 def create_app(config: APIConfig | None = None) -> FastAPI:

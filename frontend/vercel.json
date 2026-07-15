@@ -11,6 +11,10 @@
       "destination": "/api/proxy?student=:student&feature=:feature"
     },
     {
+      "source": "/api/students/:student/chat",
+      "destination": "/api/proxy?student=:student&feature=chat"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
