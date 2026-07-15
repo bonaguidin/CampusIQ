@@ -7,6 +7,7 @@ import { GapAnalysisPanel } from '../components/GapAnalysisPanel';
 import { FitAnalysisPanel } from '../components/FitAnalysisPanel';
 import { ShiftAnalysisPanel } from '../components/ShiftAnalysisPanel';
 import type { ProfileCompleteness } from '../types/student';
+import { ChatPanel } from '../components/ChatPanel';
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -104,10 +105,12 @@ function OverviewSection() {
     }
   }
 
-  return (
-    <div className="stage-section">
-      {/* Student identity — editorial serif */}
-      <div className="overview-header">
+return (
+  <div className="stage-section">
+    <ChatPanel />
+
+    {/* Student identity — editorial serif */}
+    <div className="overview-header">
         <h1 className="overview-name">{student.name}</h1>
         <div className="overview-vitals">
           <span>{student.major_current}</span>
