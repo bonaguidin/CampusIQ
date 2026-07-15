@@ -1,4 +1,4 @@
-const ALLOWED_FEATURES = new Set(['gap', 'fit', 'shift', 'professor-comments'])
+const ALLOWED_FEATURES = new Set(['gap', 'fit', 'shift', 'professor-comments', 'chat'])
 const STUDENT_SLUG_PATTERN = /^[A-Za-z0-9]{1,64}$/
 const PROXY_SECRET_HEADER = 'X-CampusIQ-Proxy-Secret'
 
@@ -14,6 +14,14 @@ function backendBaseUrl(value) {
   } catch {
     return null
   }
+}
+
+// Chat forwards to /chat; analysis features forward to /analyze/{feature}.
+function backendPath(student, feature) {
+  const slug = encodeURIComponent(student)
+  return feature === 'chat'
+    ? `/api/students/${slug}/chat`
+    : `/api/students/${slug}/analyze/${feature}`
 }
 
 export function createProxyHandler({ env = process.env, fetchImpl = globalThis.fetch } = {}) {
@@ -34,22 +42,26 @@ export function createProxyHandler({ env = process.env, fetchImpl = globalThis.f
         return jsonError(503, 'Analysis proxy is not configured.')
       }
 
-      const target = new URL(
-        `/api/students/${encodeURIComponent(student)}/analyze/${feature}`,
-        backendUrl,
-      )
+      const target = new URL(backendPath(student, feature), backendUrl)
+
+      // Forward the request body. Analyze routes send none (path params only);
+      // chat carries { message, history } in the body, so it must pass through.
+      const contentType = request.headers.get('content-type') ?? 'application/json'
+      const bodyText = await request.text()
 
       try {
         const backendResponse = await fetchImpl(target, {
           method: 'POST',
           headers: {
             Accept: 'application/json',
+            'Content-Type': contentType,
             [PROXY_SECRET_HEADER]: proxySecret,
           },
+          body: bodyText.length ? bodyText : undefined,
         })
         const headers = new Headers()
-        const contentType = backendResponse.headers.get('content-type')
-        if (contentType) headers.set('content-type', contentType)
+        const respContentType = backendResponse.headers.get('content-type')
+        if (respContentType) headers.set('content-type', respContentType)
         return new Response(await backendResponse.arrayBuffer(), {
           status: backendResponse.status,
           headers,
