@@ -8,6 +8,7 @@ import { FitAnalysisPanel } from '../components/FitAnalysisPanel';
 import { ShiftAnalysisPanel } from '../components/ShiftAnalysisPanel';
 import type { ProfileCompleteness } from '../types/student';
 import { ChatPanel } from '../components/ChatPanel';
+import { GuidedTour } from '../components/GuidedTour';
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -247,6 +248,9 @@ export function DashboardPage() {
   const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState<NavSection>('overview');
   const [railOpen, setRailOpen] = useState(false);
+  // First-run tour: shown fresh on every profile open (demo behavior), and
+  // replayable on demand via the topbar "?" button.
+  const [tourOpen, setTourOpen] = useState(true);
 
   // RequireAuth guarantees profile is non-null here
   if (!profile) return null;
@@ -272,8 +276,20 @@ export function DashboardPage() {
     setRailOpen(false);
   }
 
+  function handleTourClose(completed: boolean) {
+    setTourOpen(false);
+    // If they bailed early, return to the top of the profile for a clean start.
+    // On Finish, leave them on the Career tab where the tour ends.
+    if (!completed) setActiveSection('overview');
+  }
+
   return (
     <div className="shell">
+      {/* First-run onboarding tour — carousel that walks the tabs */}
+      {tourOpen && (
+        <GuidedTour onNavigate={setActiveSection} onClose={handleTourClose} />
+      )}
+
       {/* Mobile overlay — click to close rail */}
       {railOpen && (
         <div
@@ -348,6 +364,15 @@ export function DashboardPage() {
             </span>
           </button>
           <h2 className="topbar-title">{SECTION_TITLES[activeSection]}</h2>
+          <button
+            type="button"
+            className="topbar-help"
+            onClick={() => setTourOpen(true)}
+            aria-label="Replay the new-user tour"
+            title="Take the tour"
+          >
+            ?
+          </button>
         </header>
 
         {/* Content — keyed on activeSection so entrance animation replays */}
