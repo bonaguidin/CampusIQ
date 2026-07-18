@@ -9,7 +9,7 @@
   inset: 0;
   z-index: 100;
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: center;
   padding: var(--sp-6);
   /* Darken toward the bottom so the card reads, top stays legible */
