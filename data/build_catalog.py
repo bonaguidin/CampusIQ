@@ -14,8 +14,11 @@ import os
 import re
 import pickle
 import shutil
+from pathlib import Path
 
-BASE = "/Users/deepakmurali/Projects/CareerOS/data/catalog"
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+CATALOG_DIR = PROJECT_ROOT / "data" / "catalog"
+BASE = CATALOG_DIR
 
 # ── Load UCC dedup mapping: code -> list of area names ──────────────────────
 with open(f"{BASE}/ucc.json") as f:

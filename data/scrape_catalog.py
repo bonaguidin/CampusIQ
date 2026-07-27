@@ -10,8 +10,11 @@ import re
 import time
 import subprocess
 from html import unescape
+from pathlib import Path
 
-OUTPUT_DIR = "/Users/deepakmurali/Projects/CareerOS/data/catalog"
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+CATALOG_DIR = PROJECT_ROOT / "data" / "catalog"
+OUTPUT_DIR = CATALOG_DIR
 
 # Each entry in DEPARTMENTS produces one output file.
 # "sources" is a list of (prefix, department_label, url) tuples —

@@ -10,8 +10,11 @@ import os
 import re
 import sys
 from collections import defaultdict
+from pathlib import Path
 
-BASE = "/Users/deepakmurali/Projects/CareerOS/data/catalog"
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+CATALOG_DIR = PROJECT_ROOT / "data" / "catalog"
+BASE = CATALOG_DIR
 REQUIRED_KEYS = {"code", "title", "credit_hours", "description", "prerequisites", "department"}
 
 # Course codes referenced in student mock data
