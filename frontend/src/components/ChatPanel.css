@@ -10,7 +10,7 @@
   margin-bottom: var(--sp-6);
   background: var(--surface);
   border: 1px solid var(--line);
-  border-left: 3px solid var(--maroon);
+  border-left: 3px solid var(--accent);
   border-radius: var(--radius);
 }
 
@@ -59,8 +59,8 @@
 .chat-chip {
   font-family: var(--font-ui);
   font-size: var(--text-sm);
-  color: var(--maroon);
-  background: var(--maroon-tint);
+  color: var(--accent);
+  background: var(--accent-tint);
   border: 1px solid var(--line);
   border-radius: var(--radius);
   padding: var(--sp-2) var(--sp-3);
@@ -69,7 +69,7 @@
 }
 
 .chat-chip:hover:not(:disabled) {
-  border-color: var(--maroon);
+  border-color: var(--accent);
 }
 
 .chat-chip:disabled {
@@ -118,8 +118,8 @@
 }
 
 .chat-msg--user .chat-msg-body {
-  background: var(--maroon);
-  border-color: var(--maroon);
+  background: var(--accent);
+  border-color: var(--accent);
   color: var(--on-accent);
 }
 
@@ -141,8 +141,8 @@
 
 .chat-input:focus {
   outline: none;
-  border-color: var(--maroon);
-  box-shadow: 0 0 0 3px var(--maroon-tint);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-tint);
 }
 
 .chat-error {

@@ -32,7 +32,7 @@
   max-width: 460px;
   background: var(--surface);
   border: 1px solid var(--line);
-  border-top: 3px solid var(--maroon);
+  border-top: 3px solid var(--accent);
   border-radius: var(--radius);
   box-shadow: 0 18px 48px var(--shadow-ink);
   padding: var(--sp-6);
@@ -51,7 +51,7 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.12em;
-  color: var(--maroon);
+  color: var(--accent);
   margin-bottom: var(--sp-3);
 }
 
@@ -102,7 +102,7 @@
 }
 
 .tour-dot--active {
-  background: var(--maroon);
+  background: var(--accent);
   transform: scale(1.25);
 }
 
@@ -155,9 +155,9 @@
 }
 
 .topbar-help:hover {
-  color: var(--maroon);
-  border-color: var(--maroon);
-  background: var(--maroon-tint);
+  color: var(--accent);
+  border-color: var(--accent);
+  background: var(--accent-tint);
 }
 
 /* ─── MOBILE ──────────────────────────────────────────────────────────────── */
