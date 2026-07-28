@@ -120,7 +120,7 @@
 .chat-msg--user .chat-msg-body {
   background: var(--maroon);
   border-color: var(--maroon);
-  color: #fff;
+  color: var(--on-accent);
 }
 
 .chat-input-row {

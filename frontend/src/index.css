@@ -7,31 +7,56 @@
 /* ─── DESIGN TOKENS ───────────────────────────────────────────────────────── */
 :root {
   /* Core palette */
-  --ink:           #1C1A19;
+  --ink-rgb:       28 26 25;
+  --ink:           rgb(var(--ink-rgb));
   --paper:         #F6F5F2;
   --surface:       #FFFFFF;
   --line:          #E5E2DD;
 
   /* Rail — dark institutional sidebar */
   --rail-bg:       #2B0B0B;
-  --rail-text:     #E8DAD6;
+  --rail-text-rgb: 232 218 214;
+  --rail-text:     rgb(var(--rail-text-rgb));
   --rail-muted:    #9A7070;
-  --rail-line:     rgba(232, 218, 214, 0.12);
-  --rail-hover:    rgba(232, 218, 214, 0.06);
-  --rail-active:   rgba(232, 218, 214, 0.1);
+  --rail-line:     rgb(var(--rail-text-rgb) / 0.12);
+  --rail-hover:    rgb(var(--rail-text-rgb) / 0.06);
+  --rail-active:   rgb(var(--rail-text-rgb) / 0.1);
+  --rail-monogram-border: rgb(var(--rail-text-rgb) / 0.18);
+  --readiness-dot-bg:     rgb(var(--rail-text-rgb) / 0.15);
+  --readiness-dot-border: rgb(var(--rail-text-rgb) / 0.2);
 
   /* Accent */
-  --maroon:        #500000;
-  --maroon-hover:  #6A0A0A;
-  --maroon-tint:   rgba(80, 0, 0, 0.07);
+  --maroon-rgb:          80 0 0;
+  --maroon:              rgb(var(--maroon-rgb));
+  --maroon-hover:        #6A0A0A;
+  --maroon-tint:         rgb(var(--maroon-rgb) / 0.07);
+  --maroon-ghost-border: rgb(var(--maroon-rgb) / 0.3);
 
   /* Semantic — used sparingly */
-  --muted:         #6E6862;
-  --ready:         #2F6B4F;
-  --ready-tint:    rgba(47, 107, 79, 0.09);
-  --pending:       #9A938C;
-  --error:         #8B1A1A;
-  --error-tint:    rgba(139, 26, 26, 0.07);
+  --muted:              #6E6862;
+  --ready-rgb:          47 107 79;
+  --ready:              rgb(var(--ready-rgb));
+  --ready-tint:         rgb(var(--ready-rgb) / 0.09);
+  --ready-border:       rgb(var(--ready-rgb) / 0.2);
+  --pending-rgb:        154 147 140;
+  --pending:            rgb(var(--pending-rgb));
+  --pending-tint:       rgb(var(--pending-rgb) / 0.12);
+  --error-rgb:          139 26 26;
+  --error:              rgb(var(--error-rgb));
+  --error-tint:         rgb(var(--error-rgb) / 0.07);
+  --error-tint-border:  rgb(var(--error-rgb) / 0.18);
+  --error-ghost-border: rgb(var(--error-rgb) / 0.3);
+
+  /* On-accent — text/borders rendered on colored fills (maroon buttons, spinners) */
+  --on-accent-rgb:    255 255 255;
+  --on-accent:        rgb(var(--on-accent-rgb));
+  --on-accent-border: rgb(var(--on-accent-rgb) / 0.3);
+
+  /* Overlays / shadows — derived from --ink */
+  --scrim-top:        rgb(var(--ink-rgb) / 0.12);
+  --scrim-bottom:     rgb(var(--ink-rgb) / 0.42);
+  --shadow-ink:       rgb(var(--ink-rgb) / 0.22);
+  --overlay-backdrop: rgb(var(--ink-rgb) / 0.45);
 
   /* Typography — three distinct roles */
   --font-display:  'Newsreader', Georgia, serif;
@@ -161,8 +186,8 @@ a {
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  background: rgba(232, 218, 214, 0.1);
-  border: 1px solid rgba(232, 218, 214, 0.18);
+  background: var(--rail-active);
+  border: 1px solid var(--rail-monogram-border);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -323,8 +348,8 @@ a {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: rgba(232, 218, 214, 0.15);
-  border: 1px solid rgba(232, 218, 214, 0.2);
+  background: var(--readiness-dot-bg);
+  border: 1px solid var(--readiness-dot-border);
   flex-shrink: 0;
   z-index: 1;
 }
@@ -1080,7 +1105,7 @@ a {
 .analysis-failed {
   padding: var(--sp-3) var(--sp-4);
   background: var(--error-tint);
-  border: 1px solid rgba(139, 26, 26, 0.18);
+  border: 1px solid var(--error-tint-border);
   border-radius: var(--radius);
 }
 
@@ -1276,7 +1301,7 @@ a {
 
 .fit-badge--medium {
   color: var(--pending);
-  background: rgba(154, 147, 140, 0.12);
+  background: var(--pending-tint);
 }
 
 .fit-badge--low {
@@ -1343,7 +1368,7 @@ a {
   margin-bottom: var(--sp-3);
   padding: var(--sp-3) var(--sp-4);
   background: var(--error-tint);
-  border: 1px solid rgba(139, 26, 26, 0.18);
+  border: 1px solid var(--error-tint-border);
   border-radius: var(--radius);
 }
 
@@ -1670,7 +1695,7 @@ a {
 
 .btn-primary {
   background: var(--maroon);
-  color: #fff;
+  color: var(--on-accent);
   border-color: var(--maroon);
 }
 
@@ -1682,7 +1707,7 @@ a {
 .btn-ghost {
   background: transparent;
   color: var(--maroon);
-  border-color: rgba(80, 0, 0, 0.3);
+  border-color: var(--maroon-ghost-border);
 }
 
 .btn-ghost:hover:not(:disabled) {
@@ -1692,7 +1717,7 @@ a {
 .btn-danger-ghost {
   background: transparent;
   color: var(--error);
-  border-color: rgba(139, 26, 26, 0.3);
+  border-color: var(--error-ghost-border);
 }
 
 .btn-danger-ghost:hover:not(:disabled) {
@@ -1805,8 +1830,8 @@ a {
   display: inline-block;
   width: 12px;
   height: 12px;
-  border: 1.5px solid rgba(255, 255, 255, 0.3);
-  border-top-color: #fff;
+  border: 1.5px solid var(--on-accent-border);
+  border-top-color: var(--on-accent);
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
   vertical-align: middle;
@@ -1875,7 +1900,7 @@ a {
   font-size: var(--text-sm);
   padding: var(--sp-2) var(--sp-3);
   background: var(--error-tint);
-  border: 1px solid rgba(139, 26, 26, 0.18);
+  border: 1px solid var(--error-tint-border);
   border-radius: var(--radius);
 }
 
@@ -1903,12 +1928,12 @@ a {
   background: var(--paper);
 }
 
-.feature-ready { background: var(--ready-tint); border-color: rgba(47, 107, 79, 0.2); }
+.feature-ready { background: var(--ready-tint); border-color: var(--ready-border); }
 .feature-not-ready { background: var(--paper); }
 .feature-label { font-family: var(--font-data); font-weight: 500; }
 .feature-subtitle { font-size: var(--text-xs); color: var(--muted); }
 .feature-status { font-size: var(--text-xs); font-weight: 600; padding: 2px 6px; border-radius: var(--radius-sm); }
-.status-ready { background: var(--ready); color: #fff; }
+.status-ready { background: var(--ready); color: var(--on-accent); }
 .status-pending { background: var(--line); color: var(--muted); }
 
 .progress-row { display: flex; align-items: center; gap: var(--sp-3); }
@@ -1957,7 +1982,7 @@ a {
     display: block;
     position: fixed;
     inset: 0;
-    background: rgba(28, 26, 25, 0.45);
+    background: var(--overlay-backdrop);
     z-index: 40;
   }
 
