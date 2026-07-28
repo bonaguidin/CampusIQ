@@ -11,10 +11,16 @@ const DEMO_STUDENTS = [
 ] as const;
 
 export function LoginPage() {
-  const { login, loading, profile } = useAuth();
+  const { login, loading, profile, signInWithPassword } = useAuth();
   const navigate = useNavigate();
+
   const [selectedSlug, setSelectedSlug] = useState<string>(DEMO_STUDENTS[0].slug);
   const [error, setError] = useState<string | null>(null);
+
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [credLoading, setCredLoading] = useState(false);
+  const [credError, setCredError] = useState<string | null>(null);
 
   // Wait for React to flush the profile state before navigating
   useEffect(() => {
@@ -22,6 +28,20 @@ export function LoginPage() {
       void navigate('/dashboard');
     }
   }, [profile, loading, navigate]);
+
+  async function handleCredentialSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setCredError(null);
+    setCredLoading(true);
+    try {
+      await signInWithPassword(email, password);
+      void navigate('/dashboard');
+    } catch (err) {
+      setCredError(err instanceof Error ? err.message : 'Sign-in failed.');
+    } finally {
+      setCredLoading(false);
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -39,8 +59,69 @@ export function LoginPage() {
         {/* Header — serif product name on white */}
         <div className="login-header">
           <h1 className="login-logo">Campus IQ</h1>
-          <p className="login-subtitle">Texas A&amp;M University</p>
+          <p className="login-subtitle">Sign in to your student account</p>
         </div>
+
+        <form
+          onSubmit={(e) => { void handleCredentialSubmit(e); }}
+          className="login-form"
+        >
+          <div className="form-group">
+            <label htmlFor="login-email" className="form-label">
+              Email
+            </label>
+            <input
+              id="login-email"
+              type="email"
+              className="form-input"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              disabled={credLoading}
+              autoComplete="email"
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="login-password" className="form-label">
+              Password
+            </label>
+            <input
+              id="login-password"
+              type="password"
+              className="form-input"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              disabled={credLoading}
+              autoComplete="current-password"
+              required
+            />
+          </div>
+
+          {credError && (
+            <p className="login-error" role="alert">
+              {credError}
+            </p>
+          )}
+
+          <button
+            type="submit"
+            className="btn btn-primary btn-full"
+            disabled={credLoading}
+            aria-busy={credLoading}
+          >
+            {credLoading ? (
+              <span className="btn-loading">
+                <span className="spinner-small" aria-hidden="true" />
+                Signing in…
+              </span>
+            ) : (
+              'Sign in'
+            )}
+          </button>
+        </form>
+
+        <p className="login-note">or explore a demo profile</p>
 
         <form
           onSubmit={(e) => { void handleSubmit(e); }}
@@ -73,7 +154,7 @@ export function LoginPage() {
 
           <button
             type="submit"
-            className="btn btn-primary btn-full"
+            className="btn btn-ghost btn-full"
             disabled={loading}
             aria-busy={loading}
           >

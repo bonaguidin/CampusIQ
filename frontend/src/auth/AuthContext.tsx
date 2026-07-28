@@ -1,9 +1,15 @@
 import React, { createContext, useState, useEffect, useCallback } from 'react';
+import type { Session, User } from '@supabase/supabase-js';
 import type { StudentProfile, CareerBlock } from '../types/student';
 import { staticJsonAdapter } from '../data/dataAdapter';
+import { supabase } from '../lib/supabase';
 
 // ── Context shape ────────────────────────────────────────────────────────────
-// Matches the interface Supabase Auth would use so the adapter can be swapped.
+// Two auth paths coexist for now: the original slug-based demo picker
+// (profile/slug/login/logout/updateCareer/resetCareer) and the new
+// Supabase session (session/user/signInWithPassword/signOutSession).
+// Part 2 will connect a signed-in session to real student data; today
+// signing in with a password does not load a profile.
 
 export interface AuthContextValue {
   profile: StudentProfile | null;
@@ -13,6 +19,10 @@ export interface AuthContextValue {
   logout(): void;
   updateCareer(career: CareerBlock): Promise<void>;
   resetCareer(): Promise<void>;
+  session: Session | null;
+  user: User | null;
+  signInWithPassword(email: string, password: string): Promise<void>;
+  signOutSession(): Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextValue | null>(null);
@@ -24,9 +34,13 @@ const SESSION_KEY = 'campus_iq_slug';
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<StudentProfile | null>(null);
   const [slug, setSlug] = useState<string | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [profileLoading, setProfileLoading] = useState<boolean>(true);
 
-  // On mount: restore session from sessionStorage
+  const [session, setSession] = useState<Session | null>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [sessionLoading, setSessionLoading] = useState<boolean>(true);
+
+  // On mount: restore demo session from sessionStorage
   useEffect(() => {
     const savedSlug = sessionStorage.getItem(SESSION_KEY);
     if (savedSlug) {
@@ -39,21 +53,45 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .catch(() => {
           sessionStorage.removeItem(SESSION_KEY);
         })
-        .finally(() => setLoading(false));
+        .finally(() => setProfileLoading(false));
     } else {
-      setLoading(false);
+      setProfileLoading(false);
     }
   }, []);
 
+  // On mount: restore Supabase session and subscribe to auth changes
+  useEffect(() => {
+    let active = true;
+
+    supabase.auth.getSession().then(({ data }) => {
+      if (!active) return;
+      setSession(data.session);
+      setUser(data.session?.user ?? null);
+      setSessionLoading(false);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, newSession) => {
+      setSession(newSession);
+      setUser(newSession?.user ?? null);
+    });
+
+    return () => {
+      active = false;
+      subscription.unsubscribe();
+    };
+  }, []);
+
   const login = useCallback(async (newSlug: string): Promise<void> => {
-    setLoading(true);
+    setProfileLoading(true);
     try {
       const p = await staticJsonAdapter.loadStudent(newSlug);
       setProfile(p);
       setSlug(newSlug);
       sessionStorage.setItem(SESSION_KEY, newSlug);
     } finally {
-      setLoading(false);
+      setProfileLoading(false);
     }
   }, []);
 
@@ -80,14 +118,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setProfile(fresh);
   }, [profile, slug]);
 
+  const signInWithPassword = useCallback(async (email: string, password: string): Promise<void> => {
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) throw error;
+  }, []);
+
+  const signOutSession = useCallback(async (): Promise<void> => {
+    const { error } = await supabase.auth.signOut();
+    if (error) throw error;
+  }, []);
+
   const value: AuthContextValue = {
     profile,
     slug,
-    loading,
+    loading: profileLoading || sessionLoading,
     login,
     logout,
     updateCareer,
     resetCareer,
+    session,
+    user,
+    signInWithPassword,
+    signOutSession,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
