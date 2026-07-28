@@ -26,6 +26,7 @@ from dotenv import load_dotenv
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 
+from CampusIQ_career.academics.gpa import CourseRecord, GradeMapRow, Institution, compute_both
 from CampusIQ_career.ai.errors import AIConfigError
 from CampusIQ_career.ai.openrouter_client import (
     DEEPSEEK_R1_REASONING_TIMEOUT_SECONDS,
@@ -33,6 +34,7 @@ from CampusIQ_career.ai.openrouter_client import (
 )
 from CampusIQ_career.features.base import FeatureResult
 from CampusIQ_career.features.orchestrator import RUNNERS, run_feature
+from CampusIQ_career.supabase_client import build_client_for_token
 
 
 load_dotenv()
@@ -373,6 +375,122 @@ def chat(request: Request, student_slug: str, body: ChatRequest) -> dict:
     except Exception as exc:  # noqa: BLE001 — surface any live failure uniformly
         raise HTTPException(status_code=502, detail="Chat service is unavailable.") from exc
     return {"reply": response.text, "model": response.model}
+
+
+# ── v2: Supabase-backed GPA endpoint ──────────────────────────────────────────
+# Auth here is the student's own bearer token (Supabase session JWT), not the
+# X-CampusIQ-Proxy-Secret shared secret used by the /api/students/* routes
+# above -- authorize_proxy_request does not apply to this route.
+
+BEARER_PREFIX = "Bearer "
+
+
+def _bearer_token_from_request(request: Request) -> str:
+    header = request.headers.get("Authorization", "")
+    if not header.startswith(BEARER_PREFIX):
+        raise HTTPException(status_code=401, detail="Missing or malformed Authorization header.")
+    token = header[len(BEARER_PREFIX):].strip()
+    if not token:
+        raise HTTPException(status_code=401, detail="Missing or malformed Authorization header.")
+    return token
+
+
+@router.get("/api/v2/student/me/gpa")
+def get_student_gpa(request: Request) -> dict:
+    token = _bearer_token_from_request(request)
+    client = build_client_for_token(token)
+
+    student_rows = client.table("students").select("*").execute().data
+    if not student_rows:
+        raise HTTPException(status_code=404, detail="No student profile visible for this session.")
+    student_id = student_rows[0]["id"]
+
+    home_rows = (
+        client.table("student_institutions")
+        .select("institution_id")
+        .eq("student_id", student_id)
+        .eq("relationship", "home")
+        .execute()
+        .data
+    )
+    if not home_rows:
+        raise HTTPException(status_code=409, detail="Student has no home institution on record.")
+    home_institution_id = home_rows[0]["institution_id"]
+
+    institution_rows = (
+        client.table("institutions").select("*").eq("id", home_institution_id).execute().data
+    )
+    if not institution_rows:
+        raise HTTPException(
+            status_code=409, detail="Home institution row could not be resolved."
+        )
+    institution_row = institution_rows[0]
+
+    grade_map_rows = (
+        client.table("grade_point_map")
+        .select("*")
+        .eq("institution_id", home_institution_id)
+        .execute()
+        .data
+    )
+    grade_map = {
+        row["letter"]: GradeMapRow(
+            letter=row["letter"],
+            points=row["points"],
+            counts_toward_gpa=row["counts_toward_gpa"],
+            counts_toward_credit=row["counts_toward_credit"],
+        )
+        for row in grade_map_rows
+    }
+
+    course_rows = (
+        client.table("course_records").select("*").eq("student_id", student_id).execute().data
+    )
+    records = [
+        CourseRecord(
+            course_code=row["course_code"],
+            credit_hours=float(row["credit_hours"]),
+            letter_grade=row["letter_grade"],
+            credit_type=row["credit_type"],
+            status=row["status"],
+            institution_id=row["institution_id"],
+            confirmed_at=row.get("confirmed_at"),
+        )
+        for row in course_rows
+    ]
+
+    institution = Institution(
+        id=institution_row["id"],
+        name=institution_row["name"],
+        uses_plus_minus=institution_row["uses_plus_minus"],
+        transfer_grades_count_toward_gpa=institution_row["transfer_grades_count_toward_gpa"],
+    )
+
+    both = compute_both(records, institution, grade_map)
+
+    # projected's excluded set is the meaningful one to surface: official
+    # mode excludes nearly every in-progress course purely on status scope,
+    # which isn't a data problem worth reporting -- projected only excludes
+    # a course for a substantive reason (unmapped grade, transfer not
+    # counted, unconfirmed, etc).
+    excluded = [
+        {"course_code": record.course_code, "reason": reason}
+        for record, reason in both.projected.excluded
+    ]
+
+    return {
+        "institution": {
+            "id": institution_row["id"],
+            "name": institution_row["name"],
+            "uses_plus_minus": institution_row["uses_plus_minus"],
+        },
+        "official": both.official.gpa,
+        "projected": both.projected.gpa,
+        "completed_hours": both.completed_hours,
+        "in_progress_hours": both.in_progress_hours,
+        "earned_hours": both.official.earned_hours,
+        "excluded": excluded,
+    }
 
 
 def create_app(config: APIConfig | None = None) -> FastAPI:
