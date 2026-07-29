@@ -14,7 +14,8 @@
   --line:          #D6D6D6;
 
   /* Rail — near-black, achromatic. Institution brand color overrides this. */
-  --rail-bg:       #141414;
+  --rail-bg-rgb:   20 20 20;
+  --rail-bg:       rgb(var(--rail-bg-rgb));
   --rail-text-rgb: 235 235 235;
   --rail-text:     rgb(var(--rail-text-rgb));
   --rail-muted:    #9E9E9E;
@@ -40,7 +41,11 @@
      verification report). */
   --accent-rgb:          36 36 36;
   --accent:              rgb(var(--accent-rgb));
-  --accent-hover:        #323232;
+  /* --accent-hover-rgb is set inline by institutionTheme.ts under a
+     theme (lightened from brand_primary_hex); this literal is only
+     the neutral, no-theme fallback. */
+  --accent-hover-rgb:    50 50 50;
+  --accent-hover:        rgb(var(--accent-hover-rgb));
   --accent-tint:         rgb(var(--accent-rgb) / 0.07);
   --accent-ghost-border: rgb(var(--accent-rgb) / 0.3);
 
@@ -67,11 +72,21 @@
   --on-accent-border: rgb(var(--on-accent-rgb) / 0.3);
 
   /* Institution accent slot — defaults to the base brand accent above.
-     Intended to be overridden at runtime per institution (e.g. TAMU
-     maroon, SMU red) once per-institution theming lands; not wired to
-     any component yet. */
+     Overridden at runtime per institution (e.g. TAMU maroon, SMU red)
+     via frontend/src/lib/institutionTheme.ts. */
   --institution-accent-rgb: var(--accent-rgb);
   --institution-accent:     rgb(var(--institution-accent-rgb));
+
+  /* Neutral tokens the theming can never override. Fixed literal
+     values (not var() references into --rail-bg-rgb/--accent-rgb/
+     --on-accent-rgb), so an institution theme applied via inline
+     style on document.documentElement cannot reach them. Used only by
+     the login page, which renders before any institution is known. */
+  --neutral-rail-bg:   #141414;
+  --neutral-surface:   #F7F7F7;
+  --neutral-line:      #D6D6D6;
+  --neutral-accent:    #242424;
+  --neutral-on-accent: #FFFFFF;
 
   /* Overlays / shadows — derived from --ink */
   --scrim-top:        rgb(var(--ink-rgb) / 0.12);
@@ -1881,12 +1896,12 @@ a {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--rail-bg);
+  background: var(--neutral-rail-bg);
   padding: var(--sp-6);
 }
 
 .login-card {
-  background: var(--surface);
+  background: var(--neutral-surface);
   border-radius: var(--radius);
   width: 100%;
   max-width: 360px;
@@ -1895,7 +1910,7 @@ a {
 
 .login-header {
   padding: var(--sp-8) var(--sp-8) var(--sp-6);
-  border-bottom: 1px solid var(--line);
+  border-bottom: 1px solid var(--neutral-line);
 }
 
 .login-logo {
@@ -1922,6 +1937,15 @@ a {
   display: flex;
   flex-direction: column;
   gap: var(--sp-4);
+}
+
+/* .btn-primary is shared with themed surfaces elsewhere; the login
+   page's own Sign in button must stay neutral regardless, since no
+   institution is known before login. */
+.login-form .btn-primary {
+  background: var(--neutral-accent);
+  border-color: var(--neutral-accent);
+  color: var(--neutral-on-accent);
 }
 
 .login-error {

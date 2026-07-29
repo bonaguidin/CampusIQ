@@ -3,6 +3,11 @@ import type { Session, User } from '@supabase/supabase-js';
 import type { StudentProfile, CareerBlock } from '../types/student';
 import { staticJsonAdapter } from '../data/dataAdapter';
 import { supabase } from '../lib/supabase';
+import {
+  applyInstitutionTheme,
+  clearInstitutionTheme,
+  fetchInstitutionThemeByName,
+} from '../lib/institutionTheme';
 
 // ── Context shape ────────────────────────────────────────────────────────────
 // Two auth paths coexist for now: the original slug-based demo picker
@@ -49,6 +54,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .then((p) => {
           setProfile(p);
           setSlug(savedSlug);
+          // TEMPORARY: name-based lookup, see institutionTheme.ts.
+          void fetchInstitutionThemeByName(p.student.institution).then(applyInstitutionTheme);
         })
         .catch(() => {
           sessionStorage.removeItem(SESSION_KEY);
@@ -90,6 +97,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setProfile(p);
       setSlug(newSlug);
       sessionStorage.setItem(SESSION_KEY, newSlug);
+      // TEMPORARY: name-based lookup, see institutionTheme.ts.
+      const theme = await fetchInstitutionThemeByName(p.student.institution);
+      applyInstitutionTheme(theme);
     } finally {
       setProfileLoading(false);
     }
@@ -99,6 +109,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setProfile(null);
     setSlug(null);
     sessionStorage.removeItem(SESSION_KEY);
+    clearInstitutionTheme();
   }, []);
 
   const updateCareer = useCallback(
@@ -125,6 +136,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOutSession = useCallback(async (): Promise<void> => {
     const { error } = await supabase.auth.signOut();
+    clearInstitutionTheme();
     if (error) throw error;
   }, []);
 
