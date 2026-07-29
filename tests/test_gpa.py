@@ -100,6 +100,7 @@ def _course(
     status="completed",
     institution_id="tamu",
     confirmed_at="2026-01-01T00:00:00Z",
+    excluded_from_gpa_by=None,
 ):
     return CourseRecord(
         course_code=course_code,
@@ -109,6 +110,7 @@ def _course(
         status=status,
         institution_id=institution_id,
         confirmed_at=confirmed_at,
+        excluded_from_gpa_by=excluded_from_gpa_by,
     )
 
 
@@ -307,3 +309,132 @@ def test_worked_multi_course_case():
 
     # earned_hours includes transfer and exam credit on top of the GPA-eligible hours.
     assert result.earned_hours == 2.0 + 4.0 + 3.0 + 3.0 + 3.0
+
+    # excluded_from_gpa_by defaults to None on every record here, and none of
+    # them are excluded for the 'excluded_by_repeat' reason -- confirms that
+    # leaving the field unset does not change this test's pre-existing behavior.
+    assert all(r.excluded_from_gpa_by is None for r in records)
+    assert "excluded_by_repeat" not in excluded_codes.values()
+
+
+# 14. A record with excluded_from_gpa_by set is excluded from GPA with
+#     reason 'excluded_by_repeat'.
+def test_excluded_from_gpa_by_excludes_with_repeat_reason():
+    record = _course(letter_grade="A", excluded_from_gpa_by="some-other-record-id")
+    result = compute_gpa([record], TAMU, TAMU_MAP, mode="official")
+
+    assert result.included == []
+    assert len(result.excluded) == 1
+    excluded_record, reason = result.excluded[0]
+    assert excluded_record is record
+    assert reason == "excluded_by_repeat"
+
+
+# 15. An excluded-by-repeat record still contributes to earned_hours (only
+#     the grade points are dropped, not the earned credit).
+def test_excluded_from_gpa_by_still_counts_earned_hours():
+    record = _course(
+        letter_grade="A", credit_hours=3.0, excluded_from_gpa_by="some-other-record-id"
+    )
+    result = compute_gpa([record], TAMU, TAMU_MAP, mode="official")
+
+    assert result.earned_hours == 3.0
+    assert result.gpa_hours == 0.0
+    assert result.quality_points == 0.0
+
+
+# 16. Two-attempt repeat, SMU-direction: first attempt D excluded by the
+#     second attempt B. Only the B counts.
+def test_two_attempt_repeat_first_excluded_by_second():
+    second_attempt = _course(
+        course_code="HIST 101",
+        letter_grade="B",
+        credit_hours=3.0,
+        institution_id="smu",
+    )
+    first_attempt = _course(
+        course_code="HIST 101",
+        letter_grade="D",
+        credit_hours=3.0,
+        institution_id="smu",
+        excluded_from_gpa_by=second_attempt.course_code,
+    )
+
+    records = [first_attempt, second_attempt]
+    result = compute_gpa(records, SMU, SMU_MAP, mode="official")
+
+    # Only the second attempt (B, 3.0 points) is included.
+    assert result.included == [second_attempt]
+    excluded_codes = {r.course_code: reason for r, reason in result.excluded}
+    assert excluded_codes["HIST 101"] == "excluded_by_repeat"
+
+    expected_quality_points = 3.0 * 3.0  # B (3.0 points) x 3.0 hours
+    expected_gpa_hours = 3.0
+    assert result.quality_points == expected_quality_points
+    assert result.gpa_hours == expected_gpa_hours
+    assert result.gpa == round(expected_quality_points / expected_gpa_hours, 2)
+    assert result.gpa == 3.0
+
+    # Both attempts earned resident credit hours (D and B both earn credit
+    # under the TAMU/SMU-shaped maps used here), so both count toward
+    # earned_hours regardless of the GPA exclusion.
+    assert result.earned_hours == 3.0 + 3.0
+
+
+# 17. The reverse direction (TAMU Rule 10.22): a repeat excluded by the
+#     original, using the same excluded_from_gpa_by mechanism with no
+#     special-casing of direction.
+def test_repeat_excluded_by_original_reverse_direction():
+    original = _course(
+        course_code="MATH 151",
+        letter_grade="B",
+        credit_hours=4.0,
+        institution_id="tamu",
+    )
+    repeat = _course(
+        course_code="MATH 151",
+        letter_grade="A",
+        credit_hours=4.0,
+        institution_id="tamu",
+        excluded_from_gpa_by=original.course_code,
+    )
+
+    records = [original, repeat]
+    result = compute_gpa(records, TAMU, TAMU_MAP, mode="official")
+
+    # Only the original (B, 3.0 points) is included; the repeat is excluded.
+    assert result.included == [original]
+    excluded_codes = {id(r): reason for r, reason in result.excluded}
+    assert excluded_codes[id(repeat)] == "excluded_by_repeat"
+
+    expected_quality_points = 3.0 * 4.0  # B (3.0 points) x 4.0 hours
+    expected_gpa_hours = 4.0
+    assert result.quality_points == expected_quality_points
+    assert result.gpa_hours == expected_gpa_hours
+    assert result.gpa == round(expected_quality_points / expected_gpa_hours, 2)
+    assert result.gpa == 3.0
+
+    assert result.earned_hours == 4.0 + 4.0
+
+
+# 18. An excluded-by-repeat record whose grade earns no credit adds nothing
+#     to earned_hours. TAMU_MAP's 'F' row has counts_toward_credit=True (an
+#     attempted F still counts toward attempted-credit accounting under this
+#     fixture's institution), so a distinct grade map is used here with an
+#     'F' row that earns no credit at all, to exercise that branch.
+_NO_CREDIT_F_MAP = {
+    **TAMU_MAP,
+    "F": _row("F", 0.0, True, False),
+}
+
+
+def test_excluded_from_gpa_by_with_failing_grade_earns_no_credit():
+    record = _course(
+        letter_grade="F", credit_hours=3.0, excluded_from_gpa_by="some-other-record-id"
+    )
+    result = compute_gpa([record], TAMU, _NO_CREDIT_F_MAP, mode="official")
+
+    assert result.earned_hours == 0.0
+    assert result.gpa_hours == 0.0
+    _, reason = result.excluded[0]
+    assert reason == "excluded_by_repeat"

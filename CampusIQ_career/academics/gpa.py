@@ -39,6 +39,7 @@ class CourseRecord:
     status: Status
     institution_id: str
     confirmed_at: Optional[str] = None
+    excluded_from_gpa_by: Optional[str] = None
 
 
 @dataclass(frozen=True)
@@ -168,6 +169,14 @@ def compute_gpa(
             )
             if counts_toward_credit:
                 earned_hours += record.credit_hours
+
+        # excluded_from_gpa_by is a record-level fact set by whoever applies
+        # the institution's repeat policy (see institutions.repeat_policy) --
+        # it is independent of grade resolution and scope, so it is checked
+        # first, ahead of status/grade-mapping reasons.
+        if record.excluded_from_gpa_by is not None:
+            excluded.append((record, "excluded_by_repeat"))
+            continue
 
         if record.status not in scope_statuses:
             excluded.append((record, "status_out_of_scope"))
