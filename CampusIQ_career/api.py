@@ -34,7 +34,7 @@ from CampusIQ_career.ai.openrouter_client import (
 )
 from CampusIQ_career.features.base import FeatureResult
 from CampusIQ_career.features.orchestrator import RUNNERS, run_feature
-from CampusIQ_career.supabase_client import build_client_for_token
+from CampusIQ_career.supabase_client import SupabaseConfigError, build_client_for_token
 
 
 load_dotenv()
@@ -44,6 +44,23 @@ STUDENTS_DIR = Path(__file__).resolve().parents[1] / "data" / "students"
 # the frontend already fetches directly (frontend/src/data/dataAdapter.ts).
 CACHED_ANALYSIS_DIR = Path(__file__).resolve().parents[1] / "frontend" / "public" / "data"
 PROXY_SECRET_HEADER = "X-CampusIQ-Proxy-Secret"
+
+# These five are fabricated demo fixtures whose full records are already served
+# unauthenticated from frontend/public/data/. They are exempt from bearer-token
+# authorization because that data is public by design. Every other slug requires
+# an authenticated session. This list lives in code rather than an env var so it
+# cannot be misconfigured in production to allowlist a real student.
+#
+# Derived from the actual filenames in data/students/ (student_<slug>.json).
+DEMO_STUDENT_SLUGS = frozenset(
+    {
+        "ethanBrooks",
+        "jordanReyes",
+        "marcusWebb",
+        "priyaNair",
+        "sofiaRamirez",
+    }
+)
 
 
 def _positive_int_env(name: str, default: int, maximum: int) -> int:
@@ -144,6 +161,61 @@ def authorize_proxy_request(request: Request) -> None:
 
     if not request.app.state.rate_limiter.allow():
         raise HTTPException(status_code=429, detail="Request rate limit exceeded.")
+
+
+def authorize_student_access(request: Request, student_slug: str) -> None:
+    """Deny-by-default check that the caller may read `student_slug`'s record.
+
+    This is a separate control from authorize_proxy_request: that one proves the
+    request came through our own proxy, this one proves the *caller* is entitled
+    to this particular student. The proxy attaches its shared secret to every
+    request it forwards and authenticates nobody, so without this check any
+    anonymous caller could name any slug.
+
+    Demo fixtures short-circuit (their records are public by design; see
+    DEMO_STUDENT_SLUGS). Every other slug requires a session bearer token, and
+    is then denied: `students` has no slug column, so there is no way to map a
+    session to a dashboard slug. Rather than invent a mapping, this fails closed
+    with 403.
+
+    Never reads SUPABASE_SECRET_KEY -- build_client_for_token uses the anon
+    publishable key plus the caller's own token, so RLS applies as that user.
+    Its appearance anywhere in this path would be a bug.
+
+    Forward-references _bearer_token_from_request, defined lower in this module
+    alongside the v2 route it was written for; both are resolved at call time.
+    """
+    if student_slug in DEMO_STUDENT_SLUGS:
+        return
+
+    token = _bearer_token_from_request(request)
+
+    try:
+        client = build_client_for_token(token)
+    except SupabaseConfigError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+    # Same sequence the v2 GPA route uses: no filter and no identifier from the
+    # request -- RLS narrows `students` to the row owned by this token.
+    try:
+        student_rows = client.table("students").select("*").execute().data
+    except Exception as exc:  # noqa: BLE001 -- an unverifiable session is denied
+        # Fails closed: a rejected/expired token and a transient backend error
+        # are indistinguishable here, and 401 is the safe direction for an
+        # authorization gate.
+        raise HTTPException(status_code=401, detail="Could not verify session.") from exc
+
+    if not student_rows:
+        raise HTTPException(status_code=404, detail="No student profile visible for this session.")
+
+    raise HTTPException(
+        status_code=403,
+        detail=(
+            "Cannot verify ownership of this student record: the students table has "
+            "no slug column, so an authenticated session cannot be mapped to a "
+            "dashboard slug. Only demo fixtures are servable by these routes."
+        ),
+    )
 
 router = APIRouter()
 
@@ -265,6 +337,7 @@ def run_feature_with_fallback(feature_name: str, student_slug: str, profile: dic
 
 def _run_protected_feature(request: Request, feature_name: str, student_slug: str) -> dict:
     """Serve a validated cache hit, otherwise run live work within capacity."""
+    authorize_student_access(request, student_slug)
     profile = load_student_profile(student_slug)
     student_id = profile.get("student", {}).get("id")
     cached = load_cached_feature_result(student_slug, feature_name, student_id)
@@ -362,6 +435,7 @@ def build_chat_messages(profile: dict, analysis: dict, body: ChatRequest) -> lis
 
 @router.post("/api/students/{student_slug}/chat", dependencies=[Depends(authorize_proxy_request)])
 def chat(request: Request, student_slug: str, body: ChatRequest) -> dict:
+    authorize_student_access(request, student_slug)
     if not body.message or not body.message.strip():
         raise HTTPException(status_code=400, detail="Message is required.")
     profile = load_student_profile(student_slug)

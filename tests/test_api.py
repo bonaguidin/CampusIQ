@@ -368,12 +368,19 @@ def test_analyze_professor_comments_success(client, monkeypatch):
     assert fake.calls[0]["role"] == "academic"
 
 
-def test_analyze_gap_unknown_student_returns_404(client, monkeypatch):
+def test_analyze_gap_unknown_student_is_rejected_before_any_profile_lookup(client, monkeypatch):
+    # BEHAVIOR CHANGE (authorize_student_access): an unknown slug used to reach
+    # load_student_profile and come back 404. It is now rejected at 401 first,
+    # because it is not a demo fixture and carries no token. That is stricter,
+    # and deliberately stops leaking which slugs exist to unauthenticated
+    # callers -- a 404-vs-401 split would be an existence oracle.
     monkeypatch.setattr(api, "build_client", lambda: FakeClient('{"data": {}}'))
 
     response = client.post("/api/students/doesNotExist/analyze/gap")
 
-    assert response.status_code == 404
+    assert response.status_code == 401
+    # Still never a success, which is what the original test guarded.
+    assert response.status_code != 200
 
 
 def test_analyze_gap_missing_api_key_returns_503(client, monkeypatch):
@@ -435,12 +442,18 @@ def test_invalid_or_missing_cache_with_no_api_key_returns_503(
 
 
 def test_unknown_student_never_receives_another_students_cache(client, monkeypatch, tmp_path):
+    # A cache file exists for this slug carrying ANOTHER student's id (601).
+    # The original guarantee -- that it is never served -- still holds; the
+    # request is now stopped even earlier, at authorization rather than at the
+    # profile lookup. See the behavior-change note above.
     write_gap_cache(tmp_path, slug="doesNotExist", student_id=601)
     monkeypatch.setattr(api, "build_client", lambda: pytest.fail("unknown student stops first"))
 
     response = client.post("/api/students/doesNotExist/analyze/gap")
 
-    assert response.status_code == 404
+    assert response.status_code == 401
+    assert response.status_code != 200
+    assert "Cached GAP result." not in response.text
 
 
 def test_authentication_and_rate_limit_still_apply_to_cache_hits(monkeypatch, tmp_path):
@@ -564,3 +577,327 @@ def test_run_feature_with_fallback_cached_status_missing_fails_closed(monkeypatc
     result = api.run_feature_with_fallback("GAP", "someStudent", profile={}, client=None)
 
     assert result["status"] == "failed"
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Cross-student authorization (authorize_student_access)
+#
+# These five routes previously accepted any slug from any caller. The five
+# demo fixtures stay open (their records are already world-readable at
+# frontend/public/data/); every other slug now requires a session and is
+# denied, because `students` has no slug column to map a session onto.
+# ═══════════════════════════════════════════════════════════════════════════
+
+NON_DEMO_SLUG = "someRealStudent"
+
+# (path suffix, json body or None) for each of the five protected routes.
+PROTECTED_ROUTES = [
+    ("analyze/gap", None),
+    ("analyze/fit", None),
+    ("analyze/shift", None),
+    ("analyze/professor-comments", None),
+    ("chat", {"message": "hello", "history": []}),
+]
+ROUTE_IDS = ["gap", "fit", "shift", "professor-comments", "chat"]
+
+FEATURE_JSON = json.dumps(
+    {
+        "summary": "ok",
+        "data": {
+            "readiness_score": 7,
+            "strengths": [],
+            "must_have_gaps": [],
+            "nice_to_have_gaps": [],
+            "recommended_next_steps": [],
+            "role_matches": [],
+            "overall_fit_summary": "ok",
+            "role_evolution_summary": "ok",
+            "task_shifts": [],
+            "durable_skills": [],
+            "adjacent_paths": [],
+            "ai_fluency_guidance": [],
+            "themes": [],
+            "overall_summary": "ok",
+        },
+    }
+)
+
+
+def _post(test_client, slug, suffix, body, headers=None):
+    kwargs = {"headers": headers} if headers else {}
+    if body is not None:
+        kwargs["json"] = body
+    return test_client.post(f"/api/students/{slug}/{suffix}", **kwargs)
+
+
+class _NoopPostgrest:
+    def auth(self, token):
+        self.token = token
+
+
+class _StudentsOnlyClient:
+    """Session-scoped Supabase stand-in returning one `students` row.
+
+    Mirrors the .table(...).select(...).execute() chain authorize_student_access
+    uses. The row stands for the *caller's own* student -- never the requested
+    slug, which is the whole point of the 403.
+    """
+
+    def __init__(self, rows):
+        self._rows = rows
+        # build_client_for_token calls client.postgrest.auth(token) when it is
+        # allowed to run for real (see test_supabase_secret_key_is_never_read).
+        self.postgrest = _NoopPostgrest()
+
+    def table(self, name):
+        return self
+
+    def select(self, *args, **kwargs):
+        return self
+
+    def eq(self, *args, **kwargs):
+        return self
+
+    def execute(self):
+        class _Resp:
+            data = self._rows
+
+        return _Resp()
+
+
+# 1a. Every protected route still serves a demo slug with proxy headers only.
+@pytest.mark.parametrize(("suffix", "body"), PROTECTED_ROUTES, ids=ROUTE_IDS)
+def test_demo_slug_succeeds_on_every_route_without_a_token(suffix, body, client, monkeypatch):
+    monkeypatch.setattr(api, "build_client", lambda: FakeClient(FEATURE_JSON))
+
+    response = _post(client, "jordanReyes", suffix, body)
+
+    assert response.status_code == 200
+    # No Authorization header was sent anywhere in this request.
+    assert "Authorization" not in response.request.headers
+
+
+# 1b. Each of the five demo slugs individually is still servable.
+@pytest.mark.parametrize("slug", sorted(api.DEMO_STUDENT_SLUGS))
+def test_each_demo_slug_succeeds_without_a_token(slug, client, monkeypatch):
+    monkeypatch.setattr(api, "build_client", lambda: FakeClient(FEATURE_JSON))
+
+    response = _post(client, slug, "analyze/gap", None)
+
+    assert response.status_code == 200
+
+
+def test_demo_slug_allowlist_matches_files_on_disk():
+    on_disk = {
+        path.name[len("student_") : -len(".json")]
+        for path in api.STUDENTS_DIR.glob("student_*.json")
+    }
+    assert api.DEMO_STUDENT_SLUGS == on_disk
+
+
+# 2. Non-demo slug with no Authorization header -> 401, on all five routes.
+@pytest.mark.parametrize(("suffix", "body"), PROTECTED_ROUTES, ids=ROUTE_IDS)
+def test_non_demo_slug_without_token_is_401(suffix, body, client, monkeypatch):
+    monkeypatch.setattr(api, "build_client", lambda: pytest.fail("must not reach the AI client"))
+    monkeypatch.setattr(
+        api, "build_client_for_token", lambda token: pytest.fail("must not build a DB client")
+    )
+
+    response = _post(client, NON_DEMO_SLUG, suffix, body)
+
+    assert response.status_code == 401
+
+
+# 3. Non-demo slug with a malformed Authorization header -> 401.
+@pytest.mark.parametrize("header_value", ["", "Token abc123", "Bearer", "Bearer   ", "abc123"])
+@pytest.mark.parametrize(("suffix", "body"), PROTECTED_ROUTES, ids=ROUTE_IDS)
+def test_non_demo_slug_with_malformed_authorization_is_401(
+    suffix, body, header_value, client, monkeypatch
+):
+    monkeypatch.setattr(api, "build_client", lambda: pytest.fail("must not reach the AI client"))
+    monkeypatch.setattr(
+        api, "build_client_for_token", lambda token: pytest.fail("must not build a DB client")
+    )
+
+    response = _post(
+        client,
+        NON_DEMO_SLUG,
+        suffix,
+        body,
+        headers={**PROXY_HEADERS, "Authorization": header_value},
+    )
+
+    assert response.status_code == 401
+
+
+# 4. Valid token resolving to a DIFFERENT student -> never 200, and the
+#    requested student's record must not leak into the response.
+@pytest.mark.parametrize(("suffix", "body"), PROTECTED_ROUTES, ids=ROUTE_IDS)
+def test_valid_token_for_another_student_is_denied_and_leaks_nothing(
+    suffix, body, client, monkeypatch, tmp_path
+):
+    # Give the requested (non-demo) slug a real profile on disk, so there is
+    # genuinely something that *could* leak if authorization were bypassed.
+    secret_name = "Zzyzx Quartermain"
+    secret_gpa = 1.23
+    secret_goal = "pineapple-flavored actuarial science"
+    students_dir = tmp_path / "students"
+    students_dir.mkdir()
+    (students_dir / f"student_{NON_DEMO_SLUG}.json").write_text(
+        json.dumps(
+            {
+                "student": {
+                    "id": 9001,
+                    "name": secret_name,
+                    "gpa_current": secret_gpa,
+                    "major_current": "Actuarial Science",
+                    "classification": "Senior",
+                },
+                "career": {
+                    "target_roles": ["Actuary"],
+                    "career_goals": secret_goal,
+                    "interests": ["risk"],
+                    "skills_self_reported": {"technical": [], "soft": []},
+                    "certifications": [],
+                    "work_experience": [],
+                    "projects": [],
+                    "ai_anxiety_level": "low",
+                },
+                "courses": [],
+                "assignments": [],
+                "submissions": [],
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(api, "STUDENTS_DIR", students_dir)
+
+    # The caller's token resolves to a different student entirely.
+    caller_row = [{"id": "caller-uuid", "name": "Someone Else", "auth_user_id": "auth-uuid"}]
+    monkeypatch.setattr(
+        api, "build_client_for_token", lambda token: _StudentsOnlyClient(caller_row)
+    )
+    monkeypatch.setattr(api, "build_client", lambda: pytest.fail("must not reach the AI client"))
+
+    response = _post(
+        client,
+        NON_DEMO_SLUG,
+        suffix,
+        body,
+        headers={**PROXY_HEADERS, "Authorization": "Bearer valid-token-for-someone-else"},
+    )
+
+    assert response.status_code in (403, 404)
+    assert response.status_code != 200
+
+    body_text = response.text
+    assert secret_name not in body_text
+    assert secret_goal not in body_text
+    assert str(secret_gpa) not in body_text
+    assert "Actuarial Science" not in body_text
+    assert "9001" not in body_text
+    # Only an error envelope comes back.
+    assert set(response.json()) == {"detail"}
+
+
+# 5. SUPABASE_SECRET_KEY must never be read on any of these paths.
+#
+#    Unlike tests/test_api_v2_gpa.py:123, this does NOT stub the module that
+#    would read it: build_client_for_token runs for real, so its _required_env
+#    calls execute under the spy. Only the supabase SDK's create_client is
+#    replaced, to keep the test off the network.
+@pytest.mark.parametrize(("suffix", "body"), PROTECTED_ROUTES, ids=ROUTE_IDS)
+def test_supabase_secret_key_is_never_read(suffix, body, client, monkeypatch):
+    import os
+
+    from CampusIQ_career import supabase_client as supabase_client_module
+
+    reads = []
+    original_get = os.environ.get
+
+    def spying_get(key, *args, **kwargs):
+        reads.append(key)
+        if key == "SUPABASE_SECRET_KEY":
+            raise AssertionError("SUPABASE_SECRET_KEY must never be read by these routes")
+        return original_get(key, *args, **kwargs)
+
+    monkeypatch.setenv("SUPABASE_URL", "https://example.supabase.co")
+    monkeypatch.setenv("SUPABASE_PUBLISHABLE_KEY", "test-publishable-key")
+    # Replace only the SDK entrypoint, so build_client_for_token's own env reads
+    # still happen and remain visible to the spy.
+    monkeypatch.setattr(
+        supabase_client_module,
+        "create_client",
+        lambda url, key: _StudentsOnlyClient([{"id": "caller-uuid"}]),
+    )
+    monkeypatch.setattr(api, "build_client", lambda: FakeClient(FEATURE_JSON))
+    monkeypatch.setattr(os.environ, "get", spying_get)
+
+    response = _post(
+        client,
+        NON_DEMO_SLUG,
+        suffix,
+        body,
+        headers={**PROXY_HEADERS, "Authorization": "Bearer some-token"},
+    )
+
+    assert response.status_code in (403, 404)
+    # Prove the spy was actually on the path the real code takes -- otherwise
+    # "never read" would be vacuously true.
+    assert "SUPABASE_URL" in reads
+    assert "SUPABASE_PUBLISHABLE_KEY" in reads
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 6. Chat route coverage (previously zero)
+# ═══════════════════════════════════════════════════════════════════════════
+
+
+@pytest.mark.parametrize("message", ["", "   ", "\n\t "])
+def test_chat_requires_a_nonempty_message(message, client, monkeypatch):
+    monkeypatch.setattr(api, "build_client", lambda: pytest.fail("must not reach the AI client"))
+
+    response = client.post(
+        "/api/students/jordanReyes/chat", json={"message": message, "history": []}
+    )
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Message is required."
+
+
+def test_chat_demo_slug_returns_a_reply(client, monkeypatch):
+    fake = FakeClient("Here is your advice.")
+    monkeypatch.setattr(api, "build_client", lambda: fake)
+
+    response = client.post(
+        "/api/students/jordanReyes/chat",
+        json={"message": "How ready am I?", "history": []},
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["reply"] == "Here is your advice."
+    assert body["model"] == "fake-model"
+    assert fake.calls[0]["role"] == "chat"
+    # The student's own record is what grounds the reply.
+    system_prompt = fake.calls[0]["messages"][0]["content"]
+    assert "Jordan Reyes" in system_prompt
+
+
+def test_chat_client_failure_returns_502(client, monkeypatch):
+    def exploding_client():
+        class _Boom:
+            def complete(self, **kwargs):
+                raise RuntimeError("upstream exploded")
+
+        return _Boom()
+
+    monkeypatch.setattr(api, "build_client", exploding_client)
+
+    response = client.post(
+        "/api/students/jordanReyes/chat",
+        json={"message": "Hello", "history": []},
+    )
+
+    assert response.status_code == 502
+    assert response.json()["detail"] == "Chat service is unavailable."
