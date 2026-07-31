@@ -2,10 +2,13 @@
 
 This is the demo bridge between the Python AI engine and the React dashboard.
 Rather than stand up a live server (Phase 2), we run the orchestrator once per
-student and write the result to ``frontend/public/data/analysis_<slug>.json``,
-which the frontend can fetch exactly like it already fetches
-``student_<slug>.json``. This also de-risks the live demo: nothing calls
-OpenRouter during the presentation.
+student and write the result to ``data/demo_cache/analysis_<slug>.json``, which
+the backend serves through authorized routes. This also de-risks the live demo:
+nothing calls OpenRouter during the presentation.
+
+The output directory is deliberately NOT under ``frontend/public/`` -- anything
+there is served unauthenticated at a predictable URL, and these bundles contain
+student grades and paraphrased professor comments.
 
 Usage:
     # Real run (needs OPENROUTER_API_KEY and real model ids in model_config.py):
@@ -33,7 +36,7 @@ from typing import Any, Mapping, Sequence
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
 _STUDENTS_DIR = _REPO_ROOT / "data" / "students"
-_OUTPUT_DIR = _REPO_ROOT / "frontend" / "public" / "data"
+_OUTPUT_DIR = _REPO_ROOT / "data" / "demo_cache"
 
 
 def _slug_from_filename(path: Path) -> str:

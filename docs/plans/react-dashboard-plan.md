@@ -180,11 +180,13 @@ CareerOS/                         ← existing Python repo root
 
 ### Phase 1 (Demo — static JSON, no Supabase)
 
-Student records are copied into `frontend/public/data/` at build time. The React app fetches them at `/data/student_jordanReyes.json` etc. (or imports them as static TS modules). Writes update React state in-session only; nothing persists. This is acceptable because the demo is a live walkthrough with 5 known profiles.
+**Superseded.** This originally copied student records into `frontend/public/data/` and fetched them at `/data/student_jordanReyes.json`. Anything under `frontend/public/` is served unauthenticated at a predictable URL, and these records contain grades and professor comments, so the records now live in `data/demo_cache/` (analysis bundles) and `data/students/` (source of truth) and are served by an authorized backend route.
+
+The React app calls `GET /api/students/:slug/profile`, same-origin through the Vercel proxy, which attaches the backend secret server-side. The backend gates it on the proxy secret plus `authorize_student_access`. Writes still update React state in-session only; nothing persists.
 
 ```ts
-// Example: fetch by student name/ID selected at login
-const res = await fetch(`/data/student_${slug}.json`);
+// Example: fetch by student slug selected at login
+const res = await fetch(`/api/students/${encodeURIComponent(slug)}/profile`);
 const profile: StudentProfile = await res.json();
 ```
 
@@ -332,7 +334,7 @@ No testing library is listed — the Python validator is the contract check. Add
 #### Phase 1 — Static shell (2–3 days)
 1. Scaffold `frontend/` with `npm create vite@latest` → React + TypeScript template
 2. Define `src/types/student.ts` — TypeScript interfaces matching the JSON schema
-3. Copy 5 JSON files to `frontend/public/data/`
+3. Keep the 5 JSON files in `data/students/` and serve them via `GET /api/students/:slug/profile` (never `frontend/public/`, which is unauthenticated)
 4. Build `<LoginPage>` with mock profile selector; store selection in React Context
 5. Build `<DashboardPage>` skeleton with `<ProfileHeader>` and `<AcademicSnapshot>` (read-only)
 6. Render `<CompletenessGate>` badges from `profile_completeness.by_feature`

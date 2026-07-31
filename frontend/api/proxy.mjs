@@ -1,4 +1,6 @@
+// POST features run AI work; 'profile' is a plain read and is the only GET.
 const ALLOWED_FEATURES = new Set(['gap', 'fit', 'shift', 'professor-comments', 'chat'])
+const GET_FEATURES = new Set(['profile'])
 const STUDENT_SLUG_PATTERN = /^[A-Za-z0-9]{1,64}$/
 const PROXY_SECRET_HEADER = 'X-CampusIQ-Proxy-Secret'
 
@@ -16,23 +18,31 @@ function backendBaseUrl(value) {
   }
 }
 
-// Chat forwards to /chat; analysis features forward to /analyze/{feature}.
+// Chat forwards to /chat, profile to /profile; analysis features to
+// /analyze/{feature}.
 function backendPath(student, feature) {
   const slug = encodeURIComponent(student)
-  return feature === 'chat'
-    ? `/api/students/${slug}/chat`
-    : `/api/students/${slug}/analyze/${feature}`
+  if (feature === 'chat') return `/api/students/${slug}/chat`
+  if (feature === 'profile') return `/api/students/${slug}/profile`
+  return `/api/students/${slug}/analyze/${feature}`
 }
 
 export function createProxyHandler({ env = process.env, fetchImpl = globalThis.fetch } = {}) {
   return {
     async fetch(request) {
-      if (request.method !== 'POST') return jsonError(405, 'Method not allowed.')
+      const method = request.method
+      if (method !== 'POST' && method !== 'GET') {
+        return jsonError(405, 'Method not allowed.')
+      }
 
       const requestUrl = new URL(request.url)
       const student = requestUrl.searchParams.get('student') ?? ''
       const feature = requestUrl.searchParams.get('feature') ?? ''
-      if (!STUDENT_SLUG_PATTERN.test(student) || !ALLOWED_FEATURES.has(feature)) {
+      // Method and feature must agree: a GET may only reach a read route, and
+      // a POST may only reach an AI route. This stops a GET from triggering
+      // billable work and keeps the read route out of the POST-only surface.
+      const allowed = method === 'GET' ? GET_FEATURES : ALLOWED_FEATURES
+      if (!STUDENT_SLUG_PATTERN.test(student) || !allowed.has(feature)) {
         return jsonError(400, 'Invalid analysis route.')
       }
 
@@ -46,12 +56,13 @@ export function createProxyHandler({ env = process.env, fetchImpl = globalThis.f
 
       // Forward the request body. Analyze routes send none (path params only);
       // chat carries { message, history } in the body, so it must pass through.
+      // A GET has no body to read or forward.
       const contentType = request.headers.get('content-type') ?? 'application/json'
-      const bodyText = await request.text()
+      const bodyText = method === 'GET' ? '' : await request.text()
 
       try {
         const backendResponse = await fetchImpl(target, {
-          method: 'POST',
+          method,
           headers: {
             Accept: 'application/json',
             'Content-Type': contentType,

@@ -35,7 +35,11 @@ function careerKey(studentId: number): string {
 
 export const staticJsonAdapter: DataAdapter = {
   async loadStudent(slug: string): Promise<StudentProfile> {
-    const response = await fetch(`/data/student_${slug}.json`);
+    // Same-origin call through the Vercel proxy (frontend/api/proxy.mjs), which
+    // attaches the backend secret server-side -- mirroring api/analysis.ts and
+    // api/chat.ts. Previously this read /data/student_<slug>.json, a static
+    // file served unauthenticated to anyone who guessed the URL.
+    const response = await fetch(`/api/students/${encodeURIComponent(slug)}/profile`);
     if (!response.ok) {
       throw new Error(`Failed to load student profile for slug "${slug}": ${response.status}`);
     }

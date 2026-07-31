@@ -15,6 +15,11 @@ from CampusIQ_career.ai.types import AIResponse
 TEST_PROXY_SECRET = "test-proxy-secret"
 PROXY_HEADERS = {api.PROXY_SECRET_HEADER: TEST_PROXY_SECRET}
 
+# Captured at import, before the autouse isolated_analysis_cache fixture
+# repoints api.CACHED_ANALYSIS_DIR at tmp_path for each test. Tests asserting
+# on the *real* configured location must use this, not the patched attribute.
+REAL_CACHED_ANALYSIS_DIR = api.CACHED_ANALYSIS_DIR
+
 
 def make_test_config(**overrides):
     values = {
@@ -979,3 +984,177 @@ def test_procfile_pins_one_worker():
     assert command.startswith("web:")
     assert "--workers 1" in command
     assert "CampusIQ_career.api:app" in command
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# GET /api/students/{slug}/profile
+#
+# Replaces the old frontend/public/data/student_<slug>.json static files,
+# which were served unauthenticated at a guessable URL. Same two controls as
+# the analyze/chat routes: proxy secret + authorize_student_access.
+# ═══════════════════════════════════════════════════════════════════════════
+
+
+# Demo slugs are served with proxy headers only, no bearer token.
+@pytest.mark.parametrize("slug", sorted(api.DEMO_STUDENT_SLUGS))
+def test_profile_route_serves_every_demo_slug_without_a_token(slug, client):
+    response = client.get(f"/api/students/{slug}/profile")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert "student" in body
+    assert body["student"]["name"]
+    assert "Authorization" not in response.request.headers
+
+
+def test_profile_route_returns_the_full_record():
+    test_client = TestClient(api.create_app(make_test_config()), headers=PROXY_HEADERS)
+
+    response = test_client.get("/api/students/jordanReyes/profile")
+
+    assert response.status_code == 200
+    body = response.json()
+    # Same shape the frontend used to fetch from the public static file.
+    for key in ("student", "career", "courses", "submissions"):
+        assert key in body
+    assert body["student"]["name"] == "Jordan Reyes"
+
+
+def test_profile_route_requires_the_proxy_secret():
+    unauthenticated = TestClient(api.create_app(make_test_config()))
+
+    response = unauthenticated.get("/api/students/jordanReyes/profile")
+
+    assert response.status_code == 401
+
+
+# A non-demo slug with no Authorization header -> 401.
+def test_profile_route_non_demo_slug_without_token_is_401(client, monkeypatch):
+    monkeypatch.setattr(
+        api, "build_client_for_token", lambda token: pytest.fail("must not build a DB client")
+    )
+
+    response = client.get(f"/api/students/{NON_DEMO_SLUG}/profile")
+
+    assert response.status_code == 401
+
+
+@pytest.mark.parametrize("header_value", ["", "Token abc123", "Bearer", "Bearer   ", "abc123"])
+def test_profile_route_malformed_authorization_is_401(header_value, client):
+    response = client.get(
+        f"/api/students/{NON_DEMO_SLUG}/profile",
+        headers={**PROXY_HEADERS, "Authorization": header_value},
+    )
+
+    assert response.status_code == 401
+
+
+# A valid token resolving to a DIFFERENT student -> never 200, and the
+# requested record must not leak. Mirrors the analyze/chat cross-student test.
+def test_profile_route_valid_token_for_another_student_leaks_nothing(
+    client, monkeypatch, tmp_path
+):
+    secret_name = "Zzyzx Quartermain"
+    secret_goal = "pineapple-flavored actuarial science"
+    secret_gpa = 1.23
+    students_dir = tmp_path / "students"
+    students_dir.mkdir()
+    (students_dir / f"student_{NON_DEMO_SLUG}.json").write_text(
+        json.dumps(
+            {
+                "student": {
+                    "id": 9001,
+                    "name": secret_name,
+                    "gpa_current": secret_gpa,
+                    "major_current": "Actuarial Science",
+                },
+                "career": {"career_goals": secret_goal, "target_roles": ["Actuary"]},
+                "courses": [],
+                "submissions": [],
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(api, "STUDENTS_DIR", students_dir)
+
+    caller_row = [{"id": "caller-uuid", "name": "Someone Else", "auth_user_id": "auth-uuid"}]
+    monkeypatch.setattr(
+        api, "build_client_for_token", lambda token: _StudentsOnlyClient(caller_row)
+    )
+
+    response = client.get(
+        f"/api/students/{NON_DEMO_SLUG}/profile",
+        headers={**PROXY_HEADERS, "Authorization": "Bearer valid-token-for-someone-else"},
+    )
+
+    assert response.status_code in (403, 404)
+    assert response.status_code != 200
+
+    body_text = response.text
+    assert secret_name not in body_text
+    assert secret_goal not in body_text
+    assert str(secret_gpa) not in body_text
+    assert "Actuarial Science" not in body_text
+    assert "9001" not in body_text
+    assert set(response.json()) == {"detail"}
+
+
+def test_profile_route_unknown_slug_is_rejected_before_any_file_read(client):
+    # Not a demo slug and no token -> stopped at authorization, so an unknown
+    # slug never reveals whether a file exists.
+    response = client.get("/api/students/doesNotExist/profile")
+
+    assert response.status_code == 401
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Regression guard: no student data may return to frontend/public/.
+# ═══════════════════════════════════════════════════════════════════════════
+
+_KNOWN_STUDENT_NAMES = (
+    "Jordan Reyes",
+    "Ethan Brooks",
+    "Marcus Webb",
+    "Priya Nair",
+    "Sofia Ramirez",
+)
+
+
+def test_frontend_public_contains_no_student_data():
+    """frontend/public/ is served unauthenticated at a predictable URL.
+
+    Student records and analysis bundles lived there until they were moved to
+    data/demo_cache/ behind authorized routes. This asserts they do not come
+    back -- by content, not filename, so a rename cannot slip past it.
+    """
+    public_dir = Path(__file__).resolve().parents[1] / "frontend" / "public"
+    if not public_dir.exists():
+        return  # nothing served statically at all; trivially safe
+
+    offenders = []
+    for path in public_dir.rglob("*"):
+        if not path.is_file():
+            continue
+        try:
+            text = path.read_text(encoding="utf-8", errors="ignore")
+        except OSError:
+            continue
+        if "submissions" in text or any(name in text for name in _KNOWN_STUDENT_NAMES):
+            offenders.append(str(path.relative_to(public_dir)))
+
+    assert not offenders, (
+        f"student data found under frontend/public/: {offenders}. "
+        "These files are served unauthenticated; move them to data/demo_cache/."
+    )
+
+
+def test_demo_cache_lives_outside_frontend_public():
+    repo_root = Path(__file__).resolve().parents[1]
+
+    assert REAL_CACHED_ANALYSIS_DIR == repo_root / "data" / "demo_cache"
+    assert "public" not in REAL_CACHED_ANALYSIS_DIR.parts
+    assert "frontend" not in REAL_CACHED_ANALYSIS_DIR.parts
+    # And the generator writes to the same place the reader reads from.
+    from CampusIQ_career.demo import build_demo_cache as bdc
+
+    assert bdc._OUTPUT_DIR == REAL_CACHED_ANALYSIS_DIR
