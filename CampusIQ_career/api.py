@@ -83,6 +83,35 @@ def _positive_float_env(name: str, default: float, maximum: float) -> float:
     return value if 0 < value <= maximum else default
 
 
+def _assert_single_worker_deployment() -> None:
+    """Refuse to start if the platform asks for more than one worker.
+
+    SlidingWindowRateLimiter and AIConcurrencyGate are process-local with no
+    shared state, so N workers means N independent sliding windows and N
+    independent semaphores -- the effective ceiling silently becomes N x the
+    configured value. The Procfile pins `--workers 1`, but a start-command flag
+    is not the only lever: uvicorn and gunicorn both honor WEB_CONCURRENCY, and
+    several platforms (Render included) set it automatically per plan. A
+    Procfile alone would not catch that, so it is checked here too.
+
+    Unset is fine -- that is the single-worker default. A blank value is
+    treated as unset, matching how this module already handles
+    CAMPUSIQ_PROXY_SECRET and how model_config handles blank CAMPUSIQ_MODEL_*
+    overrides: platforms routinely inject empty strings for undefined vars.
+    """
+    raw = os.getenv("WEB_CONCURRENCY")
+    if raw is None or not raw.strip():
+        return
+    if raw.strip() != "1":
+        raise AIConfigError(
+            f"WEB_CONCURRENCY is set to {raw.strip()!r}, but this service must run with "
+            "exactly one worker: its rate limiter and AI concurrency gate are "
+            "process-local, so additional workers multiply both limits without "
+            "warning. Set WEB_CONCURRENCY=1 (or unset it), and move both to a shared "
+            "external store before scaling out. See the Procfile for details."
+        )
+
+
 def _allowed_origins_from_env() -> tuple[str, ...]:
     configured = os.getenv("CAMPUSIQ_ALLOWED_ORIGINS", "")
     return tuple(
@@ -585,6 +614,10 @@ def create_app(config: APIConfig | None = None) -> FastAPI:
     # otherwise surface as an opaque 502 (chat) or a silent status="failed"
     # FeatureResult (analyze routes) only once a live call is attempted.
     validate_configured_models(set(ROLES_VALIDATED_AT_STARTUP))
+
+    # Likewise fail the deploy rather than silently serving N x the configured
+    # rate limit and concurrency ceiling. See the Procfile.
+    _assert_single_worker_deployment()
 
     active_config = config or APIConfig.from_env()
     application = FastAPI(

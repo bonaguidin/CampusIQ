@@ -2,6 +2,7 @@ import json
 import threading
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
+from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
@@ -901,3 +902,80 @@ def test_chat_client_failure_returns_502(client, monkeypatch):
 
     assert response.status_code == 502
     assert response.json()["detail"] == "Chat service is unavailable."
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Single-worker pinning.
+#
+# SlidingWindowRateLimiter and AIConcurrencyGate are process-local, so extra
+# workers silently multiply both ceilings. The Procfile pins --workers 1;
+# this guard catches the platforms that set worker count via env var instead.
+# ═══════════════════════════════════════════════════════════════════════════
+
+
+def test_web_concurrency_above_one_fails_app_construction(monkeypatch):
+    monkeypatch.setenv("WEB_CONCURRENCY", "4")
+
+    with pytest.raises(AIConfigError, match="WEB_CONCURRENCY"):
+        api.create_app(make_test_config())
+
+
+@pytest.mark.parametrize("value", ["2", "0", "8", "-1", "many", "1.0", " 2 "])
+def test_web_concurrency_any_non_one_value_fails(value, monkeypatch):
+    monkeypatch.setenv("WEB_CONCURRENCY", value)
+
+    with pytest.raises(AIConfigError):
+        api.create_app(make_test_config())
+
+
+def test_web_concurrency_unset_succeeds(monkeypatch):
+    monkeypatch.delenv("WEB_CONCURRENCY", raising=False)
+
+    app = api.create_app(make_test_config())
+
+    assert app is not None
+    assert TestClient(app).get("/health").status_code == 200
+
+
+def test_web_concurrency_exactly_one_succeeds(monkeypatch):
+    monkeypatch.setenv("WEB_CONCURRENCY", "1")
+
+    app = api.create_app(make_test_config())
+
+    assert app is not None
+    assert TestClient(app).get("/health").status_code == 200
+
+
+@pytest.mark.parametrize("blank", ["", "   ", "\t"])
+def test_blank_web_concurrency_is_treated_as_unset(blank, monkeypatch):
+    # Platforms routinely inject empty strings for undefined vars; that must
+    # not be read as "some worker count other than 1".
+    monkeypatch.setenv("WEB_CONCURRENCY", blank)
+
+    app = api.create_app(make_test_config())
+
+    assert app is not None
+
+
+def test_web_concurrency_one_with_surrounding_whitespace_succeeds(monkeypatch):
+    monkeypatch.setenv("WEB_CONCURRENCY", "  1  ")
+
+    assert api.create_app(make_test_config()) is not None
+
+
+def test_procfile_pins_one_worker():
+    """The Procfile is the primary enforcement; assert it says what it must.
+
+    A start command that lost --workers 1 would leave only the env-var guard,
+    which does not fire when the platform uses a start-command flag instead.
+    """
+    procfile = Path(__file__).resolve().parents[1] / "Procfile"
+    assert procfile.exists(), "Procfile is the deployment pin; it must be committed"
+
+    text = procfile.read_text(encoding="utf-8")
+    command = next(
+        line for line in text.splitlines() if line.strip() and not line.lstrip().startswith("#")
+    )
+    assert command.startswith("web:")
+    assert "--workers 1" in command
+    assert "CampusIQ_career.api:app" in command

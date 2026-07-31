@@ -89,10 +89,24 @@ TAVILY_API_KEY=<server-only-key>
 
 The rate limit is a bounded sliding window shared by trusted proxy requests in
 one backend process. The concurrency semaphore is also per process. Neither is
-globally distributed across multiple Render instances; use a shared external
-limiter before scaling horizontally. CORS allows only explicitly configured
-browser origins and is defense in depth, not authentication. `/health` is the
-only intentionally public backend route.
+keyed per client, and neither is distributed across workers or Render
+instances, so both ceilings are **per process**: N workers serve N x the
+configured limit.
+
+Two mechanisms enforce that assumption rather than merely documenting it:
+
+- **`Procfile`** pins the start command to `--workers 1`.
+- **`create_app()`** raises `AIConfigError` at construction if `WEB_CONCURRENCY`
+  is set to anything other than `1`, catching platforms that set worker count
+  by environment variable instead of a start-command flag. The deploy fails
+  loudly instead of quietly serving a multiplied limit.
+
+Before scaling horizontally — more workers *or* more instances — move both the
+limiter and the concurrency gate to a shared external store (e.g. Redis).
+Raising worker count alone will now fail startup, by design.
+
+CORS allows only explicitly configured browser origins and is defense in depth,
+not authentication. `/health` is the only intentionally public backend route.
 
 The Vercel function is configured for a 300-second maximum duration. Confirm
 that the selected Vercel plan supports that duration, or lower the live-model
