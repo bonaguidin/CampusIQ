@@ -277,3 +277,191 @@ def test_ai_services_call_agent_works_with_mocked_client():
 @pytest.mark.parametrize("feature", ["FIT", "GAP", "SHIFT"])
 def test_fit_gap_shift_map_to_career_role(feature):
     assert ai_services.get_role_for_agent(feature) == "career"
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# validate_configured_models: placeholder model IDs must fail at startup,
+# not on the first live request.
+# ═══════════════════════════════════════════════════════════════════════════
+
+
+def _clear_model_env(monkeypatch):
+    """Drop every CAMPUSIQ_MODEL_* override so defaults are what resolve.
+
+    .env carries real overrides for CAMPUSIQ_MODEL_CAREER / _ACADEMIC and
+    api.py calls load_dotenv() on import, so without this a test asserting on
+    hardcoded defaults would silently be asserting on the developer's .env.
+    """
+    from CampusIQ_career.ai.model_config import ENV_BY_ROLE
+
+    for env_name in ENV_BY_ROLE.values():
+        monkeypatch.delenv(env_name, raising=False)
+
+
+# 1. A role in roles_in_use resolving to a placeholder raises AIConfigError.
+def test_validate_configured_models_raises_on_placeholder(monkeypatch):
+    from CampusIQ_career.ai.model_config import validate_configured_models
+
+    _clear_model_env(monkeypatch)
+
+    # 'chat' still carries a TODO_ default by design (it is excluded from the
+    # startup set because the chat route passes an explicit model=).
+    with pytest.raises(AIConfigError, match="Placeholder model ID"):
+        validate_configured_models({"chat"})
+
+
+def test_validate_configured_models_error_names_role_and_placeholder(monkeypatch):
+    from CampusIQ_career.ai.model_config import validate_configured_models
+
+    _clear_model_env(monkeypatch)
+
+    with pytest.raises(AIConfigError) as excinfo:
+        validate_configured_models({"chat"})
+
+    message = str(excinfo.value)
+    assert "chat" in message
+    assert "TODO_OPENROUTER_MODEL_GEMINI_2_5_FLASH" in message
+
+
+def test_validate_configured_models_reports_every_offending_role(monkeypatch):
+    from CampusIQ_career.ai.model_config import validate_configured_models
+
+    _clear_model_env(monkeypatch)
+
+    with pytest.raises(AIConfigError) as excinfo:
+        validate_configured_models({"chat", "orchestrator", "report"})
+
+    message = str(excinfo.value)
+    for role in ("chat", "orchestrator", "report"):
+        assert role in message
+
+
+# 2. The five in-use roles pass cleanly against today's config.
+def test_validate_configured_models_passes_for_roles_in_use(monkeypatch):
+    from CampusIQ_career.ai.model_config import (
+        ROLES_VALIDATED_AT_STARTUP,
+        validate_configured_models,
+    )
+
+    _clear_model_env(monkeypatch)
+
+    # Must not raise, with no env overrides in play.
+    validate_configured_models(set(ROLES_VALIDATED_AT_STARTUP))
+
+
+def test_roles_validated_at_startup_excludes_the_three_documented_roles():
+    from CampusIQ_career.ai.model_config import ROLES_VALIDATED_AT_STARTUP
+
+    assert ROLES_VALIDATED_AT_STARTUP == {"career", "academic", "role_research", "parsing"}
+    # Deliberate exclusions -- see the comment above the frozenset.
+    for excluded in ("orchestrator", "report", "chat"):
+        assert excluded not in ROLES_VALIDATED_AT_STARTUP
+
+
+# 3. An env override supplying a real model clears the check even when the
+#    hardcoded default is still a placeholder -- proves precedence is honored
+#    rather than MODEL_BY_ROLE being read directly.
+def test_env_override_clears_placeholder_check(monkeypatch):
+    from CampusIQ_career.ai.model_config import MODEL_BY_ROLE, validate_configured_models
+
+    _clear_model_env(monkeypatch)
+
+    # Precondition: chat's hardcoded default really is still a placeholder.
+    assert MODEL_BY_ROLE["chat"].startswith("TODO_")
+    with pytest.raises(AIConfigError):
+        validate_configured_models({"chat"})
+
+    monkeypatch.setenv("CAMPUSIQ_MODEL_CHAT", "openrouter/real-chat-model")
+
+    # Same role, same untouched default -- now passes purely via the override.
+    validate_configured_models({"chat"})
+    assert MODEL_BY_ROLE["chat"].startswith("TODO_")
+
+
+def test_whitespace_only_env_override_does_not_satisfy_the_check(monkeypatch):
+    from CampusIQ_career.ai.model_config import validate_configured_models
+
+    _clear_model_env(monkeypatch)
+    monkeypatch.setenv("CAMPUSIQ_MODEL_CHAT", "   ")
+
+    # get_model_for_role ignores a blank override, so the placeholder still wins.
+    with pytest.raises(AIConfigError):
+        validate_configured_models({"chat"})
+
+
+# 4. parsing now resolves to the already-validated Flash model.
+def test_parsing_resolves_to_deepseek_v4_flash(monkeypatch):
+    _clear_model_env(monkeypatch)
+
+    assert get_model_for_role("parsing") == "deepseek/deepseek-v4-flash"
+
+
+def test_parsing_and_role_research_share_the_validated_flash_model(monkeypatch):
+    _clear_model_env(monkeypatch)
+
+    assert get_model_for_role("parsing") == get_model_for_role("role_research")
+
+
+def test_qwen3_placeholder_constant_is_gone():
+    from CampusIQ_career.ai import model_config
+
+    # Removed rather than left dangling: nothing references it once parsing
+    # repoints, and a stray TODO_ constant is what the validator exists to catch.
+    assert not hasattr(model_config, "OPENROUTER_QWEN3_32B")
+
+
+# 5. Startup wiring is real: monkeypatch parsing's default back to a
+#    placeholder and create_app() must refuse to build the app.
+def test_create_app_raises_when_an_in_use_role_has_a_placeholder(monkeypatch):
+    from CampusIQ_career import api
+    from CampusIQ_career.ai import model_config
+
+    _clear_model_env(monkeypatch)
+
+    # Sanity: the app builds fine before we break anything.
+    api.create_app(
+        api.APIConfig(
+            proxy_secret="s",
+            allowed_origins=(),
+            rate_limit_requests=10,
+            rate_limit_window_seconds=60.0,
+            max_concurrent_ai_requests=2,
+        )
+    )
+
+    broken = dict(model_config.MODEL_BY_ROLE)
+    broken["parsing"] = "TODO_OPENROUTER_MODEL_QWEN3_32B"
+    monkeypatch.setattr(model_config, "MODEL_BY_ROLE", broken)
+
+    with pytest.raises(AIConfigError, match="parsing"):
+        api.create_app(
+            api.APIConfig(
+                proxy_secret="s",
+                allowed_origins=(),
+                rate_limit_requests=10,
+                rate_limit_window_seconds=60.0,
+                max_concurrent_ai_requests=2,
+            )
+        )
+
+
+def test_create_app_placeholder_failure_happens_before_any_route_is_served(monkeypatch):
+    from CampusIQ_career import api
+    from CampusIQ_career.ai import model_config
+
+    _clear_model_env(monkeypatch)
+    broken = dict(model_config.MODEL_BY_ROLE)
+    broken["career"] = "TODO_OPENROUTER_MODEL_SOMETHING"
+    monkeypatch.setattr(model_config, "MODEL_BY_ROLE", broken)
+
+    # No app object is produced at all -- there is nothing to serve /health from.
+    with pytest.raises(AIConfigError, match="career"):
+        api.create_app(
+            api.APIConfig(
+                proxy_secret="s",
+                allowed_origins=(),
+                rate_limit_requests=10,
+                rate_limit_window_seconds=60.0,
+                max_concurrent_ai_requests=2,
+            )
+        )

@@ -509,6 +509,9 @@ def run_verification(client: Client, url: str, publishable_key: str, test_passwo
                 status=r["status"],
                 institution_id=r["institution_id"],
                 confirmed_at=r["confirmed_at"],
+                # .get(): the column arrives with select("*") once the
+                # repeat-policy migration is applied, and is absent before that.
+                excluded_from_gpa_by=r.get("excluded_from_gpa_by"),
             )
             for r in course_rows
         ]

@@ -217,3 +217,39 @@ def test_bplus_against_tamu_map_normalizes_instead_of_erroring(client, monkeypat
     # 'B+' normalizes to 'B' (3.0) on a plus/minus-less TAMU map, not unmapped/excluded.
     assert body["official"] == 3.0
     assert body["excluded"] == []
+
+
+# 9. Repeat policy: a first attempt carrying excluded_from_gpa_by is dropped
+#    from the GPA, and only the second attempt scores.
+def test_repeat_excluded_attempt_is_dropped_from_gpa(client, monkeypatch):
+    # HIST 101 taken twice: first a D, then a B. The first attempt points at
+    # the second via excluded_from_gpa_by (SMU-style grade replacement), so
+    # only the B may score. Both rows are 'completed' and confirmed.
+    first_attempt = _course_row("HIST 101", "D", "completed", credit_hours=3.0)
+    first_attempt["id"] = "course-first"
+    second_attempt = _course_row("HIST 101", "B", "completed", credit_hours=3.0)
+    second_attempt["id"] = "course-second"
+    first_attempt["excluded_from_gpa_by"] = second_attempt["id"]
+    second_attempt["excluded_from_gpa_by"] = None
+
+    _patch_client(monkeypatch, make_tables(course_rows=[first_attempt, second_attempt]))
+
+    response = client.get("/api/v2/student/me/gpa", headers={"Authorization": "Bearer good-token"})
+    assert response.status_code == 200
+    body = response.json()
+
+    # Hand-computed: only the B counts. B = 3.0 points x 3.0 hours = 9.0
+    # quality points over 3.0 gpa_hours -> 3.0. Had the excluded D been
+    # counted too, this would be (9.0 + 3.0) / 6.0 = 2.0.
+    assert body["official"] == 3.0
+    assert body["projected"] == 3.0
+
+    # The excluded attempt is reported with the repeat-specific reason.
+    excluded = {(e["course_code"], e["reason"]) for e in body["excluded"]}
+    assert ("HIST 101", "excluded_by_repeat") in excluded
+    assert sum(1 for e in body["excluded"] if e["reason"] == "excluded_by_repeat") == 1
+
+    # Both attempts were completed and earned credit, so earned_hours keeps
+    # both -- only the grade points were dropped.
+    assert body["earned_hours"] == 6.0
+    assert body["completed_hours"] == 6.0

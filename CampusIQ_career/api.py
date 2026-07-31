@@ -28,6 +28,10 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from CampusIQ_career.academics.gpa import CourseRecord, GradeMapRow, Institution, compute_both
 from CampusIQ_career.ai.errors import AIConfigError
+from CampusIQ_career.ai.model_config import (
+    ROLES_VALIDATED_AT_STARTUP,
+    validate_configured_models,
+)
 from CampusIQ_career.ai.openrouter_client import (
     DEEPSEEK_R1_REASONING_TIMEOUT_SECONDS,
     OpenRouterClient,
@@ -452,9 +456,15 @@ def chat(request: Request, student_slug: str, body: ChatRequest) -> dict:
 
 
 # ── v2: Supabase-backed GPA endpoint ──────────────────────────────────────────
-# Auth here is the student's own bearer token (Supabase session JWT), not the
-# X-CampusIQ-Proxy-Secret shared secret used by the /api/students/* routes
-# above -- authorize_proxy_request does not apply to this route.
+# Auth here is the student's own bearer token (Supabase session JWT) and
+# nothing else: authorize_proxy_request does not apply to this route, so no
+# X-CampusIQ-Proxy-Secret header is required or checked.
+#
+# The /api/students/* routes above stack two different controls: the
+# X-CampusIQ-Proxy-Secret shared secret (authorize_proxy_request, proving the
+# request arrived through our own proxy) AND, for any slug outside
+# DEMO_STUDENT_SLUGS, a bearer token (authorize_student_access). The demo
+# fixtures are the one carve-out and need no token.
 
 BEARER_PREFIX = "Bearer "
 
@@ -529,6 +539,9 @@ def get_student_gpa(request: Request) -> dict:
             status=row["status"],
             institution_id=row["institution_id"],
             confirmed_at=row.get("confirmed_at"),
+            # .get(): the column arrives with select("*") once the
+            # repeat-policy migration is applied, and is absent before that.
+            excluded_from_gpa_by=row.get("excluded_from_gpa_by"),
         )
         for row in course_rows
     ]
@@ -568,6 +581,11 @@ def get_student_gpa(request: Request) -> dict:
 
 
 def create_app(config: APIConfig | None = None) -> FastAPI:
+    # Fail the deploy, not the first request: a placeholder model ID would
+    # otherwise surface as an opaque 502 (chat) or a silent status="failed"
+    # FeatureResult (analyze routes) only once a live call is attempted.
+    validate_configured_models(set(ROLES_VALIDATED_AT_STARTUP))
+
     active_config = config or APIConfig.from_env()
     application = FastAPI(
         title="Campus IQ AI Bridge",
