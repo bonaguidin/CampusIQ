@@ -1,5 +1,6 @@
 import itertools
 import json
+from pathlib import Path
 
 import pytest
 
@@ -401,3 +402,329 @@ def test_role_research_model_env_override_wins(monkeypatch):
     monkeypatch.setenv("CAMPUSIQ_MODEL_ROLE_RESEARCH", "openrouter/test-role-research-model")
 
     assert get_model_for_role("role_research") == "openrouter/test-role-research-model"
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Free-text bounds: _MAX_FIELD_CHARS per string, _MAX_LIST_ITEMS per list.
+#
+# Every field below reaches the GAP prompt verbatim (gap.py
+# _merge_requirements -> build_student_context -> base.py json.dumps), so
+# unbounded model output synthesized from third-party search results is the
+# injection surface these caps close. Reject, never truncate.
+# ═══════════════════════════════════════════════════════════════════════════
+
+
+def _payload_with(**overrides):
+    return dict(VALID_PAYLOAD, **overrides)
+
+
+# 1. Exactly at the cap passes -- boundary is inclusive.
+@pytest.mark.parametrize("field", agent._LIST_KEYS)
+def test_list_element_at_exactly_the_char_cap_passes(field):
+    at_cap = "x" * agent._MAX_FIELD_CHARS
+    client = FakeClient([_final_message(_payload_with(**{field: [at_cap]}))])
+
+    result = agent.get_role_requirements("Software Engineering Intern", client=client)
+
+    assert result is not None
+    assert result[field] == [at_cap]
+    assert len(result[field][0]) == 120
+
+
+def test_soc_title_at_exactly_the_char_cap_passes():
+    at_cap = "T" * agent._MAX_FIELD_CHARS
+    client = FakeClient([_final_message(_payload_with(soc_title=at_cap))])
+
+    result = agent.get_role_requirements("Software Engineering Intern", client=client)
+
+    assert result is not None
+    assert result["soc_title"] == at_cap
+
+
+# 2. One character over the cap fails the entry.
+@pytest.mark.parametrize("field", agent._LIST_KEYS)
+def test_list_element_one_over_the_char_cap_fails(field):
+    over_cap = "x" * (agent._MAX_FIELD_CHARS + 1)
+    client = FakeClient([_final_message(_payload_with(**{field: [over_cap]}))])
+
+    result = agent.get_role_requirements("Software Engineering Intern", client=client)
+
+    assert result is None
+    # Rejected content must not be persisted.
+    assert not agent._CACHE_PATH.exists()
+
+
+def test_soc_title_one_over_the_char_cap_fails():
+    client = FakeClient(
+        [_final_message(_payload_with(soc_title="T" * (agent._MAX_FIELD_CHARS + 1)))]
+    )
+
+    result = agent.get_role_requirements("Software Engineering Intern", client=client)
+
+    assert result is None
+    assert not agent._CACHE_PATH.exists()
+
+
+# 3. One oversized element rejects the WHOLE entry, not just that element.
+def test_one_oversized_element_rejects_the_entire_entry():
+    payload = _payload_with(
+        must_have_skills=[
+            "Python",
+            "x" * (agent._MAX_FIELD_CHARS + 1),  # the single offender
+            "Git",
+        ],
+        nice_to_have_skills=["Docker"],
+    )
+    client = FakeClient([_final_message(payload)])
+
+    result = agent.get_role_requirements("Software Engineering Intern", client=client)
+
+    # Not a filtered list -- nothing at all comes back.
+    assert result is None
+    assert not agent._CACHE_PATH.exists()
+
+
+# 4. A realistic response with ordinary skill/cert names passes unchanged.
+def test_realistic_role_research_response_passes_unchanged():
+    realistic = {
+        "soc_code": "13-2051.00",
+        "soc_title": "Financial and Investment Analysts",
+        "must_have_skills": [
+            "Financial modeling",
+            "Excel",
+            "Data analysis",
+            "Written communication",
+            "Attention to detail",
+        ],
+        "nice_to_have_skills": ["SQL", "Python", "Tableau", "Bloomberg Terminal"],
+        "must_have_certifications": [],
+        "nice_to_have_certifications": [
+            "Bloomberg Market Concepts (BMC)",
+            "CFA Level I candidate status",
+        ],
+    }
+    client = FakeClient([_final_message(realistic)])
+
+    result = agent.get_role_requirements("Finance Intern", client=client)
+
+    assert result == dict(realistic, soc_source="agent_onet_corroborated")
+    # Every field survived byte-for-byte -- no truncation, no reordering.
+    for key in agent._LIST_KEYS:
+        assert result[key] == realistic[key]
+
+
+def test_every_entry_in_the_real_cache_file_still_validates():
+    """The shipped cache must not be invalidated by the new bounds.
+
+    Guards against picking caps so tight that legitimate existing research is
+    evicted and silently re-fetched on the next GAP run.
+    """
+    real_cache = (
+        Path(__file__).resolve().parents[1] / "data" / ".cache" / "role_research_cache.json"
+    )
+    if not real_cache.exists():
+        pytest.skip("no real cache file checked in")
+
+    entries = json.loads(real_cache.read_text(encoding="utf-8"))
+    assert entries, "cache file is empty; this test would be vacuous"
+    for role, entry in entries.items():
+        assert agent._validate_schema(entry) is not None, f"{role} no longer validates"
+
+
+# 5. A pre-existing on-disk entry that violates the new bounds is a cache
+#    MISS on read, not an exception -- matching the module's fail-safe pattern.
+def test_preexisting_oversized_cache_entry_is_treated_as_a_miss():
+    # Written directly to the cache path, bypassing validation entirely --
+    # exactly how an entry created before these bounds existed would look.
+    agent._CACHE_PATH.parent.mkdir(parents=True, exist_ok=True)
+    agent._CACHE_PATH.write_text(
+        json.dumps(
+            {
+                "Software Engineering Intern": dict(
+                    VALID_PAYLOAD,
+                    soc_source="agent",
+                    must_have_skills=["y" * 500],  # far over the cap
+                )
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    # No exception: the stale entry is ignored and the agent runs instead.
+    client = FakeClient([_tool_call_message(), _final_message(VALID_PAYLOAD)])
+    result = agent.get_role_requirements("Software Engineering Intern", client=client)
+
+    assert result == EXPECTED_VALID_RESULT
+    assert len(client.calls) == 2  # cache miss honored, agent actually invoked
+
+
+def test_preexisting_overlong_list_cache_entry_is_treated_as_a_miss():
+    agent._CACHE_PATH.parent.mkdir(parents=True, exist_ok=True)
+    agent._CACHE_PATH.write_text(
+        json.dumps(
+            {
+                "Software Engineering Intern": dict(
+                    VALID_PAYLOAD,
+                    soc_source="agent",
+                    nice_to_have_skills=[f"skill-{i}" for i in range(agent._MAX_LIST_ITEMS + 1)],
+                )
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    client = FakeClient([_tool_call_message(), _final_message(VALID_PAYLOAD)])
+    result = agent.get_role_requirements("Software Engineering Intern", client=client)
+
+    assert result == EXPECTED_VALID_RESULT
+    assert len(client.calls) == 2
+
+
+# 6. Already-constrained fields are unaffected by the new length bound.
+def test_soc_code_is_unaffected_by_the_char_cap():
+    # A valid SOC code is 10 chars -- nowhere near the cap, and its own regex
+    # is what constrains it. Still accepted exactly as before.
+    client = FakeClient([_final_message(_payload_with(soc_code="17-2072.00"))])
+
+    result = agent.get_role_requirements("Embedded Systems Intern", client=client)
+
+    assert result is not None
+    assert result["soc_code"] == "17-2072.00"
+    assert len(result["soc_code"]) < agent._MAX_FIELD_CHARS
+
+
+def test_malformed_soc_code_still_rejected_for_format_not_length():
+    # Short enough to clear any length bound, still rejected on format --
+    # proves the regex gate is untouched by the new checks.
+    client = FakeClient([_final_message(_payload_with(soc_code="not-a-code"))])
+
+    result = agent.get_role_requirements("Software Engineering Intern", client=client)
+
+    assert result is None
+
+
+def test_empty_lists_remain_valid():
+    # The cap is an upper bound only; empty is still legitimate (every real
+    # cache entry has must_have_certifications == []).
+    payload = _payload_with(
+        must_have_skills=[],
+        nice_to_have_skills=[],
+        must_have_certifications=[],
+        nice_to_have_certifications=[],
+    )
+    client = FakeClient([_final_message(payload)])
+
+    result = agent.get_role_requirements("Software Engineering Intern", client=client)
+
+    assert result is not None
+    assert result["must_have_skills"] == []
+
+
+# 7. Exactly at the list cap passes.
+@pytest.mark.parametrize("field", agent._LIST_KEYS)
+def test_list_with_exactly_the_item_cap_passes(field):
+    at_cap = [f"skill-{i}" for i in range(agent._MAX_LIST_ITEMS)]
+    client = FakeClient([_final_message(_payload_with(**{field: at_cap}))])
+
+    result = agent.get_role_requirements("Software Engineering Intern", client=client)
+
+    assert result is not None
+    assert len(result[field]) == 20
+
+
+# 8. One element over the list cap fails.
+@pytest.mark.parametrize("field", agent._LIST_KEYS)
+def test_list_one_over_the_item_cap_fails(field):
+    over_cap = [f"skill-{i}" for i in range(agent._MAX_LIST_ITEMS + 1)]
+    client = FakeClient([_final_message(_payload_with(**{field: over_cap}))])
+
+    result = agent.get_role_requirements("Software Engineering Intern", client=client)
+
+    assert result is None
+    assert not agent._CACHE_PATH.exists()
+
+
+def test_many_short_items_cannot_bypass_the_char_cap():
+    # The volume expression of the same injection surface: each item is well
+    # under the char cap, but the list as a whole is not.
+    payload = _payload_with(must_have_skills=["ok"] * 200)
+    client = FakeClient([_final_message(payload)])
+
+    assert agent.get_role_requirements("Software Engineering Intern", client=client) is None
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# soc_source is a machine-set provenance tag, not free text: it must be one
+# of the two values _run_tool_loop assigns, or absent entirely.
+# ═══════════════════════════════════════════════════════════════════════════
+
+
+# A valid soc_source in the set passes on re-validation (the _read_cache path).
+@pytest.mark.parametrize("valid_source", sorted(agent._VALID_SOC_SOURCES))
+def test_valid_soc_source_passes_on_cache_read(valid_source):
+    agent._CACHE_PATH.parent.mkdir(parents=True, exist_ok=True)
+    agent._CACHE_PATH.write_text(
+        json.dumps(
+            {"Software Engineering Intern": dict(VALID_PAYLOAD, soc_source=valid_source)}
+        ),
+        encoding="utf-8",
+    )
+
+    # Ran out of scripted responses would raise -- a cache HIT is required here.
+    client = FakeClient([])
+    result = agent.get_role_requirements("Software Engineering Intern", client=client)
+
+    assert result == dict(VALID_PAYLOAD, soc_source=valid_source)
+    assert client.calls == []  # served from cache, agent never invoked
+
+
+def test_valid_soc_source_set_matches_what_the_write_path_assigns():
+    assert agent._VALID_SOC_SOURCES == {"agent", "agent_onet_corroborated"}
+    # Both tags are actually reachable from a real lookup: EXPECTED_VALID_RESULT
+    # carries "agent", and the corroborated payload carries the other.
+    assert EXPECTED_VALID_RESULT["soc_source"] in agent._VALID_SOC_SOURCES
+
+
+# An arbitrary soc_source fails and is treated as a miss on read.
+@pytest.mark.parametrize(
+    "bad_source",
+    ["admin", "", "AGENT", "agent ", "static", "agent_onet", None, 1, ["agent"], {"a": 1}],
+)
+def test_arbitrary_soc_source_is_treated_as_a_cache_miss(bad_source):
+    agent._CACHE_PATH.parent.mkdir(parents=True, exist_ok=True)
+    agent._CACHE_PATH.write_text(
+        json.dumps({"Software Engineering Intern": dict(VALID_PAYLOAD, soc_source=bad_source)}),
+        encoding="utf-8",
+    )
+
+    # No exception -- including for the unhashable list/dict cases, which would
+    # raise TypeError from a bare `in <set>` check.
+    client = FakeClient([_tool_call_message(), _final_message(VALID_PAYLOAD)])
+    result = agent.get_role_requirements("Software Engineering Intern", client=client)
+
+    assert result == EXPECTED_VALID_RESULT
+    assert len(client.calls) == 2  # miss honored, agent actually re-ran
+
+
+def test_model_supplied_bogus_soc_source_rejects_the_entry_on_write():
+    # The model does not normally emit soc_source at all, but if it does, a
+    # bogus value now fails validation rather than being silently overwritten.
+    client = FakeClient([_final_message(dict(VALID_PAYLOAD, soc_source="admin"))])
+
+    result = agent.get_role_requirements("Software Engineering Intern", client=client)
+
+    assert result is None
+    assert not agent._CACHE_PATH.exists()
+
+
+def test_absent_soc_source_remains_valid_so_the_write_path_still_works():
+    # Freshly parsed agent JSON carries no soc_source; _validate_schema must
+    # accept that and let _run_tool_loop assign the tag afterwards.
+    assert "soc_source" not in VALID_PAYLOAD
+    assert agent._validate_schema(VALID_PAYLOAD) is not None
+
+    client = FakeClient([_final_message(VALID_PAYLOAD)])
+    result = agent.get_role_requirements("Software Engineering Intern", client=client)
+
+    assert result == EXPECTED_VALID_RESULT
+    assert result["soc_source"] == "agent"

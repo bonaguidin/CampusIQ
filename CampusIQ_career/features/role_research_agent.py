@@ -116,6 +116,30 @@ _LIST_KEYS = (
     "nice_to_have_certifications",
 )
 
+# Bounds on the free-text surface of a validated entry.
+#
+# Everything in _LIST_KEYS (plus soc_title) originates as model output
+# synthesized from third-party web-search results, and reaches the GAP prompt
+# verbatim via gap.py's _merge_requirements -> build_student_context. Shape
+# checks alone let a poisoned search result put arbitrarily long, arbitrarily
+# many instruction-shaped strings into that prompt. These two caps bound both
+# expressions of that surface: per-item length and item count.
+#
+# soc_code is deliberately NOT bounded here -- _SOC_CODE_PATTERN already pins
+# it to exactly 10 characters, which is far tighter than any length cap.
+#
+# Sized against the real cache (14 entries, 2026-07): longest element 71 chars,
+# longest list 15 items, longest soc_title 58 chars. Both caps clear current
+# legitimate content with room to spare, so tightening does not evict working
+# entries and force needless re-research.
+_MAX_FIELD_CHARS = 120
+_MAX_LIST_ITEMS = 20
+
+# The only two values _run_tool_loop ever assigns to soc_source. Kept in sync
+# with that assignment; if a third provenance tag is ever introduced, add it
+# here or every entry carrying it will fail validation and re-research.
+_VALID_SOC_SOURCES = frozenset({"agent", "agent_onet_corroborated"})
+
 
 def _onet_corroborated_codes() -> frozenset[str]:
     """SOC codes present in the small genuinely-O*NET-sourced catalog.
@@ -184,11 +208,23 @@ def _execute_tool_call(name: str, arguments: Mapping[str, Any]) -> str:
 
 
 def _validate_schema(data: Any) -> dict[str, Any] | None:
-    """Validate shape and soc_code *format* only -- not membership in any
-    curated allowlist. A well-formed but previously-unseen SOC code (the
-    agent doing real, correct research beyond the static file's 14
-    hand-picked roles) must be accepted, not discarded to static fallback.
+    """Validate shape, soc_code *format*, and free-text bounds -- not
+    membership in any curated allowlist. A well-formed but previously-unseen
+    SOC code (the agent doing real, correct research beyond the static file's
+    14 hand-picked roles) must be accepted, not discarded to static fallback.
     See soc_source (added by callers) for how much to trust a given code.
+
+    Free-text fields are additionally bounded: every string is capped at
+    _MAX_FIELD_CHARS and every list at _MAX_LIST_ITEMS. Oversized content is
+    REJECTED, never truncated -- a partial skill name is worse than no entry,
+    and truncation would silently admit the first 120 characters of an
+    injection payload.
+
+    This runs on both paths, so the bounds apply identically to freshly
+    researched content (_run_tool_loop, before caching) and to entries already
+    on disk (_read_cache). A pre-existing entry that violates the new bounds
+    simply fails here and is treated as a cache miss, matching the module's
+    existing fail-safe behavior -- never an exception.
     """
     if not isinstance(data, Mapping):
         return None
@@ -197,9 +233,12 @@ def _validate_schema(data: Any) -> dict[str, Any] | None:
 
     soc_code = data.get("soc_code")
     soc_title = data.get("soc_title")
+    # soc_code is length-checked by _SOC_CODE_PATTERN, not _MAX_FIELD_CHARS.
     if not isinstance(soc_code, str) or not _SOC_CODE_PATTERN.match(soc_code.strip()):
         return None
     if not isinstance(soc_title, str) or not soc_title.strip():
+        return None
+    if len(soc_title) > _MAX_FIELD_CHARS:
         return None
 
     validated: dict[str, Any] = {"soc_code": soc_code, "soc_title": soc_title}
@@ -207,12 +246,30 @@ def _validate_schema(data: Any) -> dict[str, Any] | None:
         value = data.get(key)
         if not isinstance(value, list) or not all(isinstance(item, str) for item in value):
             return None
+        if len(value) > _MAX_LIST_ITEMS:
+            return None
+        # One oversized element rejects the whole entry, not just that item:
+        # dropping items would hand the caller a silently incomplete list.
+        if any(len(item) > _MAX_FIELD_CHARS for item in value):
+            return None
         validated[key] = value
-    if isinstance(data.get("soc_source"), str):
-        # Preserves a cached entry's original provenance on re-validation
-        # (_read_cache) -- freshly parsed agent JSON never has this key, so
-        # _run_tool_loop sets it explicitly after calling this function.
-        validated["soc_source"] = data["soc_source"]
+    # soc_source is OPTIONAL-but-constrained. Absent is valid: freshly parsed
+    # agent JSON never carries it, and _run_tool_loop assigns it immediately
+    # after this function returns. Present means it must be one of the two
+    # values that write path ever assigns -- this is a machine-set provenance
+    # tag, not free text, so anything else indicates a hand-edited or corrupted
+    # cache entry and fails the whole entry.
+    #
+    # The isinstance guard is load-bearing, not redundant: a JSON-decoded
+    # cache value can be an unhashable list/dict, and `x in <set>` raises
+    # TypeError on those. _read_cache is called outside get_role_requirements'
+    # try/except, so a raised TypeError would escape into gap.py rather than
+    # degrading to a cache miss.
+    if "soc_source" in data:
+        soc_source = data["soc_source"]
+        if not isinstance(soc_source, str) or soc_source not in _VALID_SOC_SOURCES:
+            return None
+        validated["soc_source"] = soc_source
     return validated
 
 
