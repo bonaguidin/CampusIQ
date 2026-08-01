@@ -45,7 +45,11 @@ export const staticJsonAdapter: DataAdapter = {
     }
     const data = (await response.json()) as StudentProfile;
 
-    if (data.career === null) {
+    // `== null` matches both null and undefined on purpose: a profile that
+    // omits the `career` key entirely left it undefined, which the previous
+    // strict `=== null` check missed, so the fallback never fired and every
+    // downstream `career.target_roles` access threw.
+    if (data.career == null) {
       data.career = emptyCareerBlock();
     }
 

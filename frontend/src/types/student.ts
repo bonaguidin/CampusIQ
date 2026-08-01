@@ -10,7 +10,9 @@ export interface StudentBlock {
   major_intended: string; // READ-ONLY, display only
   classification: string;
   institution: string;
-  gpa_current: number;
+  // Null for a student with no completed, GPA-eligible coursework: gpa.py's
+  // compute_gpa returns None when gpa_hours is 0. Every render site must guard.
+  gpa_current: number | null;
   expected_graduation: string;
 }
 

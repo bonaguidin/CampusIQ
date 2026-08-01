@@ -130,7 +130,7 @@ return (
       <div className="overview-stats">
         <div className="overview-stat">
           <span className="overview-stat-value">
-            {student.gpa_current.toFixed(2)}
+            {student.gpa_current !== null ? student.gpa_current.toFixed(2) : '—'}
           </span>
           <span className="overview-stat-label">GPA</span>
         </div>
@@ -313,7 +313,9 @@ export function DashboardPage() {
           <div className="rail-meta">
             <span>{student.classification}</span>
             <span className="rail-dot" aria-hidden="true">·</span>
-            <span className="rail-gpa">{student.gpa_current.toFixed(2)}</span>
+            <span className="rail-gpa">
+              {student.gpa_current !== null ? student.gpa_current.toFixed(2) : '—'}
+            </span>
           </div>
         </div>
 

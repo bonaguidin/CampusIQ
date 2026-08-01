@@ -1,0 +1,34 @@
+-- Remove anon's write grants on the two public-read reference tables.
+--
+-- Verification (2026-08-01, read-only against the live database):
+-- information_schema.role_table_grants showed anon holding
+--   DELETE, INSERT, REFERENCES, SELECT, TRIGGER, TRUNCATE, UPDATE
+-- on BOTH institutions and grade_point_map -- the Supabase default
+-- `GRANT ALL ON ALL TABLES IN SCHEMA public TO anon, authenticated`.
+--
+-- Nothing is exploitable today: each table has exactly one policy,
+-- SELECT-only (institutions_read_public / grade_point_map_read_public, both
+-- `USING (true)` for {anon, authenticated}), and PostgreSQL RLS default-denies
+-- any command with no permissive policy. But the grant is a loaded gun: adding
+-- a single write policy to either table -- or any future `USING (true)` -- would
+-- become anon-writable immediately, with no second barrier.
+--
+-- The blast radius if that happened is not cosmetic. grade_point_map is the
+-- scoring authority for every GPA the product computes
+-- (CampusIQ_career/api.py reads it directly into compute_both), so an anonymous
+-- write there silently corrupts every student's GPA rather than failing loudly.
+--
+-- SELECT is deliberately NOT revoked: both public-read policies depend on it,
+-- the frontend reads institutions for brand theming
+-- (frontend/src/lib/institutionTheme.ts), and api.py reads grade_point_map on
+-- the GPA path. REFERENCES and TRIGGER are left alone as well -- neither
+-- permits data modification, and both are out of scope here.
+--
+-- Scoped to these two tables only. The eight student tables keep their grants;
+-- they are protected by owner-scoped RLS policies (…_owner_all) rather than by
+-- grant removal, and revoking there would break authenticated writes.
+--
+-- Not applied. DDL only.
+
+revoke insert, update, delete, truncate on institutions from anon;
+revoke insert, update, delete, truncate on grade_point_map from anon;

@@ -253,3 +253,62 @@ def test_repeat_excluded_attempt_is_dropped_from_gpa(client, monkeypatch):
     # both -- only the grade points were dropped.
     assert body["earned_hours"] == 6.0
     assert body["completed_hours"] == 6.0
+
+
+# 10. An institution with a home relationship but zero grade_point_map rows
+#     returns 409, not a 200 carrying a silently-null GPA.
+def test_institution_with_no_grade_map_returns_409(client, monkeypatch):
+    tables = make_tables(
+        course_rows=[_course_row("ENGR 102", "A", "completed", credit_hours=3.0)]
+    )
+    tables["grade_point_map"] = []  # institution exists, scale does not
+    _patch_client(monkeypatch, tables)
+
+    response = client.get("/api/v2/student/me/gpa", headers={"Authorization": "Bearer good-token"})
+
+    assert response.status_code == 409
+    assert response.status_code != 200
+    detail = response.json()["detail"]
+    assert "grading scale" in detail
+    # No GPA payload leaks through the error envelope.
+    assert set(response.json()) == {"detail"}
+
+
+def test_no_grade_map_409_is_distinct_from_the_other_two_409s(client, monkeypatch):
+    """All three missing-reference-data cases use 409 but say different things."""
+    details = {}
+
+    tables = make_tables(include_home=False)
+    _patch_client(monkeypatch, tables)
+    r = client.get("/api/v2/student/me/gpa", headers={"Authorization": "Bearer good-token"})
+    assert r.status_code == 409
+    details["no_home"] = r.json()["detail"]
+
+    tables = make_tables(include_institution=False)
+    _patch_client(monkeypatch, tables)
+    r = client.get("/api/v2/student/me/gpa", headers={"Authorization": "Bearer good-token"})
+    assert r.status_code == 409
+    details["no_institution"] = r.json()["detail"]
+
+    tables = make_tables()
+    tables["grade_point_map"] = []
+    _patch_client(monkeypatch, tables)
+    r = client.get("/api/v2/student/me/gpa", headers={"Authorization": "Bearer good-token"})
+    assert r.status_code == 409
+    details["no_grade_map"] = r.json()["detail"]
+
+    # Three distinct, actionable messages -- not one generic 409.
+    assert len(set(details.values())) == 3
+
+
+def test_grade_map_present_still_returns_200(client, monkeypatch):
+    """Guard against the new 409 firing when a scale genuinely exists."""
+    _patch_client(
+        monkeypatch,
+        make_tables(course_rows=[_course_row("ENGR 102", "A", "completed", credit_hours=3.0)]),
+    )
+
+    response = client.get("/api/v2/student/me/gpa", headers={"Authorization": "Bearer good-token"})
+
+    assert response.status_code == 200
+    assert response.json()["official"] == 4.0

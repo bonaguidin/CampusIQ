@@ -584,6 +584,14 @@ def get_student_gpa(request: Request) -> dict:
         .execute()
         .data
     )
+    if not grade_map_rows:
+        # Without a scale, every letter resolves "unmapped" and the endpoint
+        # would return 200 with gpa null and every course excluded -- a silent
+        # wrong answer dressed as a real one. Missing reference data is the same
+        # class of problem as the two 409s above, so it fails the same way.
+        raise HTTPException(
+            status_code=409, detail="Home institution has no grading scale on record."
+        )
     grade_map = {
         row["letter"]: GradeMapRow(
             letter=row["letter"],
