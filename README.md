@@ -10,7 +10,7 @@ Dallas AI Group 6 | 2026 Summer Cohort.
 - [uv](https://docs.astral.sh/uv/getting-started/installation/) — Python package manager
 - Node.js 20+ for the React/Vite frontend
 - An OpenRouter API key for the primary Campus IQ AI path
-- A shared `CAMPUSIQ_PROXY_SECRET` for the Vite/Vercel server-side proxy and backend
+- A shared `CAMPUSIQ_PROXY_SECRET` for the Vite/Vercel server-side proxy and backend.
 
 ---
 
