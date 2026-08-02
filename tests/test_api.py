@@ -1158,3 +1158,95 @@ def test_demo_cache_lives_outside_frontend_public():
     from CampusIQ_career.demo import build_demo_cache as bdc
 
     assert bdc._OUTPUT_DIR == REAL_CACHED_ANALYSIS_DIR
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Postgres-backed profile wiring: demo slugs must stay on the JSON path, and
+# build_client_for_token failures must map to 503 everywhere.
+# ═══════════════════════════════════════════════════════════════════════════
+
+
+# 5. A demo slug never invokes the Postgres builder at any of the three sites.
+@pytest.mark.parametrize(
+    ("method", "suffix", "body"),
+    [
+        ("get", "profile", None),
+        ("post", "analyze/gap", None),
+        ("post", "chat", {"message": "hi", "history": []}),
+    ],
+    ids=["profile", "analyze", "chat"],
+)
+def test_demo_slug_never_calls_the_postgres_builder(method, suffix, body, client, monkeypatch):
+    monkeypatch.setattr(
+        api,
+        "build_profile_from_supabase",
+        lambda *a, **k: pytest.fail("demo slugs must not hit Postgres"),
+    )
+    monkeypatch.setattr(
+        api,
+        "build_client_for_token",
+        lambda t: pytest.fail("demo slugs must not build a DB client"),
+    )
+    monkeypatch.setattr(api, "build_client", lambda: FakeClient(FEATURE_JSON))
+
+    kwargs = {"json": body} if body is not None else {}
+    response = getattr(client, method)(f"/api/students/jordanReyes/{suffix}", **kwargs)
+
+    assert response.status_code == 200
+
+
+# 8. SupabaseConfigError -> 503, including at the pre-existing GPA route.
+def test_supabase_config_error_maps_to_503_on_gpa_route(client, monkeypatch):
+    from CampusIQ_career.supabase_client import SupabaseConfigError
+
+    def boom(token):
+        raise SupabaseConfigError("SUPABASE_URL is not set.")
+
+    monkeypatch.setattr(api, "build_client_for_token", boom)
+
+    response = client.get("/api/v2/student/me/gpa", headers={"Authorization": "Bearer tok"})
+
+    assert response.status_code == 503
+    assert "SUPABASE_URL" in response.json()["detail"]
+
+
+def test_supabase_config_error_maps_to_503_not_500(client, monkeypatch):
+    """Regression guard: this previously surfaced as an unhandled 500."""
+    from CampusIQ_career.supabase_client import SupabaseConfigError
+
+    monkeypatch.setattr(
+        api,
+        "build_client_for_token",
+        lambda t: (_ for _ in ()).throw(SupabaseConfigError("SUPABASE_PUBLISHABLE_KEY is not set.")),
+    )
+
+    response = client.get("/api/v2/student/me/gpa", headers={"Authorization": "Bearer tok"})
+
+    assert response.status_code == 503
+    assert response.status_code != 500
+
+
+# Structural finding, pinned as a test: the Postgres path is currently
+# unreachable through the three slug-addressed routes, because
+# authorize_student_access denies every non-demo slug with 403 before any
+# profile is loaded. If that changes, this test fails and the wiring above
+# becomes live -- which is the intended signal, not a regression.
+def test_non_demo_slug_is_denied_before_the_postgres_path_is_reached(client, monkeypatch):
+    calls = {"builder": 0}
+
+    def counting_builder(*args, **kwargs):
+        calls["builder"] += 1
+        raise AssertionError("unreachable today")
+
+    monkeypatch.setattr(api, "build_profile_from_supabase", counting_builder)
+    monkeypatch.setattr(
+        api, "build_client_for_token", lambda t: _StudentsOnlyClient([{"id": "uuid-1"}])
+    )
+
+    response = client.get(
+        f"/api/students/{NON_DEMO_SLUG}/profile",
+        headers={**PROXY_HEADERS, "Authorization": "Bearer tok"},
+    )
+
+    assert response.status_code == 403
+    assert calls["builder"] == 0

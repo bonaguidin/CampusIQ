@@ -38,6 +38,7 @@ from CampusIQ_career.ai.openrouter_client import (
 )
 from CampusIQ_career.features.base import FeatureResult
 from CampusIQ_career.features.orchestrator import RUNNERS, run_feature
+from CampusIQ_career.profile_builder import build_profile_from_supabase
 from CampusIQ_career.supabase_client import SupabaseConfigError, build_client_for_token
 
 
@@ -259,6 +260,56 @@ def authorize_student_access(request: Request, student_slug: str) -> None:
 router = APIRouter()
 
 
+def _session_client(request: Request):
+    """Session-scoped Supabase client for the caller, or a mapped HTTPException.
+
+    Centralizes the SupabaseConfigError -> 503 mapping that was previously done
+    in authorize_student_access but NOT in the v2 GPA route, where a missing
+    SUPABASE_URL / SUPABASE_PUBLISHABLE_KEY surfaced as an unhandled 500.
+    """
+    token = _bearer_token_from_request(request)
+    try:
+        return build_client_for_token(token)
+    except SupabaseConfigError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+
+def _resolve_session_student_id(client) -> str:
+    """The caller's own students.id, resolved through RLS.
+
+    No filter and no identifier from the request -- identical to the sequence
+    the v2 GPA route uses. RLS narrows `students` to the row owned by the token.
+    """
+    try:
+        student_rows = client.table("students").select("*").execute().data
+    except Exception as exc:  # noqa: BLE001 -- an unverifiable session is denied
+        raise HTTPException(status_code=401, detail="Could not verify session.") from exc
+    if not student_rows:
+        raise HTTPException(status_code=404, detail="No student profile visible for this session.")
+    return student_rows[0]["id"]
+
+
+def load_profile_for_slug(request: Request, student_slug: str) -> dict:
+    """Demo slugs come from JSON on disk; real students come from Postgres.
+
+    The demo fixtures have no rows in Postgres at all -- their data lives only
+    in data/students/*.json -- so the split is not a preference, it is the only
+    way either kind of student resolves.
+
+    Real students get a profile whose student.id is a UUID, which will never
+    match a demo cache entry keyed on 601-605. That is correct (real students
+    have no prebuilt cache) and verified safe: load_cached_feature_result
+    compares with str() on both sides and returns None on mismatch, and the
+    cache file for a real slug does not exist in the first place.
+    """
+    if student_slug in DEMO_STUDENT_SLUGS:
+        return load_student_profile(student_slug)
+
+    client = _session_client(request)
+    student_id = _resolve_session_student_id(client)
+    return build_profile_from_supabase(client, student_id).profile
+
+
 def load_student_profile(student_slug: str) -> dict:
     if not student_slug.isalnum() or len(student_slug) > 64:
         raise HTTPException(status_code=404, detail=f"Unknown student '{student_slug}'.")
@@ -377,7 +428,7 @@ def run_feature_with_fallback(feature_name: str, student_slug: str, profile: dic
 def _run_protected_feature(request: Request, feature_name: str, student_slug: str) -> dict:
     """Serve a validated cache hit, otherwise run live work within capacity."""
     authorize_student_access(request, student_slug)
-    profile = load_student_profile(student_slug)
+    profile = load_profile_for_slug(request, student_slug)
     student_id = profile.get("student", {}).get("id")
     cached = load_cached_feature_result(student_slug, feature_name, student_id)
     if cached is not None:
@@ -420,7 +471,7 @@ def get_student_profile(request: Request, student_slug: str) -> dict:
     """
     authorize_student_access(request, student_slug)
     try:
-        return load_student_profile(student_slug)
+        return load_profile_for_slug(request, student_slug)
     except HTTPException:
         # 401/403/404 from authorization, and 404 for an unknown slug, are all
         # meaningful to the caller and pass through untouched.
@@ -509,7 +560,7 @@ def chat(request: Request, student_slug: str, body: ChatRequest) -> dict:
     authorize_student_access(request, student_slug)
     if not body.message or not body.message.strip():
         raise HTTPException(status_code=400, detail="Message is required.")
-    profile = load_student_profile(student_slug)
+    profile = load_profile_for_slug(request, student_slug)
     analysis = load_analysis_bundle(student_slug)
     messages = build_chat_messages(profile, analysis, body)
     try:
@@ -548,8 +599,7 @@ def _bearer_token_from_request(request: Request) -> str:
 
 @router.get("/api/v2/student/me/gpa")
 def get_student_gpa(request: Request) -> dict:
-    token = _bearer_token_from_request(request)
-    client = build_client_for_token(token)
+    client = _session_client(request)
 
     student_rows = client.table("students").select("*").execute().data
     if not student_rows:
