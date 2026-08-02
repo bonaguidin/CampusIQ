@@ -112,15 +112,18 @@ def _career_block(
     }
 
 
-def _student_block(student_row: Mapping[str, Any]) -> dict[str, Any]:
+def _student_block(
+    student_row: Mapping[str, Any], institution_name: str | None
+) -> dict[str, Any]:
     """Shape the students row like the JSON student block.
 
-    Two fields the JSON carries have no column to source them from:
-      * gpa_current -- deliberately absent from the schema (GPA is always
-        derived; see the students table comment in the first migration).
-        Emitted as None so the key exists and consumers can guard on it.
-      * institution -- lives behind a student_institutions join, out of scope
-        for this builder. Omitted rather than guessed.
+    gpa_current has no column to source it from -- it is deliberately absent
+    from the schema (GPA is always derived; see the students table comment in
+    the first migration). Emitted as None so the key exists and consumers can
+    guard on it.
+
+    `institution` is resolved by the caller via _resolve_institution_name and
+    passed in, since it needs its own two-hop query.
 
     auth_user_id / created_at / updated_at are projected out: they are not in
     the JSON shape and auth_user_id in particular has no business in a payload
@@ -134,8 +137,49 @@ def _student_block(student_row: Mapping[str, Any]) -> dict[str, Any]:
         "major_intended": student_row.get("major_intended"),
         "expected_graduation": student_row.get("expected_graduation"),
         "onboarding_stage": student_row.get("onboarding_stage"),
+        "institution": institution_name,
         "gpa_current": None,
     }
+
+
+def _resolve_institution_name(client: Any, student_id: str) -> str | None:
+    """The student's home institution name, or None if it can't be resolved.
+
+    Same two-hop join GET /api/v2/student/me/gpa performs: student_institutions
+    filtered to relationship='home', then institutions by id.
+
+    Deliberately does NOT raise where the GPA route raises 409. That route is
+    computing a GPA, which is meaningless without a grading scale, so incomplete
+    reference data has to stop it. This constructor's job is to produce the best
+    available profile -- a student with no home institution still has a name, a
+    major, and a career block worth analyzing, and FIT/GAP/SHIFT read
+    `institution` only as prompt context. Duplicating the 409s here would make a
+    recoverable gap fatal at a layer that has no need to enforce it.
+    """
+    home_rows = (
+        client.table("student_institutions")
+        .select("institution_id")
+        .eq("student_id", student_id)
+        .eq("relationship", "home")
+        .execute()
+        .data
+    )
+    if not home_rows:
+        return None
+
+    institution_rows = (
+        client.table("institutions")
+        .select("*")
+        .eq("id", home_rows[0]["institution_id"])
+        .execute()
+        .data
+    )
+    if not institution_rows:
+        # Unreachable given the FK on student_institutions.institution_id, but
+        # a dangling reference must degrade to null rather than IndexError.
+        return None
+
+    return institution_rows[0].get("name")
 
 
 def build_profile_from_supabase(client: Any, student_id: str) -> ProfileBuildResult:
@@ -158,6 +202,10 @@ def build_profile_from_supabase(client: Any, student_id: str) -> ProfileBuildRes
         raise LookupError(f"No students row visible for id {student_id!r}.")
     student_row = student_rows[0]
 
+    # Resolved before any early return so the student block is identical
+    # whether or not a career_profiles row exists.
+    institution_name = _resolve_institution_name(client, student_id)
+
     career_rows = (
         client.table("career_profiles").select("*").eq("student_id", student_id).execute().data
     )
@@ -167,7 +215,10 @@ def build_profile_from_supabase(client: Any, student_id: str) -> ProfileBuildRes
     # No career_profiles row at all -- distinct from an unconfirmed one.
     if not career_rows:
         return ProfileBuildResult(
-            profile={"student": _student_block(student_row), "career": None},
+            profile={
+                "student": _student_block(student_row, institution_name),
+                "career": None,
+            },
             exclusions=exclusions,
         )
 
@@ -182,7 +233,10 @@ def build_profile_from_supabase(client: Any, student_id: str) -> ProfileBuildRes
     if career_row.get("confirmed_at") is None:
         exclusions.append((career_row, UNCONFIRMED_REASON))
         return ProfileBuildResult(
-            profile={"student": _student_block(student_row), "career": None},
+            profile={
+                "student": _student_block(student_row, institution_name),
+                "career": None,
+            },
             exclusions=exclusions,
         )
 
@@ -195,7 +249,7 @@ def build_profile_from_supabase(client: Any, student_id: str) -> ProfileBuildRes
 
     return ProfileBuildResult(
         profile={
-            "student": _student_block(student_row),
+            "student": _student_block(student_row, institution_name),
             "career": _career_block(career_row, children),
         },
         exclusions=exclusions,

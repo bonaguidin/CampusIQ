@@ -97,8 +97,32 @@ def _child(table, sid="uuid-student-1", confirmed=CONFIRMED, **fields):
     return base
 
 
-def _tables(career_confirmed=CONFIRMED, include_career=True, children=None):
+INSTITUTION_ID = "uuid-inst-1"
+INSTITUTION_NAME = "Texas A&M University"
+
+
+def _tables(
+    career_confirmed=CONFIRMED,
+    include_career=True,
+    children=None,
+    include_home=True,
+    include_institution=True,
+):
     t = {"students": [_student_row()]}
+    t["student_institutions"] = (
+        [
+            {
+                "student_id": "uuid-student-1",
+                "institution_id": INSTITUTION_ID,
+                "relationship": "home",
+            }
+        ]
+        if include_home
+        else []
+    )
+    t["institutions"] = (
+        [{"id": INSTITUTION_ID, "name": INSTITUTION_NAME}] if include_institution else []
+    )
     t["career_profiles"] = [_career_row(confirmed=career_confirmed)] if include_career else []
     defaults = {
         "certifications": [
@@ -282,3 +306,109 @@ def test_gap_with_all_unconfirmed_work_experience_is_skipped():
     assert outcome["status"] == "skipped"
     assert outcome["summary"] == "Missing required fields for this feature."
     assert any("career.work_experience" in e for e in outcome["errors"])
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Home-institution join.
+#
+# Same two-hop query the GPA route performs, but degrading to null instead of
+# raising 409: this constructor produces the best available profile, it does
+# not enforce reference-data integrity that other layers already guard.
+# ═══════════════════════════════════════════════════════════════════════════
+
+
+# 1. Home institution present -> its name string.
+def test_home_institution_name_is_resolved():
+    result = build_profile_from_supabase(FakeSupabase(_tables()), "uuid-student-1")
+
+    assert result.profile["student"]["institution"] == INSTITUTION_NAME
+    assert isinstance(result.profile["student"]["institution"], str)
+
+
+def test_only_the_home_relationship_is_used():
+    tables = _tables()
+    # A transfer institution must not win over (or stand in for) the home one.
+    tables["student_institutions"] = [
+        {
+            "student_id": "uuid-student-1",
+            "institution_id": "uuid-inst-transfer",
+            "relationship": "transfer",
+        }
+    ] + tables["student_institutions"]
+    tables["institutions"] = [
+        {"id": "uuid-inst-transfer", "name": "Some Community College"},
+        {"id": INSTITUTION_ID, "name": INSTITUTION_NAME},
+    ]
+
+    result = build_profile_from_supabase(FakeSupabase(tables), "uuid-student-1")
+
+    assert result.profile["student"]["institution"] == INSTITUTION_NAME
+
+
+# 2. No student_institutions row at all -> null, no exception.
+def test_no_home_institution_row_yields_null_institution():
+    result = build_profile_from_supabase(
+        FakeSupabase(_tables(include_home=False)), "uuid-student-1"
+    )
+
+    assert result.profile["student"]["institution"] is None
+    # The rest of the profile is unaffected -- this is a degraded field, not a
+    # failed build.
+    assert result.profile["student"]["name"] == "Jordan Reyes"
+    assert result.profile["career"] is not None
+
+
+# 3. Dangling reference (FK should prevent it) -> null, no IndexError.
+def test_unresolvable_institution_row_yields_null_institution():
+    result = build_profile_from_supabase(
+        FakeSupabase(_tables(include_institution=False)), "uuid-student-1"
+    )
+
+    assert result.profile["student"]["institution"] is None
+    assert result.profile["student"]["name"] == "Jordan Reyes"
+
+
+# 4. Institution resolution is independent of career_profiles.
+@pytest.mark.parametrize(
+    ("kwargs", "expected_career"),
+    [
+        ({}, "present"),
+        ({"include_career": False}, None),
+        ({"career_confirmed": None}, None),
+    ],
+    ids=["career-present", "no-career-row", "career-unconfirmed"],
+)
+def test_institution_resolves_regardless_of_career_state(kwargs, expected_career):
+    result = build_profile_from_supabase(FakeSupabase(_tables(**kwargs)), "uuid-student-1")
+
+    assert result.profile["student"]["institution"] == INSTITUTION_NAME
+    if expected_career is None:
+        assert result.profile["career"] is None
+    else:
+        assert result.profile["career"] is not None
+
+
+def test_student_block_is_identical_apart_from_career_presence():
+    with_career = build_profile_from_supabase(
+        FakeSupabase(_tables()), "uuid-student-1"
+    ).profile["student"]
+    without_career = build_profile_from_supabase(
+        FakeSupabase(_tables(include_career=False)), "uuid-student-1"
+    ).profile["student"]
+
+    # Byte-for-byte the same student block; only `career` differs between the
+    # two profiles.
+    assert with_career == without_career
+
+
+def test_institution_key_matches_the_demo_json_student_block():
+    demo = json.loads(
+        (REPO_ROOT / "data" / "students" / "student_jordanReyes.json").read_text(encoding="utf-8")
+    )
+    result = build_profile_from_supabase(FakeSupabase(_tables()), "uuid-student-1")
+
+    assert "institution" in demo["student"]
+    assert "institution" in result.profile["student"]
+    # Same key, same type as the file-backed shape.
+    assert isinstance(demo["student"]["institution"], str)
+    assert isinstance(result.profile["student"]["institution"], str)
