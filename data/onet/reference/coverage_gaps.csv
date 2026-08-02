@@ -1,0 +1,123 @@
+onet_soc_code,title
+11-1031.00,Legislators
+11-2032.00,Public Relations Managers
+11-9039.00,"Education Administrators, All Other"
+11-9179.00,"Personal Service Managers, All Other"
+11-9199.00,"Managers, All Other"
+13-1082.00,Project Management Specialists
+13-1199.00,"Business Operations Specialists, All Other"
+13-2051.00,Financial and Investment Analysts
+13-2054.00,Financial Risk Specialists
+13-2099.00,"Financial Specialists, All Other"
+15-1255.00,Web and Digital Interface Designers
+15-1299.00,"Computer Occupations, All Other"
+15-1299.04,Penetration Testers
+15-1299.06,Digital Forensics Analysts
+15-1299.07,Blockchain Engineers
+15-2051.00,Data Scientists
+15-2099.00,"Mathematical Science Occupations, All Other"
+17-2199.00,"Engineers, All Other"
+17-3019.00,"Drafters, All Other"
+17-3028.00,Calibration Technologists and Technicians
+17-3029.00,"Engineering Technologists and Technicians, Except Drafters, All Other"
+19-1029.00,"Biological Scientists, All Other"
+19-1099.00,"Life Scientists, All Other"
+19-2099.00,"Physical Scientists, All Other"
+19-3039.00,"Psychologists, All Other"
+19-3099.00,"Social Scientists and Related Workers, All Other"
+19-4044.00,Hydrologic Technicians
+19-4099.00,"Life, Physical, and Social Science Technicians, All Other"
+21-1019.00,"Counselors, All Other"
+21-1029.00,"Social Workers, All Other"
+21-1099.00,"Community and Social Service Specialists, All Other"
+21-2099.00,"Religious Workers, All Other"
+23-2099.00,"Legal Support Workers, All Other"
+25-1069.00,"Social Sciences Teachers, Postsecondary, All Other"
+25-1199.00,"Postsecondary Teachers, All Other"
+25-2055.00,"Special Education Teachers, Kindergarten"
+25-2059.00,"Special Education Teachers, All Other"
+25-3099.00,"Teachers and Instructors, All Other"
+25-9049.00,"Teaching Assistants, All Other"
+25-9099.00,"Educational Instruction and Library Workers, All Other"
+27-1019.00,"Artists and Related Workers, All Other"
+27-1029.00,"Designers, All Other"
+27-2091.00,"Disc Jockeys, Except Radio"
+27-2099.00,"Entertainers and Performers, Sports and Related Workers, All Other"
+27-3099.00,"Media and Communication Workers, All Other"
+27-4015.00,Lighting Technicians
+27-4099.00,"Media and Communication Equipment Workers, All Other"
+29-1029.00,"Dentists, All Other Specialists"
+29-1129.00,"Therapists, All Other"
+29-1212.00,Cardiologists
+29-1229.00,"Physicians, All Other"
+29-1242.00,"Orthopedic Surgeons, Except Pediatric"
+29-1243.00,Pediatric Surgeons
+29-1249.00,"Surgeons, All Other"
+29-1299.00,"Healthcare Diagnosing or Treating Practitioners, All Other"
+29-2042.00,Emergency Medical Technicians
+29-2043.00,Paramedics
+29-2072.00,Medical Records Specialists
+29-2099.00,"Health Technologists and Technicians, All Other"
+29-9021.00,Health Information Technologists and Medical Registrars
+29-9099.00,"Healthcare Practitioners and Technical Workers, All Other"
+31-9099.00,"Healthcare Support Workers, All Other"
+33-1099.00,"First-Line Supervisors of Protective Service Workers, All Other"
+33-9094.00,School Bus Monitors
+33-9099.00,"Protective Service Workers, All Other"
+35-2019.00,"Cooks, All Other"
+35-9099.00,"Food Preparation and Serving Related Workers, All Other"
+37-2019.00,"Building Cleaning Workers, All Other"
+37-3019.00,"Grounds Maintenance Workers, All Other"
+39-1014.00,"First-Line Supervisors of Entertainment and Recreation Workers, Except Gambling Services"
+39-3019.00,"Gambling Service Workers, All Other"
+39-3099.00,"Entertainment Attendants and Related Workers, All Other"
+39-4012.00,Crematory Operators
+39-9099.00,"Personal Care and Service Workers, All Other"
+41-3091.00,"Sales Representatives of Services, Except Advertising, Insurance, Financial Services, and Travel"
+41-9099.00,"Sales and Related Workers, All Other"
+43-2099.00,"Communications Equipment Operators, All Other"
+43-3099.00,"Financial Clerks, All Other"
+43-4199.00,"Information and Record Clerks, All Other"
+43-9199.00,"Office and Administrative Support Workers, All Other"
+45-2099.00,"Agricultural Workers, All Other"
+45-4029.00,"Logging Workers, All Other"
+47-3019.00,"Helpers, Construction Trades, All Other"
+47-4099.00,"Construction and Related Workers, All Other"
+47-5049.00,"Underground Mining Machine Operators, All Other"
+47-5099.00,"Extraction Workers, All Other"
+49-9069.00,"Precision Instrument and Equipment Repairers, All Other"
+49-9099.00,"Installation, Maintenance, and Repair Workers, All Other"
+51-2099.00,"Assemblers and Fabricators, All Other"
+51-3099.00,"Food Processing Workers, All Other"
+51-4199.00,"Metal Workers and Plastic Workers, All Other"
+51-6099.00,"Textile, Apparel, and Furnishings Workers, All Other"
+51-7099.00,"Woodworkers, All Other"
+51-8099.00,"Plant and System Operators, All Other"
+51-9199.00,"Production Workers, All Other"
+53-1044.00,First-Line Supervisors of Passenger Attendants
+53-1049.00,"First-Line Supervisors of Transportation Workers, All Other"
+53-3054.00,Taxi Drivers
+53-3099.00,"Motor Vehicle Operators, All Other"
+53-4099.00,"Rail Transportation Workers, All Other"
+53-6032.00,Aircraft Service Attendants
+53-6099.00,"Transportation Workers, All Other"
+53-7199.00,"Material Moving Workers, All Other"
+55-1011.00,Air Crew Officers
+55-1012.00,Aircraft Launch and Recovery Officers
+55-1013.00,Armored Assault Vehicle Officers
+55-1014.00,Artillery and Missile Officers
+55-1015.00,Command and Control Center Officers
+55-1016.00,Infantry Officers
+55-1017.00,Special Forces Officers
+55-1019.00,"Military Officer Special and Tactical Operations Leaders, All Other"
+55-2011.00,First-Line Supervisors of Air Crew Members
+55-2012.00,First-Line Supervisors of Weapons Specialists/Crew Members
+55-2013.00,First-Line Supervisors of All Other Tactical Operations Specialists
+55-3011.00,Air Crew Members
+55-3012.00,Aircraft Launch and Recovery Specialists
+55-3013.00,Armored Assault Vehicle Crew Members
+55-3014.00,Artillery and Missile Crew Members
+55-3015.00,Command and Control Center Specialists
+55-3016.00,Infantry
+55-3018.00,Special Forces
+55-3019.00,"Military Enlisted Tactical Operations and Air/Weapons Specialists and Crew Members, All Other"
