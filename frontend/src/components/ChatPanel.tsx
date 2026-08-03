@@ -49,9 +49,9 @@ export function ChatPanel() {
   }
 
   return (
-    <section className="chat-panel" aria-label="Ask Gradus IQ">
+    <section className="chat-panel" aria-label="Ask GradusIQ">
       <div className="chat-header">
-        <span className="chat-title">Ask Gradus IQ</span>
+        <span className="chat-title">Ask GradusIQ</span>
         <span className="chat-sub">
           Chat about your academics &amp; career — grounded in your profile and analysis.
         </span>
