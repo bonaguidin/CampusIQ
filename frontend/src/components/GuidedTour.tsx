@@ -25,7 +25,7 @@ const TOUR_STEPS: TourStep[] = [
   {
     section: 'overview',
     eyebrow: 'Welcome',
-    title: 'Welcome to CampusIQ',
+    title: 'Welcome to GradusIQ',
     body: (
       <>
         Your AI career and academic companion. This quick tour walks through the
@@ -68,7 +68,7 @@ const TOUR_STEPS: TourStep[] = [
     title: 'GAP, FIT & SHIFT',
     body: (
       <>
-        The heart of CampusIQ. <strong>GAP</strong> is a readiness check against
+        The heart of GradusIQ. <strong>GAP</strong> is a readiness check against
         your target roles — your score, what&rsquo;s missing, and what to do
         next. <strong>FIT</strong> shows how well your profile matches each
         role and why. <strong>SHIFT</strong> shows how those roles are evolving
