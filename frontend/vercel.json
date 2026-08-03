@@ -19,6 +19,18 @@
       "destination": "/api/proxy?student=:student&feature=profile"
     },
     {
+      "source": "/api/v2/student/me/analyze/:feature",
+      "destination": "/api/proxy?target=me-analyze&feature=:feature"
+    },
+    {
+      "source": "/api/v2/student/me/chat",
+      "destination": "/api/proxy?target=me-chat"
+    },
+    {
+      "source": "/api/v2/student/me/profile",
+      "destination": "/api/proxy?target=me-profile"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

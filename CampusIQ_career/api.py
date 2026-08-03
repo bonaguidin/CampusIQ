@@ -425,10 +425,24 @@ def run_feature_with_fallback(feature_name: str, student_slug: str, profile: dic
     ).to_dict()
 
 
-def _run_protected_feature(request: Request, feature_name: str, student_slug: str) -> dict:
-    """Serve a validated cache hit, otherwise run live work within capacity."""
-    authorize_student_access(request, student_slug)
-    profile = load_profile_for_slug(request, student_slug)
+def _run_protected_feature(
+    request: Request,
+    feature_name: str,
+    student_slug: str,
+    profile: dict | None = None,
+) -> dict:
+    """Serve a validated cache hit, otherwise run live work within capacity.
+
+    `profile` defaults to None, which preserves the slug-addressed behavior
+    exactly: authorize, then load from JSON or Postgres via the slug. The /me
+    routes pass an already-built, already-authenticated profile instead --
+    their caller has proven identity from the bearer token, so re-running
+    authorize_student_access (which 403s every non-demo slug by design) would
+    reject them.
+    """
+    if profile is None:
+        authorize_student_access(request, student_slug)
+        profile = load_profile_for_slug(request, student_slug)
     student_id = profile.get("student", {}).get("id")
     cached = load_cached_feature_result(student_slug, feature_name, student_id)
     if cached is not None:
@@ -562,7 +576,16 @@ def chat(request: Request, student_slug: str, body: ChatRequest) -> dict:
         raise HTTPException(status_code=400, detail="Message is required.")
     profile = load_profile_for_slug(request, student_slug)
     analysis = load_analysis_bundle(student_slug)
-    messages = build_chat_messages(profile, analysis, body)
+    return _complete_chat(build_chat_messages(profile, analysis, body))
+
+
+def _complete_chat(messages: list[dict]) -> dict:
+    """Send a prepared chat message list and shape the reply.
+
+    Extracted so the slug-addressed and /me chat routes share one live-call
+    path and one error contract; behavior is unchanged from when this was
+    inline in chat().
+    """
     try:
         client = build_client()
         response = client.complete(messages=messages, role="chat", model="@preset/chat")
@@ -703,6 +726,88 @@ def get_student_gpa(request: Request) -> dict:
         "earned_hours": both.official.earned_hours,
         "excluded": excluded,
     }
+
+
+# ── v2: session-scoped /me routes for real, Postgres-backed students ─────────
+# The slug-addressed routes above can only ever serve DEMO_STUDENT_SLUGS --
+# authorize_student_access 403s every other slug, because `students` has no
+# slug column to map a session onto. These routes cover the other half of the
+# space: identity comes from the bearer token via RLS, so no slug is needed in
+# the path at all.
+#
+# They still carry authorize_proxy_request, matching the slug routes: that is
+# what applies the shared rate limit (rate_limiter.allow() lives inside that
+# dependency, not in middleware).
+
+# URL segment -> internal runner name. Deliberately a local mapping rather than
+# features.orchestrator.normalize_feature_name: that function is only
+# .strip().upper(), so "professor-comments" raises ValueError on the hyphen and
+# would surface as a 500. Verified in the audit preceding this task.
+_ME_FEATURE_NAMES = {
+    "gap": "GAP",
+    "fit": "FIT",
+    "shift": "SHIFT",
+    "professor-comments": "PROFESSOR_COMMENTS",
+}
+
+
+def _me_profile(request: Request) -> tuple[dict, str]:
+    """Resolve the caller's own profile from Postgres, plus a slug to key on.
+
+    Same sequence as GET /api/v2/student/me/gpa: token -> session-scoped client
+    (SupabaseConfigError -> 503) -> unfiltered `students` select narrowed by RLS
+    (nothing visible -> 404) -> build the profile.
+
+    UUID-AS-SLUG: the returned string is the student's own UUID, passed as the
+    `student_slug` argument to the shared feature/chat helpers. This relies on
+    student_slug's isalnum() check in load_cached_feature_result /
+    load_analysis_bundle rejecting any UUID by construction (hyphens fail
+    isalnum()), which guarantees real students can never hit or pollute the demo
+    cache. If that check is ever loosened, this guarantee breaks silently.
+    Verified empirically in the audit preceding this task.
+    """
+    client = _session_client(request)
+    student_id = _resolve_session_student_id(client)
+    return build_profile_from_supabase(client, student_id).profile, str(student_id)
+
+
+@router.post(
+    "/api/v2/student/me/analyze/{feature}",
+    dependencies=[Depends(authorize_proxy_request)],
+)
+def analyze_me(request: Request, feature: str) -> dict:
+    internal_name = _ME_FEATURE_NAMES.get(feature)
+    if internal_name is None:
+        supported = ", ".join(sorted(_ME_FEATURE_NAMES))
+        raise HTTPException(
+            status_code=404,
+            detail=f"Unknown feature '{feature}'. Expected one of: {supported}.",
+        )
+    profile, slug = _me_profile(request)
+    return _run_protected_feature(request, internal_name, slug, profile=profile)
+
+
+@router.post(
+    "/api/v2/student/me/chat",
+    dependencies=[Depends(authorize_proxy_request)],
+)
+def chat_me(request: Request, body: ChatRequest) -> dict:
+    if not body.message or not body.message.strip():
+        raise HTTPException(status_code=400, detail="Message is required.")
+    profile, _slug = _me_profile(request)
+    # No load_analysis_bundle call: those bundles are demo fixtures keyed by
+    # demo slug, and a real student has none. An empty dict yields an empty
+    # "PRIOR ANALYSIS" section rather than another student's analysis.
+    return _complete_chat(build_chat_messages(profile, {}, body))
+
+
+@router.get(
+    "/api/v2/student/me/profile",
+    dependencies=[Depends(authorize_proxy_request)],
+)
+def get_me_profile(request: Request) -> dict:
+    profile, _slug = _me_profile(request)
+    return profile
 
 
 def create_app(config: APIConfig | None = None) -> FastAPI:
