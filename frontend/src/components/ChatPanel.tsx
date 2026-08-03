@@ -49,9 +49,9 @@ export function ChatPanel() {
   }
 
   return (
-    <section className="chat-panel" aria-label="Ask Campus IQ">
+    <section className="chat-panel" aria-label="Ask Gradus IQ">
       <div className="chat-header">
-        <span className="chat-title">Ask Campus IQ</span>
+        <span className="chat-title">Ask Gradus IQ</span>
         <span className="chat-sub">
           Chat about your academics &amp; career — grounded in your profile and analysis.
         </span>
@@ -81,14 +81,14 @@ export function ChatPanel() {
 
         {messages.map((m, i) => (
           <div key={i} className={`chat-msg chat-msg--${m.role}`}>
-            <span className="chat-msg-role">{m.role === 'user' ? 'You' : 'Campus IQ'}</span>
+            <span className="chat-msg-role">{m.role === 'user' ? 'You' : 'Gradus IQ'}</span>
             <div className="chat-msg-body">{m.content}</div>
           </div>
         ))}
 
         {sending && (
           <div className="chat-msg chat-msg--assistant">
-            <span className="chat-msg-role">Campus IQ</span>
+            <span className="chat-msg-role">Gradus IQ</span>
             <div className="chat-msg-body chat-typing" aria-label="Thinking">
               <span />
               <span />
@@ -112,7 +112,7 @@ export function ChatPanel() {
           onChange={(e) => setInput(e.target.value)}
           placeholder="Ask about your grades, gaps, roles…"
           disabled={sending || !slug}
-          aria-label="Message Campus IQ"
+          aria-label="Message Gradus IQ"
         />
         <button
           type="submit"

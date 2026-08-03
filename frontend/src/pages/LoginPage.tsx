@@ -58,7 +58,7 @@ export function LoginPage() {
       <div className="login-card">
         {/* Header — serif product name on white */}
         <div className="login-header">
-          <h1 className="login-logo">Campus IQ</h1>
+          <h1 className="login-logo">Gradus IQ</h1>
           <p className="login-subtitle">Sign in to your student account</p>
         </div>
 
