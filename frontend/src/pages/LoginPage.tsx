@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../auth/useAuth';
 
 const DEMO_STUDENTS = [
@@ -120,6 +120,10 @@ export function LoginPage() {
             )}
           </button>
         </form>
+
+        <p className="login-note">
+          Don&apos;t have an account? <Link to="/signup">Sign up</Link>
+        </p>
 
         <p className="login-note">or explore a demo profile</p>
 

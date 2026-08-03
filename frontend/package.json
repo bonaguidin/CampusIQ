@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "test": "node tests/proxy.test.mjs",
+    "test": "node --test tests/",
     "preview": "vite preview"
   },
   "dependencies": {
