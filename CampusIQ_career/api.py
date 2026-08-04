@@ -585,10 +585,20 @@ def _complete_chat(messages: list[dict]) -> dict:
     Extracted so the slug-addressed and /me chat routes share one live-call
     path and one error contract; behavior is unchanged from when this was
     inline in chat().
+
+    No explicit model= argument: this used to pass model="@preset/chat", which
+    named an OpenRouter *preset* -- an account-specific named configuration
+    created in their dashboard, not a built-in alias. No preset named "chat"
+    existed on this account, so OpenRouter answered every call with
+    404 preset_not_found and both chat routes returned 502. `role="chat"` is
+    load-bearing now rather than decorative: _select_model returns an explicit
+    model without consulting get_model_for_role, so dropping model= is what
+    routes chat through MODEL_BY_ROLE like every other role, and dropping the
+    role too would raise AIConfigError instead.
     """
     try:
         client = build_client()
-        response = client.complete(messages=messages, role="chat", model="@preset/chat")
+        response = client.complete(messages=messages, role="chat")
     except HTTPException:
         raise
     except Exception as exc:  # noqa: BLE001 — surface any live failure uniformly

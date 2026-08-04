@@ -304,10 +304,13 @@ def test_validate_configured_models_raises_on_placeholder(monkeypatch):
 
     _clear_model_env(monkeypatch)
 
-    # 'chat' still carries a TODO_ default by design (it is excluded from the
-    # startup set because the chat route passes an explicit model=).
+    # 'orchestrator' still carries a TODO_ default by design (it is excluded
+    # from the startup set because ai_services.call_agent has no production
+    # caller). These validator tests used to use 'chat' as their placeholder
+    # fixture; chat now resolves to a real model and is validated at startup,
+    # so orchestrator is the remaining genuine placeholder role.
     with pytest.raises(AIConfigError, match="Placeholder model ID"):
-        validate_configured_models({"chat"})
+        validate_configured_models({"orchestrator"})
 
 
 def test_validate_configured_models_error_names_role_and_placeholder(monkeypatch):
@@ -316,11 +319,11 @@ def test_validate_configured_models_error_names_role_and_placeholder(monkeypatch
     _clear_model_env(monkeypatch)
 
     with pytest.raises(AIConfigError) as excinfo:
-        validate_configured_models({"chat"})
+        validate_configured_models({"orchestrator"})
 
     message = str(excinfo.value)
-    assert "chat" in message
-    assert "TODO_OPENROUTER_MODEL_GEMINI_2_5_FLASH" in message
+    assert "orchestrator" in message
+    assert "TODO_OPENROUTER_MODEL_GEMINI_2_5_PRO" in message
 
 
 def test_validate_configured_models_reports_every_offending_role(monkeypatch):
@@ -328,11 +331,13 @@ def test_validate_configured_models_reports_every_offending_role(monkeypatch):
 
     _clear_model_env(monkeypatch)
 
+    # Both remaining excluded roles at once: the error must name every
+    # offender, not just the first one sorted().
     with pytest.raises(AIConfigError) as excinfo:
-        validate_configured_models({"chat", "orchestrator", "report"})
+        validate_configured_models({"orchestrator", "report"})
 
     message = str(excinfo.value)
-    for role in ("chat", "orchestrator", "report"):
+    for role in ("orchestrator", "report"):
         assert role in message
 
 
@@ -349,12 +354,20 @@ def test_validate_configured_models_passes_for_roles_in_use(monkeypatch):
     validate_configured_models(set(ROLES_VALIDATED_AT_STARTUP))
 
 
-def test_roles_validated_at_startup_excludes_the_three_documented_roles():
+def test_roles_validated_at_startup_excludes_the_two_documented_roles():
     from CampusIQ_career.ai.model_config import ROLES_VALIDATED_AT_STARTUP
 
-    assert ROLES_VALIDATED_AT_STARTUP == {"career", "academic", "role_research", "parsing"}
-    # Deliberate exclusions -- see the comment above the frozenset.
-    for excluded in ("orchestrator", "report", "chat"):
+    assert ROLES_VALIDATED_AT_STARTUP == {
+        "career",
+        "academic",
+        "role_research",
+        "parsing",
+        "chat",
+    }
+    # Deliberate exclusions -- see the comment above the frozenset. 'chat' was
+    # a third exclusion until its "@preset/chat" hardcode was removed; it is
+    # now validated like any other role.
+    for excluded in ("orchestrator", "report"):
         assert excluded not in ROLES_VALIDATED_AT_STARTUP
 
 
@@ -366,27 +379,27 @@ def test_env_override_clears_placeholder_check(monkeypatch):
 
     _clear_model_env(monkeypatch)
 
-    # Precondition: chat's hardcoded default really is still a placeholder.
-    assert MODEL_BY_ROLE["chat"].startswith("TODO_")
+    # Precondition: orchestrator's hardcoded default really is still a placeholder.
+    assert MODEL_BY_ROLE["orchestrator"].startswith("TODO_")
     with pytest.raises(AIConfigError):
-        validate_configured_models({"chat"})
+        validate_configured_models({"orchestrator"})
 
-    monkeypatch.setenv("CAMPUSIQ_MODEL_CHAT", "openrouter/real-chat-model")
+    monkeypatch.setenv("CAMPUSIQ_MODEL_ORCHESTRATOR", "openrouter/real-orchestrator-model")
 
     # Same role, same untouched default -- now passes purely via the override.
-    validate_configured_models({"chat"})
-    assert MODEL_BY_ROLE["chat"].startswith("TODO_")
+    validate_configured_models({"orchestrator"})
+    assert MODEL_BY_ROLE["orchestrator"].startswith("TODO_")
 
 
 def test_whitespace_only_env_override_does_not_satisfy_the_check(monkeypatch):
     from CampusIQ_career.ai.model_config import validate_configured_models
 
     _clear_model_env(monkeypatch)
-    monkeypatch.setenv("CAMPUSIQ_MODEL_CHAT", "   ")
+    monkeypatch.setenv("CAMPUSIQ_MODEL_ORCHESTRATOR", "   ")
 
     # get_model_for_role ignores a blank override, so the placeholder still wins.
     with pytest.raises(AIConfigError):
-        validate_configured_models({"chat"})
+        validate_configured_models({"orchestrator"})
 
 
 # 4. parsing now resolves to the already-validated Flash model.
@@ -465,3 +478,181 @@ def test_create_app_placeholder_failure_happens_before_any_route_is_served(monke
                 max_concurrent_ai_requests=2,
             )
         )
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 6. chat: repointed off the "@preset/chat" hardcode.
+#
+# api.py used to call complete(role="chat", model="@preset/chat"). OpenRouter
+# presets are account-specific named configurations created in their dashboard,
+# not built-in aliases; no preset named "chat" existed on this account, so every
+# chat call came back 404 preset_not_found and both chat routes returned 502 --
+# verified live on the slug-addressed and /me paths alike.
+#
+# The explicit model= is gone, so chat now resolves through get_model_for_role
+# like every other role, and chat has been added to ROLES_VALIDATED_AT_STARTUP
+# so a regression fails the deploy instead of the first student message.
+# ═══════════════════════════════════════════════════════════════════════════
+
+
+def test_chat_resolves_to_the_validated_flash_model(monkeypatch):
+    _clear_model_env(monkeypatch)
+
+    assert get_model_for_role("chat") == "deepseek/deepseek-v4-flash"
+    assert not get_model_for_role("chat").startswith("TODO_")
+
+
+def test_chat_and_parsing_share_the_validated_flash_model(monkeypatch):
+    _clear_model_env(monkeypatch)
+
+    assert get_model_for_role("chat") == get_model_for_role("parsing")
+
+
+def test_gemini_flash_placeholder_constant_is_gone():
+    from CampusIQ_career.ai import model_config
+
+    # Removed rather than left dangling, matching the QWEN3 precedent above:
+    # chat was its only consumer, and a stray TODO_ constant is what the
+    # validator exists to catch. GEMINI_2_5_PRO stays -- orchestrator and
+    # report still resolve to it.
+    assert not hasattr(model_config, "OPENROUTER_GEMINI_2_5_FLASH")
+    assert hasattr(model_config, "OPENROUTER_GEMINI_2_5_PRO")
+
+
+# 6a. The closest thing to a live call the suite allows: a real
+#     OpenRouterClient with a FakeSession, so the model that would go on the
+#     wire is asserted without any network. Mirrors
+#     test_explicit_model_override_wins_over_role_default, but with NO explicit
+#     model -- which is the whole point, since that argument is what used to
+#     carry "@preset/chat" and shadow the role.
+def test_chat_role_puts_the_real_model_on_the_wire(monkeypatch):
+    monkeypatch.setenv("OPENROUTER_API_KEY", "test-key")
+    _clear_model_env(monkeypatch)
+    session = FakeSession()
+    client = OpenRouterClient(session=session)
+
+    client.complete(messages=[{"role": "user", "content": "hello"}], role="chat")
+
+    sent_model = session.calls[0]["kwargs"]["json"]["model"]
+    assert sent_model == "deepseek/deepseek-v4-flash"
+    assert not sent_model.startswith("TODO_")
+    assert not sent_model.startswith("@preset/")
+
+
+def test_chat_route_sends_no_explicit_model_argument():
+    """_complete_chat must not reintroduce a model= that shadows the role.
+
+    _select_model returns an explicit model without ever consulting
+    get_model_for_role, so any model= at this call site silently re-exempts
+    chat from every check in this file -- which is exactly how "@preset/chat"
+    survived. Asserted against the source because the argument's absence is
+    the invariant, and a passing FakeSession test would not notice it coming
+    back with a different value.
+
+    The docstring is excised before scanning: _complete_chat's own docstring
+    documents the removed "@preset/chat" by name, and matching that would make
+    this test fail on the explanation rather than on the code.
+    """
+    import inspect
+
+    from CampusIQ_career import api
+
+    source = inspect.getsource(api._complete_chat)
+    code = source.replace(api._complete_chat.__doc__ or "", "")
+
+    assert "@preset/" not in code
+    assert 'role="chat"' in code, "role= is load-bearing now; it selects the model"
+    assert "model=" not in code
+
+
+# 6b. Startup validation now covers chat and passes against today's config.
+def test_startup_validation_includes_chat_and_passes(monkeypatch):
+    from CampusIQ_career.ai.model_config import (
+        ROLES_VALIDATED_AT_STARTUP,
+        validate_configured_models,
+    )
+
+    _clear_model_env(monkeypatch)
+
+    assert "chat" in ROLES_VALIDATED_AT_STARTUP
+    # Must not raise: chat's default is real now, with no env override in play.
+    validate_configured_models(set(ROLES_VALIDATED_AT_STARTUP))
+
+
+def test_create_app_succeeds_with_chat_in_the_validated_set(monkeypatch):
+    from CampusIQ_career import api
+
+    _clear_model_env(monkeypatch)
+
+    api.create_app(
+        api.APIConfig(
+            proxy_secret="s",
+            allowed_origins=(),
+            rate_limit_requests=10,
+            rate_limit_window_seconds=60.0,
+            max_concurrent_ai_requests=2,
+        )
+    )
+
+
+# 6c. THE REGRESSION TEST. Putting chat's default back the way it was must now
+#     fail at startup -- this is what proves removing the exclusion actually
+#     closed the gap, rather than just moving a string around.
+@pytest.mark.parametrize(
+    "regressed",
+    ["TODO_OPENROUTER_MODEL_GEMINI_2_5_FLASH", "TODO_ANYTHING_AT_ALL"],
+)
+def test_create_app_raises_if_chat_regresses_to_a_placeholder(monkeypatch, regressed):
+    from CampusIQ_career import api
+    from CampusIQ_career.ai import model_config
+
+    _clear_model_env(monkeypatch)
+
+    broken = dict(model_config.MODEL_BY_ROLE)
+    broken["chat"] = regressed
+    monkeypatch.setattr(model_config, "MODEL_BY_ROLE", broken)
+
+    with pytest.raises(AIConfigError, match="chat"):
+        api.create_app(
+            api.APIConfig(
+                proxy_secret="s",
+                allowed_origins=(),
+                rate_limit_requests=10,
+                rate_limit_window_seconds=60.0,
+                max_concurrent_ai_requests=2,
+            )
+        )
+
+
+def test_preset_string_would_still_slip_past_startup_validation(monkeypatch):
+    """The honest limit of this fix, pinned so nobody over-trusts the validator.
+
+    validate_configured_models is a TODO_ prefix test, not a reachability
+    check. "@preset/chat" is well-formed and simply does not exist upstream, so
+    startup validation would NOT have caught the original bug and still would
+    not. What actually fixed chat was deleting the hardcoded model= in api.py
+    (pinned by test_chat_route_sends_no_explicit_model_argument); adding chat to
+    the validated set only closes the adjacent placeholder class.
+
+    If this test ever starts failing because create_app() raises, that means
+    someone added a real reachability check -- delete this test and celebrate.
+    """
+    from CampusIQ_career import api
+    from CampusIQ_career.ai import model_config
+
+    _clear_model_env(monkeypatch)
+
+    broken = dict(model_config.MODEL_BY_ROLE)
+    broken["chat"] = "@preset/chat"
+    monkeypatch.setattr(model_config, "MODEL_BY_ROLE", broken)
+
+    # Builds cleanly. The 404 would only surface on a live call.
+    api.create_app(
+        api.APIConfig(
+            proxy_secret="s",
+            allowed_origins=(),
+            rate_limit_requests=10,
+            rate_limit_window_seconds=60.0,
+            max_concurrent_ai_requests=2,
+        )
+    )
