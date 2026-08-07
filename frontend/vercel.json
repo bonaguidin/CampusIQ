@@ -31,6 +31,10 @@
       "destination": "/api/proxy?target=me-profile"
     },
     {
+      "source": "/api/v2/student/me/resume/upload",
+      "destination": "/api/proxy?target=me-resume-upload"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

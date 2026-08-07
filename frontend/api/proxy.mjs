@@ -6,10 +6,12 @@
 //     identifies the student from the slug alone.
 //
 //   SESSION-SCOPED (?target=me-analyze&feature=<feature> | ?target=me-chat
-//                   | ?target=me-profile)
+//                   | ?target=me-profile | ?target=me-resume-upload)
 //     Forwards to /api/v2/student/me/... . These serve real students, whose
 //     identity comes from a Supabase session JWT, so the inbound Authorization
 //     header MUST be forwarded for the backend to resolve them via RLS.
+//     me-resume-upload additionally carries a binary multipart body -- see the
+//     `binary` flag on ME_TARGETS and the body branch in the handler.
 //
 // Authorization is forwarded for `target` requests ONLY -- see the single
 // `if (isMeTarget)` block below, which is the one place that distinction is
@@ -26,10 +28,17 @@ const PROXY_SECRET_HEADER = 'X-CampusIQ-Proxy-Secret'
 
 // Session-scoped targets. `feature` is required only by me-analyze, and is
 // validated against the same analysis vocabulary the slug routes accept.
+//
+// `binary: true` marks a target whose body must NOT be read as text. Branching
+// on an explicit target rather than sniffing Content-Type is deliberate:
+// ME_TARGETS is already a closed allowlist, so the binary path is reachable
+// only from a route we named, and a forged/absent Content-Type cannot flip an
+// existing JSON target onto the binary branch.
 const ME_TARGETS = {
   'me-analyze': { method: 'POST', needsFeature: true },
   'me-chat': { method: 'POST', needsFeature: false },
   'me-profile': { method: 'GET', needsFeature: false },
+  'me-resume-upload': { method: 'POST', needsFeature: false, binary: true },
 }
 const ME_ANALYZE_FEATURES = new Set(['gap', 'fit', 'shift', 'professor-comments'])
 
@@ -59,6 +68,7 @@ function backendPath(student, feature) {
 function meBackendPath(target, feature) {
   if (target === 'me-chat') return '/api/v2/student/me/chat'
   if (target === 'me-profile') return '/api/v2/student/me/profile'
+  if (target === 'me-resume-upload') return '/api/v2/student/me/resume/upload'
   return `/api/v2/student/me/analyze/${encodeURIComponent(feature)}`
 }
 
@@ -77,6 +87,7 @@ export function createProxyHandler({ env = process.env, fetchImpl = globalThis.f
 
       const isMeTarget = target !== ''
       let path
+      let isBinaryTarget = false
 
       if (isMeTarget) {
         const spec = ME_TARGETS[target]
@@ -86,6 +97,7 @@ export function createProxyHandler({ env = process.env, fetchImpl = globalThis.f
         if (spec.needsFeature && !ME_ANALYZE_FEATURES.has(feature)) {
           return jsonError(400, 'Invalid analysis route.')
         }
+        isBinaryTarget = spec.binary === true
         path = meBackendPath(target, feature)
       } else {
         // Method and feature must agree: a GET may only reach a read route, and
@@ -109,13 +121,31 @@ export function createProxyHandler({ env = process.env, fetchImpl = globalThis.f
       // Forward the request body. Analyze routes send none (path params only);
       // chat carries { message, history } in the body, so it must pass through.
       // A GET has no body to read or forward.
-      const contentType = request.headers.get('content-type') ?? 'application/json'
-      const bodyText = method === 'GET' ? '' : await request.text()
-
+      //
+      // BINARY TARGETS take a separate path. request.text() decodes the body as
+      // UTF-8, which silently replaces every byte sequence that is not valid
+      // UTF-8 with U+FFFD -- it does not throw, it corrupts. That is fine for
+      // JSON and fatal for a PDF or DOCX, so file uploads are read as raw bytes
+      // via arrayBuffer() and forwarded untouched.
       const headers = {
         Accept: 'application/json',
-        'Content-Type': contentType,
         [PROXY_SECRET_HEADER]: proxySecret,
+      }
+
+      let body
+      if (isBinaryTarget) {
+        const buffer = await request.arrayBuffer()
+        body = buffer.byteLength ? buffer : undefined
+        // Preserve the inbound Content-Type verbatim: multipart is unparseable
+        // without its boundary parameter, so this must never be defaulted or
+        // rewritten. When the caller sent none, forward none rather than
+        // inventing application/json and mislabelling a file as JSON.
+        const inboundContentType = request.headers.get('content-type')
+        if (inboundContentType) headers['Content-Type'] = inboundContentType
+      } else {
+        const bodyText = method === 'GET' ? '' : await request.text()
+        body = bodyText.length ? bodyText : undefined
+        headers['Content-Type'] = request.headers.get('content-type') ?? 'application/json'
       }
 
       // THE distinction: session-scoped targets forward the caller's bearer
@@ -131,7 +161,7 @@ export function createProxyHandler({ env = process.env, fetchImpl = globalThis.f
         const backendResponse = await fetchImpl(target_url, {
           method,
           headers,
-          body: bodyText.length ? bodyText : undefined,
+          body,
         })
         const responseHeaders = new Headers()
         const respContentType = backendResponse.headers.get('content-type')

@@ -257,6 +257,218 @@ test('me-chat and me-profile map to their backend paths with the right methods',
   ])
 })
 
+// ── me-resume-upload: binary body passthrough ────────────────────────────────
+
+const UPLOAD_URL = 'https://campusiq.example/api/proxy?target=me-resume-upload'
+
+/**
+ * Bytes that are NOT valid UTF-8, so a text round-trip is guaranteed to be
+ * detectable rather than accidentally lossless.
+ *
+ *   0x25 0x50 0x44 0x46  -> "%PDF", a real PDF magic number
+ *   0xFF 0xFE            -> never valid in UTF-8
+ *   0x80, 0xC3 0x28      -> lone continuation byte / invalid 2-byte sequence
+ *   0x00                 -> embedded NUL
+ *
+ * request.text() maps each invalid sequence to U+FFFD, which re-encodes to
+ * 0xEF 0xBF 0xBD -- so a text-decoding proxy changes both the bytes and the
+ * length. Asserting on exact bytes is what makes this test meaningful.
+ */
+const BINARY_BODY = new Uint8Array([
+  0x25, 0x50, 0x44, 0x46, 0x2d, 0x31, 0x2e, 0x37,
+  0xff, 0xfe, 0x80, 0xc3, 0x28, 0x00, 0x01, 0x02,
+  0xde, 0xad, 0xbe, 0xef,
+])
+
+test('me-resume-upload forwards a binary body byte-identical', async () => {
+  const calls = []
+  const handler = createProxyHandler({
+    env: ME_ENV,
+    fetchImpl: async (url, options) => {
+      calls.push({ url: url.toString(), options })
+      return Response.json({ status: 'ok' }, { status: 200 })
+    },
+  })
+
+  const response = await handler.fetch(
+    new Request(UPLOAD_URL, {
+      method: 'POST',
+      headers: {
+        Authorization: 'Bearer real-session-jwt',
+        'Content-Type': 'application/pdf',
+      },
+      body: BINARY_BODY,
+    }),
+  )
+
+  assert.equal(response.status, 200)
+  assert.equal(calls.length, 1)
+  assert.equal(calls[0].url, 'https://backend.example/api/v2/student/me/resume/upload')
+
+  // The body must arrive as raw bytes, not a string.
+  const forwarded = calls[0].options.body
+  assert.ok(
+    forwarded instanceof ArrayBuffer,
+    `expected an ArrayBuffer body, got ${Object.prototype.toString.call(forwarded)}`,
+  )
+
+  // Byte-for-byte equality -- the actual assertion that catches the
+  // UTF-8-decoding corruption bug.
+  const received = new Uint8Array(forwarded)
+  assert.equal(received.length, BINARY_BODY.length)
+  assert.deepEqual(Array.from(received), Array.from(BINARY_BODY))
+
+  // Belt and braces: prove the corrupted form is absent. A text round-trip
+  // would have introduced the U+FFFD replacement byte sequence.
+  assert.equal(received.includes(0xfd), false)
+  assert.equal(received.includes(0xff), true)
+})
+
+test('me-resume-upload preserves the multipart Content-Type boundary exactly', async () => {
+  const calls = []
+  const handler = createProxyHandler({
+    env: ME_ENV,
+    fetchImpl: async (url, options) => {
+      calls.push({ url: url.toString(), options })
+      return Response.json({ status: 'ok' }, { status: 200 })
+    },
+  })
+
+  const contentType =
+    'multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW'
+
+  await handler.fetch(
+    new Request(UPLOAD_URL, {
+      method: 'POST',
+      headers: { Authorization: 'Bearer t', 'Content-Type': contentType },
+      body: BINARY_BODY,
+    }),
+  )
+
+  assert.equal(calls.length, 1)
+  // Exact string equality: dropping or rewriting the boundary parameter makes
+  // the payload unparseable at the backend.
+  assert.equal(calls[0].options.headers['Content-Type'], contentType)
+  assert.match(calls[0].options.headers['Content-Type'], /boundary=/)
+  // It must NOT have been defaulted to JSON.
+  assert.notEqual(calls[0].options.headers['Content-Type'], 'application/json')
+})
+
+test('me-resume-upload forwards Authorization and the proxy secret', async () => {
+  const calls = []
+  const handler = createProxyHandler({
+    env: ME_ENV,
+    fetchImpl: async (url, options) => {
+      calls.push({ url: url.toString(), options })
+      return Response.json({ status: 'ok' }, { status: 200 })
+    },
+  })
+
+  await handler.fetch(
+    new Request(UPLOAD_URL, {
+      method: 'POST',
+      headers: {
+        Authorization: 'Bearer real-session-jwt',
+        'Content-Type': 'application/pdf',
+      },
+      body: BINARY_BODY,
+    }),
+  )
+
+  assert.equal(calls.length, 1)
+  assert.equal(calls[0].options.headers.Authorization, 'Bearer real-session-jwt')
+  assert.equal(calls[0].options.headers['X-CampusIQ-Proxy-Secret'], 'server-only-secret')
+})
+
+test('me-resume-upload is POST-only and unaffected by the slug branch', async () => {
+  let forwarded = false
+  const handler = createProxyHandler({
+    env: ME_ENV,
+    fetchImpl: async () => {
+      forwarded = true
+      return new Response()
+    },
+  })
+
+  const asGet = await handler.fetch(new Request(UPLOAD_URL, { method: 'GET' }))
+  assert.equal(asGet.status, 400)
+  assert.equal(forwarded, false)
+})
+
+test('adding a binary target leaves the JSON targets reading their body as text', async () => {
+  // Guards the regression the new body branch could plausibly introduce:
+  // me-chat must still forward a decoded JSON string, not an ArrayBuffer.
+  const calls = []
+  const handler = createProxyHandler({
+    env: ME_ENV,
+    fetchImpl: async (url, options) => {
+      calls.push(options)
+      return Response.json({ ok: true }, { status: 200 })
+    },
+  })
+
+  const payload = JSON.stringify({ message: 'hi', history: [] })
+  await handler.fetch(
+    new Request('https://campusiq.example/api/proxy?target=me-chat', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer t', 'Content-Type': 'application/json' },
+      body: payload,
+    }),
+  )
+
+  assert.equal(calls.length, 1)
+  assert.equal(typeof calls[0].body, 'string')
+  assert.equal(calls[0].body, payload)
+  assert.equal(calls[0].headers['Content-Type'], 'application/json')
+
+  // And a body-less POST still forwards no body at all.
+  await handler.fetch(
+    new Request('https://campusiq.example/api/proxy?target=me-analyze&feature=gap', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer t' },
+    }),
+  )
+  assert.equal(calls[1].body, undefined)
+  // Unchanged default for JSON targets that send no Content-Type.
+  assert.equal(calls[1].headers['Content-Type'], 'application/json')
+})
+
+test('the target allowlist stays closed after adding me-resume-upload', async () => {
+  let forwarded = false
+  const handler = createProxyHandler({
+    env: ME_ENV,
+    fetchImpl: async () => {
+      forwarded = true
+      return new Response()
+    },
+  })
+
+  // Near-misses on the new entry, plus an unrelated unknown target. None may
+  // reach the backend, and none may inherit the binary branch.
+  const rejected = [
+    'me-resume',
+    'me-resume-upload-x',
+    'me-upload',
+    'resume-upload',
+    'ME-RESUME-UPLOAD',
+    'me-danger',
+    '__proto__',
+    'constructor',
+  ]
+
+  for (const target of rejected) {
+    const response = await handler.fetch(
+      new Request(
+        `https://campusiq.example/api/proxy?target=${encodeURIComponent(target)}`,
+        { method: 'POST', body: 'x' },
+      ),
+    )
+    assert.equal(response.status, 400, `target=${target} should be rejected`)
+  }
+
+  assert.equal(forwarded, false)
+})
+
 test('me targets reject wrong method, unknown target, and bad feature', async () => {
   let forwarded = false
   const handler = createProxyHandler({
