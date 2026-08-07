@@ -34,12 +34,23 @@ const PROXY_SECRET_HEADER = 'X-CampusIQ-Proxy-Secret'
 // ME_TARGETS is already a closed allowlist, so the binary path is reachable
 // only from a route we named, and a forged/absent Content-Type cannot flip an
 // existing JSON target onto the binary branch.
-const ME_TARGETS = {
+//
+// PROTOTYPE-LESS ON PURPOSE. As a plain object literal this map answers lookups
+// for inherited keys -- ME_TARGETS['toString'] and ME_TARGETS['constructor']
+// both return truthy values that were never allowlisted. The `method !==
+// spec.method` check below happens to reject them today only because
+// spec.method is undefined; if anything in the process pollutes
+// Object.prototype.method, that accident stops holding and an unvalidated
+// target reaches meBackendPath -- forwarded with the caller's bearer token and
+// the proxy secret attached. Object.create(null) removes the inheritance
+// entirely, so the allowlist is closed by construction rather than by a
+// coincidence in an adjacent check. Object.assign keeps the entries readable.
+const ME_TARGETS = Object.assign(Object.create(null), {
   'me-analyze': { method: 'POST', needsFeature: true },
   'me-chat': { method: 'POST', needsFeature: false },
   'me-profile': { method: 'GET', needsFeature: false },
   'me-resume-upload': { method: 'POST', needsFeature: false, binary: true },
-}
+})
 const ME_ANALYZE_FEATURES = new Set(['gap', 'fit', 'shift', 'professor-comments'])
 
 function jsonError(status, detail) {

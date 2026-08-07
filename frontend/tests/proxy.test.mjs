@@ -469,6 +469,74 @@ test('the target allowlist stays closed after adding me-resume-upload', async ()
   assert.equal(forwarded, false)
 })
 
+test('inherited Object.prototype keys are rejected by the map itself, not by the method check', async () => {
+  // WHY THIS IS NOT COVERED BY THE ALLOWLIST TEST ABOVE.
+  //
+  // With a plain object literal, ME_TARGETS['toString'] returns a truthy
+  // inherited value, so `!spec` does not reject it. What rejects it is the
+  // NEXT line -- `method !== spec.method` -- and only because spec.method
+  // happens to be undefined. That is a coincidence, not a control.
+  //
+  // Polluting Object.prototype.method removes the coincidence: spec.method now
+  // equals the request method, the method check passes, needsFeature is falsy
+  // so the feature check is skipped, and an unvalidated target reaches
+  // meBackendPath -- forwarded to the backend with the caller's bearer token
+  // and the proxy secret attached. Verified against the pre-fix code, which
+  // returned 200 and forwarded to /api/v2/student/me/analyze/.
+  //
+  // So this test isolates the guard: the ONLY thing that can reject these
+  // requests is ME_TARGETS having no prototype to inherit from.
+  const calls = []
+  const handler = createProxyHandler({
+    env: ME_ENV,
+    fetchImpl: async (url, options) => {
+      calls.push({ url: url.toString(), options })
+      return Response.json({ ok: true }, { status: 200 })
+    },
+  })
+
+  const inheritedKeys = ['toString', 'constructor', '__proto__', 'valueOf', 'hasOwnProperty']
+
+  // Build every request BEFORE polluting, to keep the pollution window as
+  // narrow as possible.
+  const requests = inheritedKeys.map(
+    (key) =>
+      new Request(`https://campusiq.example/api/proxy?target=${encodeURIComponent(key)}`, {
+        method: 'POST',
+        headers: { Authorization: 'Bearer victim-session-jwt' },
+      }),
+  )
+
+  const results = []
+  // eslint-disable-next-line no-extend-native -- deliberately simulating a
+  // prototype-pollution primitive introduced elsewhere in the process.
+  Object.prototype.method = 'POST'
+  try {
+    // Sanity-check the premise: the pollution really does make the method
+    // check pass for an inherited key. If this ever stops holding, the test
+    // below would pass vacuously.
+    const literalMap = { 'me-chat': { method: 'POST' } }
+    assert.equal(literalMap['toString'] === undefined, false, 'premise: literal inherits toString')
+    assert.equal(literalMap['toString'].method, 'POST', 'premise: method check would pass')
+
+    for (const request of requests) {
+      results.push((await handler.fetch(request)).status)
+    }
+  } finally {
+    delete Object.prototype.method
+  }
+
+  assert.deepEqual(
+    results,
+    inheritedKeys.map(() => 400),
+    `inherited keys must be rejected even when the method check passes; got ${results}`,
+  )
+  assert.equal(calls.length, 0, 'no inherited-key request may reach the backend')
+
+  // Confirm the pollution was cleaned up so later tests are unaffected.
+  assert.equal({}.method, undefined)
+})
+
 test('me targets reject wrong method, unknown target, and bad feature', async () => {
   let forwarded = false
   const handler = createProxyHandler({
