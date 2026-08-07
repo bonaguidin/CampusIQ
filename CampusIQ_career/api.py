@@ -23,11 +23,11 @@ from typing import Iterator
 from pydantic import BaseModel
 
 from dotenv import load_dotenv
-from fastapi import APIRouter, Depends, FastAPI, HTTPException, Request
+from fastapi import APIRouter, Depends, FastAPI, File, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 
 from CampusIQ_career.academics.gpa import CourseRecord, GradeMapRow, Institution, compute_both
-from CampusIQ_career.ai.errors import AIConfigError
+from CampusIQ_career.ai.errors import AIConfigError, AIRequestError, AIResponseParseError
 from CampusIQ_career.ai.model_config import (
     ROLES_VALIDATED_AT_STARTUP,
     validate_configured_models,
@@ -39,6 +39,18 @@ from CampusIQ_career.ai.openrouter_client import (
 from CampusIQ_career.features.base import FeatureResult
 from CampusIQ_career.features.orchestrator import RUNNERS, run_feature
 from CampusIQ_career.profile_builder import build_profile_from_supabase
+from CampusIQ_career.resume.extraction import extract_resume_text
+from CampusIQ_career.resume.parser import parse_resume_text
+from CampusIQ_career.resume.review import (
+    TABLE_BY_SEGMENT,
+    ReviewConflict,
+    ReviewFieldError,
+    ReviewRowAlreadyConfirmed,
+    ReviewRowNotFound,
+    apply_edit,
+    load_unconfirmed,
+)
+from CampusIQ_career.resume.store import confirm_career_rows, store_parsed_resume
 from CampusIQ_career.supabase_client import SupabaseConfigError, build_client_for_token
 
 
@@ -820,6 +832,215 @@ def get_me_profile(request: Request) -> dict:
     return profile
 
 
+# ── Resume ingestion ─────────────────────────────────────────────────────────
+#
+# Both routes carry authorize_proxy_request. For the upload that is load
+# bearing, not decorative: rate_limiter.allow() lives inside that dependency
+# rather than in middleware, so a route without it is silently exempt from the
+# shared rate limit. /api/v2/student/me/gpa omits it, and the Stage 1 audit
+# recorded that as a gap rather than a precedent -- an endpoint that runs a
+# billable model call on an uploaded file is the last place to copy it.
+#
+# Neither route touches _run_protected_feature or authorize_student_access.
+# Those belong to the slug-addressed demo path: authorize_student_access 403s
+# every non-demo slug by design, and _run_protected_feature is cache-first on a
+# demo-keyed cache a real student has no entry in. Identity here comes from the
+# bearer token through RLS, exactly as in _me_profile.
+
+# Beyond this, the multipart parser is never asked to buffer more. Vercel caps
+# a serverless request body well below this, so in the proxied path this limit
+# is a backstop; it is the real limit for a direct-to-backend call.
+MAX_RESUME_BYTES = 10 * 1024 * 1024
+
+# Maps a non-"ok" extraction to an HTTP status. All 4xx: the upload itself is
+# the problem, and retrying the same bytes will not help.
+EXTRACTION_STATUS_CODES = {
+    "unsupported_format": 415,
+    "empty": 422,
+    "extraction_failed": 422,
+}
+
+
+class ConfirmRequest(BaseModel):
+    """Optional subset selection for the confirm route.
+
+    All fields omitted (or no body at all) means "confirm everything still
+    unconfirmed for this student", which is what the current UI needs. The
+    per-id fields exist for the review screen's future "confirm these, not
+    those" case.
+    """
+
+    career_profile: bool = False
+    certifications: list[str] = []
+    work_experience: list[str] = []
+    projects: list[str] = []
+
+    def is_empty(self) -> bool:
+        return not (
+            self.career_profile or self.certifications or self.work_experience or self.projects
+        )
+
+
+@router.post(
+    "/api/v2/student/me/resume/upload",
+    dependencies=[Depends(authorize_proxy_request)],
+)
+def upload_me_resume(request: Request, file: UploadFile = File(...)) -> dict:
+    client = _session_client(request)
+    student_id = _resolve_session_student_id(client)
+
+    try:
+        file_bytes = file.file.read(MAX_RESUME_BYTES + 1)
+    except Exception as exc:  # noqa: BLE001 -- a truncated upload stream
+        raise HTTPException(status_code=400, detail="Could not read the uploaded file.") from exc
+    finally:
+        file.file.close()
+
+    if len(file_bytes) > MAX_RESUME_BYTES:
+        raise HTTPException(
+            status_code=413,
+            detail=f"Resume exceeds the {MAX_RESUME_BYTES // (1024 * 1024)} MB limit.",
+        )
+
+    extraction = extract_resume_text(file_bytes, file.content_type or "")
+    if extraction.status != "ok":
+        # Short-circuits before any model call: an empty or unreadable file has
+        # nothing to parse, and paying for a call that can only hallucinate is
+        # strictly worse than a clear error.
+        raise HTTPException(
+            status_code=EXTRACTION_STATUS_CODES.get(extraction.status, 422),
+            detail={
+                "error": "extraction_failed",
+                "extraction_status": extraction.status,
+                "message": extraction.message,
+            },
+        )
+
+    try:
+        with request.app.state.ai_concurrency.slot():
+            parsed, model_name = parse_resume_text(extraction.text, build_client())
+    except HTTPException:
+        # The concurrency gate's own 429 must reach the caller unchanged.
+        raise
+    except (
+        OSError,
+        AIConfigError,
+        AIRequestError,
+        AIResponseParseError,
+        ValueError,
+    ) as exc:
+        # Same exception tuple features/base.py:65 catches, and the same
+        # decision: a structured failure the caller can act on, never a 500.
+        # ResumeContractError subclasses ValueError, so a well-formed JSON
+        # object that violates the contract lands here too.
+        return {
+            "status": "parse_failed",
+            "extraction": {"status": extraction.status, "page_count": extraction.page_count},
+            "errors": [str(exc)],
+            "written": None,
+        }
+
+    response: dict = {
+        "status": parsed.status,
+        "extraction": {"status": extraction.status, "page_count": extraction.page_count},
+        "model": model_name,
+        "warnings": parsed.warnings,
+    }
+
+    if parsed.status != "ok":
+        # The MODEL judged this not to be a usable resume -- distinct from the
+        # extraction failure above, which never reached the model. Nothing is
+        # written, and that is the correct outcome, not an error.
+        response["written"] = None
+        return response
+
+    try:
+        report = store_parsed_resume(client, student_id, parsed)
+    except HTTPException:
+        raise
+    except Exception as exc:  # noqa: BLE001 -- RLS denial, constraint, transport
+        raise HTTPException(status_code=502, detail="Could not save the parsed resume.") from exc
+
+    response.update(report.to_dict())
+    return response
+
+
+@router.post(
+    "/api/v2/student/me/career/confirm",
+    dependencies=[Depends(authorize_proxy_request)],
+)
+def confirm_me_career(request: Request, body: ConfirmRequest | None = None) -> dict:
+    client = _session_client(request)
+    student_id = _resolve_session_student_id(client)
+
+    selection = None if body is None or body.is_empty() else body.model_dump()
+
+    try:
+        confirmed = confirm_career_rows(client, student_id, selection=selection)
+    except Exception as exc:  # noqa: BLE001 -- RLS denial or transport
+        raise HTTPException(status_code=502, detail="Could not confirm career records.") from exc
+
+    return {
+        "status": "ok",
+        "scope": "selection" if selection else "all_unconfirmed",
+        "confirmed": confirmed,
+        "total_confirmed": sum(confirmed.values()),
+    }
+
+
+@router.get(
+    "/api/v2/student/me/career/review",
+    dependencies=[Depends(authorize_proxy_request)],
+)
+def get_me_career_review(request: Request) -> dict:
+    """Every unconfirmed career row for the caller, grouped by table.
+
+    Deliberately does NOT go through _me_profile / build_profile_from_supabase:
+    profile_builder drops the whole career block when career_profiles is
+    unconfirmed, which is exactly the state this endpoint reports on.
+    """
+    client = _session_client(request)
+    student_id = _resolve_session_student_id(client)
+
+    try:
+        return load_unconfirmed(client, student_id)
+    except Exception as exc:  # noqa: BLE001 -- RLS denial or transport
+        raise HTTPException(status_code=502, detail="Could not load records for review.") from exc
+
+
+@router.patch(
+    "/api/v2/student/me/career/review/{table}/{row_id}",
+    dependencies=[Depends(authorize_proxy_request)],
+)
+def patch_me_career_review(request: Request, table: str, row_id: str, body: dict) -> dict:
+    real_table = TABLE_BY_SEGMENT.get(table)
+    if real_table is None:
+        supported = ", ".join(sorted(TABLE_BY_SEGMENT))
+        raise HTTPException(
+            status_code=404,
+            detail=f"Unknown record type '{table}'. Expected one of: {supported}.",
+        )
+
+    client = _session_client(request)
+    student_id = _resolve_session_student_id(client)
+
+    try:
+        return apply_edit(client, real_table, row_id, student_id, body)
+    except ReviewFieldError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except ReviewRowNotFound as exc:
+        # 404 for both "no such row" and "another student's row". RLS makes
+        # them indistinguishable, and collapsing them is correct: a 403 would
+        # confirm the row exists to someone who may not know that.
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except (ReviewRowAlreadyConfirmed, ReviewConflict) as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except HTTPException:
+        raise
+    except Exception as exc:  # noqa: BLE001 -- RLS denial or transport
+        raise HTTPException(status_code=502, detail="Could not update the record.") from exc
+
+
 def create_app(config: APIConfig | None = None) -> FastAPI:
     # Fail the deploy, not the first request: a placeholder model ID would
     # otherwise surface as an opaque 502 (chat) or a silent status="failed"
@@ -845,7 +1066,12 @@ def create_app(config: APIConfig | None = None) -> FastAPI:
     application.add_middleware(
         CORSMiddleware,
         allow_origins=list(active_config.allowed_origins),
-        allow_methods=["GET", "POST", "OPTIONS"],
+        # PATCH is here for consistency with the routes this app actually
+        # exposes, not because the live path needs it: the browser talks to a
+        # same-origin Vercel proxy, and the proxy-to-backend hop is
+        # server-to-server, where CORS does not apply. Omitting it would leave
+        # the policy contradicting the route table for no reason.
+        allow_methods=["GET", "PATCH", "POST", "OPTIONS"],
         allow_headers=["Content-Type", PROXY_SECRET_HEADER],
     )
     application.include_router(router)
