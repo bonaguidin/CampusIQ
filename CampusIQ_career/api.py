@@ -41,6 +41,15 @@ from CampusIQ_career.features.orchestrator import RUNNERS, run_feature
 from CampusIQ_career.profile_builder import build_profile_from_supabase
 from CampusIQ_career.resume.extraction import extract_resume_text
 from CampusIQ_career.resume.parser import parse_resume_text
+from CampusIQ_career.resume.review import (
+    TABLE_BY_SEGMENT,
+    ReviewConflict,
+    ReviewFieldError,
+    ReviewRowAlreadyConfirmed,
+    ReviewRowNotFound,
+    apply_edit,
+    load_unconfirmed,
+)
 from CampusIQ_career.resume.store import confirm_career_rows, store_parsed_resume
 from CampusIQ_career.supabase_client import SupabaseConfigError, build_client_for_token
 
@@ -979,6 +988,59 @@ def confirm_me_career(request: Request, body: ConfirmRequest | None = None) -> d
     }
 
 
+@router.get(
+    "/api/v2/student/me/career/review",
+    dependencies=[Depends(authorize_proxy_request)],
+)
+def get_me_career_review(request: Request) -> dict:
+    """Every unconfirmed career row for the caller, grouped by table.
+
+    Deliberately does NOT go through _me_profile / build_profile_from_supabase:
+    profile_builder drops the whole career block when career_profiles is
+    unconfirmed, which is exactly the state this endpoint reports on.
+    """
+    client = _session_client(request)
+    student_id = _resolve_session_student_id(client)
+
+    try:
+        return load_unconfirmed(client, student_id)
+    except Exception as exc:  # noqa: BLE001 -- RLS denial or transport
+        raise HTTPException(status_code=502, detail="Could not load records for review.") from exc
+
+
+@router.patch(
+    "/api/v2/student/me/career/review/{table}/{row_id}",
+    dependencies=[Depends(authorize_proxy_request)],
+)
+def patch_me_career_review(request: Request, table: str, row_id: str, body: dict) -> dict:
+    real_table = TABLE_BY_SEGMENT.get(table)
+    if real_table is None:
+        supported = ", ".join(sorted(TABLE_BY_SEGMENT))
+        raise HTTPException(
+            status_code=404,
+            detail=f"Unknown record type '{table}'. Expected one of: {supported}.",
+        )
+
+    client = _session_client(request)
+    student_id = _resolve_session_student_id(client)
+
+    try:
+        return apply_edit(client, real_table, row_id, student_id, body)
+    except ReviewFieldError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except ReviewRowNotFound as exc:
+        # 404 for both "no such row" and "another student's row". RLS makes
+        # them indistinguishable, and collapsing them is correct: a 403 would
+        # confirm the row exists to someone who may not know that.
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except (ReviewRowAlreadyConfirmed, ReviewConflict) as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except HTTPException:
+        raise
+    except Exception as exc:  # noqa: BLE001 -- RLS denial or transport
+        raise HTTPException(status_code=502, detail="Could not update the record.") from exc
+
+
 def create_app(config: APIConfig | None = None) -> FastAPI:
     # Fail the deploy, not the first request: a placeholder model ID would
     # otherwise surface as an opaque 502 (chat) or a silent status="failed"
@@ -1004,7 +1066,12 @@ def create_app(config: APIConfig | None = None) -> FastAPI:
     application.add_middleware(
         CORSMiddleware,
         allow_origins=list(active_config.allowed_origins),
-        allow_methods=["GET", "POST", "OPTIONS"],
+        # PATCH is here for consistency with the routes this app actually
+        # exposes, not because the live path needs it: the browser talks to a
+        # same-origin Vercel proxy, and the proxy-to-backend hop is
+        # server-to-server, where CORS does not apply. Omitting it would leave
+        # the policy contradicting the route table for no reason.
+        allow_methods=["GET", "PATCH", "POST", "OPTIONS"],
         allow_headers=["Content-Type", PROXY_SECRET_HEADER],
     )
     application.include_router(router)

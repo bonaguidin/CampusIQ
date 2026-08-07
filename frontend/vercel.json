@@ -35,6 +35,18 @@
       "destination": "/api/proxy?target=me-resume-upload"
     },
     {
+      "source": "/api/v2/student/me/career/confirm",
+      "destination": "/api/proxy?target=me-career-confirm"
+    },
+    {
+      "source": "/api/v2/student/me/career/review",
+      "destination": "/api/proxy?target=me-career-review"
+    },
+    {
+      "source": "/api/v2/student/me/career/review/:table/:id",
+      "destination": "/api/proxy?target=me-career-review-edit&table=:table&id=:id"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
