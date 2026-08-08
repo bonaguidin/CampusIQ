@@ -80,6 +80,24 @@ async function fetchMeProfile(accessToken: string): Promise<MeProfileResponse> {
   });
 
   if (response.status !== 200) {
+    // The body is discarded on every non-200 today, which is exactly the
+    // detail needed to tell a proxy misroute (HTML back from the SPA
+    // catch-all rewrite) from a genuine backend 404/401/502. Read it here
+    // purely to log it; the returned shape is unchanged.
+    let body: string;
+    try {
+      body = await response.text();
+    } catch (err) {
+      body = `<unreadable: ${String(err)}>`;
+    }
+    console.error(
+      '[studentAccount] fetchMeProfile non-200 | status:',
+      response.status,
+      '| content-type:',
+      response.headers.get('content-type'),
+      '| body:',
+      body.slice(0, 600),
+    );
     return { status: response.status, profile: null };
   }
   return { status: 200, profile: (await response.json()) as MeProfile };
@@ -115,15 +133,45 @@ async function insertStudentRow(userId: string, metadata: SignupMetadata): Promi
     .select('id')
     .single();
 
-  if (!error && data) return (data as { id: string }).id;
+  if (!error && data) {
+    console.log('[studentAccount] students INSERT ok | id:', (data as { id: string }).id);
+    return (data as { id: string }).id;
+  }
 
   if (error && errorCode(error) !== UNIQUE_VIOLATION) {
+    // `throw new Error(error.message)` below flattens the Supabase error to a
+    // bare string, so the code/details/hint -- the parts that distinguish an
+    // RLS denial (42501) from a constraint or a network failure -- never
+    // reach the catch in resolveStudentAccount. Log the object intact first.
+    console.error(
+      '[studentAccount] students INSERT FAILED | code:',
+      errorCode(error),
+      '| message:',
+      error.message,
+      '| details:',
+      (error as { details?: unknown }).details,
+      '| hint:',
+      (error as { hint?: unknown }).hint,
+      '| full error object:',
+      error,
+    );
     throw new Error(error.message);
   }
 
   // 23505: the row exists already. Read it back rather than failing.
+  console.log('[studentAccount] students INSERT hit 23505 (already provisioned); reading back.');
   const existing = await supabase.from('students').select('id').eq('auth_user_id', userId).single();
   if (existing.error || !existing.data) {
+    // Insert reported "already exists" but the row is not visible to this
+    // session -- an RLS-visibility mismatch rather than a write failure.
+    console.error(
+      '[studentAccount] students READ-BACK FAILED after 23505 | code:',
+      errorCode(existing.error),
+      '| full error object:',
+      existing.error,
+      '| data:',
+      existing.data,
+    );
     throw new Error(existing.error?.message ?? 'Could not read back your student record.');
   }
   return (existing.data as { id: string }).id;
@@ -145,8 +193,33 @@ async function ensureHomeInstitution(studentId: string, institutionId: string): 
   });
 
   if (error && errorCode(error) !== UNIQUE_VIOLATION) {
+    // Same flattening problem as the students insert above.
+    console.error(
+      '[studentAccount] student_institutions INSERT FAILED | code:',
+      errorCode(error),
+      '| message:',
+      error.message,
+      '| details:',
+      (error as { details?: unknown }).details,
+      '| hint:',
+      (error as { hint?: unknown }).hint,
+      '| studentId:',
+      studentId,
+      '| institutionId:',
+      institutionId,
+      '| full error object:',
+      error,
+    );
     throw new Error(error.message);
   }
+  console.log(
+    '[studentAccount] student_institutions ensured | studentId:',
+    studentId,
+    '| institutionId:',
+    institutionId,
+    '| duplicate:',
+    error ? '23505 (already present)' : 'no (inserted)',
+  );
 }
 
 function failed(message: string): StudentAccountState {
@@ -180,9 +253,16 @@ async function repairMissingInstitution(
   accessToken: string,
   metadata: SignupMetadata,
 ): Promise<StudentAccountState> {
+  console.log(
+    '[studentAccount] repairMissingInstitution: linking institution',
+    metadata.institutionId,
+    'to studentId',
+    profile.student.id,
+  );
   try {
     await ensureHomeInstitution(profile.student.id, metadata.institutionId);
   } catch (err) {
+    console.error('[studentAccount] BRANCH: error -- repair insert threw | flattened:', err);
     return failed(
       err instanceof Error
         ? `Your account exists but its institution could not be linked: ${err.message}`
@@ -192,8 +272,16 @@ async function repairMissingInstitution(
 
   const confirmed = await fetchMeProfile(accessToken);
   if (confirmed.status === 200 && confirmed.profile) {
+    console.log(
+      '[studentAccount] BRANCH: ready -- repair completed | institution:',
+      confirmed.profile.student.institution,
+    );
     return { status: 'ready', profile: confirmed.profile, message: null };
   }
+  console.error(
+    '[studentAccount] BRANCH: error -- repair wrote the link but re-read failed | status:',
+    confirmed.status,
+  );
   return failed('Your institution was linked but your profile could not be re-read.');
 }
 
@@ -210,17 +298,47 @@ export async function resolveStudentAccount(
 ): Promise<StudentAccountState> {
   const metadata = readSignupMetadata(userMetadata);
 
+  console.log(
+    '[studentAccount] resolveStudentAccount ENTER | userId:',
+    userId,
+    '| accessToken:',
+    accessToken ? `present (len ${String(accessToken.length)})` : 'ABSENT',
+    '| signup metadata parsed:',
+    metadata ? metadata : 'null (readSignupMetadata rejected user_metadata)',
+  );
+
   let current: MeProfileResponse;
   try {
     current = await fetchMeProfile(accessToken);
-  } catch {
+  } catch (err) {
+    // Empty catch today: a DNS failure, CORS rejection or offline network is
+    // indistinguishable from any other fetch problem. Still swallowed below.
+    console.error(
+      '[studentAccount] fetchMeProfile THREW (network/CORS, not an HTTP status) | error:',
+      err,
+    );
     return failed('Could not reach the server to load your profile. Check your connection.');
   }
 
+  console.log('[studentAccount] /me/profile status:', current.status);
+
   if (current.status === 200 && current.profile) {
     if (current.profile.student.institution !== null) {
+      console.log(
+        '[studentAccount] BRANCH: ready -- students row exists with institution',
+        current.profile.student.institution,
+        '| studentId:',
+        current.profile.student.id,
+      );
       return { status: 'ready', profile: current.profile, message: null };
     }
+    console.warn(
+      '[studentAccount] 200 but institution is null -- half-provisioned student.',
+      '| studentId:',
+      current.profile.student.id,
+      '| repairable:',
+      metadata ? 'yes (metadata present)' : 'no (no metadata)',
+    );
     // A students row with no home institution. If a sign-up is behind this
     // session, that is the half-written state above and we finish it.
     if (metadata) {
@@ -232,6 +350,9 @@ export async function resolveStudentAccount(
     // profile (_resolve_institution_name degrades to null by design rather
     // than raising), so locking such a student out of the dashboard would
     // invent a failure the rest of the system does not recognize.
+    console.warn(
+      '[studentAccount] BRANCH: ready -- institution null and no metadata to repair from.',
+    );
     return { status: 'ready', profile: current.profile, message: null };
   }
 
@@ -239,6 +360,13 @@ export async function resolveStudentAccount(
     // No students row. Either a first confirmed login after sign-up, or a
     // session with no student behind it.
     if (!metadata) {
+      // 404 + no usable metadata: provisioning is never even attempted. For a
+      // real sign-up this means readSignupMetadata rejected user_metadata.
+      console.error(
+        '[studentAccount] BRANCH: absent -- /me/profile 404 and no sign-up metadata,',
+        'so NO INSERT IS ATTEMPTED. Raw user_metadata was:',
+        userMetadata,
+      );
       return {
         status: 'absent',
         profile: null,
@@ -248,10 +376,18 @@ export async function resolveStudentAccount(
       };
     }
 
+    console.log('[studentAccount] 404 + metadata present -> attempting provisioning inserts.');
+
     let studentId: string;
     try {
       studentId = await insertStudentRow(userId, metadata);
     } catch (err) {
+      console.error(
+        '[studentAccount] BRANCH: error -- students insert threw.',
+        'See the "students INSERT FAILED" line above for the raw Postgres error.',
+        '| flattened:',
+        err,
+      );
       return failed(
         err instanceof Error
           ? `Your student profile could not be created: ${err.message}`
@@ -262,6 +398,14 @@ export async function resolveStudentAccount(
     try {
       await ensureHomeInstitution(studentId, metadata.institutionId);
     } catch (err) {
+      console.error(
+        '[studentAccount] BRANCH: error -- student_institutions insert threw',
+        'AFTER the students row was written (half-provisioned).',
+        '| studentId:',
+        studentId,
+        '| flattened:',
+        err,
+      );
       // The students row IS written. Deliberately not rolled back: the next
       // load re-enters here, /me/profile now answers 200 with a null
       // institution, and repairMissingInstitution() completes just this piece.
@@ -278,21 +422,58 @@ export async function resolveStudentAccount(
     let confirmed: MeProfileResponse;
     try {
       confirmed = await fetchMeProfile(accessToken);
-    } catch {
+    } catch (err) {
+      // Empty catch today.
+      console.error(
+        '[studentAccount] BRANCH: error -- post-insert re-read THREW.',
+        'Both inserts reported success but the row could not be confirmed.',
+        '| studentId:',
+        studentId,
+        '| error:',
+        err,
+      );
       return failed('Your profile was created but could not be loaded. Try reloading.');
     }
     if (confirmed.status === 200 && confirmed.profile) {
+      console.log(
+        '[studentAccount] BRANCH: ready -- provisioning completed and verified | studentId:',
+        confirmed.profile.student.id,
+        '| institution:',
+        confirmed.profile.student.institution,
+      );
       return { status: 'ready', profile: confirmed.profile, message: null };
     }
+    // Inserts reported success, yet /me/profile still cannot see the row.
+    console.error(
+      '[studentAccount] BRANCH: error -- INSERTS SUCCEEDED BUT ROW IS ABSENT afterward.',
+      'Post-insert /me/profile status:',
+      confirmed.status,
+      '| studentId returned by insert:',
+      studentId,
+      '(see the fetchMeProfile non-200 line above for the body)',
+    );
     return failed(
       `Your profile was created but could not be loaded (status ${String(confirmed.status)}).`,
     );
   }
 
   if (current.status === 401) {
+    console.error(
+      '[studentAccount] BRANCH: error -- /me/profile returned 401.',
+      'The bearer token was rejected; no provisioning was attempted.',
+    );
     return failed('Your session could not be verified. Sign in again.');
   }
 
+  // Any status that is neither 200, 404 nor 401 -- e.g. a 502 from the proxy,
+  // or a 200-with-HTML from the SPA catch-all rewrite if the rewrite is
+  // missing in the deployed environment.
+  console.error(
+    '[studentAccount] BRANCH: error -- /me/profile returned an unexpected status:',
+    current.status,
+    '(not 200/404/401). No provisioning was attempted.',
+    'See the fetchMeProfile non-200 line above for the response body.',
+  );
   return failed(`Your profile could not be loaded (status ${String(current.status)}).`);
 }
 
@@ -308,7 +489,14 @@ export function resolveStudentAccountOnce(
   userMetadata: unknown,
 ): Promise<StudentAccountState> {
   const existing = inFlight.get(userId);
-  if (existing) return existing;
+  if (existing) {
+    console.log(
+      '[studentAccount] resolveStudentAccountOnce: reusing in-flight run for userId',
+      userId,
+      '(this call did not start a new resolution).',
+    );
+    return existing;
+  }
 
   const run = resolveStudentAccount(accessToken, userId, userMetadata).finally(() => {
     inFlight.delete(userId);

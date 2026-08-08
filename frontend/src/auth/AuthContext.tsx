@@ -77,6 +77,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     sessionRef.current = session;
   }, [session]);
 
+  // DIAGNOSTIC ONLY. Records which of the two session sources most recently
+  // set `session`, so the provisioning log below can name its trigger. Nothing
+  // reads this for control flow -- it is a label, not state.
+  const sessionSourceRef = useRef<string>('none');
+
   // On mount: restore demo session from sessionStorage
   useEffect(() => {
     const savedSlug = sessionStorage.getItem(SESSION_KEY);
@@ -104,6 +109,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     supabase.auth.getSession().then(({ data }) => {
       if (!active) return;
+      sessionSourceRef.current = 'mount:getSession';
+      console.log(
+        '[AuthContext] mount getSession resolved | session:',
+        data.session ? 'present' : 'absent',
+        '| userId:',
+        data.session?.user.id ?? null,
+      );
       setSession(data.session);
       setUser(data.session?.user ?? null);
       setSessionLoading(false);
@@ -112,6 +124,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, newSession) => {
+      sessionSourceRef.current = `onAuthStateChange:${_event}`;
+      console.log(
+        '[AuthContext] onAuthStateChange |',
+        _event,
+        '| session:',
+        newSession ? 'present' : 'absent',
+        '| userId:',
+        newSession?.user.id ?? null,
+      );
       setSession(newSession);
       setUser(newSession?.user ?? null);
     });
@@ -133,6 +154,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!userId) {
+      console.log(
+        '[AuthContext] provisioning effect: SKIPPED -- no userId (state reset to no-session).',
+        '| trigger:',
+        sessionSourceRef.current,
+      );
       setStudentAccount(NO_SESSION_STATE);
       return;
     }
@@ -142,20 +168,67 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // fixtures live in data/students/*.json and were never inserted), so asking
     // Postgres about it would produce a misleading 404 for a session that is
     // working exactly as intended.
-    if (demoProfileActive) return;
+    if (demoProfileActive) {
+      // Currently a fully silent return: no log, no state change. If a demo
+      // profile is somehow active for a real signed-in user, provisioning
+      // never runs and nothing anywhere says so.
+      console.warn(
+        '[AuthContext] provisioning effect: SKIPPED -- demo profile is active,',
+        'so the students-row question is never asked for userId:',
+        userId,
+        '| trigger:',
+        sessionSourceRef.current,
+      );
+      return;
+    }
 
     const current = sessionRef.current;
     const accessToken = current?.access_token;
-    if (!accessToken) return;
+    if (!accessToken) {
+      // Also fully silent today, and it leaves studentAccount at whatever it
+      // was. Reachable when the effect runs before sessionRef caught up.
+      console.warn(
+        '[AuthContext] provisioning effect: SKIPPED -- userId present but',
+        'sessionRef has no access_token yet. userId:',
+        userId,
+        '| sessionRef:',
+        current ? 'present' : 'null',
+        '| trigger:',
+        sessionSourceRef.current,
+      );
+      return;
+    }
 
     let active = true;
     setStudentAccount(CHECKING_STATE);
 
+    console.log(
+      '[AuthContext] calling resolveStudentAccountOnce | session:',
+      sessionRef.current ? 'present' : 'absent',
+      '| trigger:',
+      sessionSourceRef.current,
+      '| retryCount:',
+      accountRetry,
+      '| userId:',
+      userId,
+      '| user_metadata:',
+      current.user.user_metadata,
+    );
+
     resolveStudentAccountOnce(accessToken, userId, current.user.user_metadata)
       .then((next) => {
+        console.log(
+          '[AuthContext] resolveStudentAccountOnce resolved | status:',
+          next.status,
+          '| message:',
+          next.message,
+          '| applied:',
+          active,
+        );
         if (active) setStudentAccount(next);
       })
       .catch((err: unknown) => {
+        console.error('[AuthContext] resolveStudentAccountOnce REJECTED | error:', err);
         if (!active) return;
         setStudentAccount({
           status: 'error',
