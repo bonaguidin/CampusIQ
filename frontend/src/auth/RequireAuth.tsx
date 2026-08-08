@@ -1,16 +1,9 @@
 import { Navigate } from 'react-router-dom';
 import { useAuth } from './useAuth';
+import { Spinner, StudentAccountProblem } from './AccountStateScreens';
 
 interface RequireAuthProps {
   children: React.ReactNode;
-}
-
-function Spinner() {
-  return (
-    <div className="loading-screen">
-      <div className="spinner" role="status" aria-label="Loading" />
-    </div>
-  );
 }
 
 /**
@@ -26,6 +19,17 @@ function Spinner() {
  *                 through, so rendering the dashboard without one produces a
  *                 page of 404s.
  *
+ * WHERE THE SESSION PATH NOW GOES: a real student who reaches /dashboard is
+ * redirected to /resume rather than shown DashboardPage. DashboardPage reads
+ * the DEMO `profile` from useAuth and dereferences profile.courses /
+ * .enrollments / .assignments directly, so for a session-path student that
+ * value is null and the page cannot render anything meaningful. The resume
+ * flow is the only thing a real student can currently do. /dashboard stays
+ * registered and reachable because the demo path above still needs it.
+ *
+ * No "already uploaded, skip ahead" logic: there is no dashboard worth sending
+ * a returning student to yet, so ready always lands on /resume.
+ *
  * ON THE TWO LOADING FLAGS: they can differ, and are not collapsed here.
  * `profileLoading` covers the sessionStorage demo restore; `sessionLoading`
  * covers supabase.auth.getSession(). Both must be settled before the *routing*
@@ -33,8 +37,7 @@ function Spinner() {
  * merely unknown, and either would bounce a legitimate user to /login. Once
  * they are settled they are never consulted again: everything after that point
  * is driven by `studentAccount.status`, which is the only signal that tracks
- * provisioning. In particular a signed-in user's dashboard access never waits
- * on the demo adapter's own work.
+ * provisioning.
  */
 export function RequireAuth({ children }: RequireAuthProps) {
   const {
@@ -69,60 +72,19 @@ export function RequireAuth({ children }: RequireAuthProps) {
     return <Spinner />;
   }
 
-  // 3. Session plus a confirmed students row, pre-existing or just provisioned.
+  // 3. Session plus a confirmed students row -> the resume flow, not the
+  //    dashboard. See the note above on why.
   if (studentAccount.status === 'ready') {
-    return <>{children}</>;
+    return <Navigate to="/resume" replace />;
   }
 
   // 4. Signed in, but the account is not usable: either nothing to provision
-  //    from ('absent') or provisioning failed ('error'). Bouncing to /login
-  //    would read as "you're not signed in", which is the wrong problem and
-  //    invites a sign-in loop that cannot succeed.
-  const isAbsent = studentAccount.status === 'absent';
-
+  //    from ('absent') or provisioning failed ('error').
   return (
-    <div className="login-bg">
-      <div className="login-card">
-        <div className="login-header">
-          <h1 className="login-logo">GradusIQ</h1>
-          <p className="login-subtitle">
-            {isAbsent ? 'No student profile' : 'Profile setup incomplete'}
-          </p>
-        </div>
-
-        <div className="login-form">
-          <p className="login-error" role="alert">
-            {studentAccount.message ??
-              'Your account is signed in but its student profile is not ready.'}
-          </p>
-
-          {!isAbsent && (
-            <button
-              type="button"
-              className="btn btn-primary btn-full"
-              onClick={refreshStudentAccount}
-            >
-              Try again
-            </button>
-          )}
-
-          <button
-            type="button"
-            className="btn btn-ghost btn-full"
-            onClick={() => {
-              void signOutSession();
-            }}
-          >
-            Sign out
-          </button>
-        </div>
-
-        <p className="login-note">
-          {isAbsent
-            ? 'Signing up creates the profile this account is missing.'
-            : 'Your account exists — only the last setup step did not finish.'}
-        </p>
-      </div>
-    </div>
+    <StudentAccountProblem
+      studentAccount={studentAccount}
+      onRetry={refreshStudentAccount}
+      onSignOut={signOutSession}
+    />
   );
 }

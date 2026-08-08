@@ -2100,3 +2100,157 @@ a {
     padding: var(--sp-4);
   }
 }
+
+/* ── Resume upload + review ───────────────────────────────────────────────── */
+/* Extends the existing login, form and btn class vocabulary rather than
+   replacing it: the upload screen IS a login-card, and every field below is a
+   form-group. Only the review screen's wider multi-record layout needed
+   classes of its own, since no existing page lists editable records outside
+   the dashboard. */
+
+.resume-card {
+  max-width: 440px;
+}
+
+.resume-intro {
+  color: var(--muted);
+  font-size: var(--text-sm);
+  line-height: 1.55;
+  margin: 0 0 var(--sp-2);
+}
+
+.resume-file-input {
+  padding: var(--sp-2);
+  cursor: pointer;
+}
+
+.resume-file-note,
+.resume-error-hint,
+.resume-error-detail {
+  font-size: var(--text-xs);
+  color: var(--muted);
+  margin: var(--sp-1) 0 0;
+}
+
+.resume-error-hint {
+  color: inherit;
+  opacity: 0.85;
+}
+
+.resume-error-detail {
+  font-family: var(--font-data);
+  word-break: break-word;
+  opacity: 0.75;
+}
+
+.resume-review-bg {
+  min-height: 100vh;
+  background: var(--paper);
+  padding: var(--sp-8) var(--sp-4);
+}
+
+.resume-review {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.resume-review-header {
+  margin-bottom: var(--sp-6);
+}
+
+.resume-review-title {
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  margin: var(--sp-2) 0;
+}
+
+.resume-section {
+  margin-bottom: var(--sp-6);
+}
+
+.resume-section-title {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0 0 var(--sp-3);
+}
+
+.resume-section-count {
+  font-size: var(--text-xs);
+  color: var(--muted);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 0 var(--sp-2);
+}
+
+.resume-row {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: var(--sp-4) var(--sp-5);
+  margin-bottom: var(--sp-3);
+}
+
+.resume-row-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-3);
+}
+
+.resume-row-title {
+  font-family: var(--font-display);
+  font-size: var(--text-base);
+  margin: 0;
+}
+
+.resume-row-locked {
+  font-size: var(--text-xs);
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.resume-row-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0 var(--sp-4);
+}
+
+.resume-row-error,
+.resume-row-saved {
+  font-size: var(--text-sm);
+  margin: var(--sp-2) 0 0;
+}
+
+.resume-row-error {
+  color: var(--error);
+}
+
+.resume-row-saved {
+  color: var(--muted);
+}
+
+.resume-review-footer {
+  position: sticky;
+  bottom: 0;
+  background: var(--paper);
+  border-top: 1px solid var(--line);
+  padding: var(--sp-4) 0 var(--sp-6);
+}
+
+@media (max-width: 640px) {
+  .resume-review-bg {
+    padding: var(--sp-5) var(--sp-3);
+  }
+
+  .resume-row-fields {
+    grid-template-columns: 1fr;
+  }
+}
