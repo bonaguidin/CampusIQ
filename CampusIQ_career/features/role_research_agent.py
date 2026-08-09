@@ -38,6 +38,7 @@ import json
 import logging
 import os
 import re
+import threading
 import time
 from pathlib import Path
 from typing import Any, Callable, Mapping
@@ -77,6 +78,10 @@ _CACHE_PATH = Path(__file__).resolve().parents[2] / "data" / ".cache" / "role_re
 _TRENDS_CACHE_PATH = Path(__file__).resolve().parents[2] / "data" / ".cache" / "role_trends_cache.json"
 
 _SOC_CODE_PATTERN = re.compile(r"^\d{2}-\d{4}\.\d{2}$")
+
+# Serialises the load-modify-write in _write_cache. Both cache files are
+# written from ShiftRunner's concurrent research threads.
+_CACHE_WRITE_LOCK = threading.Lock()
 
 _WEB_SEARCH_TOOL: Mapping[str, Any] = {
     "type": "function",
@@ -522,16 +527,21 @@ def _read_cache(
 
 
 def _write_cache(path: Path, role: str, requirements: dict[str, Any]) -> None:
-    cache = _load_cache(path)
-    cache[role] = requirements
-    try:
-        path.parent.mkdir(parents=True, exist_ok=True)
-        with path.open("w", encoding="utf-8") as handle:
-            json.dump(cache, handle, indent=2, sort_keys=True)
-    except OSError:
-        # A cache write failure must never break a lookup that already
-        # succeeded -- the result is still returned, just not persisted.
-        pass
+    # Load-modify-write must be atomic across threads. ShiftRunner researches a
+    # student's roles concurrently, so without this two lookups finishing
+    # together would each read the pre-write file and the second would clobber
+    # the first's entry -- silently discarding research we already paid for.
+    with _CACHE_WRITE_LOCK:
+        cache = _load_cache(path)
+        cache[role] = requirements
+        try:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            with path.open("w", encoding="utf-8") as handle:
+                json.dump(cache, handle, indent=2, sort_keys=True)
+        except OSError:
+            # A cache write failure must never break a lookup that already
+            # succeeded -- the result is still returned, just not persisted.
+            pass
 
 
 def get_role_requirements(role: str, client: OpenRouterClient | None = None) -> dict[str, Any] | None:

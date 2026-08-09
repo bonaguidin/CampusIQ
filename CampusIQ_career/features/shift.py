@@ -1,10 +1,33 @@
 """SHIFT career feature runner."""
 
+import logging
+from concurrent.futures import ThreadPoolExecutor
 from typing import Any, Mapping
 
 from . import role_research_agent
 from .base import CareerFeatureRunner
 from .market_data import get_shift_signals
+
+logger = logging.getLogger(__name__)
+
+# Ceiling on concurrent research threads per request. A student's target_roles
+# list is user-controlled, so this is capped rather than left as len(roles).
+_MAX_TREND_WORKERS = 4
+
+
+def _safe_role_trends(role: str) -> dict[str, Any] | None:
+    """Never let one role's failure abort the others.
+
+    get_role_trends is contractually non-raising, but pool.map re-raises on
+    collection -- so a regression there would take down the whole SHIFT run
+    instead of costing one role its trend data. Cheap insurance for a property
+    that matters more now that these run in parallel.
+    """
+    try:
+        return role_research_agent.get_role_trends(role)
+    except Exception:  # noqa: BLE001 -- degrade to "unresearched", never fail SHIFT
+        logger.warning("role_trends raised for role=%s; treating as unresearched", role, exc_info=True)
+        return None
 
 
 class ShiftRunner(CareerFeatureRunner):
@@ -63,17 +86,36 @@ class ShiftRunner(CareerFeatureRunner):
         }
 
     def role_trends_for(self, target_roles: Any) -> dict[str, Any]:
-        """Research current trends for each target role, skipping failures.
+        """Research current trends for each target role, concurrently.
 
         A role missing from the returned map means research did not come back.
         That is reported rather than hidden, because the alternative -- letting
         the model fill the silence from memory -- is exactly the behaviour this
         feature is being built to stop.
+
+        Run in parallel because the lookups are independent and I/O-bound
+        (model call -> web search -> model call). Serially they made SHIFT's
+        wall time the SUM of every role's research: measured at ~24s per role,
+        so a three-role student spent ~2m43s researching and finished in
+        ~3m42s -- uncomfortably close to the 300s ceiling the frontend proxy
+        enforces on any request. Concurrently that research collapses to
+        roughly the slowest single role.
         """
+        roles = [r for r in (target_roles or []) if isinstance(r, str) and r.strip()]
+        # Deduplicated before dispatch: two identical role strings would
+        # otherwise research twice in parallel, and neither would see the
+        # other's cache entry because both start before either writes.
+        unique = list(dict.fromkeys(roles))
+        if not unique:
+            return {}
+
+        with ThreadPoolExecutor(max_workers=min(len(unique), _MAX_TREND_WORKERS)) as pool:
+            researched = dict(zip(unique, pool.map(_safe_role_trends, unique)))
+
         trends: dict[str, Any] = {}
         unresearched: list[str] = []
-        for role in target_roles or []:
-            result = role_research_agent.get_role_trends(role)
+        for role in unique:
+            result = researched.get(role)
             if result:
                 trends[role] = result
             else:

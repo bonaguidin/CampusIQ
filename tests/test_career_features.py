@@ -464,3 +464,61 @@ def test_shift_reports_every_role_when_trend_research_is_unavailable(monkeypatch
     assert context["role_trends"] == {"_unresearched_roles": ["Business Analyst Intern"]}
     # Local O*NET grounding is unaffected by the research outage.
     assert context["shift_signals"]["by_role"]["Business Analyst Intern"]["related"]
+
+
+def test_shift_researches_roles_concurrently_not_serially():
+    """Wall time must track the slowest role, not the sum of all of them.
+
+    Serial research put a three-role student at ~2m43s against the frontend
+    proxy's 300s ceiling; this is the property that keeps that from regressing.
+    """
+    import time
+    from CampusIQ_career.features import shift as shift_module
+
+    def slow(role, client=None):
+        time.sleep(0.4)
+        return {"role_evolution": role, "task_shifts": [], "emerging_skills": [], "sources": []}
+
+    original = shift_module.role_research_agent.get_role_trends
+    shift_module.role_research_agent.get_role_trends = slow
+    try:
+        started = time.monotonic()
+        result = ShiftRunner(client=FakeClient("{}")).role_trends_for(["A", "B", "C"])
+        elapsed = time.monotonic() - started
+    finally:
+        shift_module.role_research_agent.get_role_trends = original
+
+    assert set(result) == {"A", "B", "C"}
+    # Serial would be >=1.2s; concurrent lands near a single 0.4s sleep.
+    assert elapsed < 0.9, f"looks serial: {elapsed:.2f}s for 3 x 0.4s lookups"
+
+
+def test_shift_duplicate_roles_are_researched_once(monkeypatch):
+    from CampusIQ_career.features import shift as shift_module
+
+    calls: list[str] = []
+
+    def spy(role, client=None):
+        calls.append(role)
+        return {"role_evolution": role, "task_shifts": [], "emerging_skills": [], "sources": []}
+
+    monkeypatch.setattr(shift_module.role_research_agent, "get_role_trends", spy)
+    result = ShiftRunner(client=FakeClient("{}")).role_trends_for(["Finance Intern", "Finance Intern"])
+
+    assert calls == ["Finance Intern"]
+    assert set(result) == {"Finance Intern"}
+
+
+def test_shift_one_failing_role_does_not_abort_the_others(monkeypatch):
+    from CampusIQ_career.features import shift as shift_module
+
+    def flaky(role, client=None):
+        if role == "B":
+            raise RuntimeError("upstream blew up")
+        return {"role_evolution": role, "task_shifts": [], "emerging_skills": [], "sources": []}
+
+    monkeypatch.setattr(shift_module.role_research_agent, "get_role_trends", flaky)
+    result = ShiftRunner(client=FakeClient("{}")).role_trends_for(["A", "B", "C"])
+
+    assert set(result) == {"A", "C", "_unresearched_roles"}
+    assert result["_unresearched_roles"] == ["B"]
