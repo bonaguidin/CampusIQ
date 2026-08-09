@@ -10,8 +10,9 @@ Run:  python build_onet.py --version 30_3
 Re-run this after each annual O*NET refresh. Do not hand-edit the output.
 """
 
-import argparse, csv, io, os, sys, zipfile, urllib.request
+import argparse, csv, io, json, os, sys, zipfile, urllib.request
 from collections import defaultdict
+from datetime import date
 
 # ---------------------------------------------------------------- config
 
@@ -27,7 +28,35 @@ RATING_FILES = {
     "Abilities.txt":           "ability",
 }
 
+# Non-rating source files, named here for the same reason RATING_FILES is a
+# dict: a release rename should be one edit at the top, not a hunt through main().
+TASKS_FILE   = "Task Statements.txt"
+RELATED_FILE = "Related Occupations.txt"
+
 OUT = "out"
+
+# The reference file is application input, not loader output, so it lands in
+# data/reference/ rather than out/. market_data.py already reads this exact
+# path -- see _DEFAULT_DATA_PATH there. Emitting it replaces the hand-built
+# 10-occupation file that covered 2 of the 12 demo SOC codes.
+REF_DIR  = os.path.normpath(
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), os.pardir, "reference"))
+REF_NAME = "onet_soc_requirements.json"
+
+# Importance at or above this is a must-have. Carried in the reference file so
+# the consumer never hardcodes it.
+MUST_HAVE_THRESHOLD = 70
+
+# Floor for knowledge/abilities in the reference file. Essential Skills are kept
+# in full (all 10) to preserve the prior file's inclusion rule; knowledge and
+# abilities run ~33 and ~52 rows per occupation unfiltered, which buries the
+# signal in noise the model then has to rank itself.
+REF_MIN_IMPORTANCE = 50
+
+# Only the Primary-Short tier (exactly 5 per occupation) is carried. Primary-Long
+# and Supplemental add 15 more with progressively looser relatedness -- more
+# candidates than SHIFT's adjacent_paths can use, and weaker ones.
+RELATED_TIER = "Primary-Short"
 
 # ---------------------------------------------------------------- helpers
 
@@ -56,6 +85,120 @@ def write(name, header, rows):
     print(f"  {name:<28} {len(rows):>7,} rows   {kb:>8,.0f} KB")
     return len(rows)
 
+def write_json(directory, name, payload):
+    os.makedirs(directory, exist_ok=True)
+    path = os.path.join(directory, name)
+    with open(path, "w", encoding="utf-8", newline="") as f:
+        json.dump(payload, f, indent=2, ensure_ascii=False, sort_keys=False)
+        f.write("\n")
+    kb = os.path.getsize(path) / 1024
+    print(f"  {name:<28} {len(payload['roles']):>7,} occs   {kb:>8,.0f} KB   -> {directory}")
+    return path
+
+
+def rescale(value):
+    """O*NET native Importance is 1-5. The reference file uses 0-100 so
+    MUST_HAVE_THRESHOLD reads as a percentage and matches what the prior
+    hand-built file recorded in its _meta."""
+    return round((float(value) - 1) / 4 * 100)
+
+
+def build_reference(occ_rows, rating_rows, sw_rows, jz_rows, tasks, related, version):
+    """Assemble the per-occupation reference consumed by market_data.py.
+
+    Every occupation in the release gets an entry, including the 122 with no
+    ratings data. An entry with empty lists and a _data_status of
+    "partial_onet_profile"/"no_data" is strictly more useful to the caller than
+    a missing key: it distinguishes "this occupation has no O*NET ratings" from
+    "this SOC code is not in the release", and those need different handling
+    downstream (agent fallback vs. a bad SOC mapping to fix).
+    """
+    # Ratings -> {soc: {domain: [{name, importance}, ...]}}. IM only: --keep-level
+    # puts LV rows in rating_rows too, and they are a different scale entirely.
+    by_domain = defaultdict(lambda: defaultdict(list))
+    for code, _soc6, domain, _eid, element_name, scale_id, data_value, _n in rating_rows:
+        if scale_id != "IM":
+            continue
+        importance = rescale(data_value)
+        if domain in ("knowledge", "ability") and importance < REF_MIN_IMPORTANCE:
+            continue
+        by_domain[code][domain].append({"name": element_name, "importance": importance})
+    for domains in by_domain.values():
+        for items in domains.values():
+            items.sort(key=lambda i: (-i["importance"], i["name"]))
+
+    hot = defaultdict(list)
+    for code, _soc6, product, _category, is_hot, _in_demand in sw_rows:
+        if is_hot:
+            hot[code].append(product)
+
+    zones = {code: int(zone) for code, _soc6, zone in jz_rows if zone.isdigit()}
+
+    core_tasks = defaultdict(list)
+    for row in tasks:
+        if row["Task Type"].strip() == "Core":
+            core_tasks[row["O*NET-SOC Code"].strip()].append(row["Task"].strip())
+
+    titles = {code: title for code, _soc6, title, _desc in occ_rows}
+    related_by_soc = defaultdict(list)
+    for row in related:
+        if row["Relatedness Tier"].strip() != RELATED_TIER:
+            continue
+        target = row["Related O*NET-SOC Code"].strip()
+        related_by_soc[row["O*NET-SOC Code"].strip()].append(
+            (int(row["Index"]), {"soc": target, "title": titles.get(target, target)}))
+
+    roles = {}
+    for code, soc6_code, title, _desc in occ_rows:
+        domains = by_domain.get(code, {})
+        skills = domains.get("essential_skill", [])
+        software = sorted(set(hot.get(code, [])))
+        tasks_for_code = core_tasks.get(code, [])
+        if skills:
+            status = "onet_full"
+        elif software or tasks_for_code:
+            status = "partial_onet_profile"
+        else:
+            status = "no_data"
+        roles[code] = {
+            "title": title,
+            "soc6": soc6_code,
+            "job_zone": zones.get(code),
+            "skills": skills,
+            "knowledge": domains.get("knowledge", []),
+            "abilities": domains.get("ability", []),
+            "hot_software": software,
+            "core_tasks": tasks_for_code,
+            "related": [entry for _idx, entry in sorted(related_by_soc.get(code, []))],
+            "_data_status": status,
+        }
+
+    return {
+        "_meta": {
+            "source": f"O*NET {version.replace('_', '.')} Database (canonical text release), "
+                      "Importance (IM) scale",
+            "source_url": "https://www.onetcenter.org/database.html",
+            "taxonomy": "O*NET-SOC 2019",
+            "generated": date.today().isoformat(),
+            "generated_by": "data/onet/build_onet.py -- do not hand-edit, re-run instead",
+            "importance_scale": "0-100, rescaled from O*NET native 1-5 via (value-1)/4*100",
+            "inclusion_rule": (
+                f"skills: full Essential Skills set; knowledge & abilities: "
+                f"importance >= {REF_MIN_IMPORTANCE}; each sorted descending. "
+                f"Transferable Skills are deliberately NOT merged into skills -- "
+                f"see occupation_skills.csv if they are needed."),
+            "data_status_values": {
+                "onet_full": "has Essential Skills ratings",
+                "partial_onet_profile": "no ratings; software and/or tasks present",
+                "no_data": "no ratings, software, or tasks in this release",
+            },
+            "license": "O*NET data © under CC-BY 4.0 (US DOL/ETA)",
+        },
+        "must_have_threshold": MUST_HAVE_THRESHOLD,
+        "roles": roles,
+    }
+
+
 def fetch(version, workdir):
     """Download + unzip unless already present."""
     folder = os.path.join(workdir, f"db_{version}_text")
@@ -82,6 +225,8 @@ def main():
                     help="keep LV (Level) ratings as well as IM (Importance)")
     ap.add_argument("--keep-suppressed", action="store_true",
                     help="keep rows O*NET flags Recommend Suppress / Not Relevant (don't)")
+    ap.add_argument("--skip-reference", action="store_true",
+                    help="don't rewrite data/reference/onet_soc_requirements.json")
     ap.add_argument("--workdir", default="onet_src")
     args = ap.parse_args()
 
@@ -158,6 +303,13 @@ def main():
     jz_rows = [[r["O*NET-SOC Code"].strip(), soc6(r["O*NET-SOC Code"]),
                 r["Job Zone"].strip()] for r in jz]
 
+    # ---- tasks + related occupations (reference file only) -------------
+    # Core tasks ground "what this job actually does"; Primary-Short related
+    # occupations ground adjacent-role suggestions. Neither is written to CSV --
+    # they exist to keep the reference file from having to invent either.
+    tasks = read(src, TASKS_FILE)
+    related = read(src, RELATED_FILE)
+
     # ---- write --------------------------------------------------------
     print("Writing:")
     write("occupations.csv",
@@ -186,6 +338,14 @@ def main():
                    for f in os.listdir(OUT)) / 1024
     print(f"\n  {'TOTAL':<28} {'':>7}        {total_kb:>8,.0f} KB")
 
+    # ---- reference file for the app -----------------------------------
+    reference = None
+    if not args.skip_reference:
+        print("\nWriting reference (replaces the hand-built file):")
+        reference = build_reference(occ_rows, rating_rows, sw_rows, jz_rows,
+                                    tasks, related, args.version)
+        write_json(REF_DIR, REF_NAME, reference)
+
     print(f"\nFiltering dropped:")
     for k, v in sorted(dropped.items()):
         print(f"  {k:<20} {v:>7,} rows")
@@ -196,6 +356,19 @@ def main():
     print(f"  WITHOUT any ratings         {len(unrated):>6,}   -> out/coverage_gaps.csv")
     print(f"  software products (unique)  {len(vocab_rows):>6,}")
     print(f"  hot technologies            {sum(1 for r in vocab_rows if r[2]):>6,}")
+
+    if reference is not None:
+        status = defaultdict(int)
+        for entry in reference["roles"].values():
+            status[entry["_data_status"]] += 1
+        print(f"\nReference file ({REF_NAME}):")
+        for key in ("onet_full", "partial_onet_profile", "no_data"):
+            print(f"  {key:<27} {status[key]:>6,}")
+        print(f"  with hot software           "
+              f"{sum(1 for e in reference['roles'].values() if e['hot_software']):>6,}")
+        print(f"  with related occupations    "
+              f"{sum(1 for e in reference['roles'].values() if e['related']):>6,}")
+
     print(f"\nDone. Import out/*.csv into Supabase.")
 
 if __name__ == "__main__":

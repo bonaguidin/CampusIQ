@@ -96,6 +96,29 @@ Software/tools data **is** present for these occupations. Only the rated skills/
 
 **Total: ~13 MB as CSV.** Call it 20–25 MB in Postgres with indexes — roughly 4–5% of the Supabase free tier.
 
+`out/` is gitignored. Re-run the script to regenerate it.
+
+---
+
+## What gets written outside `out/`
+
+The script also writes **`data/reference/onet_soc_requirements.json`** (~5.3 MB, all 1,016 occupations). That one is not loader output — it's application input, read directly by
+`CampusIQ_career/features/market_data.py`, and it **is** tracked in git.
+
+It replaced a hand-built 10-occupation file that covered 2 of the 12 demo SOC codes. Per occupation it carries: title, soc6, job zone, Essential Skills (all 10), knowledge and abilities at importance ≥ 50, hot-technology software, Core task statements, and the five Primary-Short related occupations.
+
+Two extra source files feed it and are read *only* for this purpose — `Task Statements.txt` and `Related Occupations.txt`. Like the rating files, their names are constants at the top of the script so a release rename is one edit.
+
+`_data_status` on each entry is the field to check before trusting the lists:
+
+| Value | Count | Meaning |
+|---|---|---|
+| `onet_full` | 894 | Has Essential Skills ratings |
+| `partial_onet_profile` | 29 | No ratings; software and/or tasks present |
+| `no_data` | 93 | Nothing in this release |
+
+`--skip-reference` suppresses the rewrite. Same rule as everything else here: **don't hand-edit it, fix the script and re-run.** Two hand-curated fields from the old file, `role_family` and `typical_education`, are gone — neither was ever read by the app.
+
 ---
 
 ## Not included, needs a separate download
