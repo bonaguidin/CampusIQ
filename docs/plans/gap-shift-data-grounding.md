@@ -1,7 +1,7 @@
 # GAP & SHIFT — Data Grounding
 ## Implementation spec
 
-**Date:** 2026-08-09 · **Status:** Steps A–B built; C–E not started
+**Date:** 2026-08-09 · **Status:** Steps A–C built; D–E not started
 **Verified against:** O\*NET 30.3 (`data/onet/onet_src/db_30_3_text/`), branch `feat/gap-shift-grounding`
 
 ---
@@ -170,6 +170,18 @@ Prompt changes:
 - The "cite its O\*NET importance score" instruction needs a `provenance == "onet"` guard.
 
 **Finance Intern / Operations Intern:** both take the agent path. Finance Intern additionally has hot-software data even with no ratings, so it isn't fully degraded.
+
+### Built — measured
+
+Across the five demo students, **15 role-lookups now trigger 2 agent calls instead of 15.** Only one student (Jordan Reyes) triggers any, because only Finance Intern and Operations Intern lack O\*NET ratings. Each avoided call was a research loop of up to 3 tool rounds against a 90s budget, so this is the latency headroom that pays for SHIFT's trend research in Step D.
+
+`provenance` is upgraded from `"none"` to `"agent"` in `gap.py`, not `market_data` — the latter is stdlib-only and knows nothing about the agent, so the upgrade happens in the one place both halves are in scope.
+
+`role_requirements_for(roles, market=None)` takes the market block as an optional second argument. `build_student_context` passes the one it already built so the catalog isn't loaded twice; called directly (as tests do), it rebuilds. Gap-fill semantics apply either way — the behaviour does not depend on call style.
+
+**Prompt:** the `hot_software` guidance is deliberately restrictive. With up to 192 unranked products per role, enumerating them isn't a gap analysis, so the prompt permits exactly one use — intersect against the student's own tools and name at most two or three genuinely missing ones. The dead `[Script injects...]` blocks are gone, including the DFW postings one, replaced by a note that no posting feed exists and copy implying posting counts is prohibited.
+
+**Tests:** two existing tests asserted the agent runs for Business Analyst Intern (13-1111.00), which now has O\*NET coverage and correctly skips it. They were about merge semantics, not scheduling, so they were retargeted to Finance Intern — a role the agent genuinely runs for. Two new tests cover the actual new behaviour: that the agent is *not* called for O\*NET-rated roles, and that provenance is upgraded for agent-filled ones.
 
 ---
 
