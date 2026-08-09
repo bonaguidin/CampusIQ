@@ -277,3 +277,51 @@ A (loader) → B (market_data) → ┬→ C (GAP)
                                └→ D (SHIFT)
 E (placeholders) — anytime, independent
 ```
+
+---
+
+## Handoff — the demo cache still needs regenerating
+
+**The code is done; the demo does not reflect it yet.** `data/demo_cache/` was built 2026-08-02, before any of Steps A–E. The dashboard serves those files directly ([api.py](../../CampusIQ_career/api.py) is cache-first and returns before any live call), so **every feature the demo shows is pre-fix output.**
+
+That output contains the exact failure this branch removes. Grepping the five bundles for posting claims returns **15 hits**, including:
+
+- *"Lack of experience with specialized software (SPSS, Qualtrics) mentioned in **78% of local postings**"*
+- *"DFW employers like **Texas Instruments** seek candidates with basic programming skills"*
+- *"DFW employers like **Lockheed Martin** seek interns with MATLAB skills"*
+- *"**Baylor Scott & White** postings"*, *"**UT Southwestern** postings"*
+
+Real named employers and a fabricated percentage. These are in **GAP as well as SHIFT** — they came from the dead `Live DFW Posting Requirements` injection block, which promised the model posting data that never arrived. Steps C and D removed that block; the cache predates the removal.
+
+**Output contracts did not change**, so the frontend needs no changes and cached entries still validate. This is purely a content refresh.
+
+### Running it
+
+```bash
+uv run python -m CampusIQ_career.demo.build_demo_cache
+```
+
+| Key | Needed for | If missing |
+|---|---|---|
+| `OPENROUTER_API_KEY` | All synthesis, plus the research loops' model | Nothing runs |
+| `TAVILY_API_KEY` | Web search inside both research agents | Rebuild still completes; SHIFT reports roles under `_unresearched_roles`, keeps its three locally-grounded fields, stays generic on `task_shifts` / `role_evolution_summary` |
+
+Roughly 15 synthesis calls, 14 trend-research loops, 2 requirements loops. `data/.cache/` is gitignored and starts empty, so nothing is warm on a first run; a retry via `--only` / `--feature` is then nearly free.
+
+Dry-run the pipeline first at no cost, then discard the `[MOCK]` output:
+
+```bash
+uv run python -m CampusIQ_career.demo.build_demo_cache --mock --only priyaNair && git checkout data/demo_cache/
+```
+
+### Verifying it worked
+
+```bash
+grep -riE "postings|DFW employers|% of local" data/demo_cache/analysis_*.json
+```
+
+15 hits today. **Zero is the acceptance criterion** — and the only confirmation that Steps C and D hold against a live model. Everything on this branch was verified structurally; no prompt change has been exercised against a real model. The bundles are committed, so the diff shows exactly which claims disappeared.
+
+### Note on running the demo at all
+
+Separate from the rebuild: a local checkout needs `CAMPUSIQ_PROXY_SECRET` set or every API route returns 503 (`authorize_proxy_request` fails closed), and `npm install --prefix frontend`. Neither is related to this branch — but the rebuild can't be eyeballed in the UI until they're done.
