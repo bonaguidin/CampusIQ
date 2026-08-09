@@ -537,6 +537,228 @@ test('inherited Object.prototype keys are rejected by the map itself, not by the
   assert.equal({}.method, undefined)
 })
 
+// ── me-career-confirm ───────────────────────────────────────────────────────
+
+test('me-career-confirm forwards a POST body with Authorization and the secret', async () => {
+  const calls = []
+  const handler = createProxyHandler({
+    env: ME_ENV,
+    fetchImpl: async (url, options) => {
+      calls.push({ url: url.toString(), options })
+      return Response.json({ status: 'ok', total_confirmed: 4 }, { status: 200 })
+    },
+  })
+
+  const payload = JSON.stringify({ certifications: ['some-id'] })
+  const response = await handler.fetch(
+    new Request('https://gradusiq.example/api/proxy?target=me-career-confirm', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer real-session-jwt', 'Content-Type': 'application/json' },
+      body: payload,
+    }),
+  )
+
+  assert.equal(response.status, 200)
+  assert.equal(calls.length, 1)
+  assert.equal(calls[0].url, 'https://backend.example/api/v2/student/me/career/confirm')
+  assert.equal(calls[0].options.method, 'POST')
+  assert.equal(calls[0].options.headers.Authorization, 'Bearer real-session-jwt')
+  assert.equal(calls[0].options.headers['X-GradusIQ-Proxy-Secret'], 'server-only-secret')
+  // JSON target: body stays a string, not an ArrayBuffer.
+  assert.equal(typeof calls[0].options.body, 'string')
+  assert.equal(calls[0].options.body, payload)
+  assert.equal(calls[0].options.headers['Content-Type'], 'application/json')
+})
+
+test('me-career-confirm works with no body and is POST-only', async () => {
+  const calls = []
+  const handler = createProxyHandler({
+    env: ME_ENV,
+    fetchImpl: async (url, options) => {
+      calls.push(options)
+      return Response.json({ status: 'ok' }, { status: 200 })
+    },
+  })
+
+  // The common case: confirm everything, no body at all.
+  const ok = await handler.fetch(
+    new Request('https://gradusiq.example/api/proxy?target=me-career-confirm', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer t' },
+    }),
+  )
+  assert.equal(ok.status, 200)
+  assert.equal(calls[0].body, undefined)
+
+  // GET against this target is a method mismatch.
+  const asGet = await handler.fetch(
+    new Request('https://gradusiq.example/api/proxy?target=me-career-confirm', { method: 'GET' }),
+  )
+  assert.equal(asGet.status, 400)
+  assert.equal(calls.length, 1, 'the rejected GET must not have been forwarded')
+})
+
+// ── me-career-review / me-career-review-edit ────────────────────────────────
+
+const REVIEW_URL = 'https://gradusiq.example/api/proxy?target=me-career-review'
+const VALID_ID = '8f14e45f-ceea-467a-9f0e-1c2d3e4f5a6b'
+
+function editUrl(table, id) {
+  return (
+    'https://gradusiq.example/api/proxy?target=me-career-review-edit' +
+    `&table=${encodeURIComponent(table)}&id=${encodeURIComponent(id)}`
+  )
+}
+
+test('me-career-review forwards a GET with Authorization and the secret', async () => {
+  const calls = []
+  const handler = createProxyHandler({
+    env: ME_ENV,
+    fetchImpl: async (url, options) => {
+      calls.push({ url: url.toString(), options })
+      return Response.json({ certifications: [] }, { status: 200 })
+    },
+  })
+
+  const response = await handler.fetch(
+    new Request(REVIEW_URL, { method: 'GET', headers: { Authorization: 'Bearer jwt' } }),
+  )
+
+  assert.equal(response.status, 200)
+  assert.equal(calls[0].url, 'https://backend.example/api/v2/student/me/career/review')
+  assert.equal(calls[0].options.method, 'GET')
+  assert.equal(calls[0].options.headers.Authorization, 'Bearer jwt')
+  assert.equal(calls[0].options.headers['X-GradusIQ-Proxy-Secret'], 'server-only-secret')
+  assert.equal(calls[0].options.body, undefined)
+})
+
+test('me-career-review-edit builds the {table}/{id} path from validated query params', async () => {
+  const calls = []
+  const handler = createProxyHandler({
+    env: ME_ENV,
+    fetchImpl: async (url, options) => {
+      calls.push({ url: url.toString(), options })
+      return Response.json({ id: VALID_ID }, { status: 200 })
+    },
+  })
+
+  const payload = JSON.stringify({ issuer: 'Amazon' })
+  const response = await handler.fetch(
+    new Request(editUrl('certifications', VALID_ID), {
+      method: 'PATCH',
+      headers: { Authorization: 'Bearer jwt', 'Content-Type': 'application/json' },
+      body: payload,
+    }),
+  )
+
+  assert.equal(response.status, 200)
+  assert.equal(
+    calls[0].url,
+    `https://backend.example/api/v2/student/me/career/review/certifications/${VALID_ID}`,
+  )
+  assert.equal(calls[0].options.method, 'PATCH')
+  // A PATCH body is JSON and must still be forwarded as text, not bytes.
+  assert.equal(typeof calls[0].options.body, 'string')
+  assert.equal(calls[0].options.body, payload)
+  assert.equal(calls[0].options.headers.Authorization, 'Bearer jwt')
+})
+
+test('me-career-review-edit rejects an unknown table before forwarding', async () => {
+  let forwarded = false
+  const handler = createProxyHandler({
+    env: ME_ENV,
+    fetchImpl: async () => {
+      forwarded = true
+      return new Response()
+    },
+  })
+
+  const rejected = [
+    'students',
+    'career_profiles', // the real table name is NOT a valid segment
+    'institutions',
+    'course_records',
+    '__proto__',
+    'CERTIFICATIONS',
+    '',
+    '../../students',
+  ]
+
+  for (const table of rejected) {
+    const response = await handler.fetch(
+      new Request(editUrl(table, VALID_ID), { method: 'PATCH', body: '{}' }),
+    )
+    assert.equal(response.status, 400, `table=${table} should be rejected`)
+  }
+
+  assert.equal(forwarded, false, 'no unknown table may reach the backend')
+})
+
+test('me-career-review-edit rejects a malformed record id', async () => {
+  let forwarded = false
+  const handler = createProxyHandler({
+    env: ME_ENV,
+    fetchImpl: async () => {
+      forwarded = true
+      return new Response()
+    },
+  })
+
+  const badIds = ['', 'abc', '1', '../../secret', `${VALID_ID}x`, 'not-a-uuid-at-all']
+
+  for (const id of badIds) {
+    const response = await handler.fetch(
+      new Request(editUrl('certifications', id), { method: 'PATCH', body: '{}' }),
+    )
+    assert.equal(response.status, 400, `id=${id} should be rejected`)
+  }
+
+  assert.equal(forwarded, false)
+})
+
+test('PATCH is confined to the review-edit target and never reaches the slug surface', async () => {
+  let forwarded = false
+  const handler = createProxyHandler({
+    env: ME_ENV,
+    fetchImpl: async () => {
+      forwarded = true
+      return new Response()
+    },
+  })
+
+  // A PATCH naming a slug-addressed AI feature must not be routed anywhere.
+  const slugPatch = await handler.fetch(
+    new Request('https://gradusiq.example/api/proxy?student=jordanReyes&feature=gap', {
+      method: 'PATCH',
+      body: '{}',
+    }),
+  )
+  assert.equal(slugPatch.status, 400)
+
+  // PATCH against a GET-only me target is still a method mismatch.
+  const wrongMethod = await handler.fetch(
+    new Request(REVIEW_URL, { method: 'PATCH', body: '{}' }),
+  )
+  assert.equal(wrongMethod.status, 400)
+
+  // And GET against the PATCH-only edit target likewise.
+  const wrongMethod2 = await handler.fetch(
+    new Request(editUrl('certifications', VALID_ID), { method: 'GET' }),
+  )
+  assert.equal(wrongMethod2.status, 400)
+
+  assert.equal(forwarded, false)
+})
+
+test('genuinely unsupported methods are still 405', async () => {
+  const handler = createProxyHandler({ env: ME_ENV, fetchImpl: async () => new Response() })
+
+  for (const method of ['PUT', 'DELETE', 'HEAD', 'OPTIONS']) {
+    const response = await handler.fetch(new Request(REVIEW_URL, { method }))
+    assert.equal(response.status, 405, `${method} should be 405`)
+  }
+})
+
 test('me targets reject wrong method, unknown target, and bad feature', async () => {
   let forwarded = false
   const handler = createProxyHandler({

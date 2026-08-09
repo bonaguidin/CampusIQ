@@ -50,8 +50,28 @@ const ME_TARGETS = Object.assign(Object.create(null), {
   'me-chat': { method: 'POST', needsFeature: false },
   'me-profile': { method: 'GET', needsFeature: false },
   'me-resume-upload': { method: 'POST', needsFeature: false, binary: true },
+  'me-career-confirm': { method: 'POST', needsFeature: false },
+  'me-career-review': { method: 'GET', needsFeature: false },
+  // `needsRecord` marks the one target whose backend path is not fixed: it
+  // carries {table}/{id} path segments. Rather than let a caller hand the
+  // proxy a path fragment, the two pieces arrive as separate query params and
+  // are each validated against a closed allowlist / a UUID shape below, then
+  // re-encoded into the path. The backend validates `table` against the same
+  // allowlist independently -- the double check mirrors how ALLOWED_FEATURES
+  // is already enforced in both places.
+  'me-career-review-edit': { method: 'PATCH', needsFeature: false, needsRecord: true },
 })
 const ME_ANALYZE_FEATURES = new Set(['gap', 'fit', 'shift', 'professor-comments'])
+
+// Must stay in step with TABLE_BY_SEGMENT in GradusIQ_career/resume/review.py.
+const REVIEW_TABLES = new Set([
+  'career_profile',
+  'certifications',
+  'work_experience',
+  'projects',
+])
+const RECORD_ID_PATTERN =
+  /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/
 
 function jsonError(status, detail) {
   return Response.json({ detail }, { status })
@@ -76,10 +96,15 @@ function backendPath(student, feature) {
   return `/api/students/${slug}/analyze/${feature}`
 }
 
-function meBackendPath(target, feature) {
+function meBackendPath(target, feature, reviewTable, recordId) {
   if (target === 'me-chat') return '/api/v2/student/me/chat'
   if (target === 'me-profile') return '/api/v2/student/me/profile'
   if (target === 'me-resume-upload') return '/api/v2/student/me/resume/upload'
+  if (target === 'me-career-confirm') return '/api/v2/student/me/career/confirm'
+  if (target === 'me-career-review') return '/api/v2/student/me/career/review'
+  if (target === 'me-career-review-edit') {
+    return `/api/v2/student/me/career/review/${encodeURIComponent(reviewTable)}/${encodeURIComponent(recordId)}`
+  }
   return `/api/v2/student/me/analyze/${encodeURIComponent(feature)}`
 }
 
@@ -87,7 +112,7 @@ export function createProxyHandler({ env = process.env, fetchImpl = globalThis.f
   return {
     async fetch(request) {
       const method = request.method
-      if (method !== 'POST' && method !== 'GET') {
+      if (method !== 'POST' && method !== 'GET' && method !== 'PATCH') {
         return jsonError(405, 'Method not allowed.')
       }
 
@@ -95,6 +120,8 @@ export function createProxyHandler({ env = process.env, fetchImpl = globalThis.f
       const target = requestUrl.searchParams.get('target') ?? ''
       const student = requestUrl.searchParams.get('student') ?? ''
       const feature = requestUrl.searchParams.get('feature') ?? ''
+      const reviewTable = requestUrl.searchParams.get('table') ?? ''
+      const recordId = requestUrl.searchParams.get('id') ?? ''
 
       const isMeTarget = target !== ''
       let path
@@ -108,9 +135,19 @@ export function createProxyHandler({ env = process.env, fetchImpl = globalThis.f
         if (spec.needsFeature && !ME_ANALYZE_FEATURES.has(feature)) {
           return jsonError(400, 'Invalid analysis route.')
         }
+        if (spec.needsRecord && (!REVIEW_TABLES.has(reviewTable) || !RECORD_ID_PATTERN.test(recordId))) {
+          return jsonError(400, 'Invalid analysis route.')
+        }
         isBinaryTarget = spec.binary === true
-        path = meBackendPath(target, feature)
+        path = meBackendPath(target, feature, reviewTable, recordId)
       } else {
+        // PATCH exists only for the session-scoped review edit above. The
+        // slug-addressed surface stays GET/POST-only: without this guard a
+        // PATCH would fall through to the ALLOWED_FEATURES branch below and
+        // could reach an AI route.
+        if (method !== 'GET' && method !== 'POST') {
+          return jsonError(400, 'Invalid analysis route.')
+        }
         // Method and feature must agree: a GET may only reach a read route, and
         // a POST may only reach an AI route. This stops a GET from triggering
         // billable work and keeps the read route out of the POST-only surface.

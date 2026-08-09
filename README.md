@@ -1,7 +1,9 @@
-# CareerOS — Gradus IQ
+# Gradus IQ
 
 AI-powered career and academic companion for Texas A&M students.
 Dallas AI Group 6 | 2026 Summer Cohort.
+
+© 2026 GradusIQ. All rights reserved. Unauthorized copying, modification, or distribution of this software, in whole or in part, is prohibited.
 
 ---
 
@@ -219,3 +221,5 @@ GRADUSIQ_MODEL_REPORT=
 
 Supabase is documented in the workflow architecture, but no Supabase client,
 schema, or runtime path is implemented in the current code.
+
+© 2026 GradusIQ. All rights reserved. Unauthorized copying, modification, or distribution of this software, in whole or in part, is prohibited.

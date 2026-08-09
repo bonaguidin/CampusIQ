@@ -170,6 +170,36 @@ def test_cors_allows_only_explicit_configured_origin():
     assert "access-control-allow-origin" not in denied.headers
 
 
+def test_cors_allows_exactly_the_methods_the_app_exposes():
+    """Pins allow_methods itself.
+
+    test_cors_allows_only_explicit_configured_origin above varies the ORIGIN
+    and always sends Access-Control-Request-Method: POST, so it passes
+    identically whatever the method list contains. This varies the method
+    instead, which is the thing that changed when PATCH was added.
+    """
+    test_client = TestClient(api.create_app(make_test_config()))
+
+    def preflight(method: str):
+        return test_client.options(
+            "/api/students/jordanReyes/analyze/gap",
+            headers={
+                "Origin": "https://frontend.example",
+                "Access-Control-Request-Method": method,
+            },
+        )
+
+    for method in ("GET", "POST", "PATCH"):
+        response = preflight(method)
+        allowed = response.headers.get("access-control-allow-methods", "")
+        assert method in allowed, f"{method} should be allowed, got {allowed!r}"
+
+    # Methods the app exposes no route for stay out.
+    for method in ("DELETE", "PUT"):
+        response = preflight(method)
+        assert method not in response.headers.get("access-control-allow-methods", "")
+
+
 def test_rate_limiter_rejects_excess_and_expires_old_state(monkeypatch):
     builds = 0
 
