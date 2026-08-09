@@ -192,6 +192,35 @@ class GapRunner(CareerFeatureRunner):
             matched["_unmatched_roles"] = unmatched
         return matched
 
+    # The prompt asks for "Overall readiness: [X / 10]", and the dashboard
+    # renders the raw value. A live run produced 0.32 for a student whose roles
+    # mostly lacked O*NET data -- which passed every existing check, because
+    # api.py's _matches_contract only asks "is it a number".
+    _READINESS_MIN = 0
+    _READINESS_MAX = 10
+
+    def validate_data(self, data):
+        # Absence is deliberately NOT an error here. A missing score renders as
+        # nothing; a wrong score renders as a confident falsehood, and only the
+        # second is what this guard exists to stop. Presence is a shape concern,
+        # already enforced by api.py's _matches_contract on the cached path.
+        if "readiness_score" not in data:
+            return None
+        score = data["readiness_score"]
+        if isinstance(score, bool) or not isinstance(score, (int, float)):
+            return f"readiness_score must be a number, got {score!r}."
+        if not float(score).is_integer():
+            return (
+                f"readiness_score must be a whole number on a "
+                f"{self._READINESS_MIN}-{self._READINESS_MAX} scale, got {score!r}."
+            )
+        if not self._READINESS_MIN <= score <= self._READINESS_MAX:
+            return (
+                f"readiness_score must be between {self._READINESS_MIN} and "
+                f"{self._READINESS_MAX}, got {score!r}."
+            )
+        return None
+
     def default_summary(self, data):
         score = data.get("readiness_score")
         if score is not None:

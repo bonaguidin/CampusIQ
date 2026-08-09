@@ -522,3 +522,44 @@ def test_shift_one_failing_role_does_not_abort_the_others(monkeypatch):
 
     assert set(result) == {"A", "C", "_unresearched_roles"}
     assert result["_unresearched_roles"] == ["B"]
+
+
+# ---------------------------------------------------------------- score range
+# A live run returned readiness_score 0.32 for a student whose roles mostly
+# lacked O*NET data. It passed every check -- api.py's _matches_contract only
+# asks "is it a number" -- and GapAnalysisPanel renders the raw value next to
+# "/ 10", so the student would have seen "0.32".
+
+def _gap_response(score):
+    return (
+        '{"summary": "s", "data": {"readiness_score": ' + score + ','
+        '"strengths": [], "must_have_gaps": [], "nice_to_have_gaps": [],'
+        '"recommended_next_steps": []}}'
+    )
+
+
+@pytest.mark.parametrize("bad", ["0.32", "7.5", "70", "-1", '"6"', "true"])
+def test_gap_rejects_out_of_scale_readiness_score(bad):
+    result = GapRunner(client=FakeClient(_gap_response(bad))).run(sample_student())
+
+    assert result["status"] == "failed"
+    assert result["data"] == {}
+    assert "readiness_score" in result["errors"][0]
+
+
+@pytest.mark.parametrize("good", ["0", "7", "10", "7.0"])
+def test_gap_accepts_whole_numbers_on_the_zero_to_ten_scale(good):
+    result = GapRunner(client=FakeClient(_gap_response(good))).run(sample_student())
+
+    assert result["status"] == "success"
+
+
+def test_gap_tolerates_a_missing_readiness_score():
+    """Absence renders as nothing; a wrong value renders as a falsehood.
+
+    Only the second is what the range guard exists to stop, so a payload
+    without the key must still succeed.
+    """
+    client = FakeClient('{"summary": "s", "data": {"strengths": []}}')
+
+    assert GapRunner(client=client).run(sample_student())["status"] == "success"

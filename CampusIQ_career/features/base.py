@@ -82,6 +82,22 @@ class CareerFeatureRunner:
                 errors=["AI response data must be a JSON object."],
             ).to_dict()
 
+        # Value-level check, on top of the shape check the parser already did.
+        # api.py's _matches_contract only verifies types, so any number passes
+        # for a numeric field -- a readiness score of 0.32 or 900 would reach
+        # the dashboard and render verbatim. Fail closed instead: a value
+        # outside its contract means the model ignored the contract, and that
+        # is worth surfacing rather than displaying.
+        invalid = self.validate_data(data)
+        if invalid:
+            return FeatureResult(
+                feature=self.feature,
+                status="failed",
+                summary=f"{self.feature} analysis failed.",
+                data={},
+                errors=[invalid],
+            ).to_dict()
+
         return FeatureResult(
             feature=self.feature,
             status="success",
@@ -124,6 +140,15 @@ class CareerFeatureRunner:
             "summary": "string",
             "data": self.output_contract,
         }
+
+    def validate_data(self, data: Mapping[str, Any]) -> str | None:
+        """Return an error message if the parsed data is unusable, else None.
+
+        Hook for value-level constraints a JSON-shape check cannot express
+        (ranges, enums, cross-field consistency). Default is no-op: most
+        contracts are fully described by their shape.
+        """
+        return None
 
     def default_summary(self, data: Mapping[str, Any]) -> str:
         return f"{self.feature} analysis completed."
