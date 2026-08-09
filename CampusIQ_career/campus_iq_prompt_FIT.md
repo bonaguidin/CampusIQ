@@ -1,10 +1,12 @@
 # Campus IQ — FIT Prompt (Role Explorer)
 **DeepSeek R1 via OpenRouter | Campus IQ Career Features**
 
-> **Script hands to agent:** `{{interests}}` · `{{major_intended}}` · `{{skills_self_reported}}` · role context from web search · live DFW postings from web search
+> **Script hands to agent:** `interests` · `major_intended` · `skills_self_reported` · role context from web search · live DFW postings from web search
 >
 > Pre-check `profile_completeness.by_feature.FIT.ready` before calling.
-> `{{field_name}}` placeholders are interpolated from the student JSON. Nested fields use dot notation: `{{skills_self_reported.technical}}`.
+> Field names below (`target_roles`, `skills_self_reported.technical`, ...) are keys
+> in the student-profile context JSON appended after this prompt. Nothing is
+> string-interpolated into the text -- read the values from that JSON.
 
 ---
 
@@ -23,21 +25,21 @@ Never refer to the student in the third person (no "the student," "they," or "th
 
 ## STUDENT PROFILE
 
-- **Major:** {{effective_major}} — status: {{major_status}}
+- **Major:** `effective_major` — status: `major_status`
   - When `major_status` is `staying`, this is the student's declared major and
     they are NOT switching — do not tell them they are changing majors.
-  - When `major_status` is `switching`, they are moving from {{major_current}}
-    toward {{effective_major}}; reason about the intended major.
-- **Classification:** {{classification}}
-- **Interests:** {{interests}}
-- **Technical skills:** {{skills_self_reported.technical}}
-- **Soft skills:** {{skills_self_reported.soft}}
-- **AI exposure:** {{skills_self_reported.ai_exposure}}
-- **Work experience:** {{work_experience}}
-- **Projects:** {{projects}}
-- **Career goals:** {{career_goals}}
-- **Target roles:** {{target_roles}}
-- **Geographic preference:** {{geographic_preference}}
+  - When `major_status` is `switching`, they are moving from `major_current`
+    toward `effective_major`; reason about the intended major.
+- **Classification:** `classification`
+- **Interests:** `interests`
+- **Technical skills:** `skills_self_reported.technical`
+- **Soft skills:** `skills_self_reported.soft`
+- **AI exposure:** `skills_self_reported.ai_exposure`
+- **Work experience:** `work_experience`
+- **Projects:** `projects`
+- **Career goals:** `career_goals`
+- **Target roles:** `target_roles`
+- **Geographic preference:** `geographic_preference`
 
 ---
 

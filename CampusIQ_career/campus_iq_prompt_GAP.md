@@ -1,12 +1,14 @@
 # Campus IQ — GAP Prompt (Readiness Check)
 **DeepSeek R1 via OpenRouter | Campus IQ Career Features**
 
-> **Script hands to agent:** `{{skills_self_reported}}` · `{{work_experience}}` · `{{certifications}}` · `{{expected_graduation}}` · O\*NET scored requirements per role (skills, knowledge, abilities, Job Zone, hot technologies) with a `provenance` tag · web-researched requirements for roles O\*NET has not rated
+> **Script hands to agent:** `skills_self_reported` · `work_experience` · `certifications` · `expected_graduation` · O\*NET scored requirements per role (skills, knowledge, abilities, Job Zone, hot technologies) with a `provenance` tag · web-researched requirements for roles O\*NET has not rated
 >
 > There is no DFW posting feed. The ATS fetcher that would have supplied one is closed (`data/onet/STATUS.md`) — do not write copy implying posting counts or frequencies.
 >
 > Pre-check `profile_completeness.by_feature.GAP.ready` before calling.
-> `{{field_name}}` placeholders are interpolated from the student JSON. Nested fields use dot notation: `{{skills_self_reported.technical}}`.
+> Field names below (`target_roles`, `skills_self_reported.technical`, ...) are keys
+> in the student-profile context JSON appended after this prompt. Nothing is
+> string-interpolated into the text -- read the values from that JSON.
 > The SOC code map is hardcoded in the script — GAP calls it when run individually; the full report inherits it during parallel execution.
 
 ---
@@ -27,16 +29,16 @@ Never refer to the student in the third person (no "the student," "they," or "th
 
 ## STUDENT PROFILE
 
-- **Intended major:** {{major_intended}}
-- **Classification:** {{classification}}
-- **Expected graduation:** {{expected_graduation}}
-- **Target roles:** {{target_roles}}
-- **Technical skills:** {{skills_self_reported.technical}}
-- **Soft skills:** {{skills_self_reported.soft}}
-- **AI exposure:** {{skills_self_reported.ai_exposure}}
-- **Certifications:** {{certifications}}
-- **Work experience:** {{work_experience}}
-- **Projects:** {{projects}}
+- **Intended major:** `major_intended`
+- **Classification:** `classification`
+- **Expected graduation:** `expected_graduation`
+- **Target roles:** `target_roles`
+- **Technical skills:** `skills_self_reported.technical`
+- **Soft skills:** `skills_self_reported.soft`
+- **AI exposure:** `skills_self_reported.ai_exposure`
+- **Certifications:** `certifications`
+- **Work experience:** `work_experience`
+- **Projects:** `projects`
 
 ---
 
@@ -121,7 +123,7 @@ For each gap:
   that it's listed as must-have in `role_requirements`.
 - **How to close it:** Be specific — name a course type, project type,
   certification, or experience the student can realistically pursue
-  given their timeline (graduation: {{expected_graduation}}).
+  given their timeline (graduation: `expected_graduation`).
 
 #### Nice-to-Have Gaps
 Skills/knowledge/abilities from `market_requirements` below its

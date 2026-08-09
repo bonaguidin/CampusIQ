@@ -1,7 +1,7 @@
 # GAP & SHIFT — Data Grounding
 ## Implementation spec
 
-**Date:** 2026-08-09 · **Status:** Steps A–D built; E not started
+**Date:** 2026-08-09 · **Status:** Steps A–E built. Suite green (346 passed).
 **Verified against:** O\*NET 30.3 (`data/onet/onet_src/db_30_3_text/`), branch `feat/gap-shift-grounding`
 
 ---
@@ -232,6 +232,14 @@ Prompt changes:
 Both prompt files use `{{target_roles}}`, `{{expected_graduation}}`, `{{ai_anxiety_level}}` and document that they "are interpolated from the student JSON." No interpolation exists — [base.build_messages()](../../CampusIQ_career/features/base.py#L93) concatenates the template, the contract, and a student-context JSON block. There is no `.format`, template engine, or substitution anywhere in `CampusIQ_career`.
 
 It works (the model reads the JSON), so this is cosmetic — but strip the braces and the header note rather than implementing a mechanism nothing needs. Affects FIT and PROFESSOR_COMMENTS too.
+
+### Built
+
+44 placeholders across all four prompt files, now plain backticked field references. The header note in each says what is actually true: field names are keys in the context JSON appended after the prompt, and nothing is string-interpolated.
+
+**Checked first whether it was really cosmetic.** Every placeholder was cross-referenced against its runner's `build_student_context` keys — a prompt naming a field the runner never sends would have been a real bug hiding behind the fake syntax. All 26 distinct placeholders across GAP, SHIFT, FIT and ACADEMIC resolve to keys that exist. Cosmetic confirmed, not assumed.
+
+**One self-inflicted breakage worth recording.** The first pass collapsed `` `` `` → `` ` `` to clean up already-backticked placeholders, which also ate the triple-backtick fences wrapping every prompt body. Reverted and redone by rewriting `` `{{X}}` `` before bare `{{X}}`, so no double backticks are ever produced. The rewrite now asserts fence count is unchanged and that no stray `` `` `` survives, and the diff touches zero fence lines.
 
 ---
 
