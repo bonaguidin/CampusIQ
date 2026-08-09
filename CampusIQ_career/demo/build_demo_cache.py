@@ -293,6 +293,19 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--feature", nargs="*", default=None,
                         help="Limit to these features (e.g. GAP SHIFT). Defaults to all three if omitted.")
     args = parser.parse_args(argv)
+
+    # Loaded here rather than at module scope, deliberately. api.py calls
+    # load_dotenv() on import and tests/conftest.py documents the cost: once
+    # any test imports it, the real OPENROUTER_API_KEY / TAVILY_API_KEY in
+    # .env are live for the rest of the process, and tests that don't mock the
+    # agent start making real network calls. tests/test_build_demo_cache.py
+    # imports this module, so a module-scope load would spread that problem.
+    # A CLI entry point only needs the keys once main() actually runs.
+    if not args.mock:
+        from dotenv import load_dotenv  # local import by design, mirrors _make_client
+
+        load_dotenv(_REPO_ROOT / ".env")
+
     return build(only=args.only, mock=args.mock, feature=args.feature)
 
 
