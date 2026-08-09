@@ -387,3 +387,80 @@ def test_test_student_factory_is_isolated_between_tests():
     first["career"]["target_roles"].append("Changed")
 
     assert second["career"]["target_roles"] == ["Business Analyst Intern", "Operations Intern"]
+
+
+# ---------------------------------------------------------------- SHIFT grounding
+# SHIFT used to send the model nothing but student self-report, so every
+# role-specific claim was recall. These cover the two blocks that replaced that.
+
+def test_shift_signals_ground_adjacent_paths_tools_and_tasks():
+    from CampusIQ_career.features.market_data import get_shift_signals
+
+    signals = get_shift_signals(["Business Analyst Intern"])
+    entry = signals["by_role"]["Business Analyst Intern"]
+
+    assert entry["soc_code"] == "13-1111.00"
+    assert entry["grounded"] is True
+    # Five Primary-Short related occupations, each with a resolved title --
+    # this is what adjacent_paths must be drawn from instead of invented.
+    assert len(entry["related"]) == 5
+    assert all(r["soc"] and r["title"] for r in entry["related"])
+    assert entry["hot_software"]
+    assert entry["core_tasks"]
+
+
+def test_shift_signals_survive_an_occupation_with_no_ratings():
+    """Finance Intern has no O*NET importance scores but does have tools.
+
+    SHIFT consumes tools/tasks/neighbours, not ratings, so it stays grounded
+    for a role GAP has to fall back to the research agent for.
+    """
+    from CampusIQ_career.features.market_data import get_shift_signals
+
+    entry = get_shift_signals(["Finance Intern"])["by_role"]["Finance Intern"]
+
+    assert entry["soc_code"] == "13-2051.00"
+    assert entry["hot_software"]
+    assert entry["grounded"] is True
+
+
+def test_shift_context_carries_both_grounding_blocks(monkeypatch):
+    from CampusIQ_career.features import shift as shift_module
+
+    trends = {
+        "role_evolution": "Shifting toward validating model output.",
+        "task_shifts": ["Routine variance analysis is increasingly automated"],
+        "emerging_skills": ["Prompt-assisted modeling"],
+        "sources": ["https://example.org/report"],
+    }
+    monkeypatch.setattr(
+        shift_module.role_research_agent,
+        "get_role_trends",
+        lambda role, client=None: trends if role == "Business Analyst Intern" else None,
+    )
+    student = sample_student()
+    student["career"]["target_roles"] = ["Business Analyst Intern", "Operations Intern"]
+
+    context = ShiftRunner(client=FakeClient("{}")).build_student_context(student)
+
+    assert context["shift_signals"]["by_role"]["Business Analyst Intern"]["grounded"] is True
+    assert context["role_trends"]["Business Analyst Intern"] == trends
+    # A role research missed is named, not silently absent -- the prompt keys
+    # off this to stay generic instead of improvising a trend.
+    assert context["role_trends"]["_unresearched_roles"] == ["Operations Intern"]
+
+
+def test_shift_reports_every_role_when_trend_research_is_unavailable(monkeypatch):
+    from CampusIQ_career.features import shift as shift_module
+
+    monkeypatch.setattr(
+        shift_module.role_research_agent, "get_role_trends", lambda role, client=None: None
+    )
+    student = sample_student()
+    student["career"]["target_roles"] = ["Business Analyst Intern"]
+
+    context = ShiftRunner(client=FakeClient("{}")).build_student_context(student)
+
+    assert context["role_trends"] == {"_unresearched_roles": ["Business Analyst Intern"]}
+    # Local O*NET grounding is unaffected by the research outage.
+    assert context["shift_signals"]["by_role"]["Business Analyst Intern"]["related"]

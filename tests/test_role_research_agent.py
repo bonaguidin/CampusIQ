@@ -12,9 +12,10 @@ from CampusIQ_career.features import role_research_agent as agent
 
 @pytest.fixture(autouse=True)
 def _isolated_cache_path(tmp_path, monkeypatch):
-    # Every test gets its own cache file so lookups here never read/write the
-    # real data/.cache/role_research_cache.json used by the running app.
+    # Every test gets its own cache files so lookups here never read/write the
+    # real ones under data/.cache/ used by the running app.
     monkeypatch.setattr(agent, "_CACHE_PATH", tmp_path / "role_research_cache.json")
+    monkeypatch.setattr(agent, "_TRENDS_CACHE_PATH", tmp_path / "role_trends_cache.json")
 
 
 def _final_message(payload: dict) -> dict:
@@ -744,3 +745,85 @@ def test_absent_soc_source_remains_valid_so_the_write_path_still_works():
     # Which tag it lands on is decided by the catalog lookup and asserted
     # elsewhere; what this test cares about is that one was assigned at all.
     assert result["soc_source"] in agent._VALID_SOC_SOURCES
+
+
+# ---------------------------------------------------------------- trends
+# get_role_trends shares _run_tool_loop with get_role_requirements, so the loop
+# mechanics are already covered above. These cover what differs: the schema,
+# its bounds, and the separate cache.
+
+VALID_TRENDS = {
+    "role_evolution": "Analysis work is shifting toward validating model output.",
+    "task_shifts": ["Routine variance analysis is increasingly automated"],
+    "emerging_skills": ["Prompt-assisted modeling"],
+    "sources": ["https://example.org/report"],
+}
+
+
+def test_trend_lookup_returns_validated_payload():
+    client = FakeClient([_tool_call_message(), _final_message(VALID_TRENDS)])
+
+    result = agent.get_role_trends("Finance Intern", client=client)
+
+    assert result == VALID_TRENDS
+    assert len(client.calls) == 2
+
+
+def test_trends_and_requirements_use_separate_caches():
+    """A trend result must never satisfy a requirements lookup, or vice versa.
+
+    They share a role key but not a schema, so a shared cache file would hand
+    one validator the other's payload.
+    """
+    agent.get_role_trends("Finance Intern", client=FakeClient([_final_message(VALID_TRENDS)]))
+
+    assert agent._TRENDS_CACHE_PATH.exists()
+    assert not agent._CACHE_PATH.exists()
+    # The requirements path is unaffected by the cached trend entry.
+    assert agent._read_cache(agent._CACHE_PATH, "Finance Intern", agent._validate_schema) is None
+
+
+def test_trend_cache_hit_skips_the_agent():
+    first = FakeClient([_final_message(VALID_TRENDS)])
+    agent.get_role_trends("Finance Intern", client=first)
+
+    second = FakeClient([_final_message(VALID_TRENDS)])
+    result = agent.get_role_trends("Finance Intern", client=second)
+
+    assert result == VALID_TRENDS
+    assert second.calls == []  # served from cache, no second research run
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        {k: v for k, v in VALID_TRENDS.items() if k != "task_shifts"},  # missing key
+        dict(VALID_TRENDS, role_evolution=""),  # blank summary
+        dict(VALID_TRENDS, role_evolution="x" * 601),  # summary over cap
+        dict(VALID_TRENDS, task_shifts="not a list"),
+        dict(VALID_TRENDS, task_shifts=["x" * 201]),  # item over its cap
+        dict(VALID_TRENDS, emerging_skills=["x" * 121]),  # tighter cap for skills
+        dict(VALID_TRENDS, sources=["x" * 301]),  # looser cap for URLs
+        dict(VALID_TRENDS, task_shifts=[f"s{i}" for i in range(agent._MAX_LIST_ITEMS + 1)]),
+        dict(VALID_TRENDS, emerging_skills=[123]),  # non-string item
+    ],
+)
+def test_malformed_trend_payload_is_rejected(payload):
+    # Same bounded-surface contract as requirements: this text reaches the
+    # SHIFT prompt verbatim after being synthesized from third-party search
+    # results, so shape checks alone are not enough.
+    assert agent._validate_trends(payload) is None
+
+
+def test_trend_failure_returns_none_rather_than_raising():
+    client = FakeClient([_final_message({"role_evolution": "incomplete"})])
+
+    assert agent.get_role_trends("Finance Intern", client=client) is None
+    assert not agent._TRENDS_CACHE_PATH.exists()
+
+
+def test_blank_role_never_reaches_the_trend_agent():
+    client = FakeClient([_final_message(VALID_TRENDS)])
+
+    assert agent.get_role_trends("   ", client=client) is None
+    assert client.calls == []

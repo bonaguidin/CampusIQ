@@ -1,7 +1,7 @@
 # GAP & SHIFT — Data Grounding
 ## Implementation spec
 
-**Date:** 2026-08-09 · **Status:** Steps A–C built; D–E not started
+**Date:** 2026-08-09 · **Status:** Steps A–D built; E not started
 **Verified against:** O\*NET 30.3 (`data/onet/onet_src/db_30_3_text/`), branch `feat/gap-shift-grounding`
 
 ---
@@ -208,6 +208,22 @@ Prompt changes:
 - Replace both `[Script injects...]` blocks with real references to `shift_signals`.
 - **Cut posting-frequency claims outright.** The trend agent returns web sources, not a postings corpus, and the ATS work that would have supplied one is closed (see [data/onet/STATUS.md](../../data/onet/STATUS.md)). SHIFT may cite what the search found; it may not assert what share of DFW postings mention a skill. This is not a deferral — there is no pipeline coming, so the language goes rather than waits.
 - Keep the "path-clarity, not threat-assessment" directive intact.
+
+### Built — measured
+
+`get_shift_signals()` grounds three fields from local data at zero latency; `get_role_trends()` supplies the two that need live research. Priya's three roles all come back grounded — 5 related occupations, 25–32 hot-tech products, 8 core tasks each — for **7.9 KB / ~2,020 tokens** of total SHIFT context.
+
+**The tool loop was generalized rather than duplicated.** `_run_tool_loop` now takes a system prompt and a validator; the round cap, wall-clock budget, final-round tool withholding, tool dispatch and never-raise contract are shared. Trends get their own cache file rather than a namespaced key in the requirements cache — same role keys, different schemas, and a shared file would force every reader to know which validator applies to which entry.
+
+**Trend payloads are bounded like requirements payloads.** This text is model output synthesized from third-party search results and reaches the SHIFT prompt verbatim, so it carries the same injection surface. Caps differ by key because the content does: 200 chars for a shift description, 120 for a skill phrase, 300 for a source URL, and the existing 20-item list cap throughout.
+
+**`grounded` is deliberately not keyed off ratings.** An occupation with no importance scores can still have tools, tasks and neighbours — which is exactly what SHIFT consumes. Finance Intern is that case: GAP must fall back to the research agent for it, while SHIFT stays fully grounded.
+
+**A contradiction caught during the prompt rewrite.** The first draft of the no-postings rule banned all posting statistics — which would have forbidden the prompt's own STATIC CONTEXT, since the NACE and Stanford/Lightcast findings *are* posting statistics. Rewritten to draw the real line: named published studies are citable with attribution; posting counts or shares presented as measured for this student's roles or region are not.
+
+**`_unresearched_roles`** names roles research did not return for, rather than omitting them. Silence is what let the model fill gaps from memory in the first place.
+
+**conftest** now stubs `get_role_trends` alongside `get_role_requirements`. Without it every SHIFT test in the suite would make live OpenRouter and Tavily calls — and unlike requirements, trends have no static fallback to short-circuit the attempt.
 
 ---
 

@@ -207,3 +207,85 @@ def get_market_requirements(target_roles: Sequence[str] | None) -> dict[str, Any
         "by_role": by_role,
         "notes": notes,
     }
+
+
+# How many core tasks to carry per role. O*NET ships a median of 15; SHIFT
+# turns them into 3-5 durable_skills entries, so the full list is more context
+# than the output can use and crowds out the trend signal.
+_MAX_CORE_TASKS = 8
+
+
+def get_shift_signals(target_roles: Sequence[str] | None) -> dict[str, Any]:
+    """Build the local O*NET grounding block injected into the SHIFT context.
+
+    SHIFT had no external data at all: every role-specific claim was model
+    recall. Three of its five output fields can be grounded from data already
+    on disk, at no latency cost:
+
+        adjacent_paths[]      <- related       (5 Primary-Short occupations)
+        ai_fluency_guidance[] <- hot_software  (O*NET Hot Technology products)
+        durable_skills[]      <- core_tasks    (what the job actually does)
+
+    The other two (task_shifts, role_evolution_summary) are about what is
+    changing right now, which no annual survey answers -- those come from
+    role_research_agent.get_role_trends, added to the context by ShiftRunner.
+
+    Shape:
+        {
+          "source": "onet_static" | "none",
+          "by_role": {
+             "<role text>": {
+                 "soc_code": str | None,
+                 "soc_title": str | None,
+                 "related": [{"soc": str, "title": str}, ...],
+                 "hot_software": [str, ...],
+                 "core_tasks": [str, ...],
+                 "grounded": bool,
+             }, ...
+          },
+          "notes": [str, ...],
+        }
+    """
+    roles = [r for r in (target_roles or []) if isinstance(r, str) and r.strip()]
+    onet = _load_onet()
+    catalog = onet.get("roles", {}) if isinstance(onet, Mapping) else {}
+
+    notes: list[str] = []
+    if not catalog:
+        notes.append(
+            "O*NET reference file unavailable or empty; SHIFT has no local grounding "
+            "for adjacent paths, tools, or durable tasks."
+        )
+
+    by_role: dict[str, Any] = {}
+    for role in roles:
+        soc = resolve_soc(role)
+        entry = catalog.get(soc) if soc else None
+        if not isinstance(entry, Mapping):
+            entry = {}
+        related = entry.get("related") or []
+        hot_software = entry.get("hot_software") or []
+        core_tasks = (entry.get("core_tasks") or [])[:_MAX_CORE_TASKS]
+        # Deliberately NOT keyed off ratings: an occupation with no importance
+        # scores can still have tools, tasks and neighbours, and those are what
+        # SHIFT actually consumes. Finance Intern is exactly that case.
+        grounded = bool(related or hot_software or core_tasks)
+        if catalog and soc and not grounded:
+            notes.append(
+                f"O*NET has no tools, tasks, or related occupations for SOC {soc} "
+                f"('{role}'); SHIFT must not invent adjacent paths for it."
+            )
+        by_role[role] = {
+            "soc_code": soc,
+            "soc_title": entry.get("title"),
+            "related": related,
+            "hot_software": hot_software,
+            "core_tasks": core_tasks,
+            "grounded": grounded,
+        }
+
+    return {
+        "source": "onet_static" if catalog else "none",
+        "by_role": by_role,
+        "notes": notes,
+    }
