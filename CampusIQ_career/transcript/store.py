@@ -47,12 +47,17 @@ counted, which is correct for TAMU (all_attempts_count) and wrong for SMU
 (latest_replaces).
 """
 
+import logging
 from dataclasses import dataclass, field
 from decimal import Decimal
 from typing import Any, Iterable, Mapping
 
 from .parser import ParsedTranscript
+from .repeats import reconcile_repeats
 from .store_helpers import now_iso, rows_of
+
+
+logger = logging.getLogger(__name__)
 
 
 TRANSCRIPT_SOURCE = "transcript_parse"
@@ -334,7 +339,15 @@ def confirm_course_rows(
         pending = [row for row in pending if row.get("id") in wanted]
 
     if not pending:
-        return {"confirmed": 0, "scope": "selection" if ids is not None else "all_unconfirmed"}
+        # "repeats" is present-but-null rather than absent, so the response
+        # shape is the same on every path. Nothing was newly confirmed, so
+        # there is nothing for reconciliation to reconsider: exclusions are a
+        # function of the confirmed set, which did not change.
+        return {
+            "confirmed": 0,
+            "scope": "selection" if ids is not None else "all_unconfirmed",
+            "repeats": None,
+        }
 
     blocked = unverified_institutions(
         client, [row.get("institution_id") for row in pending]
@@ -358,7 +371,29 @@ def confirm_course_rows(
         query = query.in_("id", ids)
 
     confirmed = rows_of(query.execute())
+
+    # AFTER the stamp, never before. Repeat exclusion is only meaningful among
+    # rows that are already counting toward the GPA: running it earlier would
+    # let a still-unconfirmed second attempt exclude an already-confirmed first
+    # attempt, dropping the course out of the GPA entirely until the student
+    # happened to confirm the second row. See repeats.py's module docstring.
+    #
+    # Deliberately NOT inside the try/except the route wraps this in as a fatal
+    # error: a reconciliation failure must not roll back or obscure a
+    # confirmation that already succeeded. The rows are confirmed; the
+    # exclusions are recomputed from scratch on the next confirm regardless.
+    repeats: dict[str, Any] | None = None
+    try:
+        repeats = reconcile_repeats(client, student_id).to_dict()
+    except Exception:  # noqa: BLE001 -- confirmation already succeeded
+        logger.exception(
+            "repeat reconciliation failed after confirming rows for student %s; "
+            "confirmation stands and exclusions will be recomputed on the next run",
+            student_id,
+        )
+
     return {
         "confirmed": len(confirmed),
         "scope": "selection" if ids is not None else "all_unconfirmed",
+        "repeats": repeats,
     }

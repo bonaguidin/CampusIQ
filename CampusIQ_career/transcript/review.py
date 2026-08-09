@@ -114,7 +114,54 @@ class ReviewConflict(ReviewError):
     """The edit collides with an existing row's natural key."""
 
 
-def project_row(row: Mapping[str, Any]) -> dict[str, Any]:
+def repeat_exclusion_context(
+    row: Mapping[str, Any], rows_by_id: Mapping[str, Mapping[str, Any]] | None = None
+) -> dict[str, Any] | None:
+    """Read-only explanation of why this row is excluded by a repeat, or None.
+
+    INFORMATIONAL ONLY. excluded_from_gpa_by is system-managed (it is in
+    SYSTEM_MANAGED_FIELDS and absent from EDITABLE_FIELDS) and is recomputed
+    from scratch on every confirm by repeats.reconcile_repeats. A student
+    changes this outcome by correcting a grade, not by editing this field --
+    which is the point: the exclusion is derived, so letting it be edited
+    directly would create a value that the next reconcile silently overwrites.
+
+    `rows_by_id` lets the superseding row be named ("replaced by your Fall 2024
+    attempt") instead of surfacing a bare uuid. When it is absent or the target
+    is not among the caller's rows, the id is still returned so the UI can at
+    least say the row was superseded.
+    """
+    superseded_by = row.get("excluded_from_gpa_by")
+    if superseded_by is None:
+        return None
+
+    context: dict[str, Any] = {
+        "excluded_from_gpa": True,
+        "reason": "repeat_replacement",
+        "superseded_by_id": superseded_by,
+        "superseded_by": None,
+        # Stated explicitly because it is the counter-intuitive half of the
+        # rule and the first thing a student will dispute: gpa.py tallies
+        # earned_hours ABOVE its excluded_from_gpa_by check (gpa.py:166-177),
+        # so the course still counts toward hours earned.
+        "still_counts_toward_earned_hours": True,
+    }
+
+    target = (rows_by_id or {}).get(superseded_by)
+    if target is not None:
+        context["superseded_by"] = {
+            "id": target.get("id"),
+            "course_code": target.get("course_code"),
+            "letter_grade": target.get("letter_grade"),
+            "term_id": target.get("term_id"),
+        }
+
+    return context
+
+
+def project_row(
+    row: Mapping[str, Any], rows_by_id: Mapping[str, Mapping[str, Any]] | None = None
+) -> dict[str, Any]:
     """Reduce a raw row to id + editable content + context.
 
     Projection happens in Python rather than through a PostgREST column list so
@@ -130,29 +177,44 @@ def project_row(row: Mapping[str, Any]) -> dict[str, Any]:
     projected["needs_catalog_review"] = (
         row.get("source") == "transcript_parse" and row.get("catalog_course_id") is None
     )
+    projected["repeat_exclusion"] = repeat_exclusion_context(row, rows_by_id)
     return projected
 
 
 def load_unconfirmed(client: Any, student_id: str) -> dict[str, Any]:
-    """Every unconfirmed course record for this student.
+    """Unconfirmed course records, plus any rows excluded by a repeat.
 
     Scoped by student_id rather than by walking down from a term, so a second
     upload's rows are visible even when the first upload's terms were already
     confirmed.
+
+    WHY THE WHOLE TABLE IS READ AND NOT JUST THE UNCONFIRMED ROWS: repeat
+    exclusions live exclusively on CONFIRMED rows -- reconcile_repeats runs
+    inside the confirm flow and only ever considers confirmed records. A query
+    filtered to confirmed_at IS NULL therefore cannot contain a single excluded
+    row, so the repeat context would render for nobody. The full read also
+    supplies the lookup that names the SUPERSEDING row, which is likewise
+    confirmed and so likewise absent from the unconfirmed set.
     """
-    rows = rows_of(
-        client.table(TABLE)
-        .select("*")
-        .eq("student_id", student_id)
-        .is_("confirmed_at", "null")
-        .execute()
+    all_rows = rows_of(
+        client.table(TABLE).select("*").eq("student_id", student_id).execute()
     )
-    projected = [project_row(row) for row in rows]
+    rows_by_id = {row["id"]: row for row in all_rows if row.get("id")}
+
+    unconfirmed = [row for row in all_rows if row.get("confirmed_at") is None]
+    excluded = [row for row in all_rows if row.get("excluded_from_gpa_by") is not None]
+
+    projected = [project_row(row, rows_by_id) for row in unconfirmed]
+
     return {
         "course_records": projected,
         "pending_catalog_review": sum(
             1 for row in projected if row["needs_catalog_review"]
         ),
+        # Confirmed rows dropped from the GPA by an institution's repeat policy.
+        # Read-only: the student changes this by correcting a grade, after which
+        # the next confirm recomputes it.
+        "excluded_by_repeat": [project_row(row, rows_by_id) for row in excluded],
     }
 
 

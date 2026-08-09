@@ -25,6 +25,12 @@ from .parser import (
     parse_transcript_text,
     validate_parsed_transcript,
 )
+from .repeats import (
+    ReconcileReport,
+    RepeatExclusion,
+    plan_exclusions,
+    reconcile_repeats,
+)
 from .store import (
     TRANSCRIPT_SOURCE,
     ConfirmBlocked,
@@ -53,7 +59,9 @@ __all__ = [
     "MatchReport",
     "ParseStatus",
     "ParsedTranscript",
+    "ReconcileReport",
     "RejectedRow",
+    "RepeatExclusion",
     "ResolvedTerm",
     "StoreReport",
     "TermParseError",
@@ -72,6 +80,8 @@ __all__ = [
     "match_courses",
     "normalize_code",
     "parse_term_label",
+    "plan_exclusions",
+    "reconcile_repeats",
     "parse_transcript_text",
     "resolve_terms",
     "store_parsed_transcript",
