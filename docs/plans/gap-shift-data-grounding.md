@@ -223,6 +223,10 @@ Prompt changes:
 
 **`_unresearched_roles`** names roles research did not return for, rather than omitting them. Silence is what let the model fill gaps from memory in the first place.
 
+**Trend research refuses to answer unsourced.** Found while checking what a half-configured environment does: with `OPENROUTER_API_KEY` set but `TAVILY_API_KEY` missing, `_run_web_search` returns a well-formed empty result, the loop counts it as a completed round, the model answers from training data, and the payload is written to the trend cache *as though researched*. That is precisely the failure this step exists to remove, persisted to a gitignored file where it would silently serve every later run.
+
+The cause was inheriting `get_role_requirements`' fail-open contract without noticing the asymmetry. Requirements degrade to `data/role_requirements.json`, so a thin answer there is still useful. Trends have no fallback, so degrading quietly means fabricating. Fixed in two layers: refuse before spending a model call when search is unconfigured, and discard any answer that no successful search backed (`require_evidence`, which also covers runtime search failures and the model answering without searching at all). `get_role_requirements` keeps its existing behaviour — the asymmetry is deliberate and tested.
+
 **conftest** now stubs `get_role_trends` alongside `get_role_requirements`. Without it every SHIFT test in the suite would make live OpenRouter and Tavily calls — and unlike requirements, trends have no static fallback to short-circuit the attempt.
 
 ---

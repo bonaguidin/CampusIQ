@@ -760,8 +760,27 @@ VALID_TRENDS = {
 }
 
 
-def test_trend_lookup_returns_validated_payload():
-    client = FakeClient([_tool_call_message(), _final_message(VALID_TRENDS)])
+@pytest.fixture
+def searchable(monkeypatch):
+    """A working web_search, so the trend loop is allowed to answer at all.
+
+    Trends require search evidence; without this the lookup correctly refuses.
+    """
+    monkeypatch.setenv("TAVILY_API_KEY", "test-key")
+    monkeypatch.setattr(
+        agent,
+        "_run_web_search",
+        lambda arguments: json.dumps({"results": [{"title": "t", "url": "u", "content": "c"}]}),
+    )
+
+
+def _researched(payload=None):
+    """A search round followed by an answer -- the shape of a real lookup."""
+    return FakeClient([_tool_call_message(), _final_message(payload or VALID_TRENDS)])
+
+
+def test_trend_lookup_returns_validated_payload(searchable):
+    client = _researched()
 
     result = agent.get_role_trends("Finance Intern", client=client)
 
@@ -769,13 +788,13 @@ def test_trend_lookup_returns_validated_payload():
     assert len(client.calls) == 2
 
 
-def test_trends_and_requirements_use_separate_caches():
+def test_trends_and_requirements_use_separate_caches(searchable):
     """A trend result must never satisfy a requirements lookup, or vice versa.
 
     They share a role key but not a schema, so a shared cache file would hand
     one validator the other's payload.
     """
-    agent.get_role_trends("Finance Intern", client=FakeClient([_final_message(VALID_TRENDS)]))
+    agent.get_role_trends("Finance Intern", client=_researched())
 
     assert agent._TRENDS_CACHE_PATH.exists()
     assert not agent._CACHE_PATH.exists()
@@ -783,15 +802,61 @@ def test_trends_and_requirements_use_separate_caches():
     assert agent._read_cache(agent._CACHE_PATH, "Finance Intern", agent._validate_schema) is None
 
 
-def test_trend_cache_hit_skips_the_agent():
-    first = FakeClient([_final_message(VALID_TRENDS)])
-    agent.get_role_trends("Finance Intern", client=first)
+def test_trend_cache_hit_skips_the_agent(searchable):
+    agent.get_role_trends("Finance Intern", client=_researched())
 
-    second = FakeClient([_final_message(VALID_TRENDS)])
+    second = _researched()
     result = agent.get_role_trends("Finance Intern", client=second)
 
     assert result == VALID_TRENDS
     assert second.calls == []  # served from cache, no second research run
+
+
+def test_trend_lookup_refuses_when_search_is_unconfigured(monkeypatch):
+    """The half-configured environment must not produce recalled 'research'.
+
+    With OPENROUTER_API_KEY set but TAVILY_API_KEY missing, web_search returns
+    a well-formed empty result, the loop treats it as a completed round, and
+    the model answers from training data -- which would then be cached as
+    though researched. Refuse before spending the model call instead.
+    """
+    monkeypatch.delenv("TAVILY_API_KEY", raising=False)
+    client = _researched()
+
+    assert agent.get_role_trends("Finance Intern", client=client) is None
+    assert client.calls == []  # no model call attempted
+    assert not agent._TRENDS_CACHE_PATH.exists()
+
+
+def test_trend_answer_is_discarded_when_no_search_returned_results(monkeypatch):
+    # Search is configured but every call comes back empty (rate limit, auth
+    # failure, genuinely nothing found). The answer is then unsourced.
+    monkeypatch.setenv("TAVILY_API_KEY", "test-key")
+    monkeypatch.setattr(agent, "_run_web_search", lambda arguments: json.dumps({"results": []}))
+    client = _researched()
+
+    assert agent.get_role_trends("Finance Intern", client=client) is None
+    assert not agent._TRENDS_CACHE_PATH.exists()
+
+
+def test_trend_answer_without_any_search_is_discarded(searchable):
+    # Model answers immediately, never calling the tool. Nothing backs it.
+    client = FakeClient([_final_message(VALID_TRENDS)])
+
+    assert agent.get_role_trends("Finance Intern", client=client) is None
+
+
+def test_requirements_lookup_does_not_require_search_evidence(monkeypatch):
+    """The deliberate asymmetry between the two entry points.
+
+    Requirements degrade to data/role_requirements.json, so a thinly sourced
+    answer is still useful and gap.py can fall back regardless. Trends have no
+    fallback, so unsourced output there is fabrication.
+    """
+    monkeypatch.delenv("TAVILY_API_KEY", raising=False)
+    client = FakeClient([_tool_call_message(), _final_message(VALID_PAYLOAD)])
+
+    assert agent.get_role_requirements("Software Engineering Intern", client=client) is not None
 
 
 @pytest.mark.parametrize(

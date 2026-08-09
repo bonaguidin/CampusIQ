@@ -298,6 +298,25 @@ def _execute_tool_call(name: str, arguments: Mapping[str, Any]) -> str:
     return json.dumps({"error": f"Unknown tool '{name}'."})
 
 
+def _has_search_capability() -> bool:
+    key = os.getenv("TAVILY_API_KEY")
+    return bool(key and key.strip())
+
+
+def _search_returned_results(tool_result: str) -> bool:
+    """True only if a tool call actually came back with search hits.
+
+    A failed or unconfigured search still returns well-formed JSON (empty
+    results plus an error), which the loop otherwise treats as a completed
+    round -- so "the tool ran" is not the same as "we learned anything".
+    """
+    try:
+        data = json.loads(tool_result)
+    except (TypeError, ValueError):
+        return False
+    return bool(isinstance(data, Mapping) and data.get("results"))
+
+
 def _validate_schema(data: Any) -> dict[str, Any] | None:
     """Validate shape, soc_code *format*, and free-text bounds -- not
     membership in any curated allowlist. A well-formed but previously-unseen
@@ -381,6 +400,7 @@ def _run_tool_loop(
     client: OpenRouterClient,
     system_prompt: str,
     finalize: Callable[[Any], dict[str, Any] | None],
+    require_evidence: bool = False,
 ) -> dict[str, Any] | None:
     """Drive one research conversation until it produces a validated answer.
 
@@ -389,11 +409,19 @@ def _run_tool_loop(
     every failure as None -- are identical whether we are researching role
     requirements or role trends. Only the system prompt and the validator
     differ, so those are parameters rather than a second copy of this loop.
+
+    ``require_evidence`` discards an answer that no successful search backs.
+    Callers with a static fallback (requirements) leave it off: a thinly
+    sourced answer there is still better than nothing, and gap.py can fall
+    back regardless. Callers without one (trends) turn it on, because an
+    unsourced answer is the model reciting training data -- exactly what the
+    lookup exists to replace, and it would be cached as though researched.
     """
     messages: list[dict[str, Any]] = [
         {"role": "system", "content": system_prompt},
         {"role": "user", "content": user_content},
     ]
+    saw_evidence = False
 
     deadline = time.monotonic() + _TIME_BUDGET_SECONDS
 
@@ -436,6 +464,9 @@ def _run_tool_loop(
                 parsed = parse_ai_json_response(content)
             except AIResponseParseError:
                 return None
+            if require_evidence and not saw_evidence:
+                logger.info("research discarded reason=no_search_evidence")
+                return None
             return finalize(parsed)
 
         if is_final_round:
@@ -457,11 +488,14 @@ def _run_tool_loop(
                 arguments = json.loads(function.get("arguments") or "{}")
             except json.JSONDecodeError:
                 arguments = {}
+            tool_result = _execute_tool_call(name, arguments)
+            if _search_returned_results(tool_result):
+                saw_evidence = True
             messages.append(
                 {
                     "role": "tool",
                     "tool_call_id": tool_call.get("id", ""),
-                    "content": _execute_tool_call(name, arguments),
+                    "content": tool_result,
                 }
             )
 
@@ -552,10 +586,24 @@ def get_role_trends(role: str, client: OpenRouterClient | None = None) -> dict[s
         logger.info("role_trends source=cache role=%s", role)
         return cached
 
+    # Refuse before spending a model call. Without search this lookup can only
+    # return training-data recall, and it would be written to the trend cache
+    # as though researched -- so a half-configured environment would quietly
+    # poison every later run. Requirements deliberately do NOT have this guard:
+    # they degrade to data/role_requirements.json, so an unsourced attempt
+    # there costs nothing and may still help.
+    if not _has_search_capability():
+        logger.warning("role_trends source=none role=%s reason=no_search_capability", role)
+        return None
+
     try:
         active_client = client if client is not None else OpenRouterClient(timeout=_LOOKUP_TIMEOUT_SECONDS)
         result = _run_tool_loop(
-            f"Target role: {role}", active_client, _TRENDS_SYSTEM_PROMPT, _validate_trends
+            f"Target role: {role}",
+            active_client,
+            _TRENDS_SYSTEM_PROMPT,
+            _validate_trends,
+            require_evidence=True,
         )
     except (AIConfigError, AIRequestError, AIResponseParseError, ValueError, TimeoutError) as exc:
         logger.info("role_trends source=none role=%s error=%s", role, exc)
