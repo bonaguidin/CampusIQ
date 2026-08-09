@@ -12,18 +12,18 @@ student grades and paraphrased professor comments.
 
 Usage:
     # Real run (needs OPENROUTER_API_KEY and real model ids in model_config.py):
-    uv run python -m CampusIQ_career.demo.build_demo_cache
+    uv run python -m GradusIQ_career.demo.build_demo_cache
 
     # Mock run (no API key, structurally-valid placeholder output so the
     # frontend wiring and export/cache layer can be built/tested offline):
-    uv run python -m CampusIQ_career.demo.build_demo_cache --mock
+    uv run python -m GradusIQ_career.demo.build_demo_cache --mock
 
     # Limit to specific students by slug:
-    uv run python -m CampusIQ_career.demo.build_demo_cache --only priyaNair marcusWebb
+    uv run python -m GradusIQ_career.demo.build_demo_cache --only priyaNair marcusWebb
 
     # Limit to specific features (e.g. to retry a timed-out feature without
     # re-running/overwriting the others' already-good cached entries):
-    uv run python -m CampusIQ_career.demo.build_demo_cache --only ethanBrooks --feature GAP SHIFT
+    uv run python -m GradusIQ_career.demo.build_demo_cache --only ethanBrooks --feature GAP SHIFT
 """
 
 from __future__ import annotations
@@ -55,7 +55,7 @@ class _MockClient:
     """
 
     def __init__(self) -> None:
-        from CampusIQ_career.ai.types import AIResponse  # local import by design
+        from GradusIQ_career.ai.types import AIResponse  # local import by design
 
         self._AIResponse = AIResponse
 
@@ -99,8 +99,8 @@ class _MockClient:
 def _make_client(mock: bool):
     if mock:
         return _MockClient()
-    from CampusIQ_career.ai import OpenRouterClient  # local import by design
-    from CampusIQ_career.ai.openrouter_client import DEEPSEEK_R1_REASONING_TIMEOUT_SECONDS
+    from GradusIQ_career.ai import OpenRouterClient  # local import by design
+    from GradusIQ_career.ai.openrouter_client import DEEPSEEK_R1_REASONING_TIMEOUT_SECONDS
 
     # Real calls run the DeepSeek R1 career/academic roles end to end, which
     # routinely take 100-200s+ -- match api.py's build_client() timeout
@@ -143,7 +143,7 @@ def _merge_analysis(existing: Mapping[str, Any] | None, fresh: Mapping[str, Any]
     if existing is None:
         return dict(fresh)
 
-    from CampusIQ_career.features.orchestrator import (
+    from GradusIQ_career.features.orchestrator import (
         DEFAULT_CAREER_FEATURES,
         build_summary,
         collect_errors,
@@ -178,7 +178,7 @@ def _merge_analysis(existing: Mapping[str, Any] | None, fresh: Mapping[str, Any]
 
 
 def build(only: Sequence[str] | None, mock: bool, feature: Sequence[str] | None) -> int:
-    from CampusIQ_career.features.orchestrator import run_career_analysis
+    from GradusIQ_career.features.orchestrator import run_career_analysis
 
     if not _STUDENTS_DIR.exists():
         print(f"ERROR: students dir not found: {_STUDENTS_DIR}", file=sys.stderr)

@@ -1,12 +1,12 @@
-"""Shared contracts and helpers for Campus IQ feature runners."""
+"""Shared contracts and helpers for Gradus IQ feature runners."""
 
 import json
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any, Literal, Mapping, Protocol, Sequence
 
-from CampusIQ_career.ai.errors import AIConfigError, AIRequestError, AIResponseParseError
-from CampusIQ_career.ai.parser import parse_ai_json_response
+from GradusIQ_career.ai.errors import AIConfigError, AIRequestError, AIResponseParseError
+from GradusIQ_career.ai.parser import parse_ai_json_response
 
 
 FeatureStatus = Literal["success", "skipped", "failed"]
@@ -96,7 +96,7 @@ class CareerFeatureRunner:
             {
                 "role": "system",
                 "content": (
-                    "You are Campus IQ. Return valid JSON only. Do not wrap the response "
+                    "You are Gradus IQ. Return valid JSON only. Do not wrap the response "
                     "in Markdown. Follow the requested output contract exactly."
                 ),
             },

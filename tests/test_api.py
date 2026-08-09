@@ -7,9 +7,9 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
-from CampusIQ_career import api
-from CampusIQ_career.ai.errors import AIConfigError
-from CampusIQ_career.ai.types import AIResponse
+from GradusIQ_career import api
+from GradusIQ_career.ai.errors import AIConfigError
+from GradusIQ_career.ai.types import AIResponse
 
 
 TEST_PROXY_SECRET = "test-proxy-secret"
@@ -816,7 +816,7 @@ def test_valid_token_for_another_student_is_denied_and_leaks_nothing(
 def test_supabase_secret_key_is_never_read(suffix, body, client, monkeypatch):
     import os
 
-    from CampusIQ_career import supabase_client as supabase_client_module
+    from GradusIQ_career import supabase_client as supabase_client_module
 
     reads = []
     original_get = os.environ.get
@@ -983,7 +983,7 @@ def test_procfile_pins_one_worker():
     )
     assert command.startswith("web:")
     assert "--workers 1" in command
-    assert "CampusIQ_career.api:app" in command
+    assert "GradusIQ_career.api:app" in command
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -1155,7 +1155,7 @@ def test_demo_cache_lives_outside_frontend_public():
     assert "public" not in REAL_CACHED_ANALYSIS_DIR.parts
     assert "frontend" not in REAL_CACHED_ANALYSIS_DIR.parts
     # And the generator writes to the same place the reader reads from.
-    from CampusIQ_career.demo import build_demo_cache as bdc
+    from GradusIQ_career.demo import build_demo_cache as bdc
 
     assert bdc._OUTPUT_DIR == REAL_CACHED_ANALYSIS_DIR
 
@@ -1197,7 +1197,7 @@ def test_demo_slug_never_calls_the_postgres_builder(method, suffix, body, client
 
 # 8. SupabaseConfigError -> 503, including at the pre-existing GPA route.
 def test_supabase_config_error_maps_to_503_on_gpa_route(client, monkeypatch):
-    from CampusIQ_career.supabase_client import SupabaseConfigError
+    from GradusIQ_career.supabase_client import SupabaseConfigError
 
     def boom(token):
         raise SupabaseConfigError("SUPABASE_URL is not set.")
@@ -1212,7 +1212,7 @@ def test_supabase_config_error_maps_to_503_on_gpa_route(client, monkeypatch):
 
 def test_supabase_config_error_maps_to_503_not_500(client, monkeypatch):
     """Regression guard: this previously surfaced as an unhandled 500."""
-    from CampusIQ_career.supabase_client import SupabaseConfigError
+    from GradusIQ_career.supabase_client import SupabaseConfigError
 
     monkeypatch.setattr(
         api,

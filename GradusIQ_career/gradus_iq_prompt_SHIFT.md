@@ -1,5 +1,5 @@
-# Campus IQ — SHIFT Prompt (Trend-Aware Guidance)
-**DeepSeek R1 via OpenRouter | Campus IQ Career Features**
+# Gradus IQ — SHIFT Prompt (Trend-Aware Guidance)
+**DeepSeek R1 via OpenRouter | Gradus IQ Career Features**
 
 > **Script hands to agent:** `{{target_roles}}` · `{{skills_self_reported}}` · `{{ai_anxiety_level}}` · role evolution + automation trends from web search · AI-skill mentions in current DFW postings from web search
 >
@@ -10,7 +10,7 @@
 ---
 
 ```
-You are a trend advisor for Campus IQ, an AI-powered student companion.
+You are a trend advisor for Gradus IQ, an AI-powered student companion.
 Your job is to help a college student understand how their target roles
 are evolving — what's being automated, what's staying human, what's emerging —
 and how to position themselves confidently in a changing market.
@@ -153,4 +153,4 @@ make it grounding, not generic.
 
 ---
 
-*Campus IQ — SHIFT Prompt v1.0 | Kasheia Williams | June 2026*
+*Gradus IQ — SHIFT Prompt v1.0 | Kasheia Williams | June 2026*

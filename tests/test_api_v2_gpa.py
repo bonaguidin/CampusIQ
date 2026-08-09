@@ -1,4 +1,4 @@
-"""Tests for GET /api/v2/student/me/gpa (CampusIQ_career/api.py).
+"""Tests for GET /api/v2/student/me/gpa (GradusIQ_career/api.py).
 
 The Supabase client is fully mocked -- no network calls, no real
 Supabase project involved.
@@ -9,7 +9,7 @@ import os
 import pytest
 from fastapi.testclient import TestClient
 
-from CampusIQ_career import api
+from GradusIQ_career import api
 
 
 # ---------------------------------------------------------------------------

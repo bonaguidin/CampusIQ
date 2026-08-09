@@ -4,10 +4,10 @@ from pathlib import Path
 
 import pytest
 
-from CampusIQ_career.ai.errors import AIConfigError, AIRequestError, AIResponseParseError
-from CampusIQ_career.ai.model_config import OPENROUTER_DEEPSEEK_V4_FLASH, get_model_for_role
-from CampusIQ_career.ai.openrouter_client import OpenRouterClient
-from CampusIQ_career.features import role_research_agent as agent
+from GradusIQ_career.ai.errors import AIConfigError, AIRequestError, AIResponseParseError
+from GradusIQ_career.ai.model_config import OPENROUTER_DEEPSEEK_V4_FLASH, get_model_for_role
+from GradusIQ_career.ai.openrouter_client import OpenRouterClient
+from GradusIQ_career.features import role_research_agent as agent
 
 
 @pytest.fixture(autouse=True)
@@ -329,7 +329,7 @@ def test_blank_role_returns_none_without_calling_client():
 def test_missing_tavily_key_logs_a_distinct_warning_not_a_silent_fallback(monkeypatch, caplog):
     monkeypatch.delenv("TAVILY_API_KEY", raising=False)
 
-    with caplog.at_level("WARNING", logger="CampusIQ_career.features.role_research_agent"):
+    with caplog.at_level("WARNING", logger="GradusIQ_career.features.role_research_agent"):
         result = agent._tavily_client()
 
     assert result is None
@@ -393,13 +393,13 @@ def test_system_prompt_constrains_soc_code_to_entry_level_occupations():
 
 
 def test_role_research_model_resolves_to_deepseek_v4_flash_by_default(monkeypatch):
-    monkeypatch.delenv("CAMPUSIQ_MODEL_ROLE_RESEARCH", raising=False)
+    monkeypatch.delenv("GRADUSIQ_MODEL_ROLE_RESEARCH", raising=False)
 
     assert get_model_for_role("role_research") == OPENROUTER_DEEPSEEK_V4_FLASH
 
 
 def test_role_research_model_env_override_wins(monkeypatch):
-    monkeypatch.setenv("CAMPUSIQ_MODEL_ROLE_RESEARCH", "openrouter/test-role-research-model")
+    monkeypatch.setenv("GRADUSIQ_MODEL_ROLE_RESEARCH", "openrouter/test-role-research-model")
 
     assert get_model_for_role("role_research") == "openrouter/test-role-research-model"
 

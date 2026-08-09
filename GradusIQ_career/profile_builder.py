@@ -6,7 +6,7 @@ session-scoped client from build_client_for_token, and the feature runners stay
 completely unaware of where their profile dict came from.
 
 The output is structurally interchangeable with what
-CampusIQ_career.api.load_student_profile returns from data/students/*.json, so
+GradusIQ_career.api.load_student_profile returns from data/students/*.json, so
 the runners in features/ need no change to consume it.
 
 UNCONFIRMED ROWS

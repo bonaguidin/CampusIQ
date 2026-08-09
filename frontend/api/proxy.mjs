@@ -24,7 +24,7 @@
 const ALLOWED_FEATURES = new Set(['gap', 'fit', 'shift', 'professor-comments', 'chat'])
 const GET_FEATURES = new Set(['profile'])
 const STUDENT_SLUG_PATTERN = /^[A-Za-z0-9]{1,64}$/
-const PROXY_SECRET_HEADER = 'X-CampusIQ-Proxy-Secret'
+const PROXY_SECRET_HEADER = 'X-GradusIQ-Proxy-Secret'
 
 // Session-scoped targets. `feature` is required only by me-analyze, and is
 // validated against the same analysis vocabulary the slug routes accept.
@@ -121,8 +121,8 @@ export function createProxyHandler({ env = process.env, fetchImpl = globalThis.f
         path = backendPath(student, feature)
       }
 
-      const backendUrl = backendBaseUrl(env.CAMPUSIQ_BACKEND_URL ?? '')
-      const proxySecret = (env.CAMPUSIQ_PROXY_SECRET ?? '').trim()
+      const backendUrl = backendBaseUrl(env.GRADUSIQ_BACKEND_URL ?? '')
+      const proxySecret = (env.GRADUSIQ_PROXY_SECRET ?? '').trim()
       if (!backendUrl || !proxySecret) {
         return jsonError(503, 'Analysis proxy is not configured.')
       }

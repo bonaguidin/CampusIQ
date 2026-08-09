@@ -1,4 +1,4 @@
-"""Tests for CampusIQ_career.resume.extraction.
+"""Tests for GradusIQ_career.resume.extraction.
 
 FIXTURE STRATEGY: every fixture is GENERATED in-process, not checked in as a
 binary file. Two reasons, both specific to what these tests assert:
@@ -12,7 +12,7 @@ binary file. Two reasons, both specific to what these tests assert:
      literal and verifiable, rather than a claim about an opaque blob.
 
 reportlab is a dev-group dependency for exactly this purpose and is never
-imported by CampusIQ_career/.
+imported by GradusIQ_career/.
 """
 
 import io
@@ -23,7 +23,7 @@ from reportlab.lib import pdfencrypt
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas as rl_canvas
 
-from CampusIQ_career.resume import ExtractionResult, extract_resume_text
+from GradusIQ_career.resume import ExtractionResult, extract_resume_text
 
 
 PDF = "application/pdf"

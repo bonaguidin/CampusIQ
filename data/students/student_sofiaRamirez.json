@@ -5,7 +5,7 @@
     "These are 'Common Body of Knowledge' (CBK) courses Biology majors must finish before their 5th semester.",
     "courses[3]: HIST 105 satisfies UCC: American History.",
     "Recurring pattern: not connecting lab data back to the underlying mechanism/hypothesis — shows up across both Biology and Chemistry labs.",
-    "examTopicTags: Campus IQ's own topic layer — NOT part of real Canvas data.",
+    "examTopicTags: Gradus IQ's own topic layer — NOT part of real Canvas data.",
     "CHEM 237 (Organic Chemistry I Laboratory) added — lab component of CHEM 227, taken concurrently per Biology BS recommended degree plan. Assignments to follow."
   ],
   "student": {
@@ -850,7 +850,7 @@
       "assignments",
       "submissions"
     ],
-    "campus_iq_layer": [
+    "gradus_iq_layer": [
       "examTopicTags"
     ],
     "student_entered": [

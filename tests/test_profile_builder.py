@@ -1,4 +1,4 @@
-"""Tests for CampusIQ_career.profile_builder.
+"""Tests for GradusIQ_career.profile_builder.
 
 The builder reconstructs a runner-compatible profile dict from Postgres rows.
 Its contract is that the output is structurally interchangeable with what
@@ -10,8 +10,8 @@ from pathlib import Path
 
 import pytest
 
-from CampusIQ_career import api
-from CampusIQ_career.profile_builder import (
+from GradusIQ_career import api
+from GradusIQ_career.profile_builder import (
     UNCONFIRMED_REASON,
     build_profile_from_supabase,
     ProfileBuildResult,
@@ -223,7 +223,7 @@ def test_unconfirmed_child_row_is_excluded_and_recorded(table):
 
 
 def test_unconfirmed_reason_matches_gpa_vocabulary():
-    from CampusIQ_career.academics import gpa as gpa_module
+    from GradusIQ_career.academics import gpa as gpa_module
     import inspect
 
     # gpa.py uses the literal "unconfirmed"; one vocabulary across both.
@@ -281,7 +281,7 @@ def test_uuid_student_id_is_a_clean_cache_miss(tmp_path, monkeypatch):
 # 7. GAP with an all-unconfirmed work_experience behaves exactly like an
 #    absent list: status="skipped", standard missing-field error.
 def test_gap_with_all_unconfirmed_work_experience_is_skipped():
-    from CampusIQ_career.features.orchestrator import run_feature
+    from GradusIQ_career.features.orchestrator import run_feature
 
     children = {
         "certifications": [_child("certifications", name="Cert", status="completed")],

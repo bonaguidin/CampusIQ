@@ -33,14 +33,14 @@ from typing import Any, Mapping
 
 from tavily import TavilyClient
 
-from CampusIQ_career.ai import AIConfigError, AIRequestError, AIResponseParseError, OpenRouterClient
-from CampusIQ_career.ai.parser import parse_ai_json_response
+from GradusIQ_career.ai import AIConfigError, AIRequestError, AIResponseParseError, OpenRouterClient
+from GradusIQ_career.ai.parser import parse_ai_json_response
 
 logger = logging.getLogger(__name__)
 
 # Which AgentRole (model_config.py's MODEL_BY_ROLE / ENV_BY_ROLE) drives the
 # lookup loop's model selection -- resolves to OPENROUTER_DEEPSEEK_V4_FLASH by
-# default, overridable via CAMPUSIQ_MODEL_ROLE_RESEARCH like every other role.
+# default, overridable via GRADUSIQ_MODEL_ROLE_RESEARCH like every other role.
 _LOOKUP_ROLE = "role_research"
 
 # Max number of tool-call round-trips before the loop aborts.
@@ -76,7 +76,7 @@ _WEB_SEARCH_TOOL: Mapping[str, Any] = {
 }
 
 _SYSTEM_PROMPT = (
-    "You are a labor-market research assistant for Campus IQ. Given a target "
+    "You are a labor-market research assistant for Gradus IQ. Given a target "
     "job/internship role title, research its real, current skill and "
     "certification requirements using the web_search tool as needed (you may "
     "call it up to 3 times). When you have enough information, respond with "

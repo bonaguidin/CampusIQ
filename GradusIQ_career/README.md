@@ -1,4 +1,4 @@
-# Campus IQ — Career Features
+# Gradus IQ — Career Features
 
 **Team 6 | Dallas AI Summer Program | SMU | July 2026**
 
@@ -7,7 +7,7 @@
 ## Overview
 
 This folder contains the research foundation, mock data, and prompt 
-architecture for the three career-side features of Campus IQ — an 
+architecture for the three career-side features of Gradus IQ — an 
 AI-powered longitudinal academic and career companion launching at 
 Texas A&M University.
 
@@ -21,7 +21,7 @@ for students:
 ---
 
 ## Folder Structure
-Campus IQ/
+Gradus IQ/
 
 (student profiles live at repo root in data/students/, not inside this folder)
 data/students/                       # Five A&M mock student profiles
@@ -31,10 +31,10 @@ data/students/                       # Five A&M mock student profiles
 ├── student_priyaNair.json           # Priya Nair — Aerospace Engineering, Sophomore
 └── student_sofiaRamirez.json        # Sofia Ramirez — Biology, Sophomore
 │
-├── campus_iq_prompt_FIT.md      # Role Explorer prompt (at CampusIQ_career/ root)
-├── campus_iq_prompt_GAP.md      # Readiness Check prompt
-├── campus_iq_prompt_SHIFT.md    # Trend-Aware Guidance prompt
-└── campus_iq_prompt_ACADEMIC.md # Academic analysis prompt
+├── gradus_iq_prompt_FIT.md      # Role Explorer prompt (at GradusIQ_career/ root)
+├── gradus_iq_prompt_GAP.md      # Readiness Check prompt
+├── gradus_iq_prompt_SHIFT.md    # Trend-Aware Guidance prompt
+└── gradus_iq_prompt_ACADEMIC.md # Academic analysis prompt
 
 Feature outputs are not saved to disk. The FastAPI bridge (`api.py`) returns
 results over HTTP. There is no `demo_outputs/` directory today; a
@@ -56,15 +56,15 @@ career feature is most relevant for that student.
 
 ## Prompt Architecture
 
-Four prompt templates back the Campus IQ features — three career-side
+Four prompt templates back the Gradus IQ features — three career-side
 (FIT / GAP / SHIFT) and one academic-side:
 
 | Template | Feature | What It Does |
 |---|---|---|
-| `campus_iq_prompt_FIT.md` | Role Explorer | Surfaces 3-5 DFW-anchored career paths with fit reasoning |
-| `campus_iq_prompt_GAP.md` | Readiness Check | Compares student profile to real posting requirements |
-| `campus_iq_prompt_SHIFT.md` | Trend-Aware Guidance | Explains how target roles are evolving and what to learn |
-| `campus_iq_prompt_ACADEMIC.md` | Professor Comment Analyzer | Aggregates professor comments across a student's courses into recurring themes (strengths, concerns, praise, flags) |
+| `gradus_iq_prompt_FIT.md` | Role Explorer | Surfaces 3-5 DFW-anchored career paths with fit reasoning |
+| `gradus_iq_prompt_GAP.md` | Readiness Check | Compares student profile to real posting requirements |
+| `gradus_iq_prompt_SHIFT.md` | Trend-Aware Guidance | Explains how target roles are evolving and what to learn |
+| `gradus_iq_prompt_ACADEMIC.md` | Professor Comment Analyzer | Aggregates professor comments across a student's courses into recurring themes (strengths, concerns, praise, flags) |
 
 The three career prompts share a common system prompt that establishes Campus 
 IQ's identity, reasoning rules, tone, and hard constraints.

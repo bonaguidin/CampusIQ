@@ -1,4 +1,4 @@
-# React + Vite Student Dashboard — Campus IQ
+# React + Vite Student Dashboard — Gradus IQ
 ## Implementation Plan (pre-code review draft)
 
 **Date:** 2026-06-22 · **Author:** Claude Code (Sonnet 4.6)  
@@ -13,9 +13,9 @@
 - `data/students/validate_students.py`
 - `data/reference/unified_student_schema.md`
 - `.env.example`
-- `campusiq_workflow_diagram.md`
-- `CampusIQ_career/demo/campus_iq_test.py`
-- `CampusIQ_career/README.md`, `README.md`
+- `gradusiq_workflow_diagram.md`
+- `GradusIQ_career/demo/campus_iq_test.py`
+- `GradusIQ_career/README.md`, `README.md`
 - `pyproject.toml`
 
 ### Critical findings
@@ -55,7 +55,7 @@ This is the spine of the plan. Every field in the student record is marked below
 | `enrollments[]` | `canvas_derived` | READ-ONLY | Grade/score state |
 | `assignments[]` | `canvas_derived` | READ-ONLY | Assignment metadata |
 | `submissions[]` | `canvas_derived` | READ-ONLY | Scores + professor comments |
-| `examTopicTags{}` | `campus_iq_layer` | READ-ONLY | System-generated topic tags |
+| `examTopicTags{}` | `gradus_iq_layer` | READ-ONLY | System-generated topic tags |
 | `career` | `student_entered` | EDITABLE | See sub-fields below |
 | `profile_completeness` | `ai_written` | READ-ONLY | System-calculated; display only |
 | `_schema_notes` | — | NOT SHOWN | Dev/meta only |
@@ -146,7 +146,7 @@ A simple dropdown: "Select student →" shows the 5 names. Clicking "Enter Dashb
 
 ```
 CareerOS/                         ← existing Python repo root
-├── CampusIQ_career/              ← existing Python demo
+├── GradusIQ_career/              ← existing Python demo
 ├── data/                         ← existing data layer
 ├── docs/
 │   └── plans/

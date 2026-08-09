@@ -1,4 +1,4 @@
-"""Career feature orchestration for Campus IQ."""
+"""Career feature orchestration for Gradus IQ."""
 
 from typing import Any, Mapping, Sequence
 

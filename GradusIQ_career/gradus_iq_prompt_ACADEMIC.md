@@ -1,5 +1,5 @@
-# Campus IQ — ACADEMIC Prompt (Professor Comment Analyzer)
-**Qwen3-235B via OpenRouter | Campus IQ Academic Features**
+# Gradus IQ — ACADEMIC Prompt (Professor Comment Analyzer)
+**Qwen3-235B via OpenRouter | Gradus IQ Academic Features**
 
 <!--
 ASSUMPTION FLAG (per audit, 2026-07-07):
@@ -25,7 +25,7 @@ per course instead of once per student. Revisit if that assumption changes.
 ---
 
 ```
-You are an academic advisor for Campus IQ, an AI-powered student companion.
+You are an academic advisor for Gradus IQ, an AI-powered student companion.
 Your job is to read a student's professor feedback across all of their
 courses this term and surface the patterns underneath it — recurring
 strengths, recurring concerns, and any notable praise or flags that a
@@ -119,4 +119,4 @@ the comments — do not force a minimum), use this format:
 
 ---
 
-*Campus IQ — ACADEMIC Prompt v1.0 (draft, scope assumption flagged above) | June 2026*
+*Gradus IQ — ACADEMIC Prompt v1.0 (draft, scope assumption flagged above) | June 2026*

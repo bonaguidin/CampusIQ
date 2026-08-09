@@ -1,5 +1,5 @@
 [project]
-name = "campus-iq"
+name = "gradus-iq"
 version = "0.1.0"
 description = "AI-powered career and academic companion for Texas A&M students"
 readme = "README.md"
@@ -23,7 +23,7 @@ dependencies = [
 dev = [
     "pytest>=9.1.0",
     # Test-only: generates the PDF fixtures in tests/test_resume_extraction.py.
-    # Never imported by CampusIQ_career/ -- pypdf reads PDFs, reportlab writes
+    # Never imported by GradusIQ_career/ -- pypdf reads PDFs, reportlab writes
     # them, and only the tests need to write one.
     "reportlab>=4.4.0",
 ]

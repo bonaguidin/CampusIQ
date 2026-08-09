@@ -1,5 +1,5 @@
 ---
-title: Campus IQ — End-to-End Workflow (5 Layers)
+title: Gradus IQ — End-to-End Workflow (5 Layers)
 ---
 flowchart TD
 

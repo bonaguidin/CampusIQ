@@ -7,7 +7,7 @@ from .base import CareerFeatureRunner
 
 class AcademicRunner(CareerFeatureRunner):
     feature = "PROFESSOR_COMMENTS"
-    prompt_filename = "campus_iq_prompt_ACADEMIC.md"
+    prompt_filename = "gradus_iq_prompt_ACADEMIC.md"
     role = "academic"
     # NOTE: get_path() only supports dot-separated dict keys, not list
     # indexing, so "submissions[].submission_comments[]" cannot be used

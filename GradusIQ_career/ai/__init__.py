@@ -1,4 +1,4 @@
-"""Canonical AI integration utilities for Campus IQ."""
+"""Canonical AI integration utilities for Gradus IQ."""
 
 from .errors import AIConfigError, AIRequestError, AIResponseParseError
 from .openrouter_client import OpenRouterClient

@@ -5,8 +5,8 @@ import react from '@vitejs/plugin-react'
 export default defineConfig(({ mode }) => {
   // This value is consumed only by the Node-based Vite development proxy. It is
   // deliberately not VITE_-prefixed and is never exposed to browser modules.
-  const env = loadEnv(mode, '..', 'CAMPUSIQ_')
-  const proxySecret = env.CAMPUSIQ_PROXY_SECRET
+  const env = loadEnv(mode, '..', 'GRADUSIQ_')
+  const proxySecret = env.GRADUSIQ_PROXY_SECRET
 
   return {
     plugins: [react()],
@@ -15,7 +15,7 @@ export default defineConfig(({ mode }) => {
         '/api': {
           target: 'http://localhost:8000',
           ...(proxySecret
-            ? { headers: { 'X-CampusIQ-Proxy-Secret': proxySecret } }
+            ? { headers: { 'X-GradusIQ-Proxy-Secret': proxySecret } }
             : {}),
         },
       },

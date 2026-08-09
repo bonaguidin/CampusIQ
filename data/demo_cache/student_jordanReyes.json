@@ -5,7 +5,7 @@
     "courses[3]: ENGL 104 satisfies UCC: Communication.",
     "courses[4]: POLS 206 satisfies UCC: Government/Political Science.",
     "Recurring pattern: debit/credit direction + 'show your work' mix-ups across Accounting and Math — exactly what the comment analyzer should flag.",
-    "examTopicTags: Campus IQ's own topic layer — NOT part of real Canvas data.",
+    "examTopicTags: Gradus IQ's own topic layer — NOT part of real Canvas data.",
     "MATH 140 is the correct freshman fall math course for Mays Business School. MATH 142 (Business Calculus) is the spring follow-on. Assignments for course_id 3003 will be updated in the next pass to reflect MATH 140 content.",
     "ACCT 229 (Foundations of Accounting I) is typically a sophomore-level CBK course at Mays, not freshman fall. Kept here for demo narrative continuity — flag for correction before real student data flows in."
   ],
@@ -775,7 +775,7 @@
       "assignments",
       "submissions"
     ],
-    "campus_iq_layer": [
+    "gradus_iq_layer": [
       "examTopicTags"
     ],
     "student_entered": [

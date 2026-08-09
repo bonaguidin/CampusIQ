@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This document defines the official TAMU catalog JSON contract used by Campus IQ / CareerOS.
+This document defines the official TAMU catalog JSON contract used by Gradus IQ / CareerOS.
 
 The schema supports academic foundation data for future course recommendation, study planning, and student profile reasoning. It is data foundation only. It does not implement AI recommendation logic, FIT/GAP/SHIFT features, career prompts, or student-facing planning behavior.
 

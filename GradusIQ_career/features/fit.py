@@ -26,7 +26,7 @@ def _resolve_major(student: Mapping[str, Any]) -> tuple[str, str]:
 
 class FitRunner(CareerFeatureRunner):
     feature = "FIT"
-    prompt_filename = "campus_iq_prompt_FIT.md"
+    prompt_filename = "gradus_iq_prompt_FIT.md"
     required_paths = (
         "student.major_intended",
         "career.target_roles",

@@ -1,4 +1,4 @@
-"""Central model routing for Campus IQ AI roles."""
+"""Central model routing for Gradus IQ AI roles."""
 
 import os
 from typing import Mapping, get_args
@@ -43,13 +43,13 @@ MODEL_BY_ROLE: Mapping[AgentRole, str] = {
 
 
 ENV_BY_ROLE: Mapping[AgentRole, str] = {
-    "orchestrator": "CAMPUSIQ_MODEL_ORCHESTRATOR",
-    "career": "CAMPUSIQ_MODEL_CAREER",
-    "academic": "CAMPUSIQ_MODEL_ACADEMIC",
-    "parsing": "CAMPUSIQ_MODEL_PARSING",
-    "chat": "CAMPUSIQ_MODEL_CHAT",
-    "report": "CAMPUSIQ_MODEL_REPORT",
-    "role_research": "CAMPUSIQ_MODEL_ROLE_RESEARCH",
+    "orchestrator": "GRADUSIQ_MODEL_ORCHESTRATOR",
+    "career": "GRADUSIQ_MODEL_CAREER",
+    "academic": "GRADUSIQ_MODEL_ACADEMIC",
+    "parsing": "GRADUSIQ_MODEL_PARSING",
+    "chat": "GRADUSIQ_MODEL_CHAT",
+    "report": "GRADUSIQ_MODEL_REPORT",
+    "role_research": "GRADUSIQ_MODEL_ROLE_RESEARCH",
 }
 
 
@@ -97,7 +97,7 @@ PLACEHOLDER_MODEL_PREFIX = "TODO_"
 # validate_configured_models is a TODO_ prefix test, not a reachability check.
 # It would NOT have caught "@preset/chat", which is well-formed and simply does
 # not exist upstream. It equally would not catch a typo'd model ID or a bad
-# CAMPUSIQ_MODEL_* override. Catching that class needs a probe against
+# GRADUSIQ_MODEL_* override. Catching that class needs a probe against
 # OpenRouter's model list or a pinned allowlist -- deliberately not done here,
 # since it would add a network dependency to create_app().
 #
@@ -120,7 +120,7 @@ def validate_configured_models(roles_in_use: set[str]) -> None:
     Resolution goes through get_model_for_role, so this honors the same
     precedence real calls use: an env override wins over the hardcoded
     MODEL_BY_ROLE default. A role whose default is still a placeholder passes
-    cleanly once CAMPUSIQ_MODEL_<ROLE> supplies a real ID.
+    cleanly once GRADUSIQ_MODEL_<ROLE> supplies a real ID.
 
     Called at app construction so a bad model ID fails the deploy rather than
     surfacing as an opaque 502 on the first live request.
@@ -136,5 +136,5 @@ def validate_configured_models(roles_in_use: set[str]) -> None:
             "Placeholder model ID(s) still configured for role(s) in use: "
             + "; ".join(unresolved)
             + ". Set a real OpenRouter model ID in MODEL_BY_ROLE, or supply one "
-            "via the matching CAMPUSIQ_MODEL_* environment variable."
+            "via the matching GRADUSIQ_MODEL_* environment variable."
         )

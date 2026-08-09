@@ -70,7 +70,7 @@ def _merge_requirements(
 
 class GapRunner(CareerFeatureRunner):
     feature = "GAP"
-    prompt_filename = "campus_iq_prompt_GAP.md"
+    prompt_filename = "gradus_iq_prompt_GAP.md"
     required_paths = (
         "student.expected_graduation",
         "career.target_roles",

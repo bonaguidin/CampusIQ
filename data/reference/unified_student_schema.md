@@ -1,6 +1,6 @@
 # Unified Student Profile Schema
 
-This is the foundation contract for Campus IQ. Every feature should read from
+This is the foundation contract for Gradus IQ. Every feature should read from
 one student record that contains both Canvas-derived academic data and
 student-entered career data.
 
@@ -19,7 +19,7 @@ Student-entered fields are created or updated by onboarding/edit flows:
 
 - `career`
 
-System-generated fields are calculated by Campus IQ:
+System-generated fields are calculated by Gradus IQ:
 
 - `profile_completeness`
 
@@ -66,7 +66,7 @@ Academic features should use:
 - `enrollments`: grade and score state by course
 - `assignments`: assignment metadata, due dates, points, and states
 - `submissions`: student scores and professor comments
-- `examTopicTags`: Campus IQ topic tags used by exam gap and study guide features
+- `examTopicTags`: Gradus IQ topic tags used by exam gap and study guide features
 
 Professor comment analysis should read from `submissions[].submission_comments`.
 Exam gap analysis and study guide generation should combine assignment scores

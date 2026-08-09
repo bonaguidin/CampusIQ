@@ -1,4 +1,4 @@
-# Campus IQ — Combined Report
+# Gradus IQ — Combined Report
 
 **{{student.name}}** · {{student.institution}} · Generated {{report_date}}
 

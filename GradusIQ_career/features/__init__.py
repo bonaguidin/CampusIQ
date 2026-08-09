@@ -1,4 +1,4 @@
-"""Career feature runners for Campus IQ."""
+"""Career feature runners for Gradus IQ."""
 
 from .academic import AcademicRunner
 from .base import FeatureResult, FeatureRunner, FeatureStatus

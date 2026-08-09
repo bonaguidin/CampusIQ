@@ -11,9 +11,9 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
-from CampusIQ_career import api
-from CampusIQ_career.ai.types import AIResponse
-from CampusIQ_career.supabase_client import SupabaseConfigError
+from GradusIQ_career import api
+from GradusIQ_career.ai.types import AIResponse
+from GradusIQ_career.supabase_client import SupabaseConfigError
 
 
 TEST_PROXY_SECRET = "test-proxy-secret"

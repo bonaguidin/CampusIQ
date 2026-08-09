@@ -1,6 +1,6 @@
 {
   "_notes": [
-    "Static, hand-curated role-requirements lookup for the Campus IQ GAP feature demo.",
+    "Static, hand-curated role-requirements lookup for the Gradus IQ GAP feature demo.",
     "NOT live O*NET/Lightcast data — SOC codes reference the 2018 SOC / O*NET-SOC taxonomy for realism only.",
     "Keyed by the exact target_role strings used across data/students/*.json (14 distinct roles).",
     "Each role: soc_code, must_have_skills, nice_to_have_skills, must_have_certifications, nice_to_have_certifications.",

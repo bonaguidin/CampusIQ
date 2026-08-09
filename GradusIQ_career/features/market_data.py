@@ -25,12 +25,12 @@ from pathlib import Path
 from typing import Any, Mapping, Sequence
 
 
-# repo root = .../CampusIQ_career/features/market_data.py -> parents[2]
+# repo root = .../GradusIQ_career/features/market_data.py -> parents[2]
 _REPO_ROOT = Path(__file__).resolve().parents[2]
 _DEFAULT_DATA_PATH = _REPO_ROOT / "data" / "reference" / "onet_soc_requirements.json"
 
 # Env override lets the demo/cache runner point at a different data file.
-_DATA_PATH = Path(os.getenv("CAMPUSIQ_ONET_DATA", str(_DEFAULT_DATA_PATH)))
+_DATA_PATH = Path(os.getenv("GRADUSIQ_ONET_DATA", str(_DEFAULT_DATA_PATH)))
 
 # Fallback if the data file omits its own threshold.
 _DEFAULT_MUST_HAVE_THRESHOLD = 70

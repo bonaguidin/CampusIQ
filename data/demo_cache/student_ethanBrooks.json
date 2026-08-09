@@ -7,7 +7,7 @@
     "CHEM 107 + CHEM 117 are the correct chemistry sequence for Computer Engineering freshmen. CHEM 119 is for chemical/biomedical/materials engineering only. Verified against TAMU catalog.",
     "ENGL 104 (Composition and Rhetoric) added — required freshman fall course for all engineering students. Verified against TAMU catalog.",
     "Recurring pattern: skipping intermediate steps / under-documenting process — shows up in both his math and engineering-design feedback.",
-    "examTopicTags: Campus IQ's own topic layer — NOT part of real Canvas data."
+    "examTopicTags: Gradus IQ's own topic layer — NOT part of real Canvas data."
   ],
   "student": {
     "id": 603,
@@ -991,7 +991,7 @@
       "assignments",
       "submissions"
     ],
-    "campus_iq_layer": [
+    "gradus_iq_layer": [
       "examTopicTags"
     ],
     "student_entered": [

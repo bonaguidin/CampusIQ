@@ -1,4 +1,4 @@
-// TypeScript interfaces matching the Campus IQ unified student profile schema.
+// TypeScript interfaces matching the Gradus IQ unified student profile schema.
 // canvas_derived blocks are READ-ONLY; student_entered (career) is editable.
 
 // ── canvas_derived ──────────────────────────────────────────────────────────
@@ -81,7 +81,7 @@ export interface Submission {
   submission_comments: SubmissionComment[];
 }
 
-// ── campus_iq_layer ─────────────────────────────────────────────────────────
+// ── gradus_iq_layer ─────────────────────────────────────────────────────────
 
 export interface ExamTopicTag {
   question_id: string;

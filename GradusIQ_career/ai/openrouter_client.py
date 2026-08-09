@@ -1,4 +1,4 @@
-"""OpenRouter client for Campus IQ AI calls."""
+"""OpenRouter client for Gradus IQ AI calls."""
 
 import copy
 import os

@@ -1,5 +1,5 @@
 # Worker count is pinned to 1 because SlidingWindowRateLimiter and
-# AIConcurrencyGate (CampusIQ_career/api.py) are both process-local with no
+# AIConcurrencyGate (GradusIQ_career/api.py) are both process-local with no
 # shared state. Running more than one worker silently multiplies both limits
 # with no error or warning: N workers means N independent sliding windows and
 # N independent concurrency semaphores, so the effective ceiling becomes N x
@@ -11,4 +11,4 @@
 # A start command is not the only way a platform can set worker count --
 # create_app() additionally rejects WEB_CONCURRENCY set to anything but "1",
 # which this file alone would not catch.
-web: uvicorn CampusIQ_career.api:app --host 0.0.0.0 --port $PORT --workers 1
+web: uvicorn GradusIQ_career.api:app --host 0.0.0.0 --port $PORT --workers 1

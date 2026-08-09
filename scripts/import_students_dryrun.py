@@ -1,5 +1,5 @@
 """Dry-run: map existing student JSON onto the new schema shape and compute
-GPA with CampusIQ_career.academics.gpa, comparing against the pre-baked
+GPA with GradusIQ_career.academics.gpa, comparing against the pre-baked
 gpa_current field. Nothing is written anywhere — no database connection,
 no file writes, migration is not applied.
 
@@ -13,7 +13,7 @@ import json
 import re
 from pathlib import Path
 
-from CampusIQ_career.academics.gpa import (
+from GradusIQ_career.academics.gpa import (
     CourseRecord,
     GradeMapRow,
     Institution,

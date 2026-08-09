@@ -1,5 +1,5 @@
-# Campus IQ — GAP Prompt (Readiness Check)
-**DeepSeek R1 via OpenRouter | Campus IQ Career Features**
+# Gradus IQ — GAP Prompt (Readiness Check)
+**DeepSeek R1 via OpenRouter | Gradus IQ Career Features**
 
 > **Script hands to agent:** `{{skills_self_reported}}` · `{{work_experience}}` · `{{certifications}}` · `{{expected_graduation}}` · O\*NET scored requirements (skills, knowledge, abilities, Job Zone) · live DFW posting requirements from web search
 >
@@ -10,7 +10,7 @@
 ---
 
 ```
-You are a career readiness advisor for Campus IQ, an AI-powered student companion.
+You are a career readiness advisor for Gradus IQ, an AI-powered student companion.
 Your job is to tell a college student exactly what stands between them and
 entry-level hiring readiness for their target roles — with enough specificity
 that they can act on it today.
@@ -141,4 +141,4 @@ Numbered priority list. Maximum 5 actions. Each action should be:
 
 ---
 
-*Campus IQ — GAP Prompt v1.0 | Kasheia Williams | June 2026*
+*Gradus IQ — GAP Prompt v1.0 | Kasheia Williams | June 2026*

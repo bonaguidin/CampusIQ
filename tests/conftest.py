@@ -1,13 +1,13 @@
 import pytest
 
-from CampusIQ_career.features import gap as gap_module
+from GradusIQ_career.features import gap as gap_module
 
 
 @pytest.fixture(autouse=True)
 def _no_live_role_research_by_default(request, monkeypatch):
     """Default role_research_agent.get_role_requirements() to a static-only miss.
 
-    CampusIQ_career/api.py calls load_dotenv() on import, and .env carries
+    GradusIQ_career/api.py calls load_dotenv() on import, and .env carries
     real OPENROUTER_API_KEY / TAVILY_API_KEY for local development. Once any
     test imports api (directly or via the TestClient fixture in
     tests/test_api.py), those credentials are live in this process for the

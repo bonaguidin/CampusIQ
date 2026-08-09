@@ -1,7 +1,7 @@
-from CampusIQ_career.ai.types import AIResponse
-from CampusIQ_career.features import run_career_feature
-from CampusIQ_career.features.academic import AcademicRunner
-from CampusIQ_career.features.orchestrator import DEFAULT_CAREER_FEATURES, run_feature
+from GradusIQ_career.ai.types import AIResponse
+from GradusIQ_career.features import run_career_feature
+from GradusIQ_career.features.academic import AcademicRunner
+from GradusIQ_career.features.orchestrator import DEFAULT_CAREER_FEATURES, run_feature
 
 
 class FakeClient:

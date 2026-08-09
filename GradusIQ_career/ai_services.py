@@ -1,14 +1,14 @@
 """Backward-compatible AI service helpers.
 
-New code should use CampusIQ_career.ai.OpenRouterClient directly. This module
+New code should use GradusIQ_career.ai.OpenRouterClient directly. This module
 keeps the original call_agent() surface while routing through the canonical
 OpenRouter client.
 """
 
 from typing import Any, Mapping, Sequence
 
-from CampusIQ_career.ai import AIConfigError, AIMessage, OpenRouterClient
-from CampusIQ_career.ai.types import AgentRole
+from GradusIQ_career.ai import AIConfigError, AIMessage, OpenRouterClient
+from GradusIQ_career.ai.types import AgentRole
 
 
 AGENT_ROLE_BY_NAME: Mapping[str, AgentRole] = {

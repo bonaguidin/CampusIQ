@@ -7,7 +7,7 @@ from .base import CareerFeatureRunner
 
 class ShiftRunner(CareerFeatureRunner):
     feature = "SHIFT"
-    prompt_filename = "campus_iq_prompt_SHIFT.md"
+    prompt_filename = "gradus_iq_prompt_SHIFT.md"
     required_paths = (
         "career.target_roles",
         "career.skills_self_reported",

@@ -2,8 +2,8 @@ import json
 
 import pytest
 
-from CampusIQ_career.ai.types import AIResponse
-from CampusIQ_career.demo import build_demo_cache as bdc
+from GradusIQ_career.ai.types import AIResponse
+from GradusIQ_career.demo import build_demo_cache as bdc
 
 
 SAMPLE_PROFILE = {

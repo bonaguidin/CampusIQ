@@ -4,7 +4,7 @@
     "At TAMU, engineering students complete a common first-year curriculum before applying to a specific discipline. As a sophomore, Priya has been admitted to AERO and is now taking real AERO-prefixed courses.",
     "courses[3]: HIST 105 satisfies UCC: American History.",
     "Priya is a strong, consistent student — light/clean comments, good contrast case so the analyzer doesn't manufacture a correction plan where one isn't warranted.",
-    "examTopicTags: Campus IQ's own topic layer — NOT part of real Canvas data.",
+    "examTopicTags: Gradus IQ's own topic layer — NOT part of real Canvas data.",
     "AERO 201 (Introduction to Flight) and AERO 212 (Introduction to Aerothermodynamics) added — both are required sophomore fall courses for Aerospace Engineering per TAMU catalog. Assignments to follow."
   ],
   "student": {
@@ -907,7 +907,7 @@
       "assignments",
       "submissions"
     ],
-    "campus_iq_layer": [
+    "gradus_iq_layer": [
       "examTopicTags"
     ],
     "student_entered": [

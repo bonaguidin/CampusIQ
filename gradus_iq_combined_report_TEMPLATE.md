@@ -1,4 +1,4 @@
-# Campus IQ — Combined Report
+# Gradus IQ — Combined Report
 
 **Ethan Brooks** · Texas A&M University · Generated {{report_date}}
 
