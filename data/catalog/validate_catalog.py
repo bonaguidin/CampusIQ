@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
-"""Validate TAMU catalog JSON files after normalization."""
+"""Validate catalog JSON files after normalization.
+
+Covers every institution under data/catalog/: TAMU's college subfolders and
+SMU's smu/ subtree. The two institution-specific rules -- accepted source_url
+prefixes and the course-code pattern -- are declared as constants below rather
+than assumed, so adding a third institution is a change to those two values.
+"""
 
 from __future__ import annotations
 
@@ -49,8 +55,18 @@ ARRAY_FIELDS = [
     "prerequisite_courses",
     "restrictions",
 ]
-CODE_RE = re.compile(r"^\s*([A-Z]{2,5})\s+([0-9]{3}[A-Z]?)\s*$")
-SOURCE_URL_PREFIX = "https://catalog.tamu.edu/undergraduate/course-descriptions/"
+# Course numbers are 3 digits at TAMU ("BIOL 100") and 4 at SMU ("ACCT 3311").
+# {3,4} is greedy, so a TAMU code still binds all three digits to the number
+# group rather than leaving one behind.
+CODE_RE = re.compile(r"^\s*([A-Z]{2,5})\s+([0-9]{3,4}[A-Z]?)\s*$")
+
+# One entry per institution, matching institutions.catalog_base_url. A course's
+# source_url must sit under exactly one of these; the check is what stops one
+# institution's data being filed under another's.
+SOURCE_URL_PREFIXES = (
+    "https://catalog.tamu.edu/undergraduate/course-descriptions/",
+    "https://catalog.smu.edu/",
+)
 CATALOG_YEAR_PENDING = "PENDING_CONFIRMATION"
 
 
@@ -123,8 +139,11 @@ def validate_course(course: Any, label: str) -> list[str]:
 
     source_url = course.get("source_url")
     if "source_url" in course:
-        if not isinstance(source_url, str) or not source_url.startswith(SOURCE_URL_PREFIX):
-            errors.append(f"{label}: source_url is not an official TAMU course-description URL")
+        if not isinstance(source_url, str) or not source_url.startswith(SOURCE_URL_PREFIXES):
+            accepted = " or ".join(SOURCE_URL_PREFIXES)
+            errors.append(
+                f"{label}: source_url is not an official catalog URL (expected one of: {accepted})"
+            )
 
     catalog_year = course.get("catalog_year")
     if "catalog_year" in course:
