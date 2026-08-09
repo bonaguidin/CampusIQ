@@ -135,7 +135,7 @@ Run the schema and count checks before committing profile changes:
 
 ```bash
 uv run python data/students/validate_students.py
-uv run python data/validate_catalog.py
+uv run python data/catalog/validate_catalog.py
 ```
 
 `validate_students.py` checks:

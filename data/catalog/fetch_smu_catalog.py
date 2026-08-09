@@ -349,9 +349,8 @@ def main() -> int:
         "--delay",
         type=float,
         default=1.0,
-        # scrape_catalog.py uses 2s, but that is one request per subject page of
-        # HTML. This is a bulk JSON API returning 250 records per call, so the
-        # whole catalog is ~27 requests; 1s keeps the run polite and brief.
+        # This is a bulk JSON API returning 250 records per call, so the whole
+        # catalog is ~27 requests; 1s keeps the run polite and brief.
         help="seconds between requests (default: 1.0)",
     )
     parser.add_argument(

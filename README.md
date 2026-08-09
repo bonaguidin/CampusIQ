@@ -180,7 +180,7 @@ to check, then switch to Node 20+ and retry.
 ## Validating data
 
 ```bash
-uv run python data/validate_catalog.py
+uv run python data/catalog/validate_catalog.py
 uv run python data/students/validate_students.py
 ```
 
@@ -198,10 +198,10 @@ dashboard and future prompt/UI code.
 
 ## Other commands
 
-| Command                                      | What it does                          |
-|----------------------------------------------|---------------------------------------|
-| `uv run python data/scrape_catalog.py`       | Re-scrape the TAMU course catalog     |
-| `uv run python data/build_catalog.py`        | Rebuild catalog JSON from scrape output |
+| Command                                            | What it does                              |
+|----------------------------------------------------|-------------------------------------------|
+| `uv run python data/catalog/fetch_smu_catalog.py`  | Fetch the SMU course catalog              |
+| `uv run python data/catalog/import_catalog.py`     | Import normalized catalog JSON into the DB |
 
 ## AI Architecture
 
