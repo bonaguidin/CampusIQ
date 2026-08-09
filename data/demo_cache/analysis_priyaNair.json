@@ -72,62 +72,66 @@
       "data": {
         "must_have_gaps": [
           {
-            "gap": "Design knowledge",
-            "how_to_close": "Enroll in a CAD/design course (e.g., AERO 350 or MEEN 335) or complete a substantial design project using SolidWorks before your junior year.",
-            "why_it_matters": "O*NET importance 78 for Aerospace Engineering Intern and Flight Systems Intern, and 88 for Mechanical Analysis Intern \u2014 you currently have no design-focused coursework or project listed."
+            "gap": "CAD proficiency beyond SolidWorks CSWA",
+            "how_to_close": "Complete a project where you design and assemble a small UAV or mechanism in SolidWorks, including dimensioned drawings and a simple motion study. Use a free online course like Coursera's 'SolidWorks 2024 Essential Training' or a university makerspace tutorial.",
+            "why_it_matters": "In national occupational survey data for aerospace and mechanical engineering roles, Engineering and Technology knowledge scores a 94 out of 100, and Design knowledge scores a 78 or 88. Employers expect you to apply CAD in realistic engineering workflows, not just hold a certification."
           },
           {
-            "gap": "Computers and Electronics knowledge",
-            "how_to_close": "Take an introductory course in computer engineering or embedded systems, or complete an online module on microcontroller basics (e.g., Arduino) within the next semester.",
-            "why_it_matters": "O*NET importance 71 for Aerospace Engineering Intern and Flight Systems Intern \u2014 this covers computing systems, hardware, and software fundamentals you have not yet addressed."
+            "gap": "MATLAB/Simulink beyond basics",
+            "how_to_close": "Take a short course like MATLAB Onramp (free, 2 hours) and then build a project that simulates a simple control system (e.g., altitude hold for a drone) using MATLAB/Simulink. You can use the online documentation and examples.",
+            "why_it_matters": "MATLAB appears as a hot technology in all three target roles. For aerospace and mechanical internships, national data shows Critical Thinking (78) and Mathematics (72) as must-have skills\u2014MATLAB is how you'll demonstrate those in practice."
           },
           {
-            "gap": "Production and Processing knowledge",
-            "how_to_close": "Register for a manufacturing processes course (e.g., MEEN 360) or a production simulation project before your senior year.",
-            "why_it_matters": "O*NET importance 84 for Mechanical Analysis Intern \u2014 essential knowledge for understanding manufacturing methods and production workflows, which you currently lack."
+            "gap": "Finite Element Analysis (FEA) fundamentals",
+            "how_to_close": "Complete a free introductory FEA module on ANSYS's learning hub or YouTube (e.g., 'FEA in 10 Minutes' series). Then, run a simple stress analysis on a SolidWorks part you design, documenting the mesh, loads, and results in a short report.",
+            "why_it_matters": "For Mechanical Analysis Intern, analysis tools like FEA are tied to the must-have skill of 'Engineering mathematics' and the knowledge of 'Mechanical' (81 out of 100 in O*NET data). Employers want to see you understand FEA concepts even if you haven't used the software yet."
           },
           {
-            "gap": "Mechanical knowledge",
-            "how_to_close": "Take a mechanical design or machine elements course (e.g., MEEN 365); supplement with a project that involves mechanism analysis.",
-            "why_it_matters": "O*NET importance 81 for Mechanical Analysis Intern \u2014 requires understanding of machines, tools, and mechanical systems beyond your thermodynamics basics."
+            "gap": "FEA or analysis software (ANSYS, Abaqus) familiarity",
+            "how_to_close": "Install the free student version of ANSYS or use the online ANSYS Learning Hub to run through a basic structural or thermal tutorial. Add a line to your resume: 'Completed introductory ANSYS tutorial for static structural analysis.'",
+            "why_it_matters": "Hot technology lists for mechanical roles include many simulation tools. You don't need deep proficiency, but having any exposure shows initiative and fits the 'Computers and Electronics' knowledge (66 in O*NET data) expectation."
           }
         ],
         "nice_to_have_gaps": [
           {
-            "gap": "Python programming",
-            "how_to_close": "Complete a Python for engineers course (e.g., 'Python for Everybody' on Coursera) and build a small project such as analyzing flight performance data.",
-            "why_it_helps": "Python appears in the hot_software list for all three roles and is widely used for data analysis and automation in aerospace and mechanical engineering."
+            "gap": "Python for engineering analysis",
+            "how_to_close": "Complete a free 2-hour course like 'Python for Everybody' (Coursera) or 'Learn Python 3' (Codecademy), then write a script that reads sensor data from a simulated UAV flight log and plots altitude vs. time.",
+            "why_it_helps": "Python appears in hot technology lists and Role Requirements for all three internships. It's a versatile tool for data analysis, automation, and scripting\u2014differentiating you from peers who only know MATLAB."
           },
           {
-            "gap": "Monitoring skill (O*NET importance 69 for Aerospace roles)",
-            "how_to_close": "Practice using project management tools like Trello or Jira in team assignments, and actively review your work against milestones.",
-            "why_it_helps": "Monitoring is the ability to track your own or others' performance; it helps you manage project progress and detect issues early."
+            "gap": "CFD basics (ANSYS Fluent)",
+            "how_to_close": "Run through the 'ANSYS Fluent Tutorial for Beginners' (available on YouTube or the ANSYS Learning Hub) that simulates airflow over an airfoil. Document the steps and results in a brief summary.",
+            "why_it_helps": "Even basic CFD exposure signals comfort with numerical simulation, which is valued in aerospace internships. National data shows 'Physics' knowledge at 76 for aerospace roles."
           },
           {
-            "gap": "Active Learning skill (O*NET importance 66 for Aerospace roles)",
-            "how_to_close": "Set a goal to complete one self-paced online course per semester in a new area (e.g., FEA basics, controls) and apply it to a project.",
-            "why_it_helps": "Active learning helps you quickly pick up new technical concepts and stay current with evolving engineering tools."
+            "gap": "Control systems fundamentals",
+            "how_to_close": "Enroll in a free online module like 'Control Systems in MATLAB' (MATLAB Onramp) or watch a 3-part YouTube series on 'Control Systems Basics' by Brian Douglas. Build a simple Simulink model of a feedback control loop.",
+            "why_it_helps": "Flight Systems Intern specifically lists control systems as a must-have. Understanding PID control or state-space basics shows you can handle systems thinking\u2014a differentiator that ties to 'Deductive Reasoning' (75 in O*NET data)."
+          },
+          {
+            "gap": "GD&T (Geometric Dimensioning and Tolerancing)",
+            "how_to_close": "Take a free short course like 'GD&T Basics' on YouTube or LinkedIn Learning. Then, apply GD&T symbols to a part you design in SolidWorks and include a note on your CAD drawing.",
+            "why_it_helps": "GD&T is a nice-to-have for all three roles. It shows you understand manufacturing communication beyond basic CAD, which fits the 'Production and Processing' knowledge (57 in O*NET data for aerospace, 84 for mechanical)."
           }
         ],
-        "readiness_score": 5,
+        "readiness_score": 4,
         "recommended_next_steps": [
-          "Enroll in a design course (e.g., AERO 350 or MEEN 335) before junior year to close the Design knowledge gap.",
-          "Take an introductory computers and electronics course or self-paced module to cover the Computers and Electronics gap for aerospace roles.",
-          "For Mechanical Analysis, add a manufacturing processes or mechanical design course to your plan before senior year.",
-          "Learn Python through a structured online course and build a small analysis project (e.g., MATLAB-to-Python conversion or flight data handling).",
-          "Create a portfolio project that combines multiple skills \u2014 for example, a CAD model with a simple FEA simulation using SolidWorks Simulation to demonstrate design, mechanical, and analysis capabilities."
+          "1. Complete the MATLAB Onramp course (free, 2 hours) this month, then build a simple Simulink model to control a simulated drone's altitude\u2014this directly addresses the MATLAB/Simulink gap for Flight Systems Intern.",
+          "2. Start a project to design a small UAV wing or fuselage in SolidWorks, including a simple FEA stress analysis\u2014this builds CAD proficiency and FEA familiarity simultaneously, targeting Aerospace and Mechanical Analysis roles.",
+          "3. Enroll in a free Python for Everybody module (Coursera) by next month\u2014spend 1-2 hours to get comfortable with loops and data structures, then write a script that processes a flight log CSV.",
+          "4. Before the Fall 2026 semester, complete an introductory ANSYS Fluent or structural tutorial and document it as a short project\u2014this adds a concrete simulation skill to your resume.",
+          "5. Once you finish the FAA Part 107 certification (expected Fall 2026), add it prominently on your resume\u2014it's a unique credential that directly supports the Flight Systems Intern role and demonstrates regulatory awareness."
         ],
         "strengths": [
-          "SolidWorks CSWA certification (completed) \u2014 immediate proof of CAD competency for all three roles",
-          "Strong math foundation through multivariable calculus and analytical methods courses",
-          "Technical writing and communication skills demonstrated by the Introduction to Flight concept brief",
-          "Analytical thinking and attention to detail, reinforced by course team collaboration and vector calculus toolkit project"
+          "You've completed foundational aerospace engineering coursework (mechanics, aerothermodynamics, flight) and a math toolkit project that uses MATLAB basics, which shows you can apply theory to practical problems. Frame this on your resume as 'developed computational tools for vector calculus applications in aerospace contexts.'",
+          "Your SolidWorks CSWA certification and in-progress FAA Part 107 demonstrate proactive certification pursuit\u2014two credentials that stand out for these roles and align with hot technology tools listed in national survey data.",
+          "Your analytical thinking and attention to detail (self-reported and evident in your course projects) map directly to must-have abilities like deductive reasoning and problem sensitivity, which are highly valued according to national occupational data."
         ]
       },
       "errors": [],
       "feature": "GAP",
       "status": "success",
-      "summary": "You have a solid start with your SolidWorks CSWA certification and foundational aerospace coursework, but as a sophomore with graduation in 2028, you still need to build several must-have knowledge areas\u2014especially design, computers/electronics, and mechanical/production principles\u2014before you'll be fully competitive for these internships. Your biggest priority is to gain deeper technical breadth and a proficiency in Python."
+      "summary": "You're off to a strong start as a sophomore, but you have clear must-have gaps\u2014especially in CAD, MATLAB/Simulink, and FEA\u2014that employers expect for these internships. The most important thing you can do right now is build hands-on project experience that demonstrates your engineering skills beyond coursework."
     },
     "PROFESSOR_COMMENTS": {
       "data": {
