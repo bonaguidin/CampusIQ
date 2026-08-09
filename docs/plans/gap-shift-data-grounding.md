@@ -1,7 +1,7 @@
 # GAP & SHIFT — Data Grounding
 ## Implementation spec
 
-**Date:** 2026-08-09 · **Status:** Step A built; B–E not started
+**Date:** 2026-08-09 · **Status:** Steps A–B built; C–E not started
 **Verified against:** O\*NET 30.3 (`data/onet/onet_src/db_30_3_text/`), branch `feat/gap-shift-grounding`
 
 ---
@@ -128,9 +128,15 @@ At 1,016 occupations that is no longer true. A SOC code absent from the catalog 
 "provenance": "onet" | "agent" | "none",
 ```
 
-`provenance` is the load-bearing new field — it's what lets the prompt distinguish "scored against real importance data" from "scored against web research." Set `"onet"` when the entry has non-empty `skills`, `"agent"` when the research agent supplied them, `"none"` when neither.
+`provenance` is the load-bearing new field — it's what lets the prompt distinguish "scored against real importance data" from "scored against web research." `market_data` emits only `"onet"` or `"none"`; it knows nothing about the research agent. `gap.py` upgrades `"none"` → `"agent"` for the roles it backfills in Step C.
 
-Preserve both existing invariants: stdlib-only, and never raise into the runner.
+`matched` is re-derived from non-empty `skills` rather than key existence, fixing the Step A regression. Finance Intern and Operations Intern now correctly report `matched: false` with an explicit note that their requirements must not be presented as O\*NET-scored.
+
+Both existing invariants preserved: stdlib-only (verified — no first-party imports), and never raises into the runner (verified against a missing data file).
+
+**`dfw_postings` is removed from the return shape.** It was always `None` and its comment promised "Phase 2: live Adzuna/JSearch." With the ATS fetcher closed, an always-`None` postings key is exactly the kind of dead placeholder Step D deletes from the SHIFT prompt — it invites the model to imply posting evidence that does not exist. Nothing read it.
+
+**Payload check:** worst real student (3 roles) injects ~8.9 KB / ~2,300 tokens of `market_requirements`. Acceptable. But note `hot_software` can dominate — Ethan Brooks gets 192 product names against 99 actual rated items, and software carries no importance score to rank by. Step C should decide whether GAP *uses* the list or merely checks the student's tools against it; enumerating 192 tools is not a gap analysis.
 
 ---
 
