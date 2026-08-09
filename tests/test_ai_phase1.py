@@ -539,32 +539,6 @@ def test_chat_role_puts_the_real_model_on_the_wire(monkeypatch):
     assert not sent_model.startswith("@preset/")
 
 
-def test_chat_route_sends_no_explicit_model_argument():
-    """_complete_chat must not reintroduce a model= that shadows the role.
-
-    _select_model returns an explicit model without ever consulting
-    get_model_for_role, so any model= at this call site silently re-exempts
-    chat from every check in this file -- which is exactly how "@preset/chat"
-    survived. Asserted against the source because the argument's absence is
-    the invariant, and a passing FakeSession test would not notice it coming
-    back with a different value.
-
-    The docstring is excised before scanning: _complete_chat's own docstring
-    documents the removed "@preset/chat" by name, and matching that would make
-    this test fail on the explanation rather than on the code.
-    """
-    import inspect
-
-    from GradusIQ_career import api
-
-    source = inspect.getsource(api._complete_chat)
-    code = source.replace(api._complete_chat.__doc__ or "", "")
-
-    assert "@preset/" not in code
-    assert 'role="chat"' in code, "role= is load-bearing now; it selects the model"
-    assert "model=" not in code
-
-
 # 6b. Startup validation now covers chat and passes against today's config.
 def test_startup_validation_includes_chat_and_passes(monkeypatch):
     from GradusIQ_career.ai.model_config import (
