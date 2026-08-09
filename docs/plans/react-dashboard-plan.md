@@ -1,4 +1,4 @@
-# React + Vite Student Dashboard — Gradus IQ
+﻿# React + Vite Student Dashboard — Gradus IQ
 ## Implementation Plan (pre-code review draft)
 
 **Date:** 2026-06-22 · **Author:** Claude Code (Sonnet 4.6)  
@@ -14,7 +14,7 @@
 - `data/reference/unified_student_schema.md`
 - `.env.example`
 - `gradusiq_workflow_diagram.md`
-- `GradusIQ_career/demo/campus_iq_test.py`
+- `GradusIQ_career/demo/gradus_iq_test.py`
 - `GradusIQ_career/README.md`, `README.md`
 - `pyproject.toml`
 
@@ -210,7 +210,7 @@ Writes must never touch `student`, `courses`, `enrollments`, `assignments`, `sub
 
 ### How this mirrors the existing Python update pattern
 
-`campus_iq_test.py` reads the full JSON, uses it as context, and does not write back. There is no existing "update script" in the repo yet — the workflow diagram describes one (`Python · update script / overwrites changed fields only`), but it hasn't been built. The React save logic will be the first write path, and it should be written with the same field boundary the schema doc defines: only `career.*` is writable by the student.
+`gradus_iq_test.py` reads the full JSON, uses it as context, and does not write back. There is no existing "update script" in the repo yet — the workflow diagram describes one (`Python · update script / overwrites changed fields only`), but it hasn't been built. The React save logic will be the first write path, and it should be written with the same field boundary the schema doc defines: only `career.*` is writable by the student.
 
 ---
 
