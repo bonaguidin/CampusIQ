@@ -73,7 +73,16 @@ Configure these in **Vercel** and redeploy:
 ```bash
 CAMPUSIQ_BACKEND_URL=https://your-render-service.example
 CAMPUSIQ_PROXY_SECRET=<same-strong-random-value-as-render>
+VITE_SUPABASE_URL=https://your-project-ref.supabase.co
+VITE_SUPABASE_PUBLISHABLE_KEY=<publishable-anon-key>
 ```
+
+The two `VITE_`-prefixed values are read at import time by
+`frontend/src/lib/supabase.ts`, which throws if either is unset — so a missing
+one breaks the browser bundle at load, not at request time. They are baked into
+the client bundle at build time and are **not** duplicates of the
+`SUPABASE_URL` / `SUPABASE_PUBLISHABLE_KEY` pair in the Render block below:
+different layer, configured separately, even where the values coincide.
 
 Configure these in **Render** and restart/redeploy:
 
@@ -85,7 +94,17 @@ CAMPUSIQ_RATE_LIMIT_WINDOW_SECONDS=60
 CAMPUSIQ_MAX_CONCURRENT_AI_REQUESTS=2
 OPENROUTER_API_KEY=<server-only-key>
 TAVILY_API_KEY=<server-only-key>
+SUPABASE_URL=https://your-project-ref.supabase.co
+SUPABASE_PUBLISHABLE_KEY=<publishable-anon-key>
 ```
+
+`SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` fail differently from the rest of
+this list: they are read per request by `CampusIQ_career/supabase_client.py`'s
+`_required_env`, not at startup. Omitting them still lets the service boot and
+serve `/health` and the demo slug routes, while every session-scoped
+`/api/v2/student/me/*` request returns `503 {"detail":"SUPABASE_URL is not
+set."}`. Use the publishable (anon) key — never the secret/service-role key,
+which would bypass the RLS every one of those routes depends on.
 
 The rate limit is a bounded sliding window shared by trusted proxy requests in
 one backend process. The concurrency semaphore is also per process. Neither is
@@ -130,7 +149,11 @@ falling back to its static role requirements.
 ### Current demo boundaries
 
 - Canvas data and profile-select authentication are mocked for the demo.
-- Supabase remains planned; there is no active Supabase runtime client or schema.
+- Supabase is live, but only on the session-scoped path: a runtime client
+  (`CampusIQ_career/supabase_client.py`), an applied schema (8 migrations under
+  `supabase/migrations/`), and RLS-scoped `/api/v2/student/me/*` routes. The
+  demo dashboard described above is unaffected — it still reads mock JSON from
+  `data/students/` under the profile-select auth in the preceding bullet.
 - Adzuna/JSearch job-posting integration remains planned and is not executable.
 - PDF/DOCX export is not implemented in the active application.
 - Registered AI features are FIT, GAP, SHIFT, and PROFESSOR_COMMENTS.
@@ -217,5 +240,9 @@ CAMPUSIQ_MODEL_CHAT=
 CAMPUSIQ_MODEL_REPORT=
 ```
 
-Supabase is documented in the workflow architecture, but no Supabase client,
-schema, or runtime path is implemented in the current code.
+Supabase is implemented and separate from the OpenRouter path documented above:
+`CampusIQ_career/supabase_client.py` builds a session-scoped client for the
+`/api/v2/student/me/*` routes, against the applied schema in
+`supabase/migrations/`. It reads none of the variables listed here — see the
+Vercel and Render blocks under "Secure demo deployment" for the two pairs it
+does need.
