@@ -10,52 +10,60 @@
   "results": {
     "FIT": {
       "data": {
-        "overall_fit_summary": "Student Success Peer Mentor represents your strongest immediate fit, leveraging your campus presence and soft skills while requiring minimal technical upskilling. Research Assistant roles remain viable with targeted tool training.",
+        "overall_fit_summary": "Given your sophomore status and current profile, the most realistic near-term fit is Student Success Peer Mentor, where your soft skills and interest in student support align with entry-level expectations. Research Assistant is achievable with one more semester of methods coursework. People Operations Intern would require additional HR-focused development.",
         "role_matches": [
           {
             "fit_level": "medium",
             "missing_signals": [
-              "Lack of experience with specialized software (SPSS, Qualtrics) mentioned in 78% of local postings",
-              "Minimal hands-on data collection experience observed in your projects",
-              "Market requires research ethics certification (CITI) not yet evidenced"
+              "formal research methods course (e.g., PSYC 301)",
+              "direct lab assistant experience",
+              "IRB training"
             ],
-            "rationale": "Your psychology coursework and literature review experience align with research fundamentals. DFW hospitals and universities frequently seek undergrad RAs for behavioral studies, often requiring APA writing and basic statistical understanding. Your Culture and Diversity Literature Brief project demonstrates evidence synthesis capability relevant to role requirements.",
+            "rationale": "Your skills in literature review, APA writing, and statistical reasoning align with typical research assistant duties. DFW employers like UT Southwestern and Texas A&M often seek assistants for behavioral studies. However, most entry-level RAs expect prior lab experience or specific coursework (e.g., research methods). You have foundational knowledge but lack direct lab experience beyond classroom projects.",
             "role": "Research Assistant",
             "supporting_signals": [
-              "Published openings at DFW research institutes specifically mention literature review and APA qualifications",
-              "Course project matches common RA tasks like evidence synthesis",
-              "Statistical reasoning listed in your skills meets basic analytics expectations"
+              "APA-style writing",
+              "statistical reasoning",
+              "literature review",
+              "survey design basics",
+              "class research contributor experience",
+              "Culture and Diversity Literature Brief project"
             ]
           },
           {
             "fit_level": "high",
             "missing_signals": [
-              "Limited track record of sustained peer support outside classroom context",
-              "No crisis management training evidenced",
-              "Most competitive applicants show engagement in student organizations"
+              "formal peer mentoring training",
+              "knowledge of campus resources",
+              "experience leading workshops"
             ],
-            "rationale": "Your facilitation skills and diversity/inclusion interests match peer mentor needs. Campus roles strongly value lived student experience over technical skills. Your research team participation involves supporting peers \u2013 directly applicable to mentor work.",
+            "rationale": "Your empathy, facilitation, and public speaking skills directly match peer mentoring roles. DFW universities (UT Arlington, UNT, Texas A&M) hire peer mentors for first-year experience programs. You have course-based facilitation experience. Missing formal training in mentoring or academic coaching, but many programs provide onboarding.",
             "role": "Student Success Peer Mentor",
             "supporting_signals": [
-              "DFW college postings consistently prioritize facilitation and empathy over technical credentials",
-              "Group collaboration experience demonstrated through research contributions",
-              "Interest in student support matches core role purpose"
+              "empathy",
+              "facilitation",
+              "public speaking",
+              "critical reading",
+              "interest in student support",
+              "group facilitation from research team"
             ]
           },
           {
             "fit_level": "low",
             "missing_signals": [
-              "93% of DFW HR tech internship postings require prior ATS/HRIS experience",
-              "No evidenced understanding of employment law basics",
-              "Projects lack workplace behavior study components",
-              "Local employers prioritize business communication skills"
+              "HR coursework or certification",
+              "HRIS/ATS experience",
+              "business communication experience",
+              "formal internship experience"
             ],
-            "rationale": "Your organizational psychology interest provides conceptual grounding, though practical HR exposure remains limited. DFW startups seek interns for basic recruitment support and employee engagement tasks, but most require experience with HRIS platforms.",
+            "rationale": "Your interest in organizational psychology and survey design is relevant, but typical people ops interns are expected to have HR coursework, HRIS familiarity, or business-related experience. DFW companies like Toyota North America and AT&T look for interns with Excel proficiency and HR knowledge. You have Excel basics but lack HR-specific skills or internship experience in a business setting.",
             "role": "People Operations Intern",
             "supporting_signals": [
-              "Interdisciplinary psychology application matches emerging HR trends",
-              "Survey design basics could translate to employee feedback systems",
-              "Public speaking skills support potential training facilitation"
+              "survey design basics",
+              "Excel basics",
+              "interest in organizational psychology",
+              "empathy",
+              "critical reading"
             ]
           }
         ]
@@ -63,77 +71,78 @@
       "errors": [],
       "feature": "FIT",
       "status": "success",
-      "summary": "You're a Psychology sophomore with developing skills in behavioral research, academic writing, and student support. Your empathy and critical analysis abilities are emerging strengths for human-centered roles, while your foundational statistics exposure positions you for basic data work. DFW employers seek tangible research experience and technical tools proficiency for entry-level positions."
+      "summary": "You're a Psychology sophomore with strong foundations in research methods and student-facing soft skills. Your target roles in research, peer mentoring, and people ops are all viable, but your near-term strengths lie in student support roles, where your empathy and facilitation stand out. The DFW market offers opportunities in university peer programs and entry-level research assistant positions, though the latter may require a third-year methods course."
     },
     "GAP": {
       "data": {
         "must_have_gaps": [
           {
-            "gap": "Personnel and Human Resources knowledge",
-            "how_to_close": "Complete an Introduction to Human Resources course (e.g., BUSN 210 or equivalent) before graduation.",
-            "why_it_matters": "O*NET importance 90 - core requirement for HR roles."
-          },
-          {
-            "gap": "Administrative knowledge",
-            "how_to_close": "Seek on-campus administrative internships or take Business Administration coursework.",
-            "why_it_matters": "O*NET importance 74 - essential for office operations."
-          },
-          {
-            "gap": "Administration and Management knowledge",
-            "how_to_close": "Enroll in Management Fundamentals courses at your university.",
-            "why_it_matters": "O*NET importance 71 - critical for coordinating workplace processes."
-          },
-          {
             "gap": "Active Listening",
-            "how_to_close": "Join peer counseling training through campus health services to develop listening techniques.",
-            "why_it_matters": "O*NET importance 75 - vital for HR consultations and mentoring."
+            "how_to_close": "Volunteer as a peer mentor or take a free online course on active listening (e.g., Coursera's 'Achieving Personal and Professional Success'). Practice in daily conversations.",
+            "why_it_matters": "O*NET importance score 84 for Student Success Peer Mentor and 75 for Human Resources Specialists\u2014both roles require this to understand and respond to individuals' needs effectively."
           },
           {
-            "gap": "Problem Sensitivity",
-            "how_to_close": "Volunteer with student conflict resolution programs for applied practice.",
-            "why_it_matters": "O*NET importance 72 - required to anticipate workplace issues."
+            "gap": "Critical Thinking",
+            "how_to_close": "Enroll in a critical thinking or logic course (e.g., 'Critical Thinking Skills for University Success' on Coursera) or apply it to a case study project.",
+            "why_it_matters": "O*NET importance 72 for both Peer Mentor and Human Resources Specialists\u2014essential for evaluating situations, solving problems, and making sound decisions."
+          },
+          {
+            "gap": "Personnel and Human Resources Knowledge",
+            "how_to_close": "Complete a SHRM Essentials of HR Management certificate or take an introductory HR course (e.g., 'Human Resource Management' on edX) before graduation.",
+            "why_it_matters": "O*NET importance 90 for Human Resources Specialists\u2014the core knowledge area that People Operations Intern hiring managers will expect."
+          },
+          {
+            "gap": "Administrative and Management Knowledge",
+            "how_to_close": "Take a course in office administration or management (e.g., 'Administrative Support' on LinkedIn Learning) or gain experience through a campus office position.",
+            "why_it_matters": "O*NET importance 74 (Administrative) and 71 (Administration and Management) for Human Resources Specialists\u2014day-to-day HR operations rely on these."
+          },
+          {
+            "gap": "Deductive Reasoning and Problem Sensitivity",
+            "how_to_close": "Practice with HR case studies or take a problem-solving workshop (e.g., 'Problem Solving' on edX). Use real-world scenarios from your coursework.",
+            "why_it_matters": "O*NET importance 72 each for Human Resources Specialists\u2014needed to analyze HR policies, identify issues, and apply logical solutions."
           }
         ],
         "nice_to_have_gaps": [
           {
-            "gap": "SHRM-CP/PHR Certification",
-            "how_to_close": "Explore HR certification prep courses after completing foundational HR coursework.",
-            "why_it_helps": "Differentiates candidates for People Operations roles."
+            "gap": "Statistical Software (SPSS, R, or Python)",
+            "how_to_close": "Complete a Coursera course like 'R Programming' or 'Python for Data Science' and apply it to a dataset from your STAT 201 project.",
+            "why_it_helps": "Research Assistant roles often require data analysis; these tools are listed in hot software and can differentiate you from other candidates."
           },
           {
-            "gap": "Clinical Research Assistant Certification (CCRPS)",
-            "how_to_close": "Complete CCRPS online modules during Summer 2026.",
-            "why_it_helps": "Strengthens research assistant applications for clinical settings."
+            "gap": "CRLA Peer Tutor Certification",
+            "how_to_close": "Enroll in the College Reading and Learning Association (CRLA) training program through your campus learning center.",
+            "why_it_helps": "This is a nice-to-have for Student Success Peer Mentor, signaling formal training in tutoring and mentoring practices."
           },
           {
-            "gap": "Peer Mentor Certificate",
-            "how_to_close": "Apply for next cycle of campus peer mentor certification training.",
-            "why_it_helps": "Preferred credential for institutional mentoring positions."
+            "gap": "SHRM-CP or aPHR Certification",
+            "how_to_close": "After completing an HR fundamentals course, start studying for the SHRM-CP exam (eligibility often requires a degree, but you can learn the material).",
+            "why_it_helps": "These are nice-to-have for People Operations Intern, showing commitment to HR professionalism even before graduation."
           },
           {
-            "gap": "Active Learning skill",
-            "how_to_close": "Participate in pedagogy-focused psychology workshops on metacognition.",
-            "why_it_helps": "Adaptive skill valued across all target roles."
+            "gap": "Group Facilitation Skills",
+            "how_to_close": "Lead a study group or workshop, or take a free online course on group facilitation (e.g., 'Facilitation Skills' on LinkedIn Learning).",
+            "why_it_helps": "Peer Mentor roles benefit from leading group discussions; this is a nice-to-have skill that enhances your facilitation experience."
           }
         ],
-        "readiness_score": 3,
+        "readiness_score": 5,
         "recommended_next_steps": [
-          "Register for Intro to Human Resources coursework (e.g., BUSN 210) next semester",
-          "Complete Mental Health First Aid certification this summer and add to resume",
-          "Apply for campus peer mentor positions to practice active listening skills",
-          "Join student SHRM chapter for HR professional development opportunities",
-          "Seek fall internship in academic department administration for applied experience"
+          "1. Complete a free online course on Active Listening and Critical Thinking within the next 2 months (e.g., Coursera).",
+          "2. Enroll in an introductory HR course or SHRM Essentials certificate by the end of this semester to close People Operations knowledge gaps.",
+          "3. Learn a statistical software (R or Python) through a Coursera specialization and apply it to a dataset from your STAT 201 project by the end of summer.",
+          "4. Pursue CRLA Peer Tutor Certification through your campus tutoring center if you are interested in the Peer Mentor role.",
+          "5. Take a course in administrative management or office administration (e.g., LinkedIn Learning) to strengthen your People Operations profile."
         ],
         "strengths": [
-          "Empathy and facilitation skills developed through psychology coursework and research teamwork: Highlight in resumes/interviews as foundational for peer mentorship roles or client-facing HR situations.",
-          "CITI Human Subjects Research certification: Immediately qualifies you for research assistant positions involving behavioral studies - emphasize this credential when applying to academic labs.",
-          "Analytical foundation through STAT 201 hypothesis testing project: Demonstrate concrete examples of translating statistical concepts into practical study tools to showcase problem-solving abilities."
+          "Strong foundation in academic writing and literature review, including APA-style writing and critical reading\u2014directly relevant to Research Assistant and Peer Mentor roles.",
+          "Demonstrated empathy and facilitation skills from coursework and a class research contributor role, which map to the interpersonal demands of all three targets.",
+          "Completed CITI Program Human Subjects Research certification, a nice-to-have credential for Research Assistant that also shows research ethics awareness.",
+          "Basic statistical reasoning and Excel skills from STAT 201, providing a starting point for data analysis expectations in Research Assistant and People Operations roles."
         ]
       },
       "errors": [],
       "feature": "GAP",
       "status": "success",
-      "summary": "You have solid foundations in psychology and interpersonal skills that align well with mentorship roles, but significant gaps in human resources fundamentals prevent immediate readiness for People Operations positions. The most critical need is gaining core HR knowledge through structured coursework before graduation in 2028."
+      "summary": "You're a sophomore Psychology major with a solid foundation for Research Assistant roles, but your People Operations Intern target has significant must-have gaps in HR knowledge and abilities. Your strongest immediate move is to build active listening and critical thinking skills, which are must-haves for two of your three target roles."
     },
     "PROFESSOR_COMMENTS": {
       "data": {
@@ -223,61 +232,72 @@
       "data": {
         "adjacent_paths": [
           {
-            "driver": "Companies use AI for sentiment analysis on surveys, but need humans to design interventions.",
-            "path": "Employee Experience Analyst",
-            "relevance": "Leverages your psychology training and people operations interest to optimize workplace well-being using human-AI collaboration."
+            "driver": "As AI handles routine data entry and recordkeeping, HR generalists are being asked to take on more nuanced employee relations work, making your interest in organizational psychology and your empathy particularly valuable.",
+            "path": "Human Resources Assistants, Except Payroll and Timekeeping",
+            "relevance": "This role is closely related to the People Operations Intern path, and your psychology background gives you an edge in interpreting and explaining HR policies with empathy\u2014something less common among purely administrative-focused candidates."
           },
           {
-            "driver": "Education sector demand rises for professionals who blend data interpretation with pedagogical psychology.",
-            "path": "Research Coordinator (EdTech)",
-            "relevance": "Builds on your student success passion using AI tools to analyze learning behaviors while you design support frameworks."
+            "driver": "AI now handles survey distribution and basic data tabulation, freeing survey researchers to focus on question design, bias detection, and interpreting open-ended responses\u2014areas where your psychology training is directly applicable.",
+            "path": "Survey Researchers",
+            "relevance": "This role builds directly on your survey design basics and statistical reasoning, and the data interpretation skills you would develop as a Research Assistant. It also aligns with your interest in behavioral research."
+          },
+          {
+            "driver": "AI tools are automating data entry and compliance tracking, so clinical coordinators spend more time on participant recruitment, informed consent conversations, and liaising between researchers and clinicians\u2014roles where your facilitation skills are key.",
+            "path": "Clinical Research Coordinators",
+            "relevance": "This path leverages your literature review skills, attention to detail, and interest in applying psychology in structured settings. The role involves managing research protocols and data, much like a Research Assistant but with more responsibility and direct patient or participant interaction."
           }
         ],
-        "ai_fluency_guidance": [
-          "Current: 'I use AI to generate study questions and refine research outlines, which helps me allocate more mental energy to analyzing complex psychological concepts.'",
-          "Future: 'Develop structured experience by: (1) Adding an NLP tool like NVivo to analyze open-ended survey responses in your next research project, and (2) Designing a peer mentoring session comparing AI-generated vs. human-created student support resources to hone evaluative skills.'"
-        ],
+        "ai_fluency_guidance": [],
         "durable_skills": [
           {
-            "reason": "Nuanced emotional support requires lived human experience AI can't replicate.",
-            "task": "Empathic conversations"
+            "reason": "AI can summarize papers, but it cannot evaluate methodological rigor, contextualize findings within a field, or craft a nuanced narrative. Your statistic reasoning and APA-style writing will drive the real value of research reports.",
+            "task": "Interpreting research findings and writing analysis"
           },
           {
-            "reason": "Judging ethical implications demands human moral reasoning.",
-            "task": "Research ethics design"
+            "reason": "AI can generate course recommendations, but it cannot understand a student's unique fears, motivations, or life circumstances. Your empathy and active listening build the trust needed for students to share what they really need.",
+            "task": "Counseling students regarding course selection and career paths"
           },
           {
-            "reason": "Tailoring programs to specific communities relies on cultural sensitivity beyond algorithmic outputs.",
-            "task": "Inclusion initiative planning"
+            "reason": "Harassment allegations, interpersonal conflicts, and personal crises require human judgment, discretion, and emotional intelligence. AI cannot navigate the nuance of a difficult conversation or provide the reassurance a distressed employee needs.",
+            "task": "Addressing employee relations issues and providing crisis intervention"
           },
           {
-            "reason": "High-stakes scenarios require real-time adaptive judgment.",
-            "task": "Crisis intervention"
+            "reason": "The final hiring decision still belongs to humans. AI can filter by keywords, but it cannot assess culture fit, potential, or how a candidate's unique experiences and facilitation skills will contribute to team dynamics.",
+            "task": "Selecting qualified job applicants and making hiring recommendations"
+          },
+          {
+            "reason": "Presenting findings\u2014whether to a lab group, a student success committee, or an HR team\u2014requires tailoring the message to the audience, reading the room, and answering unexpected questions. Your public speaking and facilitation skills are irreplaceable here.",
+            "task": "Preparing and presenting research results to stakeholders"
           }
         ],
-        "role_evolution_summary": "The most significant shift in psychology-related roles is the integration of AI for data processing and routine tasks, while human skills in empathy, ethical judgment, and personalized support become irreplaceable. In your target research, mentoring, and people operations roles, AI augments analysis and administrative work, freeing you to focus on complex human interactions and contextual interpretation.",
+        "role_evolution_summary": "Each of your target roles is shifting from manual, routine tasks toward higher-level, human-centered work augmented by AI. As a Research Assistant, you'll move from performing literature searches and data entry by hand to overseeing and validating AI tools that handle those steps, freeing you for synthesis and critical evaluation. As a Student Success Peer Mentor, AI will automate mentor matching and initial student outreach, so your time can go to the complex, empathetic conversations where your relational skills shine. In People Operations, AI agents are taking over resume screening, onboarding paperwork, and compliance tracking, opening space for you to focus on data-driven process improvement, employee experience, and change management around new technology.",
         "task_shifts": [
           {
-            "changing": "AI analyzes large datasets to identify trends in seconds",
-            "meaning": "Your statistical reasoning shifts toward interpreting trends contextually\u2014asking why patterns emerge in human behavior.",
-            "task": "Survey data processing"
+            "changing": "AI research assistants like Elicit and ResearchRabbit now automate literature searches across databases, surfacing relevant papers and extracting key findings.",
+            "meaning": "You can spend less time hunting for papers and more time critically evaluating which studies are methodologically sound and most relevant to your research question. Your critical reading skills become your primary filter.",
+            "task": "Literature searching and paper discovery"
           },
           {
-            "changing": "AI tools draft preliminary summaries of academic papers",
-            "meaning": "Your critical reading becomes vital to evaluate AI-sourced content for relevance and bias in research contexts.",
-            "task": "Literature review scoping"
+            "changing": "AI-powered applicant tracking systems now handle initial resume screening and candidate ranking for People Operations Interns.",
+            "meaning": "Your focus shifts from manually reviewing resumes to understanding how to configure AI tools to reduce bias and to interpreting AI-generated shortlists with a human lens for culture fit and potential.",
+            "task": "Resume screening and candidate matching"
           },
           {
-            "changing": "AI schedules meetings or sends templated reminders",
-            "meaning": "Your facilitation skills elevate toward designing deeper check-ins that address unspoken student/employee needs.",
-            "task": "Routine administrative follow-ups"
+            "changing": "AI platforms like Element451 automate matching based on shared goals and flag at-risk students by analyzing login patterns, grades, and engagement data.",
+            "meaning": "Instead of managing schedules or manually identifying struggling students, you can step into the high-touch role earlier\u2014having the conversations that build trust and help students navigate challenges AI can't interpret.",
+            "task": "Mentor-mentee matching and at-risk student flagging"
+          },
+          {
+            "changing": "Automated workflows handle offer letters, benefits enrollment, and compliance document collection for People Operations Interns.",
+            "meaning": "Your work shifts from chasing paperwork to designing a seamless, welcoming onboarding experience. Your facilitation skills become key to helping new hires navigate and feel connected to the organization.",
+            "task": "Onboarding document collection and benefits enrollment"
           }
         ]
       },
       "errors": [],
       "feature": "SHIFT",
       "status": "success",
-      "summary": "Focus on strengthening your human-centric skills like empathy and critical analysis\u2014these are becoming the core differentiators in your fields as AI handles routine tasks. Your psychology background uniquely positions you to interpret AI outputs ethically. Build concrete AI experience through research projects, starting with tools that enhance (not replace) your existing workflows\u2014this gradual approach turns uncertainty into confidence."
+      "summary": "Your target roles are evolving to blend human skills with AI tools. Research Assistants now validate AI-curated literature; Peer Mentors use AI signals to deepen student relationships; People Operations Interns focus on strategic process improvement as AI handles routine tasks. Your empathy, facilitation, and critical reading skills will be your edge."
     }
   },
   "status": "success",

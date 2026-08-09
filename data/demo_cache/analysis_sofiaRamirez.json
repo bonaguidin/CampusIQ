@@ -10,45 +10,72 @@
   "results": {
     "FIT": {
       "data": {
-        "overall_fit_summary": "Lab Assistant roles are your strongest immediate fit\u2014they convert your documented wet lab fundamentals into employment while expanding technique exposure as next-step preparation.",
+        "overall_fit_summary": "Your most realistic near-term fit is a research assistant in an academic lab, where your coursework and lab basics provide a strong foundation. To move into clinical or biotech lab roles, you'll need some direct lab experience beyond classwork, which you can gain by starting in an academic lab. Your pre-health clinical volunteer path is promising but requires you to build hands-on patient experience first.",
         "role_matches": [
           {
             "fit_level": "high",
             "missing_signals": [
-              "Experience with tissue culture equipment common in DFW labs",
-              "Autoclave/sterilization procedure proficiency required in full-time roles"
+              "direct research experience in a lab beyond coursework",
+              "experience with specific lab equipment (e.g., pipetting calibration, PCR, microscopy)",
+              "data analysis software (e.g., Python, R, or Prism)"
             ],
-            "rationale": "Your Biology/Chemistry coursework provided hands-on wet lab experience including safety protocols and documentation\u2014core requirements per Texas Medical Center postings. Projects like your Organic Chemistry Reaction Tracker demonstrate methodical data organization employers value.",
-            "role": "Lab Assistant",
+            "rationale": "Your BIOL 213 concept map and organic chemistry reaction tracker demonstrate your ability to synthesize scientific information, a key skill for research support roles. Employers like UT Southwestern and UTSW postings emphasize candidates who can handle detailed lab documentation and follow protocols, which align with your lab notebook and wet lab basics. Your 'careful observation' and 'collaboration' soft skills are also frequently listed in academic research assistant job descriptions.",
+            "role": "Research Assistant (Academic)",
             "supporting_signals": [
-              "DFW employers prioritize meticulous lab notebook skills and equipment familiarity (Baylor Scott & White postings)",
-              "High demand for basic wet lab technicians in academic/research hospitals across Central Texas"
+              "wet lab technique basics",
+              "lab notebook documentation",
+              "biology concept mapping",
+              "organic chemistry mechanisms",
+              "careful observation",
+              "persistence"
             ]
           },
           {
             "fit_level": "medium",
             "missing_signals": [
-              "HIPAA compliance training common in onboarding",
-              "Direct patient interaction experience"
+              "professional lab experience (paid or internship)",
+              "knowledge of regulatory standards (GLP, GMP)",
+              "experience with laboratory equipment beyond basic coursework"
             ],
-            "rationale": "Your stated healthcare interest aligns with volunteer needs in DFW teaching hospitals. Soft skills like careful observation and persistence match Houston Methodist\u2019s volunteer criteria for patient interaction roles.",
+            "rationale": "DFW biotech and clinical labs (e.g., Charles River Labs, Quest Diagnostics) often require hands-on lab skills, attention to detail, and familiarity with safety protocols\u2014areas where you have foundational coursework experience. Your 'careful observation' and 'lab safety' skills are directly relevant. However, these postings frequently expect some previous lab work experience (even part-time or volunteer), which you lack beyond structured course labs.",
+            "role": "Lab Assistant (Biotech/Clinical)",
+            "supporting_signals": [
+              "wet lab technique basics",
+              "lab safety",
+              "data recording",
+              "collaboration",
+              "Excel basics"
+            ]
+          },
+          {
+            "fit_level": "medium",
+            "missing_signals": [
+              "direct clinical exposure or certification (e.g., CPR, CNA)",
+              "evidence of patient interaction or care",
+              "volunteer history in healthcare settings"
+            ],
+            "rationale": "Your interest in healthcare and pre-health path, combined with your 'collaboration' and 'careful observation' skills, aligns with what hospitals value in volunteers (e.g., Baylor Scott & White Health, Texas Health Resources). Postings emphasize patient interaction, empathy, and reliability\u2014skills you can connect to your lab teamwork and reflective learning. However, you have no direct clinical or patient-facing experience yet, which is the core requirement for these roles.",
             "role": "Pre-Health Clinical Volunteer",
             "supporting_signals": [
-              "Major Texas hospitals (e.g., MD Anderson) require 100+ volunteer hours for pre-health candidates",
-              "Training programs typically provided\u2014emphasis on professionalism over technical skills"
+              "healthcare interest",
+              "collaboration",
+              "careful observation",
+              "reflective learning"
             ]
           },
           {
-            "fit_level": "medium",
+            "fit_level": "low",
             "missing_signals": [
-              "Published research documentation examples",
-              "Statistical analysis software competence (e.g., GraphPad Prism)"
+              "experience with qualitative research methods",
+              "knowledge of statistical software",
+              "relevant coursework in social sciences"
             ],
-            "rationale": "Your Molecular Cell Biology Mechanism Project shows valuable concept mapping skills relevant to academic research roles. However, UT Southwestern postings require independent experiment design experience beyond structured coursework labs.",
-            "role": "Research Assistant",
+            "rationale": "While your concept mapping and evidence synthesis skills could transfer to social science research, DFW postings for such roles typically require qualitative analysis skills, survey methods, or statistical software like SPSS. Your current skill set is heavily biased toward biological lab work, and you have no coursework or projects in non-lab research methods.",
+            "role": "Research Assistant (Social Science or Policy)",
             "supporting_signals": [
-              "Academic labs seek STEM students with 1+ semester lab methodology exposure",
-              "Competitive DFW cancer research hubs prioritize candidates with PCR/ELISA exposure"
+              "evidence synthesis",
+              "Excel basics",
+              "careful observation"
             ]
           }
         ]
@@ -56,67 +83,78 @@
       "errors": [],
       "feature": "FIT",
       "status": "success",
-      "summary": "You're a Biology sophomore with strong foundational lab skills from coursework and clear interests in cell biology and healthcare. Your documented lab technique fundamentals and project synthesis abilities align well with research-focused roles, while the DFW market seeks candidates with precise technical execution and reliability for entry-level opportunities."
+      "summary": "You're a sophomore Biology major with foundational wet-lab skills and coursework in cell biology and organic chemistry, targeting research and pre-health roles in Texas. DFW employers are currently hiring entry-level lab assistants and research assistants, often requiring basic lab techniques, good documentation, and some clinical or research exposure. Your strongest immediate fit is as a lab assistant or research assistant in academic settings, where your coursework and initial lab experience align well."
     },
     "GAP": {
       "data": {
         "must_have_gaps": [
           {
-            "gap": "Communication Skills",
-            "how_to_close": "Complete a technical communication course or join Toastmasters by Fall 2026",
-            "why_it_matters": "Required by all target roles (O*NET importance: 85+ for lab/research roles)"
+            "gap": "Customer and Personal Service knowledge",
+            "how_to_close": "Volunteer at a local clinic, hospital, or community health center to gain hands-on patient service experience. Aim for 50+ hours before applying.",
+            "why_it_matters": "O*NET rates this knowledge at 88 out of 100 for Pre-Health Clinical Volunteer roles, making it a must-have. You currently have no direct customer service or patient interaction experience."
           },
           {
-            "gap": "Patient Interaction",
-            "how_to_close": "Volunteer 4+ hours weekly at a clinic/hospital starting Summer 2026",
-            "why_it_matters": "Core requirement for Pre-Health Clinical Volunteer roles"
+            "gap": "Medicine and Dentistry knowledge",
+            "how_to_close": "Enroll in a medical terminology course online or shadow a healthcare professional to learn clinical practices and patient care basics.",
+            "why_it_matters": "O*NET rates this knowledge at 83 out of 100 for Pre-Health Clinical Volunteer roles, meaning it's essential. Your biology background is a start, but you need clinical medical knowledge."
           },
           {
-            "gap": "Specimen Handling",
-            "how_to_close": "Take BIOL 315: Microbiology Lab with hands-on processing by Spring 2027",
-            "why_it_matters": "Essential for Lab Assistant positions (O*NET importance: 78)"
+            "gap": "Administrative knowledge",
+            "how_to_close": "Complete a free online module on medical office administration or volunteer in a front-desk role at a health center.",
+            "why_it_matters": "O*NET rates this knowledge at 78 out of 100 for Pre-Health Clinical Volunteer roles. Medical settings expect familiarity with scheduling, records, and office procedures."
           },
           {
-            "gap": "Statistical Software Proficiency",
-            "how_to_close": "Complete Coursera's 'Statistics with R' specialization by Fall 2027",
-            "why_it_matters": "Required for Research Assistant data analysis (O*NET importance: 72)"
+            "gap": "Computers and Electronics knowledge",
+            "how_to_close": "Take an introductory course on electronic health records (e.g., Epic training modules) or a basic computer applications class.",
+            "why_it_matters": "O*NET rates this knowledge at 70 out of 100 for Pre-Health Clinical Volunteer roles. You have Excel basics but need broader IT skills for EHR systems and clinical software."
+          },
+          {
+            "gap": "Speaking skill",
+            "how_to_close": "Join a public speaking group like Toastmasters or practice delivering short health presentations in class to build confidence.",
+            "why_it_matters": "O*NET rates this skill at 72 out of 100 for Pre-Health Clinical Volunteer roles. Clear communication with patients and staff is a must-have, and your current soft skills don't explicitly include speaking."
           }
         ],
         "nice_to_have_gaps": [
           {
-            "gap": "Phlebotomy Certification",
-            "how_to_close": "Enroll in a weekend phlebotomy workshop by Spring 2027",
-            "why_it_helps": "Strengthens Lab Assistant/Pre-Health applications"
+            "gap": "OSHA Laboratory Safety certification",
+            "how_to_close": "Complete the OSHA 10-hour general industry course online (often available for free through university safety offices).",
+            "why_it_helps": "This credential is valued for lab assistant roles and goes beyond basic lab safety training, making you a stronger candidate."
           },
           {
-            "gap": "Python Programming Basics",
-            "how_to_close": "Complete Codecademy's Python for Data Science by Fall 2026",
-            "why_it_helps": "Enhances research data analysis capabilities"
+            "gap": "BLS/CPR certification (AHA)",
+            "how_to_close": "Sign up for an American Heart Association BLS provider course (typically a 4-hour class).",
+            "why_it_helps": "Many pre-health volunteer positions prefer or require BLS/CPR, and it demonstrates readiness for clinical settings."
           },
           {
-            "gap": "CPR/BLS Certification",
-            "how_to_close": "Take American Heart Association certification by Summer 2027",
-            "why_it_helps": "Preferred for clinical volunteer roles"
+            "gap": "HIPAA training",
+            "how_to_close": "Take the free HIPAA training module from the HHS website or complete a CITI HIPAA course.",
+            "why_it_helps": "Understanding patient privacy is essential for pre-health roles and is often listed as a nice-to-have credential."
+          },
+          {
+            "gap": "Statistical analysis software (e.g., R or SPSS)",
+            "how_to_close": "Work through a free online R tutorial (e.g., DataCamp's Introduction to R) and apply it to a small dataset.",
+            "why_it_helps": "Proficiency in a statistical tool is a common nice-to-have for research assistant roles and can set you apart."
           }
         ],
-        "readiness_score": 4,
+        "readiness_score": 5,
         "recommended_next_steps": [
-          "Enroll in technical communication course this semester (e.g., ENGL 210)",
-          "Start hospital/clinic volunteering this summer (4+ hours/week)",
-          "Register for BIOL 315: Microbiology Lab in Spring 2027",
-          "Complete Coursera 'Statistics with R' specialization by Fall 2027",
-          "Obtain CPR/BLS certification next summer"
+          "1. Gain healthcare exposure by volunteering at a local clinic or hospital to address Customer and Personal Service and Medicine/Dentistry knowledge gaps for pre-health roles.",
+          "2. Complete a BLS/CPR certification and HIPAA training online to strengthen your pre-health clinical volunteer profile.",
+          "3. Take an introductory statistics course or online module (e.g., Coursera's Basic Statistics) to build toward research assistant expectations.",
+          "4. Start learning a statistical software like R via free tutorials to enhance both research and lab assistant profiles.",
+          "5. Enroll in a medical terminology course or shadow a professional to close the Medicine and Dentistry knowledge gap."
         ],
         "strengths": [
-          "Lab Safety Proficiency: Your completed safety training and wet lab experience meet core requirements for lab roles. Highlight this in applications by specifying protocols you've mastered.",
-          "Scientific Analysis Skills: Projects like your Molecular Cell Biology Mechanism Map demonstrate structured problem-solving. Frame these as evidence of analytical abilities in interviews.",
-          "Technical Documentation: Your lab notebook and Excel skills show attention to detail. Emphasize these as quality assurance assets for research positions."
+          "Strong foundation in biology and chemistry from coursework and lab activities.",
+          "Completed lab safety training certification, directly required for lab assistant roles.",
+          "Proven ability to synthesize complex information (Molecular Cell Biology Mechanism Map) and track experimental details (Organic Chemistry Reaction Tracker).",
+          "Developed soft skills in careful observation and collaboration that are valuable in both lab and clinical settings."
         ]
       },
       "errors": [],
       "feature": "GAP",
       "status": "success",
-      "summary": "You've built a solid foundation in lab techniques and scientific concepts through coursework and projects, but significant gaps remain in core competencies required for your target roles. The most critical priority is developing communication skills, which are essential across all positions."
+      "summary": "You have a solid start in biology and lab techniques, making you a candidate for lab assistant roles with some additional development. However, you face significant gaps for pre-health clinical volunteer and research assistant roles, where you lack clinical knowledge, customer service experience, and statistical skills. Your most important step is to gain practical healthcare exposure to open doors in pre-health."
     },
     "PROFESSOR_COMMENTS": {
       "data": {
@@ -209,61 +247,75 @@
       "data": {
         "adjacent_paths": [
           {
-            "driver": "Surge in biomedical AI applications creates demand for biology-savvy professionals who bridge lab knowledge and data science.",
-            "path": "Biomedical Data Analyst",
-            "relevance": "Leverages your biology concepts and pattern-spotting strengths while working alongside AI on genomic/clinical data interpretation."
+            "driver": "AI automates trial data collection and monitoring, creating demand for coordinators who can interpret AI-generated insights and maintain human oversight in patient interactions.",
+            "path": "Clinical Research Coordinator",
+            "relevance": "Connects your research assistant interest with pre-health goals\u2014overseeing clinical trials, managing data, and ensuring protocol compliance. Your biology background and attention to detail are directly applicable."
           },
           {
-            "driver": "Growing focus on personalized medicine increases need for skilled coordinators who integrate human insights with AI-enhanced trial design.",
-            "path": "Clinical Research Coordinator",
-            "relevance": "Builds on your research interest and observation skills while using AI tools for patient data organization in trials."
+            "driver": "As AI handles high-volume routine testing, the role shifts to troubleshooting, quality assurance, and interpretation of AI-flagged anomalies, requiring the lab expertise you're developing.",
+            "path": "Medical and Clinical Laboratory Technologist",
+            "relevance": "Builds on your lab assistant skills and interest in healthcare\u2014performing complex tests, validating automated results, and making critical judgments on specimen integrity. Your organic chemistry and cell biology knowledge are a strong foundation."
+          },
+          {
+            "driver": "Employers in health and research increasingly need people who can bridge biology and data science to validate AI outputs and ask the right questions of the data.",
+            "path": "Data Scientist (Life Sciences)",
+            "relevance": "Leverages your research-oriented mind and growing interest in AI\u2014if you build programming skills (Python/R), you can analyze biomedical datasets, build models, and drive discoveries that AI alone cannot design."
           }
         ],
         "ai_fluency_guidance": [
-          "Based on your current exposure: You can honestly say 'I use AI as a study partner to clarify complex biology concepts and compare explanations, building my foundation to apply these tools in real research contexts.'",
-          "To build demonstrable fluency: Enroll in a biomedical data workshop focused on AI tools for genomic analysis, and seek volunteer opportunities in digital health projects using patient data platforms."
+          "You can already say: 'I've used AI tools like ChatGPT to help me understand complex biology mechanisms and prepare for exams. I always cross-reference AI-generated explanations with textbooks and lab data to verify accuracy, which has sharpened my critical evaluation skills.' This honestly reflects your current exposure and shows you engage with AI thoughtfully.",
+          "Build toward: Get hands-on with AI research tools like Elicit (free for students) to automate literature reviews for a class project. Also consider a short Python or R workshop (many universities offer them) to analyze a small dataset\u2014this directly matches what research assistant roles now ask for. Even a single project will give you a concrete example to discuss in interviews."
         ],
         "durable_skills": [
           {
-            "reason": "Designing biologically sound experiments requires human creativity and domain knowledge AI lacks.",
-            "task": "Hypothesis development"
+            "reason": "Building trust, reading non-verbal cues, and adapting communication to each patient's needs cannot be automated\u2014AI can assist documentation but not the human connection.",
+            "task": "Interviewing patients and taking medical histories (Pre-Health Clinical Volunteer)"
           },
           {
-            "reason": "Diagnosing unexpected lab outcomes draws on critical thinking and pattern recognition honed through experience.",
-            "task": "Troubleshooting experiments"
+            "reason": "AI can generate outputs and summaries, but the critical thinking to evaluate whether results make sense in context, spot anomalies, and draw conclusions requires human judgment.",
+            "task": "Analyzing experimental data and interpreting results (Lab Assistant / Research Assistant)"
           },
           {
-            "reason": "Establishing trust and reading non-verbal cues in clinical contexts relies entirely on human empathy and social intelligence.",
-            "task": "Patient relationship building"
+            "reason": "Automation handles execution, but a human eye is needed to detect subtle changes, equipment malfunctions, or unexpected outcomes that the system may not flag.",
+            "task": "Monitoring and observing experiments (Lab Assistant)"
           },
           {
-            "reason": "Integrating diverse perspectives in research teams requires nuanced communication skills beyond algorithmic capabilities.",
-            "task": "Collaborative problem-solving"
+            "reason": "Communicating findings, crafting a narrative, and tailoring the message for different audiences (e.g., lab meetings, conferences) remains a deeply human skill that AI can assist but not lead.",
+            "task": "Preparing research reports and presentations (Research Assistant)"
+          },
+          {
+            "reason": "Patient education requires empathy, patience, and the ability to simplify complex information\u2014traits that are the foundation of healthcare and not replaceable by AI.",
+            "task": "Explaining treatment procedures and physician instructions to patients (Pre-Health Clinical Volunteer)"
           }
         ],
-        "role_evolution_summary": "Biology research and lab roles are significantly shifting toward human-AI collaboration, with AI accelerating data analysis while amplifying the need for human judgement in experimentation and clinical interactions. For Research and Lab Assistants, this means less time on manual data processing and more focus on experimental design and quality control. In clinical volunteer settings, AI aids patient data organization so you can dedicate more attention to direct patient engagement.",
+        "role_evolution_summary": "Lab assistant and research assistant roles are moving away from repetitive manual tasks toward overseeing automated systems, interpreting AI-generated data, and making critical judgment calls. Pre-health clinical volunteering retains a strong human core, with AI assisting in record-keeping and triage but not replacing patient communication and hands-on care. Across all your target roles, the expectation is that you'll work alongside AI tools\u2014not be replaced by them\u2014and that your ability to evaluate and synthesize information will matter more than ever.",
         "task_shifts": [
           {
-            "changing": "AI now rapidly analyzes large datasets from lab instruments, identifying patterns faster than manual methods.",
-            "meaning": "Your skill in contextualizing the results becomes essential \u2013 bringing biological understanding to validate AI findings.",
-            "task": "Experimental data processing"
+            "changing": "Automated liquid handlers and robotic systems now perform high-throughput pipetting and sample preparation, reducing the need for manual execution.",
+            "meaning": "Your value shifts to setting up, monitoring, and troubleshooting these automated workflows, and to verifying the quality of AI-driven results.",
+            "task": "Routine pipetting and liquid handling (Lab Assistant)"
           },
           {
-            "changing": "AI tools scan thousands of publications to surface relevant research papers and summarize findings.",
-            "meaning": "Your critical evaluation ability matters more to assess credibility and synthesize insights across sources.",
-            "task": "Literature reviews"
+            "changing": "Total lab automation systems can sort and prepare samples at rates of 15,000+ tubes per hour, replacing manual sorting and labeling.",
+            "meaning": "Focus on understanding the principles behind automation, ensuring sample integrity, and handling exceptions that the system flags.",
+            "task": "Sample preparation and sorting (Lab Assistant)"
           },
           {
-            "changing": "Voice-to-text AI and automated templates handle routine logging of experiment parameters and observations.",
-            "meaning": "Your meticulous observational skill shifts toward detecting anomalies and ensuring accurate context capture.",
-            "task": "Basic lab documentation"
+            "changing": "AI tools like Elicit and ResearchRabbit perform rapid literature searches and generate summaries, automating what used to take hours of database combing.",
+            "meaning": "Your job becomes critically evaluating AI-curated results, synthesizing findings across multiple sources, and designing research questions that go beyond what the AI surfaces.",
+            "task": "Literature searching and paper discovery (Research Assistant)"
+          },
+          {
+            "changing": "AI can extract key data points from papers and clean datasets automatically, reducing the time spent on manual data entry.",
+            "meaning": "Develop skills in validating data quality, interpreting cleaned datasets, and performing higher-level statistical analysis to draw meaningful conclusions.",
+            "task": "Data collection, cleaning, and entry (Research Assistant)"
           }
         ]
       },
       "errors": [],
       "feature": "SHIFT",
       "status": "success",
-      "summary": "Your biology background and lab skills remain highly valuable as AI enhances data analysis capabilities in your target roles. Focus on developing complementary AI data literacy skills while leveraging your strengths in observation and collaboration \u2013 this combination will position you strongly for research and healthcare roles that increasingly blend human insight with technology."
+      "summary": "Your target roles in lab and research are shifting from manual execution to oversight, data interpretation, and human judgment. AI is handling routine tasks like pipetting, literature searches, and data logging, which means your critical thinking, communication, and ability to validate AI outputs become your strongest assets. For pre-health clinical volunteering, the durable human skills of patient interaction and direct care remain central, while AI streamlines documentation. This is an opportunity to build AI fluency alongside your existing strengths."
     }
   },
   "status": "success",

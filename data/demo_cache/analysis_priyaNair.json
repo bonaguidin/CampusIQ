@@ -10,48 +10,55 @@
   "results": {
     "FIT": {
       "data": {
-        "overall_fit_summary": "Aerospace Engineering Intern roles are your strongest near-term fit\u2014they directly leverage your coursework and technical communication skills, though gaining CAD proficiency through campus labs would strengthen applications.",
+        "overall_fit_summary": "Aerospace Engineering Intern is your most realistic near-term target because it directly leverages your major, coursework, and project experience while allowing you to build the industry-specific skills (CAD/CFD, simulation) that other roles require. Your solid foundation and early project work make you a competitive candidate for generalist aerospace internships that emphasize learning potential.",
         "role_matches": [
           {
-            "fit_level": "medium",
+            "fit_level": "high",
             "missing_signals": [
-              "CAD software experience (e.g., SolidWorks)",
-              "Hands-on lab/testing exposure",
-              "Systems engineering coursework"
+              "No direct internship or co-op experience yet",
+              "Limited proficiency with industry-standard CAD/CFD tools (e.g., SolidWorks, ANSYS)",
+              "No demonstrated experience with aerospace-specific software or simulation"
             ],
-            "rationale": "Your coursework in engineering mechanics and thermodynamics basics directly supports core aerospace analysis tasks. Projects like your Flight Concept Brief demonstrate technical communication skills employers value. AI exposure is moderate\u2014entry roles prioritize foundational engineering skills over AI integration.",
+            "rationale": "Your major and interests directly align with this role. Your project on flight concepts and use of MATLAB show relevant foundational skills. Coursework in aerodynamics and engineering mechanics provides the baseline knowledge employers seek.",
             "role": "Aerospace Engineering Intern",
             "supporting_signals": [
-              "DFW employers like Lockheed Martin seek interns with MATLAB skills and core aerospace coursework",
-              "Local postings emphasize technical documentation and teamwork abilities"
-            ]
-          },
-          {
-            "fit_level": "low",
-            "missing_signals": [
-              "Control theory fundamentals",
-              "Flight simulation software experience",
-              "Avionics hardware exposure"
-            ],
-            "rationale": "Your interest in flight dynamics aligns with this role's focus, and your vector calculus project shows relevant analytical foundations. However, DFW employers require specific avionics or control systems exposure. AI is transforming flight systems through autonomy tools\u2014your current AI use for documentation doesn't match this application.",
-            "role": "Flight Systems Intern",
-            "supporting_signals": [
-              "Raytheon DFW postings prioritize control systems coursework",
-              "Local demand growing for satellite/space systems support"
+              "Aerospace Engineering major",
+              "Completed project on flight dynamics and aerodynamics",
+              "MATLAB basics from vector calculus project",
+              "Analytical thinking and technical communication skills",
+              "Worked in a team on engineering assignments"
             ]
           },
           {
             "fit_level": "medium",
             "missing_signals": [
-              "Finite Element Analysis (FEA) software exposure",
-              "Materials science coursework",
-              "Lab instrumentation experience"
+              "No coursework or project in control systems or avionics",
+              "No experience with flight simulation or hardware",
+              "Limited exposure to systems engineering or integration"
             ],
-            "rationale": "Your free body diagram experience and thermodynamics basics meet core mechanical analysis needs. Projects demonstrate structured problem-solving\u2014Bell Helicopter DFW postings specifically value this. AI is moderately reshaping analysis roles through predictive modeling, but your current skills focus is appropriate.",
+            "rationale": "Your interest in flight systems and experience with technical writing for flight concepts are relevant. However, flight systems roles often require deeper knowledge of avionics, control systems, or propulsion, which you have not yet demonstrated at the coursework level.",
+            "role": "Flight Systems Intern",
+            "supporting_signals": [
+              "Interest in flight dynamics and space systems",
+              "Technical writing skills from project report",
+              "Engineering mechanics and thermodynamics basics",
+              "Calculus foundation applicable to control theory"
+            ]
+          },
+          {
+            "fit_level": "medium",
+            "missing_signals": [
+              "No experience with FEA software (e.g., ANSYS, Abaqus)",
+              "No demonstrated design or stress analysis project",
+              "Limited exposure to materials science or failure analysis"
+            ],
+            "rationale": "Your engineering mechanics and thermodynamics coursework, plus the free body diagram experience from your team role, align with mechanical analysis. However, these roles typically expect stronger proficiency with FEA tools and detailed design analysis, which you have not yet demonstrated.",
             "role": "Mechanical Analysis Intern",
             "supporting_signals": [
-              "DFW manufacturers emphasize FEA preparation skills",
-              "Material testing labs seek interns with attention to detail"
+              "Engineering mechanics and thermodynamics coursework",
+              "Free body diagram experience from team assignments",
+              "Analytical thinking and attention to detail",
+              "MATLAB basics applicable to analysis"
             ]
           }
         ]
@@ -59,63 +66,68 @@
       "errors": [],
       "feature": "FIT",
       "status": "success",
-      "summary": "As a sophomore Aerospace Engineering student, you've built foundational skills in MATLAB, engineering mechanics, and technical documentation through coursework and projects. Your interests in flight dynamics and space systems align with DFW's aerospace sector, though entry-level roles require more specialized tools and applied experience."
+      "summary": "You are a sophomore Aerospace Engineering student with foundational coursework and project experience in flight dynamics, aerodynamics, and vector calculus. You have demonstrated analytical thinking and technical communication through your course project work. The DFW market shows consistent demand for entry-level engineering interns, especially at aerospace and defense firms like Lockheed Martin, Bell Textron, and Raytheon, requiring baseline technical skills and hands-on project exposure."
     },
     "GAP": {
       "data": {
         "must_have_gaps": [
           {
-            "gap": "Python programming",
-            "how_to_close": "Complete 'Python for Engineers' course (e.g., Coursera/Udemy) or build a simulation project using Python by Spring 2027",
-            "why_it_matters": "Required must-have skill for Aerospace Engineering Intern and Flight Systems Intern roles"
+            "gap": "Design knowledge",
+            "how_to_close": "Enroll in a CAD/design course (e.g., AERO 350 or MEEN 335) or complete a substantial design project using SolidWorks before your junior year.",
+            "why_it_matters": "O*NET importance 78 for Aerospace Engineering Intern and Flight Systems Intern, and 88 for Mechanical Analysis Intern \u2014 you currently have no design-focused coursework or project listed."
           },
           {
-            "gap": "Requirements management",
-            "how_to_close": "Join a student rocketry team to practice documenting/tracking requirements by Fall 2027",
-            "why_it_matters": "Essential must-have for Flight Systems Interns to handle system specifications and design changes"
+            "gap": "Computers and Electronics knowledge",
+            "how_to_close": "Take an introductory course in computer engineering or embedded systems, or complete an online module on microcontroller basics (e.g., Arduino) within the next semester.",
+            "why_it_matters": "O*NET importance 71 for Aerospace Engineering Intern and Flight Systems Intern \u2014 this covers computing systems, hardware, and software fundamentals you have not yet addressed."
           },
           {
-            "gap": "Test and verification methods",
-            "how_to_close": "Engage in AERO lab courses involving component testing protocols by Fall 2027",
-            "why_it_matters": "Must-have competency for Flight Systems Interns to validate system functionality and safety"
+            "gap": "Production and Processing knowledge",
+            "how_to_close": "Register for a manufacturing processes course (e.g., MEEN 360) or a production simulation project before your senior year.",
+            "why_it_matters": "O*NET importance 84 for Mechanical Analysis Intern \u2014 essential knowledge for understanding manufacturing methods and production workflows, which you currently lack."
+          },
+          {
+            "gap": "Mechanical knowledge",
+            "how_to_close": "Take a mechanical design or machine elements course (e.g., MEEN 365); supplement with a project that involves mechanism analysis.",
+            "why_it_matters": "O*NET importance 81 for Mechanical Analysis Intern \u2014 requires understanding of machines, tools, and mechanical systems beyond your thermodynamics basics."
           }
         ],
         "nice_to_have_gaps": [
           {
-            "gap": "Finite Element Analysis (FEA)",
-            "how_to_close": "Take 'Introduction to FEA' elective alongside your junior-year mechanics courses",
-            "why_it_helps": "Differentiates candidates for Mechanical Analysis roles and enhances simulation capabilities"
+            "gap": "Python programming",
+            "how_to_close": "Complete a Python for engineers course (e.g., 'Python for Everybody' on Coursera) and build a small project such as analyzing flight performance data.",
+            "why_it_helps": "Python appears in the hot_software list for all three roles and is widely used for data analysis and automation in aerospace and mechanical engineering."
           },
           {
-            "gap": "Data analysis",
-            "how_to_close": "Complete engineering statistics course (e.g., STAT 211) by Spring 2027",
-            "why_it_helps": "Strengthens interpretation of simulations and test results across all target roles"
+            "gap": "Monitoring skill (O*NET importance 69 for Aerospace roles)",
+            "how_to_close": "Practice using project management tools like Trello or Jira in team assignments, and actively review your work against milestones.",
+            "why_it_helps": "Monitoring is the ability to track your own or others' performance; it helps you manage project progress and detect issues early."
           },
           {
-            "gap": "Engineer-in-Training (EIT) certification",
-            "how_to_close": "Plan FE exam prep during junior year after completing core engineering courses",
-            "why_it_helps": "Demonstrates foundational engineering competency valued by all target employers"
+            "gap": "Active Learning skill (O*NET importance 66 for Aerospace roles)",
+            "how_to_close": "Set a goal to complete one self-paced online course per semester in a new area (e.g., FEA basics, controls) and apply it to a project.",
+            "why_it_helps": "Active learning helps you quickly pick up new technical concepts and stay current with evolving engineering tools."
           }
         ],
-        "readiness_score": 4,
+        "readiness_score": 5,
         "recommended_next_steps": [
-          "Enroll in Python programming course by Fall 2026 (prerequisite for higher-level aerospace courses)",
-          "Seek student competition team position (e.g., AIAA Design Build Fly) next semester to apply flight systems knowledge",
-          "Register for ENGR/AERO lab course with hardware testing component by Spring 2027",
-          "Schedule FE exam prep during junior year once eligible (after completing 60+ credit hours)",
-          "Embed ANSYS or other simulation tools in next academic project documentation"
+          "Enroll in a design course (e.g., AERO 350 or MEEN 335) before junior year to close the Design knowledge gap.",
+          "Take an introductory computers and electronics course or self-paced module to cover the Computers and Electronics gap for aerospace roles.",
+          "For Mechanical Analysis, add a manufacturing processes or mechanical design course to your plan before senior year.",
+          "Learn Python through a structured online course and build a small analysis project (e.g., MATLAB-to-Python conversion or flight data handling).",
+          "Create a portfolio project that combines multiple skills \u2014 for example, a CAD model with a simple FEA simulation using SolidWorks Simulation to demonstrate design, mechanical, and analysis capabilities."
         ],
         "strengths": [
-          "SolidWorks certification: Frame as industry-recognized CAD proficiency in your resume's certifications section.",
-          "Aerodynamics projects: Highlight your ability to translate complex concepts into technical documentation on applications and CVs.",
-          "Technical communication: Emphasize in interviews using examples like your team-based calculations review experience.",
-          "FAA Part 107 progress: Mention as evidence of practical aviation knowledge during flight systems internship interviews."
+          "SolidWorks CSWA certification (completed) \u2014 immediate proof of CAD competency for all three roles",
+          "Strong math foundation through multivariable calculus and analytical methods courses",
+          "Technical writing and communication skills demonstrated by the Introduction to Flight concept brief",
+          "Analytical thinking and attention to detail, reinforced by course team collaboration and vector calculus toolkit project"
         ]
       },
       "errors": [],
       "feature": "GAP",
       "status": "success",
-      "summary": "You have a solid foundation in aerospace engineering fundamentals but lack several must-have technical skills for your target internships. The most urgent gap is Python programming, required by both aerospace and flight systems roles. With focused effort before your 2028 graduation, you can close these gaps through coursework and projects."
+      "summary": "You have a solid start with your SolidWorks CSWA certification and foundational aerospace coursework, but as a sophomore with graduation in 2028, you still need to build several must-have knowledge areas\u2014especially design, computers/electronics, and mechanical/production principles\u2014before you'll be fully competitive for these internships. Your biggest priority is to gain deeper technical breadth and a proficiency in Python."
     },
     "PROFESSOR_COMMENTS": {
       "data": {
@@ -191,52 +203,97 @@
       "data": {
         "adjacent_paths": [
           {
-            "driver": "Demand for rapid engine performance simulation in next-gen reusable launch systems.",
-            "path": "AI-assisted Propulsion Analyst",
-            "relevance": "Aligns with your thermodynamics focus while leveraging computational pattern recognition."
+            "driver": "AI is automating routine analysis, so professionals who can operate and validate AI-driven systems in real-world tests are in demand.",
+            "path": "Aerospace Engineering and Operations Technologists and Technicians (17-3021.00)",
+            "relevance": "You already have technical documentation and engineering mechanics skills\u2014this path lets you apply them hands-on with AI-augmented testing and operations, a natural step toward your internship goal."
           },
           {
-            "driver": "Growth in satellite constellations requiring real-time orbital adjustments.",
-            "path": "Space Systems Autonomy Engineer",
-            "relevance": "Builds on your space systems interest through human oversight of AI decision-loops."
+            "driver": "AI-assisted simulation tools are making mechanical analysis faster, creating need for technicians who can oversee and validate these workflows.",
+            "path": "Mechanical Engineering Technologists and Technicians (17-3027.00)",
+            "relevance": "Your thermodynamics basics and MATLAB skills align well\u2014this role focuses on applying AI-accelerated FEA/CFD tools to mechanical systems, broadening your internship options."
+          },
+          {
+            "driver": "Predictive maintenance AI is transforming how avionics systems are monitored, opening roles that blend hands-on work with AI oversight.",
+            "path": "Avionics Technicians (49-2091.00)",
+            "relevance": "Your interest in flight dynamics and space systems connects to avionics\u2014AI now handles diagnostic routines, freeing you to focus on system integration and troubleshooting."
           }
         ],
         "ai_fluency_guidance": [
-          "You can confidently say: 'I use AI tools to iterate preliminary design concepts in MATLAB and draft technical documentation frameworks, while reserving final validation for engineering best practices and peer review.'",
-          "Target project experience applying machine learning libraries like PyTorch to optimize aerodynamics simulations or conduct structural health monitoring pattern analysis. DFW aerospace employers increasingly mention Python ML skills in early-career postings."
+          {
+            "content": [
+              "\"I use AI tools like ChatGPT to review and refine technical documentation and explore aerospace concepts\u2014this helps me communicate complex ideas clearly and spot gaps in my own understanding.\"",
+              "\"I've applied MATLAB to basic engineering analysis and am learning how to integrate AI-driven insights into simulation workflows, focusing on validation and critical review.\""
+            ],
+            "section": "What you can already say"
+          },
+          {
+            "content": [
+              "Take an online short course on Ansys SimAI or SimScale to get hands-on with AI-augmented CFD\u2014then you can say you've validated an AI-generated simulation result against theory.",
+              "Learn Python scripting for automating data analysis and integrating AI tools\u2014pair it with your MATLAB foundation to demonstrate workflow automation skills."
+            ],
+            "section": "What to build toward"
+          }
         ],
         "durable_skills": [
           {
-            "reason": "Requires creative synthesis of physics constraints and mission objectives beyond algorithmic optimization.",
-            "task": "Conceptual flight system design"
+            "reason": "Setting up the right model and interpreting its outputs requires deep engineering understanding that AI cannot replace\u2014you define the problem.",
+            "task": "Formulate mathematical models or other methods of computer analysis to develop, evaluate, or modify design."
           },
           {
-            "reason": "Demands material science intuition and analogical reasoning from non-standard scenarios.",
-            "task": "Thermal-stress failure analysis"
+            "reason": "Test design, safety oversight, and hands-on troubleshooting rely on human judgment and adaptability in unpredictable conditions.",
+            "task": "Plan or conduct experimental, environmental, operational, or stress tests on models or prototypes."
           },
           {
-            "reason": "Relies on nuanced communication between engineering specialties like propulsion and avionics.",
-            "task": "Cross-functional requirement translation"
+            "reason": "Diagnosing field issues, communicating with customers, and devising fixes demands empathy, context, and creative problem-solving.",
+            "task": "Plan or coordinate investigation and resolution of customers' reports of technical problems."
+          },
+          {
+            "reason": "Translating complex technical results into clear, actionable insights for diverse audiences remains a uniquely human skill.",
+            "task": "Write technical reports or other documentation for use by engineering staff, management, or customers."
+          },
+          {
+            "reason": "Collaboration, negotiation, and integrating multiple perspectives in real-time are tasks where human communication is irreplaceable.",
+            "task": "Confer with engineers or other personnel to implement operating procedures or resolve system malfunctions."
           }
         ],
-        "role_evolution_summary": "Aerospace engineering roles are rapidly integrating AI as a co-design assistant for simulation and optimization tasks. Your internship targets now prioritize candidates who can validate AI outputs while deepening domain expertise in fluid dynamics and structural analysis. The shift leans toward human-AI collaboration where engineers command tools rather than compete with them.",
+        "role_evolution_summary": "The aerospace engineering intern role is shifting from manual drafting and simulation setup to co-designing with AI tools. You're now expected to work alongside generative design software and AI-driven CFD platforms, making system-level thinking and AI fluency as important as classical fundamentals. For flight systems and mechanical analysis, routine tasks like telemetry processing, mesh generation, and first-pass FEA are being automated, freeing you to focus on higher-level interpretation and validation.",
         "task_shifts": [
           {
-            "changing": "AI rapidly iterates aerodynamic simulations with variable inputs like airspeed or wing geometry.",
-            "meaning": "Your ability to validate simulation results against physical principles becomes essential.",
-            "task": "Parameterized simulation setup"
+            "changing": "Topology optimization in Siemens NX or ANSYS that used to require manual iterative CAD work is now handled by AI, proposing multiple structurally optimized geometries automatically.",
+            "meaning": "Your engineering judgment to select and refine AI-generated designs\u2014knowing why one topology works over another\u2014becomes your key differentiator.",
+            "task": "Generative design exploration"
           },
           {
-            "changing": "Generative AI produces initial reports from structured data inputs.",
-            "meaning": "Your engineering judgment ensures accuracy and context when refining technical documents.",
-            "task": "Technical documentation drafting"
+            "changing": "AI surrogate models and agentic AI accelerate or replace many standard simulation runs, delivering predictions 10\u2013100\u00d7 faster than traditional solvers.",
+            "meaning": "Your ability to interpret and validate AI outputs\u2014spotting when a result is physically implausible\u2014matters more than manually clicking through setups.",
+            "task": "Setting up and running routine CFD simulations"
+          },
+          {
+            "changing": "Processing test data, creating dashboards, and generating routine reports are now automated by AI analytics tools.",
+            "meaning": "Your capacity to ask the right questions of the data and communicate insights clearly to engineers and managers becomes the value you add.",
+            "task": "Data-heavy analysis and reporting"
+          },
+          {
+            "changing": "AI-driven automation flags common issues before human review, so you spend less time checking standard specs and more on edge cases.",
+            "meaning": "You can focus on creative problem-solving and non-standard challenges that require your human judgment.",
+            "task": "Basic design validation checks"
+          },
+          {
+            "changing": "AI handles these from sensor data, automating what was a manual coordination and analysis task.",
+            "meaning": "Your role shifts to overseeing AI recommendations, integrating them with operational context, and making final decisions.",
+            "task": "Predictive maintenance scheduling and flight path optimization"
+          },
+          {
+            "changing": "Handled by agentic AI systems, freeing interns from manual data crunching.",
+            "meaning": "You interpret algorithmic outputs and apply systems thinking to ensure safety and performance.",
+            "task": "Flight telemetry data processing and analysis"
           }
         ]
       },
       "errors": [],
       "feature": "SHIFT",
       "status": "success",
-      "summary": "Focus on deepening your engineering analysis skills while strategically incorporating AI as a design partner. Your path isn't threatened by automation\u2014it's enhanced by tools that free you for creative problem-solving in flight systems and spacecraft design. Build confidence knowing employers in Dallas-Fort Worth specifically seek candidates who combine foundational engineering rigor with emerging AI application skills."
+      "summary": "Your aerospace engineering roles are evolving toward AI-augmented design and analysis\u2014your path is to build AI fluency as an enhancer to your core engineering judgment."
     }
   },
   "status": "success",

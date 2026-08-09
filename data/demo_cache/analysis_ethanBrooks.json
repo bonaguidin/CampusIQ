@@ -10,45 +10,53 @@
   "results": {
     "FIT": {
       "data": {
-        "overall_fit_summary": "Computer Engineering Intern is your strongest near-term fit due to major alignment and foundational skills, but prioritize building hardware-focused projects to close experience gaps.",
+        "overall_fit_summary": "All three target roles are currently a low fit given your freshman standing and limited project depth. The most realistic near-term step is to build a concrete project\u2014either a simple software app or an embedded system\u2014that demonstrates your skills before applying to internships next cycle.",
         "role_matches": [
           {
-            "fit_level": "medium",
+            "fit_level": "low",
             "missing_signals": [
-              "Hands-on hardware projects (e.g., circuit design)",
-              "Experience with hardware description languages (VHDL/Verilog)"
+              "Proficiency in a full programming language beyond basics (e.g., Java, C++, JavaScript)",
+              "A completed software project (web, mobile, or open-source contribution)",
+              "Version control (Git) and testing skills"
             ],
-            "rationale": "Your ENGR 102 Python portfolio and interest in computer hardware provide foundational alignment. AI is transforming hardware design through optimization tools, though entry-level roles mainly require awareness.",
-            "role": "Computer Engineering Intern",
-            "supporting_signals": [
-              "DFW employers like Texas Instruments seek candidates with basic programming skills and hardware curiosity",
-              "Local postings emphasize problem-solving abilities and engineering coursework"
-            ]
-          },
-          {
-            "fit_level": "medium",
-            "missing_signals": [
-              "Data structures/algorithms knowledge",
-              "Software development projects outside coursework"
-            ],
-            "rationale": "Your Python basics and debugging experience from team projects match core programming expectations. AI is rapidly reshaping this field through code-generation tools, making exposure increasingly valuable.",
+            "rationale": "Your Python basics and engineering team collaboration show a starting point, and your interest in software development is relevant. However, DFW postings for software interns typically require proficiency in a full language stack (e.g., Java, C++, or web frameworks), completion of at least one full project (e.g., an app or web service), and familiarity with version control and testing. Your current portfolio only includes classroom computation exercises, not independent software.",
             "role": "Software Engineering Intern",
             "supporting_signals": [
-              "DFW companies like Capital One prioritize Python skills for intern roles",
-              "Local listings emphasize collaborative problem-solving abilities"
+              "Python basics",
+              "team collaboration",
+              "problem-solving",
+              "interest in software development"
             ]
           },
           {
             "fit_level": "low",
             "missing_signals": [
-              "Microcontroller programming experience",
-              "Real-time operating systems exposure"
+              "Coursework or self-study in digital logic, circuits, or computer architecture",
+              "Hands-on project with a microcontroller (e.g., Arduino, MSP430) or simulation (e.g., Verilog, SPICE)",
+              "Experience with hardware description languages or lab equipment"
             ],
-            "rationale": "Your robotics interest provides conceptual alignment, but lacks technical execution. AI integration (like TinyML) is compressing entry-level requirements, demanding hands-on microcontroller experience.",
+            "rationale": "Your intended major and interest in hardware and robotics are a natural fit for this broad role. DFW companies like Texas Instruments and Raytheon look for interns with coursework in digital logic, circuits, or microcontrollers\u2014plus some hands-on lab or simulation experience. Your MATLAB basics and engineering computation help, but you haven't yet taken any CE-specific courses or built a hardware-related project.",
+            "role": "Computer Engineering Intern",
+            "supporting_signals": [
+              "intended major in computer engineering",
+              "MATLAB basics",
+              "engineering computation",
+              "interests in embedded systems and hardware"
+            ]
+          },
+          {
+            "fit_level": "low",
+            "missing_signals": [
+              "C or C++ programming experience",
+              "Any embedded project (e.g., using an Arduino, Raspberry Pi, or STM32)",
+              "Understanding of memory management, interrupts, or basic circuit design"
+            ],
+            "rationale": "Your interest in embedded systems and robotics is a strong directional match, and your persistence and problem-solving attitude are relevant. Real DFW postings (e.g., from Lockheed Martin and other defense contractors) expect C/C++ programming, familiarity with RTOS or bare-metal development, and at least one embedded project (e.g., a sensor interface or motor control). You have no embedded-specific skills or projects yet.",
             "role": "Embedded Systems Intern",
             "supporting_signals": [
-              "DFW aerospace/defense contractors seek candidates with hardware-software integration awareness",
-              "Local roles emphasize C/C++ proficiency and sensor interfacing"
+              "interest in embedded systems and robotics",
+              "Python basics (used in some embedded tooling)",
+              "asking for feedback and persistence"
             ]
           }
         ]
@@ -56,73 +64,100 @@
       "errors": [],
       "feature": "FIT",
       "status": "success",
-      "summary": "You're a freshman transitioning from General Engineering to Computer Engineering with foundational Python and MATLAB skills through coursework. Your interests in embedded systems and robotics align with DFW's tech market, but entry-level roles require more specialized project experience beyond classroom assignments."
+      "summary": "You're a freshman switching into computer engineering with foundational Python and MATLAB skills, plus engineering project experience. Your interests in embedded systems and software align with demand in Texas, but you lack the project depth and tool-specific experience that DFW employers expect for technical internships right now."
     },
     "GAP": {
       "data": {
         "must_have_gaps": [
           {
-            "gap": "Java Programming",
-            "how_to_close": "Complete Udacity's 'Java Programming Basics' course this summer and build a personal project like a student database app by Fall 2026",
-            "why_it_matters": "Required for Software Engineering Intern roles according to role-specific must-have skills lists"
+            "gap": "Critical Thinking",
+            "how_to_close": "Enroll in a logic or problem-solving course (e.g., PHIL 240 or a competitive programming club). Build a project that requires deductive reasoning, such as a simple game AI or a data analysis tool that compares multiple solutions.",
+            "why_it_matters": "Required at 75 importance for hardware roles and 72 for software roles (O*NET). Employers expect you to analyze complex problems, evaluate alternatives, and make logical decisions."
           },
           {
-            "gap": "C++ Proficiency",
-            "how_to_close": "Enroll in Codecademy's 'Learn C++' course this semester and contribute to an open-source repository like Arduino libraries by Spring 2027",
-            "why_it_matters": "Essential for both Computer Engineering and Embedded Systems Intern roles per stated requirements"
+            "gap": "Computers and Electronics Knowledge",
+            "how_to_close": "Take courses in computer architecture, digital logic, and operating systems as part of your computer engineering curriculum. Start with a basics course like 'Introduction to Digital Systems' in your sophomore year.",
+            "why_it_matters": "Required at 93-94 importance across all three roles (O*NET). This is the foundation for any hardware or software role."
           },
           {
-            "gap": "Data Structures & Algorithms",
-            "how_to_close": "Complete Coursera's 'Data Structures and Algorithms Specialization' and implement solutions in Python notebooks by next academic year",
-            "why_it_matters": "Core requirement for Software Engineering Intern positions to solve complex coding problems"
+            "gap": "Engineering and Technology Knowledge",
+            "how_to_close": "Complete your engineering fundamentals sequence (ENGR 102, 216, etc.) and then take circuits, electronics, and embedded systems courses. Join a design team like Aggie Robotics to apply theory.",
+            "why_it_matters": "Required at 92 importance for hardware roles (O*NET). Essential for understanding how to design and test hardware systems."
           },
           {
-            "gap": "Version Control with Git",
-            "how_to_close": "Apply Git in all projects immediately, document workflows in your portfolio, and aim for 30+ contributions on GitHub by December",
-            "why_it_matters": "Considered a must-have for Software Engineering Intern roles despite your GitHub certification"
+            "gap": "Design Knowledge",
+            "how_to_close": "Take a design course (e.g., ENGR 217 or a capstone prep) and seek out a project that involves building a physical system, such as a weather station or a simple robot.",
+            "why_it_matters": "Required at 78 importance for hardware roles (O*NET). Needed to create hardware prototypes and understand design trade-offs."
           },
           {
-            "gap": "Embedded Systems Fundamentals",
-            "how_to_close": "Take Coursera's 'Embedded Systems Essentials' and build a basic IoT project using Raspberry Pi before Spring 2027 courses start",
-            "why_it_matters": "Required for both Computer Engineering and Embedded Systems Intern roles as per role specifications"
+            "gap": "Mathematics Knowledge",
+            "how_to_close": "Continue with the calculus sequence (MATH 152, 251) and take linear algebra. Apply math in a project, like simulating a circuit in MATLAB or Python.",
+            "why_it_matters": "Required at 78 importance for hardware roles (O*NET). Used for modeling, simulation, and analysis of hardware systems."
           }
         ],
         "nice_to_have_gaps": [
           {
-            "gap": "LabVIEW Associate Developer (CLAD)",
-            "how_to_close": "Complete NI's free LabVIEW Core 1 course and practice with student licenses before exam registration next year",
-            "why_it_helps": "Preferred certification for Computer Engineering roles, showing hardware integration skills"
+            "gap": "Active Learning",
+            "how_to_close": "Take a self-directed online course (e.g., Coursera's 'Learning How to Learn') and apply it by picking up a new language like Rust or Go over a summer.",
+            "why_it_helps": "Rated at 69 importance for hardware roles and 62 for software (O*NET). Helps you stay current with new technologies and adapt quickly."
           },
           {
-            "gap": "Linux Administration",
-            "how_to_close": "Configure Ubuntu for daily coursework use and complete Linux Foundation's free 'Introduction to Linux' this semester",
-            "why_it_helps": "Widely valued across embedded and cloud roles for system management capabilities"
+            "gap": "Physics Knowledge",
+            "how_to_close": "Take the physics sequence (PHYS 218, 208) as part of your curriculum. Build a simple project like a light sensor circuit to reinforce concepts.",
+            "why_it_helps": "Rated at 61 importance for hardware roles (O*NET). Useful for understanding circuit behavior and signal processing."
           },
           {
-            "gap": "Cloud Platform Experience (AWS)",
-            "how_to_close": "Build three small AWS projects using the free tier after finishing your certification, documenting architecture decisions",
-            "why_it_helps": "Differentiates software candidates when paired with your Cloud Practitioner certification"
+            "gap": "LabVIEW Associate Developer (CLAD) certification",
+            "how_to_close": "Complete NI's free LabVIEW training modules and take the CLAD exam, which can be done in a semester.",
+            "why_it_helps": "Listed as a nice-to-have certification for Computer Engineering Intern roles. Differentiates you for hardware testing and automation positions."
+          },
+          {
+            "gap": "Arm Accredited Engineer certification",
+            "how_to_close": "Enroll in Arm's free online courses (e.g., 'Embedded Systems with Arm') and pass the certification exam, which is feasible within a year.",
+            "why_it_helps": "Listed as a nice-to-have certification for Embedded Systems Intern roles. Signals deep knowledge of ARM architecture."
+          },
+          {
+            "gap": "C/C++ programming (for hardware roles)",
+            "how_to_close": "Take a 'C Programming for Embedded Systems' course or complete a project like writing a game in C. Aim to build a simple embedded project using an Arduino or STM32 board.",
+            "why_it_helps": "C and C++ are listed as hot technologies for hardware and embedded roles. Most embedded systems and firmware development require these languages."
+          },
+          {
+            "gap": "SQL (for software roles)",
+            "how_to_close": "Complete a free SQL course (e.g., SQLZoo or W3Schools) and build a small project, like a personal library tracker with a database backend.",
+            "why_it_helps": "SQL is a hot technology for software engineering internships. Many backend systems rely on relational databases."
           }
         ],
         "readiness_score": 3,
         "recommended_next_steps": [
-          "Complete Udacity's Java Programming course and build at least one application portfolio project by Fall 2026",
-          "Achieve the AWS Cloud Practitioner certification by its expected date this fall, then create 3 cloud-based projects in Q1 2027",
-          "Implement Git version control in every coding assignment starting immediately, documenting workflow in GitHub repositories",
-          "Begin Coursera's 'Embedded Systems Essentials' specialization and create a Raspberry Pi sensor project before Spring 2027",
-          "Configure Linux on your development machine and commit to using it for 50% of engineering coursework this academic year"
+          "1. Complete the AWS Certified Cloud Practitioner certification (already in progress) to solidify your cloud basics and differentiate yourself for software internships.",
+          "2. Enroll in a C programming course (e.g., CSCE 121 or an online course) and build a simple embedded project (e.g., Arduino-based temperature monitor) to cover both C and hardware exposure.",
+          "3. Take a critical thinking or logic course (e.g., PHIL 240) or join a competitive programming team to develop the deductive reasoning and problem-solving skills employers expect.",
+          "4. Begin your computer engineering core sequence: next semester, take a digital logic or computer architecture course to build your Computers and Electronics knowledge.",
+          "5. Over the summer, learn SQL and build a small database project (e.g., a personal finance tracker) to address the software role gap, and consider starting the LabVIEW CLAD training if you're leaning toward hardware."
         ],
         "strengths": [
-          "Problem Solving: Highlight your methodical approach through your ENGR 102 computational portfolio where you applied Python to solve technical problems",
-          "Team Collaboration: Showcase coordination skills gained from your engineering project team - describe how you contributed to group deliverables",
-          "Python Foundations: Frame ENGR 102 projects as applicable to software development and emphasize plans to expand proficiency",
-          "Certification Progress: Note completion of GitHub Foundations and in-progress AWS Cloud Practitioner as proof of proactive learning beyond coursework"
+          {
+            "framing": "This credential shows you understand version control fundamentals, which is a nice-to-have for software engineering internships. Highlight it on your resume and mention it in interviews as a sign of your commitment to industry-standard tools.",
+            "strength": "GitHub Foundations certification"
+          },
+          {
+            "framing": "Even though it's not a must-have, cloud knowledge is a differentiator for software roles. Completing this certification will demonstrate initiative and cloud awareness.",
+            "strength": "AWS Certified Cloud Practitioner (in progress)"
+          },
+          {
+            "framing": "Your computation portfolio from ENGR 102 shows you can apply programming to engineering problems. Frame this as 'engineering computation skills' and mention specific projects, like the lab data tracker.",
+            "strength": "Early Python and MATLAB experience"
+          },
+          {
+            "framing": "Your team coordination and documentation experience on a Texas A&M engineering project shows you can collaborate and communicate in a technical setting. Emphasize your role in debugging and supporting the team.",
+            "strength": "First-year project team member role"
+          }
         ]
       },
       "errors": [],
       "feature": "GAP",
       "status": "success",
-      "summary": "As a freshman in computer engineering, you've built solid foundations in Python and teamwork through coursework and projects. However, you need to develop core technical competencies like programming languages (Java, C++), data structures, and specialized hardware skills for your target internships. Prioritize building deeper technical projects beyond class requirements this year."
+      "summary": "You're a freshman with foundational exposure to Python and MATLAB, but you have significant gaps in the critical thinking, knowledge, and technical skills that employers expect for software, computer engineering, and embedded systems internships. The single most important thing you need to address is building a deep understanding of computers and electronics, while also developing your critical thinking and problem-solving abilities through structured projects and coursework."
     },
     "PROFESSOR_COMMENTS": {
       "data": {
@@ -198,61 +233,86 @@
       "data": {
         "adjacent_paths": [
           {
-            "driver": "Growing demand for deploying lightweight AI models directly on devices",
-            "path": "Edge AI Integration Specialist",
-            "relevance": "Aligns with your embedded systems interest and Python/MATLAB foundation"
+            "driver": "Embedded internships are adopting AI-driven testing and hardware-in-the-loop simulation, creating demand for technicians who can run and interpret automated tests on physical systems.",
+            "path": "Robotics Technicians",
+            "relevance": "Your interest in robotics and hands-on hardware/software integration maps directly here \u2014 you already use Python and MATLAB, and your persistence fits the build-test-debug cycle."
           },
           {
-            "driver": "Autonomous systems requiring real-time processing at the hardware level",
-            "path": "Robotics Systems Developer",
-            "relevance": "Builds on your hardware/software crossover skills and robotics interest"
+            "driver": "Embedded systems roles are beginning to interface with AI models on edge devices, so engineers who understand both hardware constraints and ML fundamentals are increasingly valuable.",
+            "path": "Microsystems Engineers",
+            "relevance": "This connects your computer-hardware curiosity with the edge-AI trend, where small devices run models and programming fundamentals matter."
+          },
+          {
+            "driver": "AI code assistants produce code and tests faster, which multiplies the need for people who can design validation strategies and judge whether AI-generated outputs meet real requirements.",
+            "path": "Software Quality Assurance Analysts and Testers",
+            "relevance": "With software development among your targets, QA is a strategic adjacent path \u2014 your persistence and habit of asking for feedback translate directly to finding edge cases and improving quality."
           }
         ],
         "ai_fluency_guidance": [
-          "I leverage AI tools like ChatGPT to break down complex programming concepts during self-study and use AI-assisted features in IDEs to accelerate my learning curve for new languages.",
-          "Complete a project integrating TinyML libraries with embedded hardware and explore UT Dallas's AI certificate program to build structured competency before internship applications."
+          {
+            "label": "What you can already say",
+            "text": "\u201cI use AI assistants to explain unfamiliar code and organize my engineering study time, then I check the output against my own understanding. For example, I had it break down a Python concept and traced through the logic myself to make sure I actually understood it.\u201d That sentence is true to your informal exposure and shows critical thinking, not just tool usage."
+          },
+          {
+            "label": "What to build toward",
+            "text": "Take one small embedded or software project \u2014 even an Arduino/ESP32 or a Python script \u2014 and use an AI assistant to generate a first draft. Then review it against documentation, fix at least one mistake it made, and write a one-paragraph reflection on what you changed. Pair that with a short intro to AI/ML concepts, since computer engineering roles increasingly expect interns to understand how models integrate with systems. Handshake\u2019s Class of 2026 data found that 85% of students use AI but only 28% received formal instruction \u2014 closing that articulation gap is a real differentiator."
+          }
         ],
         "durable_skills": [
           {
-            "reason": "Requires holistic understanding of hardware-software interactions that AI can't replicate",
-            "task": "Cross-platform system design"
+            "reason": "AI doesn't see the negotiation between hardware limitations, software goals, and stakeholder needs \u2014 that requires cross-functional communication and judgment.",
+            "task": "Conferring with engineering teams about hardware-software interfaces"
           },
           {
-            "reason": "Demands physical intuition and hands-on problem-solving beyond algorithmic patterns",
-            "task": "Hardware troubleshooting"
+            "reason": "Deciding what to model, what to test physically, and when to trust a simulation is hands-on engineering creativity that AI can assist but not own.",
+            "task": "Building and testing prototypes with simulations"
           },
           {
-            "reason": "Needs human interpretation of ambiguous client needs into technical specifications",
-            "task": "Requirements translation"
+            "reason": "AI can draft text, but defining requirements, constraints, and tradeoffs requires decisions that come from real product and user context.",
+            "task": "Writing detailed functional specifications"
           },
           {
-            "reason": "Requires contextual judgment about societal impacts of engineering decisions",
-            "task": "Ethical implementation review"
+            "reason": "Interpreting ambiguous test data, isolating failures, and deciding next steps requires deep system understanding and persistence.",
+            "task": "Testing and verifying hardware against specifications"
+          },
+          {
+            "reason": "Translating between technical and nontechnical people and building trust through clear communication stays fundamentally human.",
+            "task": "Providing technical support across designers, suppliers, and teams"
           }
         ],
-        "role_evolution_summary": "Software and computer engineering roles are rapidly integrating AI co-development tools that accelerate coding and testing cycles, while embedded systems increasingly leverage AI for real-time edge computing. This shifts focus toward system design oversight and hardware-AI integration.",
+        "role_evolution_summary": "The most important shift in your computer engineering and embedded systems targets is that AI assistants now handle routine implementation \u2014 boilerplate code, test generation, and documentation drafts \u2014 so intern work is becoming more about reviewing, curating, and validating AI output. Embedded systems is specifically adding edge AI, memory-safe languages like Rust, and AI-assisted hardware-in-the-loop testing, while safety-critical judgment stays with humans. For Software Engineering Intern, live specifics weren't returned in the research pass, so the reliable takeaway is the broader one: entry-level engineering work is becoming AI-augmented, not replaced \u2014 Anthropic's economic analysis puts 57% of AI's current impact in the 'assists humans' category.",
         "task_shifts": [
           {
-            "changing": "AI tools automatically identify errors and suggest fixes",
-            "meaning": "You'll focus more on validating solutions and understanding root causes",
-            "task": "Code debugging"
+            "changing": "AI coding assistants now generate common functions, test scaffolding, and repetitive implementation code.",
+            "meaning": "Your value becomes reviewing AI output for correctness, system fit, and style \u2014 which makes strong fundamentals in C/C++ and Python more important, not less.",
+            "task": "Writing boilerplate or routine code"
           },
           {
-            "changing": "AI-assisted tools rapidly model circuit behaviors",
-            "meaning": "Your system integration skills become crucial for translating simulations to real-world implementations",
-            "task": "Hardware simulation"
+            "changing": "AI assistants accelerate debugging by suggesting fixes and pointing out common errors.",
+            "meaning": "The human edge is understanding root cause and system context, not just applying a suggested patch \u2014 that is where your problem-solving strength fits.",
+            "task": "Basic debugging and error fixing"
           },
           {
-            "changing": "AI drafts technical specs from code comments",
-            "meaning": "You'll emphasize clarity in original technical communication to guide AI outputs",
-            "task": "Documentation generation"
+            "changing": "AI tools now draft comments, READMEs, and spec summaries automatically.",
+            "meaning": "You still need to verify technical accuracy, communicate tradeoffs, and tailor explanations to different audiences \u2014 a deeply human skill.",
+            "task": "Creating documentation"
+          },
+          {
+            "changing": "AI-driven test frameworks can write and run straightforward unit tests on their own.",
+            "meaning": "Designing meaningful test cases \u2014 especially edge cases and hardware interactions \u2014 remains human judgment you can own.",
+            "task": "Manual testing of simple functions"
+          },
+          {
+            "changing": "In embedded work, AI assistants can propose entire modules, write unit tests, and refactor C/C++ codebases.",
+            "meaning": "Safety-critical embedded systems require validation against datasheets, hardware constraints, and real-world behavior \u2014 your engineering judgment becomes the safeguard.",
+            "task": "Embedded module generation and refactoring"
           }
         ]
       },
       "errors": [],
       "feature": "SHIFT",
       "status": "success",
-      "summary": "Focus on strengthening your core engineering skills while gradually integrating AI tools into your projects. Your interests in embedded systems and robotics position you well for emerging hardware-AI integration roles. Remember that employers value your problem-solving and collaboration skills above all\u2014AI fluency enhances these strengths rather than replaces them."
+      "summary": "The direction is clear: AI is taking over routine code generation, but your future roles are increasingly about reviewing, validating, and integrating AI output into real hardware and systems. Your robotics/hardware interests and foundational Python/MATLAB skills are the durable core. Focus on being able to say specifically how you use AI critically \u2014 that articulation is what separates you."
     }
   },
   "status": "success",
