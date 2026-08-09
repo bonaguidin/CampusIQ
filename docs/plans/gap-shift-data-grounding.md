@@ -111,9 +111,15 @@ Net effect is still strongly positive (2 → 12 roles with real data), but the t
 **2. The agent's O\*NET corroboration check just became a real validator.**
 [role_research_agent.py:59](../../CampusIQ_career/features/role_research_agent.py#L59) reads this same file and tags results `agent_onet_corroborated` when the SOC appears in it. Its own comment says the catalog is *"only 10 occupations — far too narrow to use for rejection."*
 
-At 1,016 occupations that is no longer true. A SOC code absent from the catalog is now genuinely not a valid O\*NET-SOC 2019 code, so corroboration can be promoted from a soft tag to an actual rejection filter — which would have caught the unstable SOC guesses that [gap.py:41](../../CampusIQ_career/features/gap.py#L41) currently works around by discarding agent SOC codes entirely. Fold into Step C.
+At 1,016 occupations that is no longer true. A SOC code absent from the catalog is now genuinely not a valid O\*NET-SOC 2019 code, so corroboration *could* be promoted to a rejection filter.
 
-**Test impact:** `tests/test_role_research_agent.py` encodes the 10-occupation assumption in its fixtures — `15-1252.00` and `17-2072.00` are chosen precisely because they were *absent* from the catalog. Both are present now, so roughly eight assertions expecting `soc_source="agent"` will instead get `"agent_onet_corroborated"`. The fixtures need new SOCs (or the rejection decision above resolved first) — they are asserting on an assumption this step deliberately retires.
+**Decided: it stays a soft tag.** Never used to reject. What changed is what it means — it no longer separates well-known occupations from obscure ones (every real occupation is in the catalog), it separates real SOC codes from invented ones. Narrower, but sharper, and it keeps the module's fail-open behaviour: an unreadable catalog corroborates nothing rather than rejecting everything.
+
+**Test impact — resolved.** `tests/test_role_research_agent.py` encoded the 10-occupation assumption in its fixtures: `15-1252.00` and `17-2072.00` were chosen precisely because they were *absent* from the old catalog. Both are real occupations and now corroborate, which broke **20 tests** (not the ~8 a read-through suggested — the parametrized cache-miss cases share one fixture).
+
+Verified by restoring the old catalog and re-running: 67 passed, 0 failed. So all 20 were caused by the catalog change alone, with nothing pre-existing underneath.
+
+Fixed by flipping the fixtures to `agent_onet_corroborated` and adding `UNCORROBORATED_PAYLOAD` (`99-9999.00` — format-valid, and absent because the release stops at major group 55). That is now the only way to produce an uncorroborated result, which is exactly what the tag means post-change. One assertion that hardcoded the tag value was relaxed to assert a *legal* tag was assigned, since that test is about the write path, not the catalog.
 
 ---
 

@@ -87,23 +87,34 @@ VALID_PAYLOAD = {
     "must_have_certifications": [],
     "nice_to_have_certifications": ["AWS Certified Cloud Practitioner"],
 }
-# 15-1252.00 (Software Developers) is not one of the 10 occupations in the
-# small real-O*NET catalog, so a fresh agent result for it is expected to
-# come back tagged "agent" (format-valid, uncorroborated), not
-# "agent_onet_corroborated".
-EXPECTED_VALID_RESULT = dict(VALID_PAYLOAD, soc_source="agent")
+# What "corroborated" means changed when build_onet.py started generating
+# data/reference/onet_soc_requirements.json: the catalog went from 10
+# occupations to all 1,016 in the release. It no longer separates well-known
+# occupations from obscure ones -- every real O*NET-SOC 2019 code is in it. It
+# now separates real codes from invented ones, which is a narrower but sharper
+# signal. The tag is deliberately kept soft (never used to reject); see
+# UNCORROBORATED_PAYLOAD for the only case that still produces "agent".
 
-# 13-2051.00 (Financial and Investment Analysts) IS one of the 10 occupations
-# in data/reference/onet_soc_requirements.json -- used to test the
-# corroborated-source tag.
+# 15-1252.00 (Software Developers) is a real occupation, so a fresh agent
+# result for it corroborates.
+EXPECTED_VALID_RESULT = dict(VALID_PAYLOAD, soc_source="agent_onet_corroborated")
+
+# 13-2051.00 (Financial and Investment Analysts) is in the catalog like every
+# other real occupation. Kept as its own fixture because it is the SOC the
+# demo's Finance Intern role maps to.
 ONET_CORROBORATED_PAYLOAD = dict(VALID_PAYLOAD, soc_code="13-2051.00", soc_title="Financial and Investment Analysts")
 
-# 17-2072.00 (Electronics Engineers) is well-formed, not in the static 14
-# curated role_requirements.json entries, and not in the small O*NET
-# catalog either -- this is the shape of the real-world case (e.g. the
-# agent's actual "Embedded Systems Intern" answer) that the old allowlist
-# guard used to silently discard.
+# 17-2072.00 (Electronics Engineers) is well-formed and NOT one of the 14
+# curated role_requirements.json entries -- the shape of the real-world case
+# (e.g. the agent's actual "Embedded Systems Intern" answer) that the old
+# allowlist guard used to silently discard. It is a real occupation, so it
+# corroborates; this fixture is about bypassing the curated list, not the tag.
 NOVEL_SOC_PAYLOAD = dict(VALID_PAYLOAD, soc_code="17-2072.00", soc_title="Electronics Engineers, Except Computer")
+
+# 99-9999.00 is format-valid but is not a real O*NET-SOC code -- the release
+# stops at major group 55. With a full catalog this is the only way to get an
+# uncorroborated result.
+UNCORROBORATED_PAYLOAD = dict(VALID_PAYLOAD, soc_code="99-9999.00", soc_title="Invented Occupation")
 
 
 def test_successful_lookup_with_mocked_tool_calls_returns_correct_schema():
@@ -149,7 +160,7 @@ def test_well_formed_soc_code_outside_the_static_allowlist_is_accepted():
 
     result = agent.get_role_requirements("Embedded Systems Intern", client=client)
 
-    assert result == dict(NOVEL_SOC_PAYLOAD, soc_source="agent")
+    assert result == dict(NOVEL_SOC_PAYLOAD, soc_source="agent_onet_corroborated")
 
 
 def test_soc_code_present_in_onet_catalog_is_corroborated():
@@ -161,11 +172,14 @@ def test_soc_code_present_in_onet_catalog_is_corroborated():
 
 
 def test_soc_code_absent_from_onet_catalog_is_uncorroborated():
-    client = FakeClient([_final_message(VALID_PAYLOAD)])
+    # Format-valid but invented. Still accepted -- corroboration is a soft
+    # signal on soc_source, never a rejection filter, so callers can decide
+    # for themselves how much to trust an uncorroborated code.
+    client = FakeClient([_final_message(UNCORROBORATED_PAYLOAD)])
 
     result = agent.get_role_requirements("Software Engineering Intern", client=client)
 
-    assert result["soc_source"] == "agent"
+    assert result == dict(UNCORROBORATED_PAYLOAD, soc_source="agent")
 
 
 def test_malformed_soc_code_format_returns_none():
@@ -727,4 +741,6 @@ def test_absent_soc_source_remains_valid_so_the_write_path_still_works():
     result = agent.get_role_requirements("Software Engineering Intern", client=client)
 
     assert result == EXPECTED_VALID_RESULT
-    assert result["soc_source"] == "agent"
+    # Which tag it lands on is decided by the catalog lookup and asserted
+    # elsewhere; what this test cares about is that one was assigned at all.
+    assert result["soc_source"] in agent._VALID_SOC_SOURCES
