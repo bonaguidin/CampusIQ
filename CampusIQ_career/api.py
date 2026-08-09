@@ -52,6 +52,28 @@ from CampusIQ_career.resume.review import (
 )
 from CampusIQ_career.resume.store import confirm_career_rows, store_parsed_resume
 from CampusIQ_career.supabase_client import SupabaseConfigError, build_client_for_token
+from CampusIQ_career.transcript.catalog import match_courses
+from CampusIQ_career.transcript.crosscheck import cross_check_terms
+from CampusIQ_career.transcript.extraction import extract_transcript_text
+from CampusIQ_career.transcript.parser import (
+    TranscriptTooLongError,
+    parse_transcript_text,
+)
+from CampusIQ_career.transcript.review import (
+    ReviewConflict as CourseReviewConflict,
+    ReviewFieldError as CourseReviewFieldError,
+    ReviewRowAlreadyConfirmed as CourseReviewRowAlreadyConfirmed,
+    ReviewRowNotFound as CourseReviewRowNotFound,
+    apply_edit as apply_course_edit,
+    load_unconfirmed as load_unconfirmed_courses,
+)
+from CampusIQ_career.transcript.store import (
+    ConfirmBlocked,
+    confirm_course_rows,
+    grade_map_for,
+    store_parsed_transcript,
+)
+from CampusIQ_career.transcript.terms import resolve_terms
 
 
 load_dotenv()
@@ -1039,6 +1061,251 @@ def patch_me_career_review(request: Request, table: str, row_id: str, body: dict
         raise
     except Exception as exc:  # noqa: BLE001 -- RLS denial or transport
         raise HTTPException(status_code=502, detail="Could not update the record.") from exc
+
+
+# ── transcript ingestion ─────────────────────────────────────────────────────
+
+MAX_TRANSCRIPT_BYTES = 10 * 1024 * 1024
+
+# Same mapping as EXTRACTION_STATUS_CODES, plus the transcript-only "encrypted"
+# status. 422 rather than 415: the format IS supported, the file is locked.
+TRANSCRIPT_EXTRACTION_STATUS_CODES = {
+    **EXTRACTION_STATUS_CODES,
+    "encrypted": 422,
+}
+
+
+class ConfirmCoursesRequest(BaseModel):
+    """Optional subset selection for the transcript confirm route.
+
+    An empty list (or no body) means "confirm everything still unconfirmed",
+    matching ConfirmRequest's shape for the career tables.
+    """
+
+    course_records: list[str] = []
+
+    def is_empty(self) -> bool:
+        return not self.course_records
+
+
+def _home_institution_id(client, student_id: str) -> str:
+    """The student's home institution, or a mapped HTTPException.
+
+    Same sequence as the v2 GPA route. A transcript cannot be parsed without
+    one: the grade scale that decides which letters are even valid, and the
+    catalog that course codes are matched against, are both per-institution.
+    """
+    try:
+        home_rows = (
+            client.table("student_institutions")
+            .select("institution_id")
+            .eq("student_id", student_id)
+            .eq("relationship", "home")
+            .execute()
+            .data
+        )
+    except Exception as exc:  # noqa: BLE001 -- RLS denial or transport
+        raise HTTPException(status_code=502, detail="Could not resolve institution.") from exc
+
+    if not home_rows:
+        raise HTTPException(status_code=409, detail="Student has no home institution on record.")
+    return home_rows[0]["institution_id"]
+
+
+@router.post(
+    "/api/v2/student/me/transcript/upload",
+    dependencies=[Depends(authorize_proxy_request)],
+)
+def upload_me_transcript(request: Request, file: UploadFile = File(...)) -> dict:
+    client = _session_client(request)
+    student_id = _resolve_session_student_id(client)
+    institution_id = _home_institution_id(client, student_id)
+
+    try:
+        file_bytes = file.file.read(MAX_TRANSCRIPT_BYTES + 1)
+    except Exception as exc:  # noqa: BLE001 -- a truncated upload stream
+        raise HTTPException(status_code=400, detail="Could not read the uploaded file.") from exc
+    finally:
+        file.file.close()
+
+    if len(file_bytes) > MAX_TRANSCRIPT_BYTES:
+        raise HTTPException(
+            status_code=413,
+            detail=f"Transcript exceeds the {MAX_TRANSCRIPT_BYTES // (1024 * 1024)} MB limit.",
+        )
+
+    extraction = extract_transcript_text(file_bytes, file.content_type or "")
+    if extraction.status != "ok":
+        # Short-circuits before any model call, same as the resume route.
+        raise HTTPException(
+            status_code=TRANSCRIPT_EXTRACTION_STATUS_CODES.get(extraction.status, 422),
+            detail={
+                "error": "extraction_failed",
+                "extraction_status": extraction.status,
+                "message": extraction.message,
+            },
+        )
+
+    # The institution's real grade letters gate which grades the parser will
+    # accept -- an unmapped letter rejects its row into review rather than
+    # becoming a course that silently drops out of the GPA.
+    try:
+        grade_map = grade_map_for(client, institution_id)
+    except Exception as exc:  # noqa: BLE001 -- RLS denial or transport
+        raise HTTPException(status_code=502, detail="Could not load the grading scale.") from exc
+    if not grade_map:
+        # Same reasoning as the GPA route's 409: without a scale every letter
+        # would reject, and the response would be a wall of review items dressed
+        # as a parse result.
+        raise HTTPException(
+            status_code=409, detail="Home institution has no grading scale on record."
+        )
+
+    try:
+        with request.app.state.ai_concurrency.slot():
+            parsed, model_name = parse_transcript_text(
+                extraction.text, build_client(), grade_letters=grade_map.keys()
+            )
+    except HTTPException:
+        # The concurrency gate's own 429 must reach the caller unchanged.
+        raise
+    except TranscriptTooLongError as exc:
+        # A HARD ERROR, deliberately unlike the resume parser, which truncates
+        # and notes it. Truncating a transcript silently deletes its final
+        # terms and yields a GPA computed over a subset of the coursework --
+        # indistinguishable from a correct parse from the outside.
+        raise HTTPException(
+            status_code=413,
+            detail={"error": "transcript_too_long", "message": str(exc)},
+        ) from exc
+    except (
+        OSError,
+        AIConfigError,
+        AIRequestError,
+        AIResponseParseError,
+        ValueError,
+    ) as exc:
+        # Same exception tuple features/base.py:65 catches. TranscriptContract-
+        # Error subclasses ValueError, so a contract violation lands here.
+        return {
+            "status": "parse_failed",
+            "extraction": {"status": extraction.status, "page_count": extraction.page_count},
+            "errors": [str(exc)],
+            "written": None,
+        }
+
+    response: dict = {
+        "status": parsed.status,
+        "extraction": {"status": extraction.status, "page_count": extraction.page_count},
+        "model": model_name,
+        "warnings": parsed.warnings,
+        "rejected": [row.to_dict() for row in parsed.rejected],
+    }
+
+    if parsed.status != "ok":
+        response["written"] = None
+        return response
+
+    try:
+        resolution = resolve_terms(
+            client,
+            student_id,
+            institution_id,
+            [c.get("term_label") for c in parsed.courses if c.get("term_label")],
+        )
+        match_report = match_courses(client, institution_id, parsed.courses)
+        report = store_parsed_transcript(
+            client,
+            student_id,
+            institution_id,
+            parsed,
+            term_id_by_label=resolution.term_id_by_label,
+            unresolved_terms=resolution.errors,
+            terms_created=resolution.created,
+            terms_reused=resolution.reused,
+            grade_map=grade_map,
+        )
+    except HTTPException:
+        raise
+    except Exception as exc:  # noqa: BLE001 -- RLS denial, constraint, transport
+        raise HTTPException(status_code=502, detail="Could not save the parsed transcript.") from exc
+
+    response.update(report.to_dict())
+    response["catalog"] = match_report.to_dict()
+    # Surfaced, never blocking -- see crosscheck.py.
+    response["cross_check"] = cross_check_terms(
+        parsed.courses, parsed.term_summaries, grade_map
+    ).to_dict()
+    return response
+
+
+@router.post(
+    "/api/v2/student/me/transcript/confirm",
+    dependencies=[Depends(authorize_proxy_request)],
+)
+def confirm_me_courses(request: Request, body: ConfirmCoursesRequest | None = None) -> dict:
+    client = _session_client(request)
+    student_id = _resolve_session_student_id(client)
+
+    selection = None if body is None or body.is_empty() else body.course_records
+
+    try:
+        result = confirm_course_rows(client, student_id, selection=selection)
+    except ConfirmBlocked as exc:
+        # 409, not 403: the caller is authorized and the request is well formed.
+        # The institution's grade scale is not verified yet, which is a state of
+        # our data, not of their permissions.
+        raise HTTPException(
+            status_code=409,
+            detail={"error": "grade_scale_unverified", "message": str(exc)},
+        ) from exc
+    except HTTPException:
+        raise
+    except Exception as exc:  # noqa: BLE001 -- RLS denial or transport
+        raise HTTPException(status_code=502, detail="Could not confirm course records.") from exc
+
+    return {"status": "ok", **result}
+
+
+@router.get(
+    "/api/v2/student/me/transcript/review",
+    dependencies=[Depends(authorize_proxy_request)],
+)
+def get_me_transcript_review(request: Request) -> dict:
+    """Every unconfirmed course record for the caller."""
+    client = _session_client(request)
+    student_id = _resolve_session_student_id(client)
+
+    try:
+        return load_unconfirmed_courses(client, student_id)
+    except Exception as exc:  # noqa: BLE001 -- RLS denial or transport
+        raise HTTPException(
+            status_code=502, detail="Could not load course records for review."
+        ) from exc
+
+
+@router.patch(
+    "/api/v2/student/me/transcript/review/{row_id}",
+    dependencies=[Depends(authorize_proxy_request)],
+)
+def patch_me_transcript_review(request: Request, row_id: str, body: dict) -> dict:
+    client = _session_client(request)
+    student_id = _resolve_session_student_id(client)
+
+    try:
+        return apply_course_edit(client, row_id, student_id, body)
+    except CourseReviewFieldError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except CourseReviewRowNotFound as exc:
+        # 404 for both "no such row" and "another student's row" -- RLS makes
+        # them indistinguishable, and a 403 would confirm the row exists.
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except (CourseReviewRowAlreadyConfirmed, CourseReviewConflict) as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except HTTPException:
+        raise
+    except Exception as exc:  # noqa: BLE001 -- RLS denial or transport
+        raise HTTPException(status_code=502, detail="Could not update the course record.") from exc
 
 
 def create_app(config: APIConfig | None = None) -> FastAPI:
