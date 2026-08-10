@@ -2,6 +2,13 @@ export const TRANSCRIPT_UPLOAD_URL = '/api/v2/student/me/transcript/upload'
 export const TRANSCRIPT_REVIEW_URL = '/api/v2/student/me/transcript/review'
 export const TRANSCRIPT_CONFIRM_URL = '/api/v2/student/me/transcript/confirm'
 
+// Imported and re-exported from resumeApi so the two flows cannot drift on
+// either the timeout budget or the sentinel status. See resumeApi.mjs for the
+// reasoning behind both values.
+import { CONFIRM_TIMEOUT_MS, REQUEST_TIMEOUT_STATUS } from './resumeApi.mjs'
+
+export { CONFIRM_TIMEOUT_MS, REQUEST_TIMEOUT_STATUS }
+
 export const TRANSCRIPT_FIELDS = [
   'course_code',
   'title',
@@ -196,6 +203,9 @@ function failure(status, body, fallback) {
   const code = detailErrorCode(detail)
 
   if (status === 0) return { ok: false, kind: 'network', message: 'Could not reach the server.' }
+  // Distinct from 'network' on purpose: the request did reach the server, we
+  // just stopped waiting for it. Same copy as the resume flow's timeout.
+  if (status === REQUEST_TIMEOUT_STATUS) return { ok: false, kind: 'timeout', message: 'This is taking longer than expected. The server may still be starting up — try again in a moment.' }
   if (status === 401) return { ok: false, kind: 'unauthenticated', message: 'Your session has expired. Sign in again.' }
   if (status === 409) {
     const kind = code === 'grade_scale_unverified' ? 'grade_scale_unverified' : 'conflict'

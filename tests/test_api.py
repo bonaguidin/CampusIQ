@@ -368,6 +368,12 @@ def test_analyze_shift_success(client, monkeypatch):
 
 
 def test_analyze_professor_comments_success(client, monkeypatch):
+    # The cited courses must be ones sofiaRamirez actually has professor
+    # comments from -- CHEM 237 and PHYS 201 are two of hers. This canned
+    # response previously cited ENGR 102, copied from the Ethan Brooks
+    # fixture, which is a course she is not enrolled in; the route returned
+    # status="success" on that cross-student citation because nothing
+    # validated it. AcademicRunner.validate_data now rejects it.
     fake = FakeClient(
         """
         {
@@ -380,9 +386,14 @@ def test_analyze_professor_comments_success(client, monkeypatch):
                 "summary": "Multiple professors want clearer explanations.",
                 "supporting_references": [
                   {
-                    "course_code": "ENGR 102",
-                    "course_name": "Engineering Lab I: Computation",
-                    "paraphrase": "Asked for more explanation of code logic."
+                    "course_code": "CHEM 237",
+                    "course_name": "Organic Chemistry I Laboratory",
+                    "paraphrase": "Asked for fuller write-ups of your procedure."
+                  },
+                  {
+                    "course_code": "PHYS 201",
+                    "course_name": "College Physics I",
+                    "paraphrase": "Wanted your reasoning shown, not just the answer."
                   }
                 ]
               }

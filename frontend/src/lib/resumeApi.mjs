@@ -32,6 +32,21 @@ export const UPLOAD_URL = '/api/v2/student/me/resume/upload'
 export const REVIEW_URL = '/api/v2/student/me/career/review'
 export const CONFIRM_URL = '/api/v2/student/me/career/confirm'
 
+/**
+ * Synthetic status for "the client gave up waiting", distinct from the
+ * status 0 that means "the request never reached the server".
+ *
+ * Negative so it can never collide with a real HTTP status. The distinction
+ * matters to the student: a network failure is worth retrying immediately,
+ * whereas a timeout here is most often a backend cold start still in progress,
+ * where the honest advice is to wait a moment first. Only the confirm calls
+ * pass a timeout today, so nothing else can produce this.
+ */
+export const REQUEST_TIMEOUT_STATUS = -1
+
+/** How long a confirm may run before the client stops waiting. */
+export const CONFIRM_TIMEOUT_MS = 60_000
+
 /** URL segments, which are also the PATCH path's {table} values. */
 export const CHILD_TABLES = ['certifications', 'work_experience', 'projects']
 export const ALL_SECTIONS = ['career_profile', ...CHILD_TABLES]
@@ -144,6 +159,17 @@ function sharedHttpFailure(httpStatus, body) {
   const text = (t) => detailToText(detail, t)
 
   switch (httpStatus) {
+    case REQUEST_TIMEOUT_STATUS:
+      // Deliberately NOT phrased as a failure. The request may well have
+      // succeeded on the server -- the client simply stopped listening -- and
+      // the most likely cause is a cold start that is still finishing, so the
+      // useful instruction is to wait rather than to report a broken app.
+      return {
+        ok: false,
+        kind: 'timeout',
+        message:
+          'This is taking longer than expected. The server may still be starting up — try again in a moment.',
+      }
     case 401:
       return {
         ok: false,

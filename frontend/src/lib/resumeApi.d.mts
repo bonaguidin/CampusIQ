@@ -6,6 +6,10 @@ export declare const UPLOAD_URL: string;
 export declare const REVIEW_URL: string;
 export declare const CONFIRM_URL: string;
 
+/** Synthetic status meaning the client stopped waiting. Never a real HTTP code. */
+export declare const REQUEST_TIMEOUT_STATUS: number;
+export declare const CONFIRM_TIMEOUT_MS: number;
+
 export type ChildTable = 'certifications' | 'work_experience' | 'projects';
 export type SectionKey = 'career_profile' | ChildTable;
 

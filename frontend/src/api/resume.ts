@@ -13,7 +13,9 @@
 // synthetic status 0.
 
 import {
+  CONFIRM_TIMEOUT_MS,
   CONFIRM_URL,
+  REQUEST_TIMEOUT_STATUS,
   REVIEW_URL,
   UPLOAD_URL,
   normalizeConfirmResponse,
@@ -47,12 +49,33 @@ async function readJson(response: Response): Promise<unknown> {
   }
 }
 
-async function send(url: string, init: RequestInit): Promise<RawResult> {
+/**
+ * `timeoutMs` is opt-in and additive: omit it and this behaves exactly as it
+ * did before -- no AbortController is created, no signal is attached, and the
+ * catch can only ever produce NETWORK_FAILURE. Only the confirm call passes
+ * one, so no other endpoint's success or failure path changes.
+ */
+async function send(url: string, init: RequestInit, timeoutMs?: number): Promise<RawResult> {
+  const controller = timeoutMs === undefined ? null : new AbortController();
+  const timer =
+    controller === null ? null : setTimeout(() => { controller.abort(); }, timeoutMs);
+
   try {
-    const response = await fetch(url, init);
+    const response = await fetch(
+      url,
+      controller === null ? init : { ...init, signal: controller.signal },
+    );
     return { status: response.status, body: await readJson(response) };
   } catch {
-    return { status: NETWORK_FAILURE, body: null };
+    // The abort we scheduled is the ONLY way signal.aborted can be true here,
+    // so this distinguishes our own timeout from a genuine transport failure
+    // without having to match on the error's name across browsers.
+    return {
+      status: controller?.signal.aborted ? REQUEST_TIMEOUT_STATUS : NETWORK_FAILURE,
+      body: null,
+    };
+  } finally {
+    if (timer !== null) clearTimeout(timer);
   }
 }
 
@@ -107,9 +130,15 @@ export async function patchCareerRow(
 export async function confirmCareerRecords(accessToken: string): Promise<NormalizedConfirm> {
   // No body: the backend treats an absent/empty selection as "confirm
   // everything still unconfirmed", which is this stage's only mode.
-  const { status, body } = await send(CONFIRM_URL, {
-    method: 'POST',
-    headers: authHeaders(accessToken),
-  });
+  //
+  // The timeout is here and not on the other calls because this is the one
+  // request that can legitimately run tens of seconds (cold start plus the
+  // synchronous repeat reconciliation), and the one whose UI would otherwise
+  // sit on "Saving…" forever with no failure path.
+  const { status, body } = await send(
+    CONFIRM_URL,
+    { method: 'POST', headers: authHeaders(accessToken) },
+    CONFIRM_TIMEOUT_MS,
+  );
   return normalizeConfirmResponse(status, body);
 }

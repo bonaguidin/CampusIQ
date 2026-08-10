@@ -1,4 +1,6 @@
 import {
+  CONFIRM_TIMEOUT_MS,
+  REQUEST_TIMEOUT_STATUS,
   TRANSCRIPT_CONFIRM_URL,
   TRANSCRIPT_REVIEW_URL,
   TRANSCRIPT_UPLOAD_URL,
@@ -10,14 +12,27 @@ import {
 } from '../lib/transcriptApi.mjs';
 import type { TranscriptConfirmResult, TranscriptPatchResult, TranscriptReviewResult, TranscriptUploadResult } from '../lib/transcriptApi.mjs';
 
-async function send(url: string, init: RequestInit): Promise<{ status: number; body: unknown }> {
+/**
+ * `timeoutMs` is opt-in and additive -- see api/resume.ts's send for the full
+ * reasoning. Omitted, this is byte-for-byte the previous behaviour.
+ */
+async function send(url: string, init: RequestInit, timeoutMs?: number): Promise<{ status: number; body: unknown }> {
+  const controller = timeoutMs === undefined ? null : new AbortController();
+  const timer =
+    controller === null ? null : setTimeout(() => { controller.abort(); }, timeoutMs);
+
   try {
-    const response = await fetch(url, init);
+    const response = await fetch(
+      url,
+      controller === null ? init : { ...init, signal: controller.signal },
+    );
     let body: unknown = null;
     try { body = await response.json(); } catch { /* normalizers accept null */ }
     return { status: response.status, body };
   } catch {
-    return { status: 0, body: null };
+    return { status: controller?.signal.aborted ? REQUEST_TIMEOUT_STATUS : 0, body: null };
+  } finally {
+    if (timer !== null) clearTimeout(timer);
   }
 }
 
@@ -41,6 +56,8 @@ export async function patchTranscriptRecord(token: string, id: string, changes: 
 }
 
 export async function confirmTranscript(token: string): Promise<TranscriptConfirmResult> {
-  const { status, body } = await send(TRANSCRIPT_CONFIRM_URL, { method: 'POST', headers: auth(token) });
+  // Timed out for the same reason as the resume confirm: cold start plus the
+  // synchronous repeat reconciliation makes this the one long request.
+  const { status, body } = await send(TRANSCRIPT_CONFIRM_URL, { method: 'POST', headers: auth(token) }, CONFIRM_TIMEOUT_MS);
   return normalizeTranscriptConfirm(status, body);
 }

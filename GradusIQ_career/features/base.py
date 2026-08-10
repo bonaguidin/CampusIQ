@@ -45,7 +45,15 @@ class CareerFeatureRunner:
         self.prompt_path = Path(prompt_path) if prompt_path else PROMPT_DIR / self.prompt_filename
 
     def run(self, student_profile: Mapping[str, Any]) -> dict[str, Any]:
-        missing_fields = find_missing_fields(student_profile, self.required_paths)
+        # required_paths can only express dot-separated dict keys (see
+        # get_path), so a runner whose real precondition lives inside a list
+        # -- e.g. submissions[].submission_comments[] -- reports it via
+        # additional_missing_fields and reuses this same skip path. Only
+        # consulted when the declarative gate is already satisfied, so a
+        # profile missing the top-level field reports that field alone.
+        missing_fields = find_missing_fields(
+            student_profile, self.required_paths
+        ) or self.additional_missing_fields(student_profile)
         if missing_fields:
             return FeatureResult(
                 feature=self.feature,
@@ -80,6 +88,18 @@ class CareerFeatureRunner:
                 summary=f"{self.feature} analysis failed.",
                 data={},
                 errors=["AI response data must be a JSON object."],
+            ).to_dict()
+
+        # Valid JSON of the wrong shape is the same failure mode as malformed
+        # JSON: the caller cannot render it. Reject rather than repair.
+        contract_errors = self.validate_data(data, student_profile)
+        if contract_errors:
+            return FeatureResult(
+                feature=self.feature,
+                status="failed",
+                summary=f"{self.feature} analysis failed.",
+                data={},
+                errors=contract_errors,
             ).to_dict()
 
         return FeatureResult(
@@ -117,6 +137,25 @@ class CareerFeatureRunner:
             "student": student_profile.get("student", {}),
             "career": student_profile.get("career", {}),
         }
+
+    def additional_missing_fields(self, student_profile: Mapping[str, Any]) -> list[str]:
+        """Preconditions required_paths cannot express. Default: none.
+
+        Returning a nonempty list produces the ordinary "skipped" result, so
+        overriding this never introduces a new status or message.
+        """
+        return []
+
+    def validate_data(
+        self, data: Mapping[str, Any], student_profile: Mapping[str, Any]
+    ) -> list[str]:
+        """Contract violations in a parsed model response. Default: none.
+
+        Opt-in per runner: the default keeps the historical "any JSON object
+        is a success" behavior for runners that have not been reviewed for
+        live-path validation yet.
+        """
+        return []
 
     def feature_contract(self) -> dict[str, Any]:
         return {

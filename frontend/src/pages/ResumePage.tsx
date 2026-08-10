@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '../auth/useAuth';
 import { ResumeUpload } from '../components/ResumeUpload';
 import { CareerReview } from '../components/CareerReview';
+import { GoToDashboard } from '../components/GoToDashboard';
 import { fetchCareerReview } from '../api/resume';
 import type {
   NormalizedConfirm,
@@ -16,9 +17,16 @@ type Step = 'checking' | 'upload' | 'review' | 'recovery_error' | 'done';
  * The three-step resume flow, held on one route.
  *
  * ON THE TERMINAL STATE: confirming shows a static success screen here rather
- * than navigating anywhere. The authenticated dashboard is available through
- * /dashboard; this page remains the focused resume onboarding workflow and
- * keeps the static confirmation so the student can review the completed step.
+ * than AUTO-navigating anywhere. This page remains the focused resume
+ * onboarding workflow and keeps the static confirmation so the student can
+ * review the completed step at their own pace.
+ *
+ * What that reasoning never justified was leaving them with no exit: the
+ * screen used to end on "you can close this page", which is not an answer to
+ * "what now". It now offers an explicit link to /dashboard (GoToDashboard,
+ * shared with the transcript flow's identical ending). Not navigating FOR them
+ * and giving them nowhere to go were always two different decisions; only the
+ * first one was intended.
  */
 export function ResumePage() {
   const { session } = useAuth();
@@ -141,11 +149,10 @@ export function ResumeFlow({ accessToken }: { accessToken: string }) {
                 : `${String(skipped)} entries were already on your profile and were left as they were.`}
             </p>
           )}
+          <GoToDashboard />
         </div>
 
-        <p className="login-note">
-          Nothing else is needed from you right now. You can close this page.
-        </p>
+        <p className="login-note">Nothing else is needed from you right now.</p>
       </div>
     </div>
   );
