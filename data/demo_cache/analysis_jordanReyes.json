@@ -68,67 +68,72 @@
       "data": {
         "must_have_gaps": [
           {
-            "gap": "SQL and data querying",
-            "how_to_close": "Complete an online SQL course (e.g., Codecademy's Learn SQL or Coursera's SQL for Data Analysis) and build a small project querying a sample database (e.g., analyzing sales data).",
-            "why_it_matters": "Business Analyst internships rely on SQL as a core tool for data extraction and analysis, and both Finance and Operations internships list it as a must-have according to current job-market research. You currently have no experience with SQL."
-          },
-          {
-            "gap": "Advanced Excel proficiency",
-            "how_to_close": "Complete a LinkedIn Learning course like 'Excel for Business Analysts' or pursue the Microsoft Excel Associate certification to demonstrate proficiency.",
-            "why_it_matters": "For Finance internships, Excel proficiency is a non-negotiable must-have from current job-market research. Your current Excel skills are basic, and you'll need VLOOKUP, pivot tables, and financial functions."
-          },
-          {
             "gap": "Administration and Management knowledge",
-            "how_to_close": "Enroll in a Principles of Management course (e.g., MGMT 309 at Texas A&M) to build foundational business operations understanding.",
-            "why_it_matters": "For Business Analyst internships, national occupational survey data rates 'Administration and Management' knowledge at 84 out of 100 importance. You have no coursework in this area yet."
+            "how_to_close": "Enroll in an introductory management course (e.g., MGMT 209 or MGMT 211) within your next two semesters to build formal understanding of organizational structure and business operations.",
+            "why_it_matters": "National occupational survey data rates this knowledge area at 84 out of 100 for Management Analysts (your Business Analyst Intern target)\u2014it is considered essential for the role."
           },
           {
-            "gap": "Financial statement analysis depth",
-            "how_to_close": "Take Financial Accounting II or Intermediate Accounting, and practice analyzing public company filings (e.g., Apple or Microsoft 10-Ks) to build hands-on skills.",
-            "why_it_matters": "Finance internships require the ability to analyze income statements, balance sheets, and cash flows - a skill listed as must-have from current job-market research. Your introductory accounting gives you a start, but you need to go deeper."
+            "gap": "Customer and Personal Service knowledge",
+            "how_to_close": "Seek a part-time customer-facing role or volunteer position that involves client interaction, or take a course in services marketing (e.g., MKTG 321).",
+            "why_it_matters": "Rated 75 out of 100 for Management Analysts, this is a must-have for engaging stakeholders and understanding client needs."
+          },
+          {
+            "gap": "Economics and Accounting knowledge",
+            "how_to_close": "Continue with your accounting sequence (ACCT 230 next) and add a microeconomics course (ECON 202) to deepen your understanding of economic principles.",
+            "why_it_matters": "Personal Financial Advisors, the closest occupation national survey data covers for your Finance Intern target, rate this at 77 out of 100. It is a must-have for that role."
+          },
+          {
+            "gap": "Organizational and time management skills (demonstrated through structured projects)",
+            "how_to_close": "Take on a leadership role in a student organization (e.g., project chair for a business club event) where you plan timelines and coordinate tasks.",
+            "why_it_matters": "Current job-market research identifies these as must-haves for Operations Interns\u2014employers look for evidence of managing competing priorities."
+          },
+          {
+            "gap": "Data analysis skills with SQL",
+            "how_to_close": "Complete the SQL module in your Google Data Analytics Certificate\u2014it covers querying, joins, and aggregation. Then build a small dataset analysis project using a public dataset (e.g., from Kaggle).",
+            "why_it_matters": "For both Business Analyst Intern (must-have per role-specific research) and Finance Intern (nice-to-have but expected in competitive pools), SQL is the most commonly cited tool. Your profile lacks any database or query experience."
           }
         ],
         "nice_to_have_gaps": [
           {
-            "gap": "Google Data Analytics Certificate",
-            "how_to_close": "Continue and finish the in-progress Google Data Analytics Certificate on Coursera; aim to complete by end of summer 2026.",
-            "why_it_helps": "This certificate is a nice-to-have for Business Analyst internships and will introduce you to SQL, data cleaning, and visualization - directly closing your SQL gap."
+            "gap": "Mathematics knowledge (beyond business math)",
+            "how_to_close": "Take a statistics course (e.g., STAT 211) that covers descriptive and inferential statistics.",
+            "why_it_helps": "Rated 66 out of 100 for Management Analysts and 68 for Personal Financial Advisors\u2014having stronger quantitative reasoning can differentiate you."
           },
           {
-            "gap": "Financial modeling skills",
-            "how_to_close": "Take a self-paced financial modeling course (e.g., Wall Street Prep or Corporate Finance Institute) and build a simple three-statement model for a real company.",
-            "why_it_helps": "Financial modeling is a nice-to-have for Finance internships, setting you apart from candidates with only basic accounting knowledge."
+            "gap": "Tableau or Power BI",
+            "how_to_close": "After the Google Data Analytics Certificate, practice building dashboards in Tableau Public using the same project dataset.",
+            "why_it_helps": "Both tools appear in hot technology lists for Business Analyst and Finance Intern roles\u2014they make your data work visible and compelling."
           },
           {
-            "gap": "Six Sigma Yellow Belt",
-            "how_to_close": "Complete a free Six Sigma Yellow Belt course (e.g., on Coursera or ASQ) - can be done in a few weekends.",
-            "why_it_helps": "This certification is a nice-to-have for Operations internships, signaling process improvement awareness and a data-driven mindset."
+            "gap": "CFA Level I candidate status (Finance Intern)",
+            "how_to_close": "Plan to register for the CFA Level I exam in your junior year; start reviewing the curriculum through free resources early.",
+            "why_it_helps": "Listed as a nice-to-have credential for Finance Interns\u2014signals commitment to finance careers."
           },
           {
-            "gap": "Data visualization (Tableau or Power BI)",
-            "how_to_close": "After gaining SQL proficiency, take a Tableau for Beginners course (e.g., on Udemy) and create a dashboard using a public dataset.",
-            "why_it_helps": "Both Business Analyst and Finance internships list data visualization as a nice-to-have skill, helping you communicate insights effectively."
+            "gap": "Six Sigma Yellow Belt (Operations Intern)",
+            "how_to_close": "Complete a free online Six Sigma Yellow Belt course (Coursera or ASQ) in under 10 hours to get foundational knowledge.",
+            "why_it_helps": "Current job-market research shows process improvement knowledge can differentiate candidates for Operations roles."
           }
         ],
         "readiness_score": 3,
         "recommended_next_steps": [
-          "1. Complete the Google Data Analytics Certificate (in progress) by summer 2026 to gain SQL and data analysis fundamentals.",
-          "2. Enroll in a Principles of Management course (MGMT 309) in the next semester to address the Administration and Management knowledge gap for Business Analyst roles.",
-          "3. Take a dedicated SQL course (e.g., Codecademy's Learn SQL) and build a project (e.g., querying a sample sales database) within the next 2-3 months.",
-          "4. Pursue the Microsoft Excel Associate certification or complete an advanced Excel course to reach proficiency for Finance internships.",
-          "5. In your sophomore year, take Financial Accounting II to deepen your financial statement analysis skills for Finance internships."
+          "Complete the Google Data Analytics Certificate by end of summer\u2014focus on the SQL and data visualization modules, then build a public project portfolio.",
+          "Enroll in a management or organizational behavior course in your sophomore year to address the Administration and Management knowledge gap.",
+          "Practice financial statement analysis beyond your introductory accounting\u2014use public company 10-Ks to model a simple income statement and balance sheet in Excel.",
+          "Join a student business organization (e.g., Mays Business Council) and take on a project coordinator role to demonstrate organizational and time management skills.",
+          "Prepare a 2-page 'skills gap tracker' for each target role\u2014map your courses and projects to the must-have knowledge areas so you can actively check them off each semester."
         ],
         "strengths": [
-          "Bloomberg Market Concepts (BMC) certification: This directly addresses the Bloomberg terminal familiarity that Finance internships often look for as a differentiator.",
-          "Basic accounting and financial statement knowledge: Your Accounting Practice Workbook and introductory accounting course give you a foundation that Finance and Business Analyst internships require.",
-          "Communication and presentation skills: Your business case team experience and course projects show you can articulate ideas and collaborate, which is critical for all three roles.",
-          "Early academic awareness: You've already completed a relevant project and are pursuing the Google Data Analytics Certificate, showing initiative toward data skills."
+          "Bloomberg Market Concepts (BMC) certification completed\u2014directly relevant to the Finance Intern role and signals financial market awareness.",
+          "Google Data Analytics Certificate in progress\u2014this will build SQL, spreadsheet, and visualization skills that apply across all three roles.",
+          "Basic Excel proficiency and introductory accounting coursework provide a foundation for financial modeling and data analysis.",
+          "Team collaboration, presentation, and written communication skills demonstrated through your Freshman Business Initiative project and class team work."
         ]
       },
       "errors": [],
       "feature": "GAP",
       "status": "success",
-      "summary": "You're a freshman with a solid start in business fundamentals and a Bloomberg certification, but you lack the technical depth\u2014especially in SQL, advanced Excel, and data analysis\u2014that internships demand across all three target roles. The single most important thing you can do right now is build a working knowledge of SQL and data querying, since it appears as a requirement for every role you're targeting."
+      "summary": "You are early in your college journey with a strong foundation in communication and basic business concepts, but significant technical and domain knowledge gaps remain. The single most important thing you need to address is building hands-on data analysis skills\u2014starting with SQL and a data visualization tool\u2014to meet employer expectations for all three target roles."
     },
     "PROFESSOR_COMMENTS": {
       "data": {

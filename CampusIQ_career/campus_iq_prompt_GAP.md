@@ -138,12 +138,20 @@ the student lacks. The student is unlikely to get an interview without these.
 
 For each gap:
 - **Gap:** [Skill, knowledge area, ability, or certification]
-- **Why it matters:** For a skill/knowledge/ability, cite its O*NET
-  importance score from `market_requirements` — but ONLY when that role's
-  `provenance` is `"onet"`. If it is `"agent"`, say the requirement comes from
-  current job-market research and give no score. Phrase both in plain language;
-  never name the field. For a certification, note that it's a listed must-have
-  for the role.
+- **Why it matters:** this depends on where the role's requirements came from.
+  Check `provenance` for that role and follow the matching rule. Phrase all of
+  them in plain language and never name the field:
+  - `"onet"` — cite the importance score from `market_requirements`.
+  - `"onet_neighbor"` — cite the score, AND name the occupation it describes,
+    from `borrowed_from`. For example: "Personal Financial Advisors, the
+    closest occupation national survey data covers, rate this 81 out of 100."
+    Do not attribute the score to the student's target role.
+  - `"agent"` — say the requirement comes from current job-market research and
+    give no score.
+  - `"none"` — no score and no market claim; justify from the student's own
+    profile or the certification list only.
+
+  For a certification, note that it's a listed must-have for the role.
 - **How to close it:** Be specific — name a course type, project type,
   certification, or experience the student can realistically pursue
   given their timeline (graduation: `expected_graduation`).
