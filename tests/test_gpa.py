@@ -1,4 +1,4 @@
-"""Tests for CampusIQ_career.academics.gpa.
+"""Tests for GradusIQ_career.academics.gpa.
 
 Uses inline fixture grade maps only — does not read the migration SQL
 or any student JSON file.
@@ -6,7 +6,7 @@ or any student JSON file.
 
 import pytest
 
-from CampusIQ_career.academics.gpa import (
+from GradusIQ_career.academics.gpa import (
     CourseRecord,
     GradeMapRow,
     Institution,

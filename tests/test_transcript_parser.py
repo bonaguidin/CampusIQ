@@ -9,7 +9,7 @@ from decimal import Decimal
 
 import pytest
 
-from CampusIQ_career.transcript import catalog, crosscheck, parser, store, terms
+from GradusIQ_career.transcript import catalog, crosscheck, parser, store, terms
 
 
 TAMU_LETTERS = ("A", "B", "C", "D", "F", "W", "I")

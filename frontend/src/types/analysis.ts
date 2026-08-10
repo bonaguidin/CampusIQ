@@ -1,4 +1,4 @@
-// Mirrors CampusIQ_career/features/gap.py and academic.py's `output_contract`
+// Mirrors GradusIQ_career/features/gap.py and academic.py's `output_contract`
 // dicts. Confirmed against real (non-mocked) DeepSeek R1 output — see
 // /tmp/career_result.json and /tmp/academic_result.json from the validation
 // run. academic.py's shape matched on the first real call; gap.py's

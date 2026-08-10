@@ -4,7 +4,7 @@
     "Department of Psychological & Brain Sciences uses course prefix PBSI (not PSYC). Marcus is already past the PBSI 107 intro gateway course.",
     "courses[3]: POLS 206 satisfies UCC: Government/Political Science.",
     "Recurring pattern: unclear thesis statements (writing-heavy classes) + a stats concept mix-up that repeats from homework to exam.",
-    "examTopicTags: Campus IQ's own topic layer — NOT part of real Canvas data.",
+    "examTopicTags: Gradus IQ's own topic layer — NOT part of real Canvas data.",
     "courses[0]: PBSI 211 course code is approximate — real course exists at TAMU but exact catalog code unverified. Update before using real student data.",
     "courses[1]: PBSI 209 correct catalog name is 'Psychology of Culture and Diversity' — fixed. Course code is still approximate; verify exact number against TAMU PBSI department before using real data."
   ],
@@ -632,7 +632,7 @@
       "assignments",
       "submissions"
     ],
-    "campus_iq_layer": [
+    "gradus_iq_layer": [
       "examTopicTags"
     ],
     "student_entered": [

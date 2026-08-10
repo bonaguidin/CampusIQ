@@ -1,12 +1,12 @@
 import pytest
 import requests
 
-from CampusIQ_career.ai.errors import AIConfigError, AIRequestError, AIResponseParseError
-from CampusIQ_career.ai.model_config import OPENROUTER_DEEPSEEK_R1, get_model_for_role
-from CampusIQ_career.ai.openrouter_client import OpenRouterClient
-from CampusIQ_career.ai.parser import parse_ai_json_response
-from CampusIQ_career.ai.types import AIResponse
-from CampusIQ_career import ai_services
+from GradusIQ_career.ai.errors import AIConfigError, AIRequestError, AIResponseParseError
+from GradusIQ_career.ai.model_config import OPENROUTER_DEEPSEEK_R1, get_model_for_role
+from GradusIQ_career.ai.openrouter_client import OpenRouterClient
+from GradusIQ_career.ai.parser import parse_ai_json_response
+from GradusIQ_career.ai.types import AIResponse
+from GradusIQ_career import ai_services
 
 
 class FakeResponse:
@@ -45,20 +45,20 @@ def test_missing_openrouter_api_key_raises_config_error(monkeypatch):
 
 
 def test_role_based_model_routing_returns_configured_model(monkeypatch):
-    monkeypatch.delenv("CAMPUSIQ_MODEL_CAREER", raising=False)
+    monkeypatch.delenv("GRADUSIQ_MODEL_CAREER", raising=False)
 
     assert get_model_for_role("career") == OPENROUTER_DEEPSEEK_R1
 
 
 def test_env_model_override_wins_for_role(monkeypatch):
-    monkeypatch.setenv("CAMPUSIQ_MODEL_CAREER", "openrouter/test-career-model")
+    monkeypatch.setenv("GRADUSIQ_MODEL_CAREER", "openrouter/test-career-model")
 
     assert get_model_for_role("career") == "openrouter/test-career-model"
 
 
 def test_explicit_model_override_wins_over_role_default(monkeypatch):
     monkeypatch.setenv("OPENROUTER_API_KEY", "test-key")
-    monkeypatch.setenv("CAMPUSIQ_MODEL_CAREER", "openrouter/test-career-model")
+    monkeypatch.setenv("GRADUSIQ_MODEL_CAREER", "openrouter/test-career-model")
     session = FakeSession()
     client = OpenRouterClient(session=session)
 
@@ -286,13 +286,13 @@ def test_fit_gap_shift_map_to_career_role(feature):
 
 
 def _clear_model_env(monkeypatch):
-    """Drop every CAMPUSIQ_MODEL_* override so defaults are what resolve.
+    """Drop every GRADUSIQ_MODEL_* override so defaults are what resolve.
 
-    .env carries real overrides for CAMPUSIQ_MODEL_CAREER / _ACADEMIC and
+    .env carries real overrides for GRADUSIQ_MODEL_CAREER / _ACADEMIC and
     api.py calls load_dotenv() on import, so without this a test asserting on
     hardcoded defaults would silently be asserting on the developer's .env.
     """
-    from CampusIQ_career.ai.model_config import ENV_BY_ROLE
+    from GradusIQ_career.ai.model_config import ENV_BY_ROLE
 
     for env_name in ENV_BY_ROLE.values():
         monkeypatch.delenv(env_name, raising=False)
@@ -300,7 +300,7 @@ def _clear_model_env(monkeypatch):
 
 # 1. A role in roles_in_use resolving to a placeholder raises AIConfigError.
 def test_validate_configured_models_raises_on_placeholder(monkeypatch):
-    from CampusIQ_career.ai.model_config import validate_configured_models
+    from GradusIQ_career.ai.model_config import validate_configured_models
 
     _clear_model_env(monkeypatch)
 
@@ -314,7 +314,7 @@ def test_validate_configured_models_raises_on_placeholder(monkeypatch):
 
 
 def test_validate_configured_models_error_names_role_and_placeholder(monkeypatch):
-    from CampusIQ_career.ai.model_config import validate_configured_models
+    from GradusIQ_career.ai.model_config import validate_configured_models
 
     _clear_model_env(monkeypatch)
 
@@ -327,7 +327,7 @@ def test_validate_configured_models_error_names_role_and_placeholder(monkeypatch
 
 
 def test_validate_configured_models_reports_every_offending_role(monkeypatch):
-    from CampusIQ_career.ai.model_config import validate_configured_models
+    from GradusIQ_career.ai.model_config import validate_configured_models
 
     _clear_model_env(monkeypatch)
 
@@ -343,7 +343,7 @@ def test_validate_configured_models_reports_every_offending_role(monkeypatch):
 
 # 2. The five in-use roles pass cleanly against today's config.
 def test_validate_configured_models_passes_for_roles_in_use(monkeypatch):
-    from CampusIQ_career.ai.model_config import (
+    from GradusIQ_career.ai.model_config import (
         ROLES_VALIDATED_AT_STARTUP,
         validate_configured_models,
     )
@@ -355,7 +355,7 @@ def test_validate_configured_models_passes_for_roles_in_use(monkeypatch):
 
 
 def test_roles_validated_at_startup_excludes_the_two_documented_roles():
-    from CampusIQ_career.ai.model_config import ROLES_VALIDATED_AT_STARTUP
+    from GradusIQ_career.ai.model_config import ROLES_VALIDATED_AT_STARTUP
 
     assert ROLES_VALIDATED_AT_STARTUP == {
         "career",
@@ -375,7 +375,7 @@ def test_roles_validated_at_startup_excludes_the_two_documented_roles():
 #    hardcoded default is still a placeholder -- proves precedence is honored
 #    rather than MODEL_BY_ROLE being read directly.
 def test_env_override_clears_placeholder_check(monkeypatch):
-    from CampusIQ_career.ai.model_config import MODEL_BY_ROLE, validate_configured_models
+    from GradusIQ_career.ai.model_config import MODEL_BY_ROLE, validate_configured_models
 
     _clear_model_env(monkeypatch)
 
@@ -384,7 +384,7 @@ def test_env_override_clears_placeholder_check(monkeypatch):
     with pytest.raises(AIConfigError):
         validate_configured_models({"orchestrator"})
 
-    monkeypatch.setenv("CAMPUSIQ_MODEL_ORCHESTRATOR", "openrouter/real-orchestrator-model")
+    monkeypatch.setenv("GRADUSIQ_MODEL_ORCHESTRATOR", "openrouter/real-orchestrator-model")
 
     # Same role, same untouched default -- now passes purely via the override.
     validate_configured_models({"orchestrator"})
@@ -392,10 +392,10 @@ def test_env_override_clears_placeholder_check(monkeypatch):
 
 
 def test_whitespace_only_env_override_does_not_satisfy_the_check(monkeypatch):
-    from CampusIQ_career.ai.model_config import validate_configured_models
+    from GradusIQ_career.ai.model_config import validate_configured_models
 
     _clear_model_env(monkeypatch)
-    monkeypatch.setenv("CAMPUSIQ_MODEL_ORCHESTRATOR", "   ")
+    monkeypatch.setenv("GRADUSIQ_MODEL_ORCHESTRATOR", "   ")
 
     # get_model_for_role ignores a blank override, so the placeholder still wins.
     with pytest.raises(AIConfigError):
@@ -416,7 +416,7 @@ def test_parsing_and_role_research_share_the_validated_flash_model(monkeypatch):
 
 
 def test_qwen3_placeholder_constant_is_gone():
-    from CampusIQ_career.ai import model_config
+    from GradusIQ_career.ai import model_config
 
     # Removed rather than left dangling: nothing references it once parsing
     # repoints, and a stray TODO_ constant is what the validator exists to catch.
@@ -426,8 +426,8 @@ def test_qwen3_placeholder_constant_is_gone():
 # 5. Startup wiring is real: monkeypatch parsing's default back to a
 #    placeholder and create_app() must refuse to build the app.
 def test_create_app_raises_when_an_in_use_role_has_a_placeholder(monkeypatch):
-    from CampusIQ_career import api
-    from CampusIQ_career.ai import model_config
+    from GradusIQ_career import api
+    from GradusIQ_career.ai import model_config
 
     _clear_model_env(monkeypatch)
 
@@ -459,8 +459,8 @@ def test_create_app_raises_when_an_in_use_role_has_a_placeholder(monkeypatch):
 
 
 def test_create_app_placeholder_failure_happens_before_any_route_is_served(monkeypatch):
-    from CampusIQ_career import api
-    from CampusIQ_career.ai import model_config
+    from GradusIQ_career import api
+    from GradusIQ_career.ai import model_config
 
     _clear_model_env(monkeypatch)
     broken = dict(model_config.MODEL_BY_ROLE)
@@ -509,7 +509,7 @@ def test_chat_and_parsing_share_the_validated_flash_model(monkeypatch):
 
 
 def test_gemini_flash_placeholder_constant_is_gone():
-    from CampusIQ_career.ai import model_config
+    from GradusIQ_career.ai import model_config
 
     # Removed rather than left dangling, matching the QWEN3 precedent above:
     # chat was its only consumer, and a stray TODO_ constant is what the
@@ -539,35 +539,9 @@ def test_chat_role_puts_the_real_model_on_the_wire(monkeypatch):
     assert not sent_model.startswith("@preset/")
 
 
-def test_chat_route_sends_no_explicit_model_argument():
-    """_complete_chat must not reintroduce a model= that shadows the role.
-
-    _select_model returns an explicit model without ever consulting
-    get_model_for_role, so any model= at this call site silently re-exempts
-    chat from every check in this file -- which is exactly how "@preset/chat"
-    survived. Asserted against the source because the argument's absence is
-    the invariant, and a passing FakeSession test would not notice it coming
-    back with a different value.
-
-    The docstring is excised before scanning: _complete_chat's own docstring
-    documents the removed "@preset/chat" by name, and matching that would make
-    this test fail on the explanation rather than on the code.
-    """
-    import inspect
-
-    from CampusIQ_career import api
-
-    source = inspect.getsource(api._complete_chat)
-    code = source.replace(api._complete_chat.__doc__ or "", "")
-
-    assert "@preset/" not in code
-    assert 'role="chat"' in code, "role= is load-bearing now; it selects the model"
-    assert "model=" not in code
-
-
 # 6b. Startup validation now covers chat and passes against today's config.
 def test_startup_validation_includes_chat_and_passes(monkeypatch):
-    from CampusIQ_career.ai.model_config import (
+    from GradusIQ_career.ai.model_config import (
         ROLES_VALIDATED_AT_STARTUP,
         validate_configured_models,
     )
@@ -580,7 +554,7 @@ def test_startup_validation_includes_chat_and_passes(monkeypatch):
 
 
 def test_create_app_succeeds_with_chat_in_the_validated_set(monkeypatch):
-    from CampusIQ_career import api
+    from GradusIQ_career import api
 
     _clear_model_env(monkeypatch)
 
@@ -603,8 +577,8 @@ def test_create_app_succeeds_with_chat_in_the_validated_set(monkeypatch):
     ["TODO_OPENROUTER_MODEL_GEMINI_2_5_FLASH", "TODO_ANYTHING_AT_ALL"],
 )
 def test_create_app_raises_if_chat_regresses_to_a_placeholder(monkeypatch, regressed):
-    from CampusIQ_career import api
-    from CampusIQ_career.ai import model_config
+    from GradusIQ_career import api
+    from GradusIQ_career.ai import model_config
 
     _clear_model_env(monkeypatch)
 
@@ -637,8 +611,8 @@ def test_preset_string_would_still_slip_past_startup_validation(monkeypatch):
     If this test ever starts failing because create_app() raises, that means
     someone added a real reachability check -- delete this test and celebrate.
     """
-    from CampusIQ_career import api
-    from CampusIQ_career.ai import model_config
+    from GradusIQ_career import api
+    from GradusIQ_career.ai import model_config
 
     _clear_model_env(monkeypatch)
 

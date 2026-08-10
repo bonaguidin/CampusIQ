@@ -1,4 +1,4 @@
-"""Mock student importer: writes the five data/students/student_*.json mock
+﻿"""Mock student importer: writes the five data/students/student_*.json mock
 students into Supabase (auth users + the schema from
 supabase/migrations/20260728000103_institution_grading_schema.sql).
 
@@ -36,7 +36,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 from supabase import Client, create_client
 
-from CampusIQ_career.academics.gpa import (
+from GradusIQ_career.academics.gpa import (
     CourseRecord,
     GradeMapRow,
     Institution,
@@ -56,7 +56,7 @@ def stop(message: str) -> None:
 def email_for_name(name: str) -> str:
     parts = name.strip().split()
     first, last = parts[0], parts[-1]
-    return f"{first.lower()}.{last.lower()}@campusiq.test"
+    return f"{first.lower()}.{last.lower()}@gradusiq.test"
 
 
 # ---------------------------------------------------------------------------
@@ -445,7 +445,7 @@ def run_verification(client: Client, url: str, publishable_key: str, test_passwo
     print("VERIFICATION (post-write read-back)")
     print("=" * 78)
 
-    from CampusIQ_career.academics.gpa import CourseRecord as _CR  # local alias
+    from GradusIQ_career.academics.gpa import CourseRecord as _CR  # local alias
 
     institutions_by_name = load_institutions(client)
     grade_maps_by_institution_id = load_grade_maps(client)
@@ -534,12 +534,12 @@ def run_verification(client: Client, url: str, publishable_key: str, test_passwo
 
     # -- RLS behavioral test as Jordan Reyes --------------------------
     print("\n" + "=" * 78)
-    print("RLS BEHAVIORAL TEST — signed in as jordan.reyes@campusiq.test")
+    print("RLS BEHAVIORAL TEST — signed in as jordan.reyes@gradusiq.test")
     print("=" * 78)
 
     jordan_client: Client = create_client(url, publishable_key)
     jordan_client.auth.sign_in_with_password(
-        {"email": "jordan.reyes@campusiq.test", "password": test_password}
+        {"email": "jordan.reyes@gradusiq.test", "password": test_password}
     )
 
     students_visible = jordan_client.table("students").select("*").execute().data
@@ -552,7 +552,7 @@ def run_verification(client: Client, url: str, publishable_key: str, test_passwo
     a_pass = len(students_visible) == 1 and len(career_profiles_visible) == 1
     print(f"   a. PASS: {a_pass}" if a_pass else f"   a. FAIL: {a_pass}")
 
-    priya_email = "priya.nair@campusiq.test"
+    priya_email = "priya.nair@gradusiq.test"
     priya_visible_students = [
         s for s in students_visible if s.get("name", "").lower().startswith("priya")
     ]
@@ -588,13 +588,13 @@ def main():
     url = os.environ.get("SUPABASE_URL")
     secret_key = os.environ.get("SUPABASE_SECRET_KEY")
     publishable_key = os.environ.get("SUPABASE_PUBLISHABLE_KEY")
-    test_password = os.environ.get("CAMPUSIQ_TEST_PASSWORD")
+    test_password = os.environ.get("GRADUSIQ_TEST_PASSWORD")
 
     if not url or not secret_key:
         stop("SUPABASE_URL and/or SUPABASE_SECRET_KEY are not set in .env.")
     if not test_password:
         stop(
-            "CAMPUSIQ_TEST_PASSWORD is not set. Set it (in .env or the environment) "
+            "GRADUSIQ_TEST_PASSWORD is not set. Set it (in .env or the environment) "
             "before running this script. No password is hardcoded or invented here."
         )
 

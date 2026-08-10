@@ -1,7 +1,9 @@
-# CareerOS — Gradus IQ
+# Gradus IQ
 
 AI-powered career and academic companion for Texas A&M students.
 Dallas AI Group 6 | 2026 Summer Cohort.
+
+© 2026 GradusIQ. All rights reserved. Unauthorized copying, modification, or distribution of this software, in whole or in part, is prohibited.
 
 ---
 
@@ -10,7 +12,7 @@ Dallas AI Group 6 | 2026 Summer Cohort.
 - [uv](https://docs.astral.sh/uv/getting-started/installation/) — Python package manager
 - Node.js 20+ for the React/Vite frontend
 - An OpenRouter API key for the primary Gradus IQ AI path
-- A shared `CAMPUSIQ_PROXY_SECRET` for the Vite/Vercel server-side proxy and backend.
+- A shared `GRADUSIQ_PROXY_SECRET` for the Vite/Vercel server-side proxy and backend.
 
 ---
 
@@ -41,7 +43,7 @@ analysis calls (FIT/GAP/SHIFT/PROFESSOR_COMMENTS) to work.
 **Terminal 1 — backend** (FastAPI bridge, port 8000):
 
 ```bash
-uv run uvicorn CampusIQ_career.api:app --reload --port 8000
+uv run uvicorn GradusIQ_career.api:app --reload --port 8000
 ```
 
 **Terminal 2 — frontend** (Vite dev server):
@@ -55,7 +57,7 @@ Vite prints a local URL (typically `http://localhost:5173`). Open it in a
 browser — you'll land on the login page with a student dropdown
 (mock/profile-select auth, no real credentials). Pick a student to enter
 the dashboard. The Vite dev server proxies `/api/*` requests to
-`localhost:8000` and attaches `CAMPUSIQ_PROXY_SECRET` server-side (configured
+`localhost:8000` and attaches `GRADUSIQ_PROXY_SECRET` server-side (configured
 in `frontend/vite.config.ts`). The secret is deliberately not `VITE_`-prefixed
 and is never available to browser modules.
 
@@ -64,15 +66,15 @@ and is never available to browser modules.
 The active frontend is React + Vite. In production the browser calls a
 same-origin Vercel Function, `frontend/api/proxy.mjs`; it does not call Render
 directly. The function validates the requested student/feature route, forwards
-it to Render, and adds `X-CampusIQ-Proxy-Secret` from server-only environment
+it to Render, and adds `X-GradusIQ-Proxy-Secret` from server-only environment
 configuration. Render rejects missing or incorrect credentials with HTTP 401
 using constant-time comparison.
 
 Configure these in **Vercel** and redeploy:
 
 ```bash
-CAMPUSIQ_BACKEND_URL=https://your-render-service.example
-CAMPUSIQ_PROXY_SECRET=<same-strong-random-value-as-render>
+GRADUSIQ_BACKEND_URL=https://your-render-service.example
+GRADUSIQ_PROXY_SECRET=<same-strong-random-value-as-render>
 VITE_SUPABASE_URL=https://your-project-ref.supabase.co
 VITE_SUPABASE_PUBLISHABLE_KEY=<publishable-anon-key>
 ```
@@ -87,11 +89,11 @@ different layer, configured separately, even where the values coincide.
 Configure these in **Render** and restart/redeploy:
 
 ```bash
-CAMPUSIQ_PROXY_SECRET=<same-strong-random-value-as-vercel>
-CAMPUSIQ_ALLOWED_ORIGINS=https://your-vercel-domain.example
-CAMPUSIQ_RATE_LIMIT_REQUESTS=10
-CAMPUSIQ_RATE_LIMIT_WINDOW_SECONDS=60
-CAMPUSIQ_MAX_CONCURRENT_AI_REQUESTS=2
+GRADUSIQ_PROXY_SECRET=<same-strong-random-value-as-vercel>
+GRADUSIQ_ALLOWED_ORIGINS=https://your-vercel-domain.example
+GRADUSIQ_RATE_LIMIT_REQUESTS=10
+GRADUSIQ_RATE_LIMIT_WINDOW_SECONDS=60
+GRADUSIQ_MAX_CONCURRENT_AI_REQUESTS=2
 OPENROUTER_API_KEY=<server-only-key>
 TAVILY_API_KEY=<server-only-key>
 SUPABASE_URL=https://your-project-ref.supabase.co
@@ -205,12 +207,12 @@ dashboard and future prompt/UI code.
 
 ## AI Architecture
 
-Campus IQ uses OpenRouter as the primary app AI gateway.
+Gradus IQ uses OpenRouter as the primary app AI gateway.
 
 ### Role-Based Model Routing
 
-Model routing is centralized in `CampusIQ_career/ai/model_config.py` and can be
-overridden with `CAMPUSIQ_MODEL_*` environment variables.
+Model routing is centralized in `GradusIQ_career/ai/model_config.py` and can be
+overridden with `GRADUSIQ_MODEL_*` environment variables.
 
 | Role | Purpose | Default model family |
 |---------|---------|---------|
@@ -232,17 +234,19 @@ OPENROUTER_API_KEY=your-openrouter-key-here
 Optional role overrides:
 
 ```bash
-CAMPUSIQ_MODEL_ORCHESTRATOR=
-CAMPUSIQ_MODEL_CAREER=
-CAMPUSIQ_MODEL_ACADEMIC=
-CAMPUSIQ_MODEL_PARSING=
-CAMPUSIQ_MODEL_CHAT=
-CAMPUSIQ_MODEL_REPORT=
+GRADUSIQ_MODEL_ORCHESTRATOR=
+GRADUSIQ_MODEL_CAREER=
+GRADUSIQ_MODEL_ACADEMIC=
+GRADUSIQ_MODEL_PARSING=
+GRADUSIQ_MODEL_CHAT=
+GRADUSIQ_MODEL_REPORT=
 ```
 
 Supabase is implemented and separate from the OpenRouter path documented above:
-`CampusIQ_career/supabase_client.py` builds a session-scoped client for the
+`GradusIQ_career/supabase_client.py` builds a session-scoped client for the
 `/api/v2/student/me/*` routes, against the applied schema in
 `supabase/migrations/`. It reads none of the variables listed here — see the
 Vercel and Render blocks under "Secure demo deployment" for the two pairs it
 does need.
+
+© 2026 GradusIQ. All rights reserved. Unauthorized copying, modification, or distribution of this software, in whole or in part, is prohibited.

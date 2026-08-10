@@ -1,4 +1,4 @@
-// To swap to Supabase: implement DataAdapter with supabase.from('students')
+﻿// To swap to Supabase: implement DataAdapter with supabase.from('students')
 // reads and a career PATCH; swap staticJsonAdapter for the new impl in AuthContext
 
 import type { StudentProfile, CareerBlock } from '../types/student';
@@ -28,7 +28,7 @@ export interface DataAdapter {
 // ── localStorage key helper ──────────────────────────────────────────────────
 
 function careerKey(studentId: number): string {
-  return `campus_iq_career_${studentId}`;
+  return `gradus_iq_career_${studentId}`;
 }
 
 // ── Static JSON + localStorage overlay implementation ────────────────────────

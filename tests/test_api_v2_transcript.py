@@ -18,9 +18,9 @@ from fastapi.testclient import TestClient
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas as rl_canvas
 
-from CampusIQ_career import api
-from CampusIQ_career.ai.types import AIResponse
-from CampusIQ_career.transcript import store as transcript_store
+from GradusIQ_career import api
+from GradusIQ_career.ai.types import AIResponse
+from GradusIQ_career.transcript import store as transcript_store
 
 
 TEST_PROXY_SECRET = "test-proxy-secret"
@@ -457,7 +457,7 @@ def test_terms_are_created_in_chronological_order_despite_page_order(db):
     client = fake_client(db)
     labels = ["Spring 2024", "Fall 2023", "Summer 2024", "Fall 2022"]
 
-    from CampusIQ_career.transcript.terms import resolve_terms
+    from GradusIQ_career.transcript.terms import resolve_terms
 
     resolution = resolve_terms(client, STUDENT_A, TAMU, labels)
 
@@ -474,7 +474,7 @@ def test_terms_are_created_in_chronological_order_despite_page_order(db):
 
 
 def test_existing_terms_are_reused_not_duplicated(db):
-    from CampusIQ_career.transcript.terms import resolve_terms
+    from GradusIQ_career.transcript.terms import resolve_terms
 
     client = fake_client(db)
     first = resolve_terms(client, STUDENT_A, TAMU, ["Fall 2023", "Spring 2024"])
@@ -488,7 +488,7 @@ def test_existing_terms_are_reused_not_duplicated(db):
 
 def test_differently_spelled_labels_collapse_onto_one_term(db):
     """'Fall 2023' and 'FALL 2023' are one term, not two."""
-    from CampusIQ_career.transcript.terms import resolve_terms
+    from GradusIQ_career.transcript.terms import resolve_terms
 
     client = fake_client(db)
     resolution = resolve_terms(
@@ -500,7 +500,7 @@ def test_differently_spelled_labels_collapse_onto_one_term(db):
 
 
 def test_a_second_upload_appends_sequence_without_renumbering(db):
-    from CampusIQ_career.transcript.terms import resolve_terms
+    from GradusIQ_career.transcript.terms import resolve_terms
 
     client = fake_client(db)
     resolve_terms(client, STUDENT_A, TAMU, ["Fall 2023"])
@@ -604,7 +604,7 @@ def test_unnormalized_code_still_matches_the_catalog(client, db, monkeypatch):
 
 def test_catalog_is_scoped_per_institution(db):
     """SMU has no rows in this catalog, so a TAMU code must not match for SMU."""
-    from CampusIQ_career.transcript.catalog import lookup_catalog_ids
+    from GradusIQ_career.transcript.catalog import lookup_catalog_ids
 
     client = fake_client(db)
     assert lookup_catalog_ids(client, TAMU, ["MATH 251"]) != {}
@@ -622,7 +622,7 @@ def test_catalog_misses_are_logged_with_the_raw_string(client, db, monkeypatch, 
     }
     monkeypatch.setattr(api, "build_client", lambda: FakeAI(json.dumps(parse)))
 
-    with caplog.at_level("INFO", logger="CampusIQ_career.transcript.catalog"):
+    with caplog.at_level("INFO", logger="GradusIQ_career.transcript.catalog"):
         upload(client)
 
     assert any("arts-999" in r.getMessage() for r in caplog.records), (

@@ -2,12 +2,12 @@ from copy import deepcopy
 
 import pytest
 
-from CampusIQ_career.ai.types import AIResponse
-from CampusIQ_career.features import gap as gap_module
-from CampusIQ_career.features import run_career_feature
-from CampusIQ_career.features.fit import FitRunner
-from CampusIQ_career.features.gap import GapRunner
-from CampusIQ_career.features.shift import ShiftRunner
+from GradusIQ_career.ai.types import AIResponse
+from GradusIQ_career.features import gap as gap_module
+from GradusIQ_career.features import run_career_feature
+from GradusIQ_career.features.fit import FitRunner
+from GradusIQ_career.features.gap import GapRunner
+from GradusIQ_career.features.shift import ShiftRunner
 
 
 class FakeClient:

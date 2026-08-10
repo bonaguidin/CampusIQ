@@ -3,7 +3,7 @@
 //
 // WHY NO NEW BACKEND ENDPOINT: the inserts run through the browser's own
 // session-scoped Supabase client (publishable key + the user's JWT), which is
-// byte-for-byte the same identity the backend uses -- CampusIQ_career/
+// byte-for-byte the same identity the backend uses -- GradusIQ_career/
 // supabase_client.py builds its client from the publishable key and the
 // caller's bearer token too, deliberately never the secret key. Both inserts
 // were exercised against the live database under a real non-admin session

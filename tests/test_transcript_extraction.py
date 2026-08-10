@@ -1,4 +1,4 @@
-"""Tests for CampusIQ_career.transcript.extraction.
+"""Tests for GradusIQ_career.transcript.extraction.
 
 FIXTURE STRATEGY: mirrors tests/test_resume_extraction.py -- every fixture is
 GENERATED in-process, not checked in as a binary file, so the geometry and the
@@ -8,7 +8,7 @@ than sealed inside an opaque blob.
 The fixtures here are transcript-shaped (course rows: code, title, credits,
 grade) because that column structure is the thing the shared extractors have to
 survive. reportlab is a dev-group dependency used only to WRITE fixture PDFs;
-CampusIQ_career/ never imports it.
+GradusIQ_career/ never imports it.
 """
 
 import io
@@ -19,7 +19,7 @@ from reportlab.lib import pdfencrypt
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas as rl_canvas
 
-from CampusIQ_career.transcript import (
+from GradusIQ_career.transcript import (
     TranscriptExtractionResult,
     extract_transcript_text,
 )

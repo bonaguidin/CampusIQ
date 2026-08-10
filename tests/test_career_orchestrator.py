@@ -2,8 +2,8 @@ from copy import deepcopy
 
 import pytest
 
-from CampusIQ_career.ai.types import AIResponse
-from CampusIQ_career.features.orchestrator import run_career_analysis, run_feature
+from GradusIQ_career.ai.types import AIResponse
+from GradusIQ_career.features.orchestrator import run_career_analysis, run_feature
 
 
 class QueueClient:

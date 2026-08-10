@@ -15,7 +15,7 @@ non-admin session token before this fake was written.
 import pytest
 from fastapi.testclient import TestClient
 
-from CampusIQ_career import api
+from GradusIQ_career import api
 
 
 TEST_PROXY_SECRET = "test-proxy-secret"
@@ -677,7 +677,7 @@ def test_no_visible_student_row_is_404(method, client, monkeypatch):
 
 @pytest.mark.parametrize("method", ["get", "patch"])
 def test_supabase_config_error_is_503(method, client, monkeypatch):
-    from CampusIQ_career.supabase_client import SupabaseConfigError
+    from GradusIQ_career.supabase_client import SupabaseConfigError
 
     monkeypatch.setattr(
         api,
@@ -707,7 +707,7 @@ def test_supabase_secret_key_is_never_read(method, db, monkeypatch):
     """
     import os
 
-    from CampusIQ_career import supabase_client as supabase_client_module
+    from GradusIQ_career import supabase_client as supabase_client_module
 
     seed(db, STUDENT_A, "a")
 
@@ -743,7 +743,7 @@ def test_supabase_secret_key_is_never_read(method, db, monkeypatch):
 
 @pytest.mark.parametrize("method", ["get", "patch"])
 def test_caller_token_reaches_postgrest(method, db, monkeypatch):
-    from CampusIQ_career import supabase_client as supabase_client_module
+    from GradusIQ_career import supabase_client as supabase_client_module
 
     seed(db, STUDENT_A, "a")
     built = []

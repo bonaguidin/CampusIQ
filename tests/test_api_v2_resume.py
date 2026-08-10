@@ -19,8 +19,8 @@ from fastapi.testclient import TestClient
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas as rl_canvas
 
-from CampusIQ_career import api
-from CampusIQ_career.ai.types import AIResponse
+from GradusIQ_career import api
+from GradusIQ_career.ai.types import AIResponse
 
 
 TEST_PROXY_SECRET = "test-proxy-secret"
@@ -505,7 +505,7 @@ def test_malformed_model_output_returns_structured_failure(label, text, client, 
 
 
 def test_ai_request_error_is_also_a_structured_failure(client, db, monkeypatch):
-    from CampusIQ_career.ai.errors import AIRequestError
+    from GradusIQ_career.ai.errors import AIRequestError
 
     patch_session(monkeypatch, db)
 
@@ -881,7 +881,7 @@ def test_supabase_secret_key_is_never_read(path, db, monkeypatch):
     """
     import os
 
-    from CampusIQ_career import supabase_client as supabase_client_module
+    from GradusIQ_career import supabase_client as supabase_client_module
 
     seed_unconfirmed(db, STUDENT_A, "cp-a")
 
@@ -918,7 +918,7 @@ def test_supabase_secret_key_is_never_read(path, db, monkeypatch):
 @pytest.mark.parametrize("path", [UPLOAD, CONFIRM])
 def test_caller_token_is_handed_to_postgrest(path, db, monkeypatch):
     """RLS only applies if the token actually reaches postgrest.auth()."""
-    from CampusIQ_career import supabase_client as supabase_client_module
+    from GradusIQ_career import supabase_client as supabase_client_module
 
     seed_unconfirmed(db, STUDENT_A, "cp-a")
     built: list[FakeSupabase] = []
@@ -959,7 +959,7 @@ def test_no_authorization_header_is_401(path, client, monkeypatch):
 
 @pytest.mark.parametrize("path", [UPLOAD, CONFIRM])
 def test_supabase_config_error_is_503(path, client, monkeypatch):
-    from CampusIQ_career.supabase_client import SupabaseConfigError
+    from GradusIQ_career.supabase_client import SupabaseConfigError
 
     monkeypatch.setattr(
         api,

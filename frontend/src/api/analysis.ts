@@ -1,4 +1,4 @@
-// Bridge to CampusIQ_career/api.py — the FastAPI wrapper around orchestrator.run_feature().
+// Bridge to GradusIQ_career/api.py — the FastAPI wrapper around orchestrator.run_feature().
 // Student identity here is the dashboard slug (e.g. "jordanReyes"), the same
 // slug dataAdapter.ts passes to GET /api/students/:slug/profile.
 

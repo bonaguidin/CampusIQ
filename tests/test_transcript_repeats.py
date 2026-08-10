@@ -11,15 +11,15 @@ from decimal import Decimal
 
 import pytest
 
-from CampusIQ_career.academics.gpa import (
+from GradusIQ_career.academics.gpa import (
     CourseRecord,
     GradeMapRow,
     Institution,
     compute_gpa,
 )
-from CampusIQ_career.transcript import repeats
-from CampusIQ_career.transcript.review import load_unconfirmed, project_row
-from CampusIQ_career.transcript.store import confirm_course_rows
+from GradusIQ_career.transcript import repeats
+from GradusIQ_career.transcript.review import load_unconfirmed, project_row
+from GradusIQ_career.transcript.store import confirm_course_rows
 
 
 TAMU = "inst-tamu"
@@ -667,7 +667,7 @@ def test_excluded_from_gpa_by_is_not_student_editable():
     Letting it be edited would create a value the next reconcile silently
     overwrites -- worse than not offering the field at all.
     """
-    from CampusIQ_career.transcript.review import (
+    from GradusIQ_career.transcript.review import (
         EDITABLE_FIELDS,
         SYSTEM_MANAGED_FIELDS,
         clean_edit_fields,
@@ -712,7 +712,7 @@ def test_reconciliation_failure_does_not_undo_a_successful_confirm(db, monkeypat
     def boom(*a, **k):
         raise RuntimeError("reconciliation exploded")
 
-    monkeypatch.setattr("CampusIQ_career.transcript.store.reconcile_repeats", boom)
+    monkeypatch.setattr("GradusIQ_career.transcript.store.reconcile_repeats", boom)
 
     result = confirm_course_rows(db, STUDENT)
 

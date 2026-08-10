@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect, useCallback, useRef } from 'react';
+﻿import React, { createContext, useState, useEffect, useCallback, useRef } from 'react';
 import type { Session, User } from '@supabase/supabase-js';
 import type { StudentProfile, CareerBlock } from '../types/student';
 import { staticJsonAdapter } from '../data/dataAdapter';
@@ -52,7 +52,7 @@ export interface AuthContextValue {
 
 export const AuthContext = createContext<AuthContextValue | null>(null);
 
-const SESSION_KEY = 'campus_iq_slug';
+const SESSION_KEY = 'gradus_iq_slug';
 
 // ── Provider ─────────────────────────────────────────────────────────────────
 
