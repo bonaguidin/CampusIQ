@@ -1,86 +1,366 @@
-import { useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { confirmTranscript, patchTranscriptRecord } from '../api/transcript';
-import type { TranscriptConfirmResult, TranscriptRecord, TranscriptReviewResult, TranscriptUploadResult } from '../lib/transcriptApi.mjs';
+import { GLYPH_EDITED, GLYPH_EMPTY, GLYPH_READ, isEmptyValue } from '../lib/resumeApi.mjs';
+import type { ReviewRow } from '../lib/resumeApi.mjs';
+import {
+  TRANSCRIPT_SECTION,
+  parseCreditHours,
+  transcriptChangedFields,
+  transcriptFieldChanged,
+} from '../lib/transcriptApi.mjs';
+import type {
+  TranscriptConfirmResult,
+  TranscriptRecord,
+  TranscriptReviewResult,
+  TranscriptUploadResult,
+} from '../lib/transcriptApi.mjs';
+import { CommitBar } from './review/CommitBar';
+import { CrossCheckNotice } from './review/CrossCheckNotice';
+import { EntryCard } from './review/EntryCard';
+import { RepeatExclusions } from './review/RepeatExclusions';
+import { TermGroup } from './review/TermGroup';
+import { TranscriptLedger } from './review/TranscriptLedger';
 
-type Draft = Pick<TranscriptRecord, 'course_code' | 'title' | 'credit_hours' | 'letter_grade' | 'status'>;
-const draftOf = (row: TranscriptRecord): Draft => ({ course_code: row.course_code, title: row.title, credit_hours: row.credit_hours, letter_grade: row.letter_grade, status: row.status });
+export interface TranscriptReviewProps {
+  accessToken: string;
+  review: TranscriptReviewResult & { ok: true };
+  uploadResult?: TranscriptUploadResult | null;
+  sourceName?: string;
+  onConfirmed(result: TranscriptConfirmResult): void;
+}
 
-export function TranscriptReview({ accessToken, review, uploadResult, sourceName, onConfirmed }: { accessToken: string; review: TranscriptReviewResult & { ok: true }; uploadResult?: TranscriptUploadResult | null; sourceName?: string; onConfirmed(result: TranscriptConfirmResult): void }) {
-  const [rows, setRows] = useState(review.records);
-  const [editing, setEditing] = useState<string | null>(null);
-  const [draft, setDraft] = useState<Draft | null>(null);
-  const [saving, setSaving] = useState(false);
-  const [saveError, setSaveError] = useState('');
+interface RowState {
+  message: string | null;
+  tone: 'error' | 'saved';
+  locked: boolean;
+}
+
+const DATE_FMT = new Intl.DateTimeFormat(undefined, {
+  year: 'numeric',
+  month: 'short',
+  day: '2-digit',
+});
+
+/** Sorts a term after every resolved one. Ported from the previous grouping. */
+const UNSEQUENCED = 9999;
+const UNRESOLVED_KEY = 'unresolved';
+
+/**
+ * Provenance glyph for a transcript field.
+ *
+ * Cannot be the shared fieldGlyph: that compares with a strict ===, and
+ * credit_hours arrives from the backend as the string "3.00" while the number
+ * FieldRow hands back is 3. A pure reformat would otherwise show the ✎ that
+ * means "you changed this", which is a lie about where the value came from.
+ */
+function transcriptGlyph(original: ReviewRow, draft: ReviewRow, fieldName: string) {
+  const changed = transcriptFieldChanged(original, draft, fieldName);
+  if (isEmptyValue(draft[fieldName])) return changed ? GLYPH_EMPTY : null;
+  return changed ? GLYPH_EDITED : GLYPH_READ;
+}
+
+/**
+ * Draft rows keep credit_hours as a NUMBER, parsed once on the way in.
+ *
+ * The decision is that the string/number boundary lives at the edit surface
+ * and nowhere else. Parsing here means FieldRow's number type receives what it
+ * expects, and formatCreditHours puts it back to the backend's 2dp string at
+ * the save boundary -- see transcriptChangedFields.
+ */
+function draftOf(row: TranscriptRecord): ReviewRow {
+  return { ...row, credit_hours: parseCreditHours(row.credit_hours) } as unknown as ReviewRow;
+}
+
+export function TranscriptReview({
+  accessToken,
+  review,
+  uploadResult,
+  sourceName,
+  onConfirmed,
+}: TranscriptReviewProps) {
+  const [records, setRecords] = useState<TranscriptRecord[]>(review.records);
+  const [drafts, setDrafts] = useState<Record<string, ReviewRow>>(() =>
+    Object.fromEntries(review.records.map((row) => [row.id, draftOf(row)])),
+  );
+  /**
+   * The rows exactly as the transcript parse produced them. Glyphs compare
+   * against this, never against `records` -- which is replaced by the server's
+   * saved row after each PATCH, so diffing against it would erase the edit
+   * marker the instant the edit succeeded. Same reasoning as CareerReview's
+   * baseline, and the same reason it is a separate piece of state.
+   */
+  const [baseline] = useState<Record<string, ReviewRow>>(() =>
+    Object.fromEntries(review.records.map((row) => [row.id, draftOf(row)])),
+  );
+  const [rowStates, setRowStates] = useState<Record<string, RowState>>({});
   const [confirming, setConfirming] = useState(false);
-  const [confirmError, setConfirmError] = useState('');
-  const editHeading = useRef<HTMLHeadingElement>(null);
+  const [justSaved, setJustSaved] = useState(false);
+  const [confirmError, setConfirmError] = useState<string | null>(null);
+  const [confirmBlocked, setConfirmBlocked] = useState<string | null>(null);
+
   const terms = useMemo(() => new Map(review.terms.map((term) => [term.id, term])), [review.terms]);
   const institution = review.institutions[0]?.name;
+
+  /**
+   * Courses grouped by term, ported from the previous implementation:
+   * a Map keyed on term_id, an 'unresolved' bucket for rows whose term could
+   * not be resolved, ordered by the term's own sequence with unsequenced
+   * groups last. Only the presentation below is new.
+   */
   const groups = useMemo(() => {
     const grouped = new Map<string, TranscriptRecord[]>();
-    for (const row of rows) {
-      const key = row.term_id ?? 'unresolved';
+    for (const row of records) {
+      const key = row.term_id ?? UNRESOLVED_KEY;
       grouped.set(key, [...(grouped.get(key) ?? []), row]);
     }
-    return [...grouped.entries()].sort(([a], [b]) => (terms.get(a)?.sequence ?? 9999) - (terms.get(b)?.sequence ?? 9999));
-  }, [rows, terms]);
-  const credits = rows.reduce((sum, row) => sum + (Number(row.credit_hours) || 0), 0);
+    return [...grouped.entries()].sort(
+      ([a], [b]) =>
+        (terms.get(a)?.sequence ?? UNSEQUENCED) - (terms.get(b)?.sequence ?? UNSEQUENCED),
+    );
+  }, [records, terms]);
 
-  function begin(row: TranscriptRecord) {
-    setEditing(row.id); setDraft(draftOf(row)); setSaveError('');
-    requestAnimationFrame(() => editHeading.current?.focus());
+  const creditsOf = useCallback(
+    (rows: TranscriptRecord[]) =>
+      rows
+        .reduce((sum, row) => sum + (parseCreditHours(drafts[row.id]?.credit_hours ?? row.credit_hours) ?? 0), 0)
+        .toFixed(2),
+    [drafts],
+  );
+
+  const catalogChecks = records.filter((row) => row.needs_catalog_review).length;
+
+  const setRowState = useCallback((id: string, state: RowState | null) => {
+    setRowStates((prev) => {
+      const next = { ...prev };
+      if (state === null) delete next[id];
+      else next[id] = state;
+      return next;
+    });
+  }, []);
+
+  /**
+   * Save one course's changes.
+   *
+   * The same shape as CareerReview.commit, because transcript/review.py raises
+   * the same four conditions by deliberate design: not-found, already-
+   * confirmed, conflict, and invalid. Each is handled the same way here --
+   * drop the row, lock it, or keep the typed value and say it did not save.
+   */
+  const commit = useCallback(
+    async (row: TranscriptRecord, overrides?: Record<string, unknown>): Promise<boolean> => {
+      const stored = drafts[row.id];
+      if (!stored) return false;
+      const draft = overrides ? { ...stored, ...overrides } : stored;
+
+      const changes = transcriptChangedFields(row as unknown as ReviewRow, draft);
+      if (Object.keys(changes).length === 0) return false;
+
+      const result = await patchTranscriptRecord(accessToken, row.id, changes);
+
+      if (result.ok && result.record) {
+        const saved = result.record;
+        setRecords((prev) => prev.map((item) => (item.id === saved.id ? saved : item)));
+        setDrafts((prev) => ({ ...prev, [saved.id]: draftOf(saved) }));
+        setRowState(row.id, null);
+        return true;
+      }
+
+      if (result.kind === 'not_found') {
+        setRecords((prev) => prev.filter((item) => item.id !== row.id));
+        setDrafts((prev) => {
+          const next = { ...prev };
+          delete next[row.id];
+          return next;
+        });
+        setRowState(row.id, null);
+        return false;
+      }
+
+      if (result.kind === 'already_confirmed') {
+        setDrafts((prev) => ({ ...prev, [row.id]: draftOf(row) }));
+        setRowState(row.id, { message: result.message, tone: 'error', locked: true });
+        return false;
+      }
+
+      setRowState(row.id, { message: result.message, tone: 'error', locked: false });
+      return false;
+    },
+    [accessToken, drafts, setRowState],
+  );
+
+  async function handleConfirm() {
+    setConfirming(true);
+    setConfirmError(null);
+    setConfirmBlocked(null);
+    try {
+      const result = await confirmTranscript(accessToken);
+      if (result.ok) {
+        setJustSaved(true);
+        window.setTimeout(() => onConfirmed(result), 450);
+        return;
+      }
+      // A pending grade scale is not a failed action -- it is a state of our
+      // data that the student can do nothing about, and the backend models it
+      // as its own 409 code for exactly that reason. Rendering it as an error
+      // beside a retry button would invite them to keep clicking.
+      if (result.kind === 'grade_scale_unverified') setConfirmBlocked(result.message);
+      else setConfirmError(result.message);
+    } finally {
+      setConfirming(false);
+    }
   }
-  async function save(row: TranscriptRecord) {
-    if (!draft || saving) return;
-    setSaving(true); setSaveError('');
-    const result = await patchTranscriptRecord(accessToken, row.id, draft);
-    setSaving(false);
-    if (!result.ok || !result.record) { setSaveError(result.message); return; }
-    setRows((current) => current.map((item) => item.id === row.id ? result.record! : item));
-    setEditing(null); setDraft(null);
-  }
-  async function confirm() {
-    if (confirming) return;
-    setConfirming(true); setConfirmError('');
-    const result = await confirmTranscript(accessToken);
-    setConfirming(false);
-    if (!result.ok) { setConfirmError(result.message); return; }
-    onConfirmed(result);
-  }
 
-  return <main className="transcript-shell">
-    <header className="transcript-review-header">
-      <div><p className="transcript-kicker">Transcript review</p><h1>Verify your academic record</h1><p>{institution ? `${institution} · ` : ''}{sourceName ? `Read from ${sourceName}` : 'Recovered from your saved review'}</p></div>
-      <dl className="transcript-totals"><div><dt>Courses</dt><dd>{rows.length}</dd></div><div><dt>Attempted credits</dt><dd>{credits.toFixed(2)}</dd></div><div><dt>Catalog checks</dt><dd>{review.pendingCatalogReview}</dd></div></dl>
-    </header>
+  const jumpToCheck = useCallback(() => {
+    const card = document.querySelector<HTMLElement>('[data-catalog-check]');
+    if (!card) return;
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    card.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'center' });
+  }, []);
 
-    <div className="transcript-notice" role="note"><strong>Credit classification needs verification.</strong> Transcript imports currently default courses to resident credit; transfer and dual-enrollment status are not detected yet.</div>
-    {uploadResult && (uploadResult.rejected.length > 0 || uploadResult.warnings.length > 0) && <div className="transcript-error" role="alert"><strong>Some extracted content needs attention.</strong><p>{uploadResult.rejected.length} course row(s) could not be safely stored. {uploadResult.warnings[0] ?? 'Review the stored courses below against your original transcript.'}</p></div>}
+  const totalCredits = creditsOf(records);
+  const editedCount = records.filter((row) =>
+    TRANSCRIPT_SECTION.fields.some((field) =>
+      transcriptFieldChanged(baseline[row.id], drafts[row.id], field.name),
+    ),
+  ).length;
 
-    {groups.map(([termId, termRows]) => <section className="transcript-paper transcript-term" key={termId} aria-labelledby={`term-${termId}`}>
-      <header><p className="transcript-kicker">Academic term</p><h2 id={`term-${termId}`}>{terms.get(termId)?.label ?? 'Term not resolved'}</h2></header>
-      <div className="transcript-course-list">
-        {termRows.map((row) => <article className={`transcript-course ${row.needs_catalog_review ? 'needs-review' : ''}`} key={row.id}>
-          {editing === row.id && draft ? <div className="transcript-edit-form">
-            <h3 ref={editHeading} tabIndex={-1}>Correct {row.course_code}</h3>
-            <label>Course code<input value={draft.course_code} onChange={(e) => setDraft({ ...draft, course_code: e.target.value })} /></label>
-            <label>Course title<input value={draft.title ?? ''} onChange={(e) => setDraft({ ...draft, title: e.target.value || null })} /></label>
-            <label>Credits<input type="number" min="0" max="99.99" step="0.01" value={draft.credit_hours} onChange={(e) => setDraft({ ...draft, credit_hours: e.target.value })} /></label>
-            <label>Grade<input value={draft.letter_grade ?? ''} onChange={(e) => setDraft({ ...draft, letter_grade: e.target.value || null })} /></label>
-            <label>Status<select value={draft.status} onChange={(e) => setDraft({ ...draft, status: e.target.value as Draft['status'] })}><option value="completed">Completed</option><option value="in_progress">In progress</option></select></label>
-            {saveError && <p className="transcript-error" role="alert">{saveError}</p>}
-            <div className="transcript-actions"><button className="btn btn-primary" type="button" disabled={saving} onClick={() => void save(row)}>{saving ? 'Saving…' : 'Save correction'}</button><button className="btn btn-ghost" type="button" disabled={saving} onClick={() => { setEditing(null); setDraft(null); setSaveError(''); }}>Cancel</button></div>
-          </div> : <>
-            <div className="transcript-course-main"><div><p className="transcript-code">{row.course_code}</p><h3>{row.title || 'Untitled course'}</h3></div><button className="transcript-edit-button" type="button" onClick={() => begin(row)} aria-label={`Edit ${row.course_code}`}>Edit</button></div>
-            <dl className="transcript-course-meta"><div><dt>Credits</dt><dd>{row.credit_hours}</dd></div><div><dt>Grade</dt><dd>{row.letter_grade ?? '—'}</dd></div><div><dt>Status</dt><dd>{row.status === 'in_progress' ? 'In progress' : 'Completed'}</dd></div><div><dt>Credit type</dt><dd>{row.credit_type === 'resident' ? 'Resident (default)' : row.credit_type.replace('_', ' ')}</dd></div></dl>
-            <div className="transcript-flags">{row.needs_catalog_review && <span>Course code needs catalog review</span>}{!row.counts_toward_gpa && <span>Does not currently count toward GPA</span>}{row.repeat_exclusion && <span>Excluded from GPA: replaced by {row.repeat_exclusion.superseded_by?.course_code ?? 'a later attempt'}; earned hours still count</span>}</div>
-          </>}
-        </article>)}
+  return (
+    <div className="rv-bg">
+      <div className="rv-page">
+        <header className="rv-masthead">
+          <div className="rv-masthead-top">
+            <span className="rv-wordmark">GradusIQ</span>
+            {(sourceName || institution) && (
+              <span className="rv-provenance">
+                {sourceName && <span className="rv-provenance-file">{sourceName}</span>}
+                {institution && <span>{institution}</span>}
+                <span>read {DATE_FMT.format(new Date())}</span>
+              </span>
+            )}
+          </div>
+          {/* The rv-masthead STRUCTURE is the parity that was missing (wordmark,
+              provenance, glyph legend). The headline stays transcript-specific
+              rather than borrowing the resume screen's wording. */}
+          <h1 className="rv-headline">Verify your academic record</h1>
+          <p className="rv-standfirst">
+            Every course below came off your transcript and none of it is saved yet. A{' '}
+            <span className="rv-inline-glyph">·</span> means we read it as-is, a{' '}
+            <span className="rv-inline-glyph rv-glyph-edited">✎</span> means you changed it. Click
+            anything to correct it — edits save as you go.
+          </p>
+        </header>
+
+        <TranscriptLedger
+          courses={records.length}
+          credits={totalCredits}
+          catalogChecks={catalogChecks}
+          repeatExclusions={review.excludedByRepeat.length}
+          onJumpToCheck={jumpToCheck}
+        />
+
+        {uploadResult && <CrossCheckNotice crossCheck={uploadResult.crossCheck} />}
+
+        {groups.map(([termId, termRows]) => (
+          <TermGroup
+            key={termId}
+            label={terms.get(termId)?.label ?? 'Term not resolved'}
+            count={termRows.length}
+            credits={creditsOf(termRows)}
+          >
+            {termRows.map((row, index) => {
+              const state = rowStates[row.id];
+              return (
+                <EntryCard
+                  key={row.id}
+                  table="course_records"
+                  section={TRANSCRIPT_SECTION}
+                  original={baseline[row.id] ?? (row as unknown as ReviewRow)}
+                  draft={drafts[row.id] ?? (row as unknown as ReviewRow)}
+                  index={index}
+                  locked={state?.locked ?? false}
+                  message={state?.message ?? null}
+                  tone={state?.tone ?? 'saved'}
+                  glyphFor={transcriptGlyph}
+                  // Every course has every field, so an empty value is a
+                  // correction to make in place, not a gap to invite.
+                  hideGaps
+                  flags={<CourseFlags row={row} />}
+                  onChange={(fieldName, next) =>
+                    setDrafts((prev) => ({
+                      ...prev,
+                      [row.id]: { ...prev[row.id], [fieldName]: next },
+                    }))
+                  }
+                  onCommit={(overrides) => commit(row, overrides)}
+                />
+              );
+            })}
+          </TermGroup>
+        ))}
+
+        <RepeatExclusions rows={review.excludedByRepeat} terms={terms} />
       </div>
-    </section>)}
 
-    {review.excludedByRepeat.length > 0 && <section className="transcript-paper transcript-repeat-summary"><p className="transcript-kicker">Repeat policy</p><h2>Attempts excluded from GPA</h2>{review.excludedByRepeat.map((row) => <p key={row.id}><strong>{row.course_code}</strong> ({row.letter_grade ?? 'no grade'}) was replaced by {row.repeat_exclusion?.superseded_by?.course_code ?? 'a later attempt'}. It still counts toward earned hours.</p>)}</section>}
+      <CommitBar
+        counters={{
+          read: records.length,
+          gaps: catalogChecks,
+          edited: editedCount,
+          total: records.length,
+          filledRatio: 1,
+        }}
+        confirming={confirming}
+        justSaved={justSaved}
+        error={confirmError}
+        blocked={confirmBlocked}
+        confirmLabel={`Confirm ${String(records.length)} courses`}
+        statusOverride={
+          catalogChecks > 0
+            ? `Confirming saves ${String(records.length)} courses worth ${totalCredits} credits. ${String(catalogChecks)} still ${catalogChecks === 1 ? 'needs' : 'need'} a catalog check.`
+            : `Confirming saves ${String(records.length)} courses worth ${totalCredits} credits.`
+        }
+        onConfirm={() => {
+          void handleConfirm();
+        }}
+      />
+    </div>
+  );
+}
 
-    <footer className="transcript-commit"><div><strong>Ready to confirm?</strong><p>Confirming makes these records part of your academic profile. GPA is calculated by the backend after confirmation.</p>{confirmError && <p className="transcript-error" role="alert">{confirmError}</p>}</div><button className="btn btn-primary" type="button" disabled={confirming || editing !== null} onClick={() => void confirm()}>{confirming ? 'Confirming…' : `Confirm ${rows.length} courses`}</button></footer>
-  </main>;
+/**
+ * Card-level annotations for one course.
+ *
+ * Card level, not field level: needs_catalog_review is a fact about the course
+ * record as a whole, and no field-level provenance pattern exists on either
+ * the resume or the transcript side to extend. Driven off the backend's
+ * precomputed boolean rather than re-deriving catalog_course_id IS NULL here,
+ * so the client cannot disagree with the server about what counts as matched.
+ */
+function CourseFlags({ row }: { row: TranscriptRecord }) {
+  const flags: string[] = [];
+  if (row.needs_catalog_review) flags.push('No catalog match — check the course code');
+  if (!row.counts_toward_gpa) flags.push('Does not count toward GPA');
+  // Carried over from the previous card's meta row. Not a warning, but worth
+  // stating: transcript imports default every course to resident credit, and
+  // transfer/dual-enrollment are not detected yet, so a student checking their
+  // record needs to see what was assumed.
+  flags.push(
+    row.credit_type === 'resident'
+      ? 'Resident (default)'
+      : row.credit_type.replace('_', ' '),
+  );
+  if (flags.length === 0) return null;
+
+  return (
+    <ul
+      className="rv-card-flags"
+      {...(row.needs_catalog_review ? { 'data-catalog-check': row.id } : {})}
+    >
+      {flags.map((flag) => (
+        <li key={flag} className="rv-card-flag">
+          {flag}
+        </li>
+      ))}
+    </ul>
+  );
 }

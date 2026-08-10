@@ -19,16 +19,9 @@ interface RequireAuthProps {
  *                 through, so rendering the dashboard without one produces a
  *                 page of 404s.
  *
- * WHERE THE SESSION PATH NOW GOES: a real student who reaches /dashboard is
- * redirected to /resume rather than shown DashboardPage. DashboardPage reads
- * the DEMO `profile` from useAuth and dereferences profile.courses /
- * .enrollments / .assignments directly, so for a session-path student that
- * value is null and the page cannot render anything meaningful. The resume
- * flow is the only thing a real student can currently do. /dashboard stays
- * registered and reachable because the demo path above still needs it.
- *
- * No "already uploaded, skip ahead" logic: there is no dashboard worth sending
- * a returning student to yet, so ready always lands on /resume.
+ * The session path renders the same route through its authenticated dashboard
+ * boundary. DashboardPage adapts `studentAccount.profile.intelligence_profile`
+ * and never substitutes demo data for a real account.
  *
  * ON THE TWO LOADING FLAGS: they can differ, and are not collapsed here.
  * `profileLoading` covers the sessionStorage demo restore; `sessionLoading`
@@ -72,10 +65,9 @@ export function RequireAuth({ children }: RequireAuthProps) {
     return <Spinner />;
   }
 
-  // 3. Session plus a confirmed students row -> the resume flow, not the
-  //    dashboard. See the note above on why.
+  // 3. Session plus a confirmed students row -> authenticated dashboard.
   if (studentAccount.status === 'ready') {
-    return <Navigate to="/resume" replace />;
+    return <>{children}</>;
   }
 
   // 4. Signed in, but the account is not usable: either nothing to provision

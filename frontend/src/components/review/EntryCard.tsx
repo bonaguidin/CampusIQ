@@ -1,11 +1,13 @@
+import type { ReactNode } from 'react';
 import { useState } from 'react';
 import { REVIEW_SECTIONS, fieldGlyph, isEmptyValue } from '../../lib/resumeApi.mjs';
-import type { ReviewField, ReviewRow, SectionKey } from '../../lib/resumeApi.mjs';
+import type { ReviewField, ReviewRow, ReviewSection, SectionKey } from '../../lib/resumeApi.mjs';
 import { FieldRow } from './FieldRow';
 import { GapPills } from './GapPills';
 
 export interface EntryCardProps {
-  table: SectionKey;
+  /** Identity for DOM ids. A SectionKey for resume; any key for another surface. */
+  table: SectionKey | string;
   original: ReviewRow;
   draft: ReviewRow;
   index: number;
@@ -15,6 +17,27 @@ export interface EntryCardProps {
   onChange(fieldName: string, next: unknown): void;
   /** Resolves to whether a save round-tripped; gates FieldRow's confirmation flash. */
   onCommit(overrides?: Record<string, unknown>): Promise<boolean> | boolean;
+  /**
+   * The field config to render. Defaults to REVIEW_SECTIONS[table], so every
+   * existing resume call site is unchanged. Transcript passes its own parallel
+   * section rather than being registered in the career table map -- see
+   * TRANSCRIPT_SECTION for why the registries stay separate.
+   */
+  section?: ReviewSection;
+  /**
+   * Provenance glyph for one field. Defaults to the shared fieldGlyph.
+   * Transcript overrides it because credit_hours arrives as a string and is
+   * edited as a number, so a raw === comparison would report a pure reformat
+   * as an edit.
+   */
+  glyphFor?(original: ReviewRow, draft: ReviewRow, fieldName: string): string | null;
+  /**
+   * Card-level annotations (catalog review, repeat exclusion). Rendered under
+   * the header. Resume passes nothing and is unaffected.
+   */
+  flags?: ReactNode;
+  /** Suppresses the gap-pill row for surfaces where every field is expected. */
+  hideGaps?: boolean;
 }
 
 /**
@@ -26,8 +49,7 @@ export interface EntryCardProps {
  * titleField but a blank value still numbers, because there really are others
  * to tell it apart from.
  */
-function titleFor(table: SectionKey, row: ReviewRow, index: number): string {
-  const section = REVIEW_SECTIONS[table];
+function titleFor(section: ReviewSection, row: ReviewRow, index: number): string {
   const field = section.titleField;
   if (!field) return section.label;
   const value = row[field];
@@ -41,8 +63,21 @@ function titleFor(table: SectionKey, row: ReviewRow, index: number): string {
  * derived -- no per-section subtitle config to drift out of sync with the
  * fields actually present.
  */
-function subtitleFor(table: SectionKey, row: ReviewRow): string {
-  const section = REVIEW_SECTIONS[table];
+function subtitleFor(section: ReviewSection, row: ReviewRow): string {
+  // An explicit list wins: the derived scan below picks the first two filled
+  // non-title fields, which is right for a resume entry but would give a
+  // course its own title back instead of the credits and grade that
+  // distinguish it.
+  if (section.subtitleFields) {
+    const named: string[] = [];
+    for (const name of section.subtitleFields) {
+      const value = row[name];
+      if (typeof value === 'string' && value.trim()) named.push(value.trim());
+      else if (typeof value === 'number') named.push(String(value));
+    }
+    return named.join(' · ');
+  }
+
   const parts: string[] = [];
   for (const field of section.fields) {
     if (field.name === section.titleField) continue;
@@ -68,12 +103,16 @@ export function EntryCard({
   tone,
   onChange,
   onCommit,
+  section: sectionProp,
+  glyphFor = fieldGlyph,
+  flags,
+  hideGaps = false,
 }: EntryCardProps) {
   // Fields promoted from a gap pill this session. They render as real rows even
   // while still empty, so the student can type into what they just clicked --
   // without this, an empty field would immediately collapse back into a pill.
   const [promoted, setPromoted] = useState<string[]>([]);
-  const section = REVIEW_SECTIONS[table];
+  const section = sectionProp ?? REVIEW_SECTIONS[table as SectionKey];
   const idPrefix = `${table}:${original.id}`;
 
   const shown: ReviewField[] = [];
@@ -87,12 +126,14 @@ export function EntryCard({
   return (
     <article className="rv-card">
       <header className="rv-card-head">
-        <h3 className="rv-card-title">{titleFor(table, draft, index)}</h3>
-        {subtitleFor(table, draft) && (
-          <p className="rv-card-sub">{subtitleFor(table, draft)}</p>
+        <h3 className="rv-card-title">{titleFor(section, draft, index)}</h3>
+        {subtitleFor(section, draft) && (
+          <p className="rv-card-sub">{subtitleFor(section, draft)}</p>
         )}
         {locked && <span className="rv-card-locked">confirmed · read only</span>}
       </header>
+
+      {flags}
 
       <div className="rv-card-fields">
         {shown.map((field) => (
@@ -100,7 +141,7 @@ export function EntryCard({
             key={field.name}
             field={field}
             idPrefix={idPrefix}
-            glyph={fieldGlyph(original, draft, field.name)}
+            glyph={glyphFor(original, draft, field.name)}
             value={draft[field.name]}
             locked={locked}
             autoEdit={promoted.includes(field.name) && isEmptyValue(draft[field.name])}
@@ -110,7 +151,7 @@ export function EntryCard({
         ))}
       </div>
 
-      {!locked && (
+      {!locked && !hideGaps && (
         <GapPills
           fields={gaps}
           idPrefix={idPrefix}

@@ -1,0 +1,140 @@
+# CI — backend (pytest) and frontend (node --test)
+#
+# STATUS BADGE (not added yet — needs review first):
+# README.md has no badge row today. The natural spot is a new line 5, directly
+# under "Dallas AI Group 6 | 2026 Summer Cohort." and above the © line:
+#
+#   [![CI](https://github.com/bonaguidin/GradusIQ/actions/workflows/ci.yml/badge.svg)](https://github.com/bonaguidin/GradusIQ/actions/workflows/ci.yml)
+#
+# That is a one-line addition, so it can land with this file if wanted. It is
+# left out of this pass so the workflow can be reviewed on its own.
+#
+# ---------------------------------------------------------------------------
+# Why the versions below are pinned explicitly rather than left to the runner:
+#
+# Python: .python-version (3.11) used to be gitignored, so it did not exist in
+# a fresh clone. Verified in a clean worktree at the time — uv had no pin to
+# read and built the venv on 3.12 instead of the 3.11 every dev machine uses,
+# and pyproject's bare ">=3.11" would never have caught it. The file is now
+# committed, so uv and CI read the same pin and this job needs no hardcoded
+# number.
+#
+# Node: .nvmrc is read via node-version-file rather than a hardcoded number, so
+# this workflow cannot drift from .nvmrc — changing that file changes CI in the
+# same commit. Project history has runners defaulting to Node 16 against a
+# pinned 20 and breaking Vite silently; this makes that impossible.
+#
+# No secrets anywhere in this workflow — verified, not assumed.
+#
+# Backend: no env vars at all. Every test that needs config sets it with
+# monkeypatch.setenv, and the ones covering missing-key behaviour use
+# monkeypatch.delenv. Verified in a clean worktree with OPENROUTER_API_KEY /
+# TAVILY_API_KEY / SUPABASE_* unset and no .env present — 743 passed, 1
+# skipped (that skip is data/.cache/ being gitignored, and is expected in CI).
+# Adding placeholder keys there would be worse than useless: it would mask the
+# unconfigured-env behaviour those tests exist to pin down.
+#
+# Frontend: needs two VITE_ vars, and PLACEHOLDER VALUES ARE ENOUGH. See the
+# job below for why. No real Supabase project is contacted.
+
+name: CI
+
+on:
+  pull_request:
+    branches: [main, dev]
+  push:
+    # Direct pushes to these branches have happened before, so they are checked
+    # too — PR-only triggers would let those land unverified.
+    branches: [main, dev]
+
+# A new push to a PR makes the in-flight run obsolete; cancel it rather than
+# paying for both. Never cancels on main/dev, where every commit's result is
+# worth keeping.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  backend:
+    name: Backend (pytest)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python from .python-version
+        uses: actions/setup-python@v5
+        with:
+          # Reads .python-version verbatim (currently "3.11"), the same file
+          # uv reads on every dev machine. Same pattern as node-version-file
+          # below, so CI cannot drift from what is committed.
+          python-version-file: .python-version
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        # --frozen fails if uv.lock is out of sync with pyproject.toml instead
+        # of silently re-resolving, so CI tests the locked dependency set.
+        run: uv sync --frozen
+
+      - name: Run tests
+        # testpaths = ["tests"] and pythonpath = ["."] come from
+        # [tool.pytest.ini_options] in pyproject.toml, so bare pytest is the
+        # whole command. A non-zero exit fails the job; nothing wraps this.
+        run: uv run --frozen pytest
+
+  frontend:
+    name: Frontend (node --test)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        # package.json, package-lock.json and tests/ all live here. The test
+        # script is "node --test tests/", relative to this directory.
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node from .nvmrc
+        uses: actions/setup-node@v4
+        with:
+          # Reads .nvmrc verbatim (currently "20"). Not "latest", not "lts",
+          # not the runner default.
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        # ci, not install: installs exactly package-lock.json and fails if it
+        # disagrees with package.json.
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        # 4 of the 9 test files call chromium.launch(). npm ci installs the
+        # playwright package but NOT the browser binaries, so without this the
+        # suite fails on a fresh runner while passing locally off a warm
+        # ~/.cache/ms-playwright. --with-deps adds the system libraries the
+        # ubuntu runner lacks. Only chromium is used, so only chromium is
+        # fetched. npx resolves the version npm ci just installed, keeping the
+        # browser matched to the lockfile.
+        run: npx playwright install --with-deps chromium
+
+      - name: Run tests
+        # Exactly the package.json "test" script. Non-zero exit fails the job.
+        #
+        # These two are supplied by frontend/.env locally, which is GITIGNORED
+        # and therefore absent in CI. Without them 3 of the 108 tests
+        # (authenticatedDashboard, resumeRecovery, transcriptFlow) time out
+        # after 30s waiting for a heading that never renders, because the
+        # Supabase client cannot initialise and the app never mounts.
+        #
+        # Placeholders are sufficient and real credentials are NOT needed —
+        # verified by running the suite in a clean checkout with exactly these
+        # values: 108/108 pass. The tests intercept their own API calls with a
+        # vite middleware plugin, so no request ever leaves the runner. Vite
+        # picks up VITE_-prefixed process env vars without an .env file.
+        env:
+          VITE_SUPABASE_URL: https://example.supabase.co
+          VITE_SUPABASE_PUBLISHABLE_KEY: test-publishable-key
+        run: npm test

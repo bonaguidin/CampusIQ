@@ -8,8 +8,10 @@ import { AnalysisPanel, type AnalysisPhase } from './AnalysisPanel';
 // overall_fit_summary). Confirmed against real (non-mocked) DeepSeek R1 output —
 // see frontend/src/types/analysis.ts.
 export function FitAnalysisPanel() {
-  const { slug } = useAuth();
-  const { state, trigger } = useAnalysisRun(() => analyzeFit(slug ?? ''));
+  const { slug, session } = useAuth();
+  const { state, trigger } = useAnalysisRun(() =>
+    analyzeFit({ slug, accessToken: session?.access_token ?? null }),
+  );
 
   const phase: AnalysisPhase =
     state.phase === 'idle'

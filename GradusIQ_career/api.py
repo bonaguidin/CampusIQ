@@ -38,7 +38,11 @@ from GradusIQ_career.ai.openrouter_client import (
 )
 from GradusIQ_career.features.base import FeatureResult
 from GradusIQ_career.features.orchestrator import RUNNERS, run_feature
-from GradusIQ_career.profile_builder import build_profile_from_supabase
+from GradusIQ_career.profile_builder import (
+    build_profile_from_supabase,
+    build_student_intelligence_profile,
+    canonical_to_legacy_profile,
+)
 from GradusIQ_career.resume.extraction import extract_resume_text
 from GradusIQ_career.resume.parser import parse_resume_text
 from GradusIQ_career.resume.review import (
@@ -815,6 +819,19 @@ def _me_profile(request: Request) -> tuple[dict, str]:
     return build_profile_from_supabase(client, student_id).profile, str(student_id)
 
 
+def _me_canonical_feature_profile(request: Request) -> tuple[dict, str]:
+    """Build one canonical profile, then adapt it for the existing runners.
+
+    FIT/GAP/SHIFT still intentionally consume their established dictionary
+    contract. Their authenticated source of truth is canonical, however, and
+    no independent legacy database reconstruction occurs on this path.
+    """
+    client = _session_client(request)
+    student_id = _resolve_session_student_id(client)
+    canonical = build_student_intelligence_profile(client, student_id)
+    return canonical_to_legacy_profile(canonical), str(student_id)
+
+
 @router.post(
     "/api/v2/student/me/analyze/{feature}",
     dependencies=[Depends(authorize_proxy_request)],
@@ -827,7 +844,13 @@ def analyze_me(request: Request, feature: str) -> dict:
             status_code=404,
             detail=f"Unknown feature '{feature}'. Expected one of: {supported}.",
         )
-    profile, slug = _me_profile(request)
+    # Professor comments still require the demo/Canvas-era submissions shape,
+    # which StudentIntelligenceProfile deliberately does not fabricate. Keep
+    # that route on its existing legacy path; Phase 3 is career features only.
+    if internal_name in {"FIT", "GAP", "SHIFT"}:
+        profile, slug = _me_canonical_feature_profile(request)
+    else:
+        profile, slug = _me_profile(request)
     return _run_protected_feature(request, internal_name, slug, profile=profile)
 
 
@@ -850,8 +873,13 @@ def chat_me(request: Request, body: ChatRequest) -> dict:
     dependencies=[Depends(authorize_proxy_request)],
 )
 def get_me_profile(request: Request) -> dict:
-    profile, _slug = _me_profile(request)
-    return profile
+    client = _session_client(request)
+    student_id = _resolve_session_student_id(client)
+    # Additive evolution: retain the runner/dashboard compatibility keys while
+    # exposing the validated domain contract under an explicit versioned key.
+    canonical = build_student_intelligence_profile(client, student_id)
+    legacy = canonical_to_legacy_profile(canonical)
+    return {**legacy, "intelligence_profile": canonical.model_dump(mode="json")}
 
 
 # ── Resume ingestion ─────────────────────────────────────────────────────────

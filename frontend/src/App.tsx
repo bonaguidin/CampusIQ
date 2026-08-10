@@ -12,12 +12,8 @@ export default function App() {
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/signup" element={<SignUpPage />} />
-      {/*
-        /dashboard keeps RequireAuth: it still serves the demo path unchanged.
-        A real (session-path) student is redirected from there to /resume,
-        because DashboardPage renders from the demo profile and shows nothing
-        for them. See RequireAuth's own note.
-      */}
+      {/* RequireAuth admits either a demo profile or a ready student account;
+          DashboardPage keeps their data paths separate. */}
       <Route
         path="/dashboard"
         element={

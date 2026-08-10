@@ -14,7 +14,17 @@ export interface LedgerBarProps {
  * changed" and becomes visual noise. prefers-reduced-motion is handled in CSS,
  * where the animation is simply not applied -- the number still updates.
  */
-function Counter({ value, label, tone }: { value: number; label: string; tone?: 'gap' }) {
+export function Counter({
+  value,
+  label,
+  tone,
+}: {
+  value: number | string;
+  label: string;
+  tone?: 'gap';
+}) {
+  // Accepts a string so a formatted total (credits, "12.00") can bump the same
+  // way a plain count does. The bump keys on inequality, which works for both.
   const [bump, setBump] = useState(false);
   const previous = useRef(value);
 

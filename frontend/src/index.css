@@ -2079,6 +2079,71 @@ a {
   padding: var(--sp-3) 0;
 }
 
+.readiness-state {
+  text-transform: capitalize;
+}
+
+.real-profile-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-4);
+}
+
+.real-profile-card,
+.real-empty {
+  padding: var(--sp-5);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.real-profile-card h3,
+.real-empty h3 {
+  margin-top: 0;
+}
+
+.real-item-list,
+.real-item,
+.real-course-table,
+.real-course-row {
+  display: grid;
+  gap: var(--sp-2);
+}
+
+.real-item {
+  padding-block: var(--sp-2);
+  border-bottom: 1px solid var(--line);
+}
+
+.real-item span,
+.real-course-row small,
+.real-note {
+  color: var(--muted);
+}
+
+.real-course-row {
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  padding: var(--sp-4);
+  border-bottom: 1px solid var(--line);
+}
+
+.real-course-row span:first-child {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+@media (max-width: 640px) {
+  .real-profile-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .real-course-row {
+    grid-template-columns: 1fr;
+  }
+}
+
 .snapshot-card {
   /* Used by AcademicSnapshot — now just a plain container */
 }
@@ -2340,6 +2405,11 @@ a {
    ══════════════════════════════════════════════════════════════════════════ */
 
 .rv-bg {
+  /* 32px gutter, matching the site's --gut (22px below its 720px
+     breakpoint; see the responsive block). Declared here rather than on
+     .rv-page so the fixed commit bar -- a sibling, not a descendant -- picks
+     up the same value and stays aligned to the column above it. */
+  --rv-gut: 2rem;
   min-height: 100vh;
   background: var(--paper);
   color: var(--ink);
@@ -2349,7 +2419,7 @@ a {
 .rv-page {
   max-width: 56rem;
   margin: 0 auto;
-  padding: 3rem 1.5rem 0;
+  padding: 3.25rem var(--rv-gut) 0;
 }
 
 /* ── masthead ─────────────────────────────────────────────────────────── */
@@ -2364,12 +2434,37 @@ a {
   flex-wrap: wrap;
 }
 
+/* The landing page's wordmark is a rotated 7px square followed by the
+   letterforms at mono/0.13em. The diamond is the site's one repeating
+   decorative mark, so it comes across here as a ::before rather than new
+   markup.
+
+   The mark is gold on the site. Rather than port that literal (this palette
+   carries no gold, and a fixed hue would sit permanently at odds with TAMU
+   maroon or SMU blue), it renders in --accent-text: the site's own system
+   reserves accent for labels, marks, and one action, and a decorative mark is
+   exactly that category. --accent-text is institution-derived at runtime by
+   institutionTheme.ts, so the diamond takes on each school's color like every
+   other accent reference on this screen. */
 .rv-wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
   font-family: var(--font-data);
   font-size: 0.75rem;
-  letter-spacing: 0.14em;
+  font-weight: 500;
+  letter-spacing: 0.13em;
   text-transform: uppercase;
   color: var(--ink);
+}
+
+.rv-wordmark::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  flex: none;
+  background: var(--accent-text);
+  transform: rotate(45deg);
 }
 
 .rv-provenance {
@@ -2389,21 +2484,28 @@ a {
   white-space: nowrap;
 }
 
+/* Display type matches the landing page's h1: Newsreader 500 (not 300 -- the
+   site never sets the display face lighter than 500), 1.06 leading, -0.022em
+   tracking, and a 15ch measure so the headline always breaks as a stacked
+   display block rather than running the full column width. */
 .rv-headline {
   font-family: var(--font-display);
-  font-weight: 300;
-  font-size: clamp(2rem, 6vw, 3.25rem);
-  line-height: 1.05;
-  letter-spacing: -0.015em;
+  font-weight: 500;
+  font-size: clamp(2.6rem, 6vw, 4.15rem);
+  line-height: 1.06;
+  letter-spacing: -0.022em;
+  max-width: 15ch;
   margin: 1.5rem 0 0.75rem;
 }
 
+/* 58ch and 1.62 leading are the site's .lede values; the measure is expressed
+   in ch (not rem) so it tracks the font size the way the site's does. */
 .rv-standfirst {
   font-family: var(--font-ui);
-  font-size: 0.95rem;
-  line-height: 1.6;
+  font-size: 1.0625rem;
+  line-height: 1.62;
   color: var(--muted);
-  max-width: 46rem;
+  max-width: 58ch;
   margin: 0;
 }
 
@@ -2416,18 +2518,21 @@ a {
   grid-template-columns: 1fr auto;
   gap: 1rem 2rem;
   align-items: end;
-  padding: 1.5rem 0 1.25rem;
-  border-bottom: 1px solid var(--line);
+  padding: 1.5rem 0 1.75rem;
 }
 
 .rv-ledger-counts { display: flex; gap: 2.5rem; flex-wrap: wrap; }
 
 .rv-counter { display: flex; flex-direction: column; gap: 0.15rem; }
 
+/* Sized like the site's .f-code display numerals: mono 500, ~1 leading, a
+   touch of positive tracking so large mono figures don't crowd. */
 .rv-counter-value {
   font-family: var(--font-data);
   font-variant-numeric: tabular-nums;
-  font-size: 1.85rem;
+  font-size: 2.15rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
   line-height: 1;
   color: var(--ink);
   display: inline-block;
@@ -2437,8 +2542,8 @@ a {
 
 .rv-counter-label {
   font-family: var(--font-data);
-  font-size: 0.62rem;
-  letter-spacing: 0.11em;
+  font-size: 0.65625rem;
+  letter-spacing: 0.13em;
   text-transform: uppercase;
   color: var(--muted);
 }
@@ -2454,11 +2559,10 @@ a {
 
 .rv-jump {
   font-family: var(--font-data);
-  font-size: 0.72rem;
+  font-size: 0.71875rem;
   letter-spacing: 0.06em;
   padding: 0.5rem 0.85rem;
   border: 1px solid var(--accent-ghost-border);
-  border-radius: 2px;
   background: transparent;
   color: var(--accent-text);
   cursor: pointer;
@@ -2481,19 +2585,29 @@ a {
 
 /* ── sections ─────────────────────────────────────────────────────────── */
 
-.rv-section { margin-top: 2.75rem; }
+/* The site divides every section with a top hairline plus generous padding
+   (104px there; scaled down here for an app column rather than a landing
+   page). The ledger's own bottom border was removed above so the first
+   section's top rule is the only line between them. */
+.rv-section {
+  margin-top: 0;
+  padding-top: 3.25rem;
+  border-top: 1px solid var(--line);
+}
 
+/* The site's .eyebrow: mono 11px/500 at 0.16em, uppercase, with a 20px gap
+   below. */
 .rv-section-head {
   display: flex;
-  align-items: baseline;
-  gap: 0.6rem;
+  align-items: center;
+  gap: 0.875rem;
   font-family: var(--font-data);
-  font-size: 0.68rem;
+  font-size: 0.6875rem;
   font-weight: 500;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--muted);
-  margin: 0 0 0.9rem;
+  margin: 0 0 1.25rem;
 }
 
 .rv-section-count {
@@ -2501,23 +2615,38 @@ a {
   color: var(--ink);
 }
 
+/* The site's .card-label mark: a short 28px rule trailing the label rather
+   than a full-width divider -- "it labels, it doesn't enclose". */
+.rv-section-head::after {
+  content: '';
+  width: 28px;
+  height: 1px;
+  flex: none;
+  background: var(--line);
+}
+
 /* ── entry card ───────────────────────────────────────────────────────── */
 
+/* Square corners throughout: the landing page's stylesheet header states the
+   rule outright ("Hairline rules, no rounded corners"), and every panel,
+   chip and control there is unrounded. */
 .rv-card {
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 3px;
   padding: 1.25rem 1.4rem;
   margin-bottom: 0.9rem;
 }
 
 .rv-card-head { margin-bottom: 0.9rem; }
 
+/* Mid-scale serif headings on the site (.member h3, .arch-lead h3) stay at
+   400 with tighter tracking; only h1/h2 step up to 500. */
 .rv-card-title {
   font-family: var(--font-display);
   font-weight: 400;
   font-size: 1.35rem;
-  line-height: 1.2;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
   margin: 0;
 }
 
@@ -2532,8 +2661,8 @@ a {
   display: inline-block;
   margin-top: 0.5rem;
   font-family: var(--font-data);
-  font-size: 0.62rem;
-  letter-spacing: 0.1em;
+  font-size: 0.65625rem;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--muted);
 }
@@ -2548,7 +2677,6 @@ a {
   gap: 0 0.75rem;
   align-items: baseline;
   padding: 0.3rem 0;
-  border-radius: 2px;
 }
 
 .rv-glyph {
@@ -2569,8 +2697,8 @@ a {
 
 .rv-field-value {
   font-family: var(--font-ui);
-  font-size: 0.92rem;
-  line-height: 1.55;
+  font-size: 0.9375rem;
+  line-height: 1.65;
   color: var(--ink);
   min-width: 0;
 }
@@ -2579,7 +2707,6 @@ a {
   text-align: left;
   background: transparent;
   border: 1px solid transparent;
-  border-radius: 2px;
   padding: 0.1rem 0.3rem;
   margin: -0.1rem -0.3rem;
   cursor: text;
@@ -2611,12 +2738,11 @@ a {
 .rv-input {
   width: 100%;
   font-family: var(--font-ui);
-  font-size: 0.92rem;
+  font-size: 0.9375rem;
   line-height: 1.5;
   color: var(--ink);
   background: var(--paper);
   border: 1px solid var(--accent);
-  border-radius: 2px;
   padding: 0.15rem 0.35rem;
 }
 .rv-input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
@@ -2626,13 +2752,15 @@ a {
 
 .rv-chips { display: inline-flex; flex-wrap: wrap; gap: 0.3rem; align-items: center; }
 
+/* The site sets its enumerated tokens (.stack li, .phase) in mono at ~11.5px
+   with 0.04em tracking inside a square hairline box, not in the body sans. */
 .rv-chip {
-  font-family: var(--font-ui);
-  font-size: 0.78rem;
+  font-family: var(--font-data);
+  font-size: 0.71875rem;
   line-height: 1.3;
-  padding: 0.1rem 0.45rem;
+  letter-spacing: 0.04em;
+  padding: 0.2rem 0.55rem;
   border: 1px solid var(--line);
-  border-radius: 2px;
   background: var(--paper);
 }
 
@@ -2668,10 +2796,10 @@ a {
 
 .rv-gap-pill {
   font-family: var(--font-data);
-  font-size: 0.7rem;
-  padding: 0.15rem 0.5rem;
+  font-size: 0.71875rem;
+  letter-spacing: 0.04em;
+  padding: 0.2rem 0.55rem;
   border: 1px dashed var(--accent-ghost-border);
-  border-radius: 2px;
   background: transparent;
   color: var(--accent-text);
   cursor: pointer;
@@ -2714,7 +2842,7 @@ a {
 .rv-commit-inner {
   max-width: 56rem;
   margin: 0 auto;
-  padding: 0.85rem 1.5rem;
+  padding: 0.85rem var(--rv-gut);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -2730,30 +2858,40 @@ a {
 }
 .rv-commit-error { color: var(--error); }
 
+/* The site's .btn: 15px/500 sans, 13px 26px padding, square, 1px border on
+   the same color as the fill so bordered and filled buttons align optically. */
 .rv-commit-button {
   font-family: var(--font-ui);
-  font-size: 0.88rem;
+  font-size: 0.9375rem;
   font-weight: 500;
-  padding: 0.55rem 1.4rem;
-  border: none;
-  border-radius: 2px;
+  padding: 0.8125rem 1.625rem;
+  border: 1px solid var(--accent);
   background: var(--accent);
   color: var(--on-accent, #fff);
   cursor: pointer;
   white-space: nowrap;
 }
-.rv-commit-button:hover:not(:disabled) { background: var(--accent-hover); }
+.rv-commit-button:hover:not(:disabled) {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
 .rv-commit-button:disabled { opacity: 0.75; cursor: default; }
 .rv-commit-button:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
 
 /* ── responsive ───────────────────────────────────────────────────────── */
 
 @media (max-width: 640px) {
-  .rv-page { padding: 2rem 1rem 0; }
+  /* The site steps its gutter to 22px and tightens section rhythm at its
+     narrow breakpoint; same move here. */
+  .rv-bg { --rv-gut: 1.375rem; }
+
+  .rv-page { padding: 2rem var(--rv-gut) 0; }
+
+  .rv-section { padding-top: 2.25rem; }
 
   .rv-ledger { grid-template-columns: 1fr; align-items: start; }
   .rv-ledger-counts { gap: 1.5rem; }
-  .rv-counter-value { font-size: 1.5rem; }
+  .rv-counter-value { font-size: 1.75rem; }
   .rv-ledger-actions { justify-content: flex-start; }
 
   /* Label above value: a 9.5rem label column leaves too little for the value
@@ -2778,4 +2916,254 @@ a {
   .rv-counter-bump { animation: none; }
   .rv-field-flash { animation: none; background: var(--accent-tint); }
   .rv-progress-fill { transition: none; }
+}
+
+/* ── transcript review ────────────────────────────────────────────────────
+   The transcript surface reuses the rv-* card, field, ledger and commit
+   vocabulary wholesale. What follows is only the structure a transcript has
+   and a resume does not: courses grouped into terms, card-level record flags,
+   the repeat-policy section, the arithmetic cross-check, and an upload screen
+   whose failures each have their own remedy.
+
+   Same rules as the rest of this stylesheet: hairline rules, square corners,
+   mono for labels and data, serif for headings. */
+
+/* Terms are the middle level a resume has no equivalent of. Presented as a
+   section head so a term heading and a resume section heading read as the
+   same kind of thing. */
+.rv-term-meta {
+  font-family: var(--font-data);
+  font-size: 0.6875rem;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  margin: -0.75rem 0 1.1rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Card-level record flags. Deliberately not styled as errors: "needs a catalog
+   check" is a thing to look at, not a thing that went wrong. */
+.rv-card-flags {
+  list-style: none;
+  margin: 0 0 0.9rem;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.75rem;
+}
+
+.rv-card-flag {
+  font-family: var(--font-data);
+  font-size: 0.65625rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--muted);
+  border-left: 2px solid var(--line);
+  padding-left: 0.5rem;
+}
+
+/* ── repeat policy ────────────────────────────────────────────────────── */
+
+.rv-repeats-lede {
+  font-family: var(--font-ui);
+  font-size: 0.9375rem;
+  line-height: 1.62;
+  color: var(--muted);
+  margin: 0 0 1.1rem;
+  max-width: 58ch;
+}
+
+/* The counter-intuitive half of the rule, and the first thing a student will
+   dispute -- so it is set in the body ink rather than the muted grey the rest
+   of the sentence uses. */
+.rv-repeats-emphasis {
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.rv-repeats-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.rv-repeat {
+  display: grid;
+  grid-template-columns: 7rem 3rem 1fr;
+  gap: 0 1rem;
+  align-items: baseline;
+  padding: 0.7rem 0;
+  border-top: 1px solid var(--line);
+}
+
+.rv-repeat-code {
+  font-family: var(--font-data);
+  font-size: 0.8125rem;
+  color: var(--ink);
+}
+
+.rv-repeat-grade {
+  font-family: var(--font-data);
+  font-size: 0.8125rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.rv-repeat-note {
+  font-family: var(--font-ui);
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+.rv-repeats-foot {
+  font-family: var(--font-ui);
+  font-size: 0.8125rem;
+  color: var(--muted);
+  margin: 1rem 0 0;
+  max-width: 58ch;
+}
+
+/* ── cross-check ──────────────────────────────────────────────────────── */
+
+/* Advisory, never blocking: a left rule marks it as something to read, not a
+   panel that stops the flow. */
+.rv-crosscheck {
+  border-left: 2px solid var(--ink);
+  padding: 0.25rem 0 0.25rem 1.1rem;
+  margin: 2.5rem 0 0;
+}
+
+.rv-crosscheck-head {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 1.15rem;
+  letter-spacing: -0.01em;
+  margin: 0 0 0.5rem;
+  color: var(--ink);
+}
+
+.rv-crosscheck-lede {
+  font-family: var(--font-ui);
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: var(--muted);
+  margin: 0 0 0.9rem;
+  max-width: 58ch;
+}
+
+.rv-crosscheck-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.rv-crosscheck-row {
+  display: grid;
+  grid-template-columns: 9rem 7rem 1fr;
+  gap: 0 1rem;
+  align-items: baseline;
+  padding: 0.5rem 0;
+  border-top: 1px solid var(--line);
+  font-family: var(--font-data);
+  font-size: 0.75rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.rv-crosscheck-term { color: var(--ink); }
+.rv-crosscheck-values strong { color: var(--ink); font-weight: 500; }
+
+/* ── commit bar: blocked state ────────────────────────────────────────── */
+
+/* Not --error: a pending grade scale is a state of our data, not a failed
+   action, and colouring it like a failure would read as something the student
+   did wrong. */
+.rv-commit-blocked { color: var(--muted); }
+
+/* ── transcript upload ────────────────────────────────────────────────── */
+
+.rv-page-narrow { max-width: 46rem; }
+
+.rv-upload {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  align-items: flex-start;
+  padding-top: 2.5rem;
+  border-top: 1px solid var(--line);
+}
+
+.rv-upload-label {
+  font-family: var(--font-data);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.rv-upload-help,
+.rv-upload-footnote {
+  font-family: var(--font-ui);
+  font-size: 0.8125rem;
+  line-height: 1.6;
+  color: var(--muted);
+  margin: 0;
+  max-width: 58ch;
+}
+
+.rv-upload-footnote { margin-top: 2rem; }
+
+/* Each failure gets a headline naming the actual problem and a line saying
+   what to do about it; the backend's own message follows as detail. */
+.rv-upload-error {
+  border-left: 2px solid var(--error);
+  padding: 0.1rem 0 0.1rem 1rem;
+  margin: 0.5rem 0;
+  max-width: 58ch;
+}
+
+.rv-upload-error-title {
+  display: block;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 1.05rem;
+  color: var(--ink);
+  margin-bottom: 0.35rem;
+}
+
+.rv-upload-error-action {
+  font-family: var(--font-ui);
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: var(--ink);
+  margin: 0 0 0.4rem;
+}
+
+.rv-upload-error-detail {
+  font-family: var(--font-data);
+  font-size: 0.75rem;
+  line-height: 1.55;
+  color: var(--muted);
+  margin: 0;
+}
+
+.rv-upload-reset {
+  font-family: var(--font-ui);
+  font-size: 0.875rem;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--line);
+  color: var(--muted);
+  padding: 0 0 0.15rem;
+  cursor: pointer;
+}
+
+.rv-upload-reset:hover { color: var(--ink); }
+
+@media (max-width: 40rem) {
+  .rv-repeat,
+  .rv-crosscheck-row {
+    grid-template-columns: 1fr;
+    gap: 0.15rem;
+  }
 }
