@@ -38,7 +38,11 @@ from GradusIQ_career.ai.openrouter_client import (
 )
 from GradusIQ_career.features.base import FeatureResult
 from GradusIQ_career.features.orchestrator import RUNNERS, run_feature
-from GradusIQ_career.profile_builder import build_profile_from_supabase
+from GradusIQ_career.profile_builder import (
+    build_profile_from_supabase,
+    build_student_intelligence_profile,
+    canonical_to_legacy_profile,
+)
 from GradusIQ_career.resume.extraction import extract_resume_text
 from GradusIQ_career.resume.parser import parse_resume_text
 from GradusIQ_career.resume.review import (
@@ -850,8 +854,13 @@ def chat_me(request: Request, body: ChatRequest) -> dict:
     dependencies=[Depends(authorize_proxy_request)],
 )
 def get_me_profile(request: Request) -> dict:
-    profile, _slug = _me_profile(request)
-    return profile
+    client = _session_client(request)
+    student_id = _resolve_session_student_id(client)
+    # Additive evolution: retain the runner/dashboard compatibility keys while
+    # exposing the validated domain contract under an explicit versioned key.
+    canonical = build_student_intelligence_profile(client, student_id)
+    legacy = canonical_to_legacy_profile(canonical)
+    return {**legacy, "intelligence_profile": canonical.model_dump(mode="json")}
 
 
 # ── Resume ingestion ─────────────────────────────────────────────────────────

@@ -1,5 +1,34 @@
 # Unified Student Profile Schema
 
+> This document now describes two application representations. Supabase is
+> still relational and authoritative; neither representation is a database
+> table or a proposal for a JSON persistence column.
+
+## Authenticated Student Intelligence Profile (contract 1.0)
+
+Real authenticated profiles flow through:
+
+```text
+Relational Supabase tables
+        ↓
+build_student_intelligence_profile (canonical adapter)
+        ↓
+StudentIntelligenceProfile (validated Pydantic domain contract)
+        ↓
+Dashboard / AI / chat / reports (future Phase 2 consumers)
+```
+
+The contract contains `identity`, `institution`, `academics`, `career`,
+`completeness`, and `provenance`. Academic terms and courses contain confirmed
+transcript records only. GPA is supplied by the existing GPA service, and
+repeat exclusions reflect `course_records.excluded_from_gpa_by`. Career data
+is likewise included only after confirmation.
+
+`GET /api/v2/student/me/profile` exposes this as the additive
+`intelligence_profile` key while retaining the existing `student` and `career`
+keys for current consumers. Demo JSON below remains a reference fixture and
+is not the canonical authenticated contract.
+
 This is the foundation contract for Gradus IQ. Every feature should read from
 one student record that contains both Canvas-derived academic data and
 student-entered career data.
