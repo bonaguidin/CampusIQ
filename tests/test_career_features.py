@@ -150,23 +150,22 @@ def _live_agent_requirements():
 
 
 def test_role_requirements_for_uses_agent_skills_but_static_soc_code(monkeypatch):
-    # Finance Intern (13-2051.00) is one of the two demo roles O*NET has no
-    # ratings for, so it is a role the agent actually runs for. A role with
-    # O*NET coverage would skip the agent entirely -- see
-    # test_agent_is_not_called_for_roles_onet_already_rates.
+    # Operations Intern (13-1199.00) is the only demo role that reaches the
+    # agent: no O*NET ratings AND no related occupations to borrow from.
+    # Finance Intern used to qualify, but now borrows from a rated neighbour.
     agent_data = _live_agent_requirements()
     monkeypatch.setattr(
         gap_module.role_research_agent,
         "get_role_requirements",
-        lambda role: agent_data if role == "Finance Intern" else None,
+        lambda role: agent_data if role == "Operations Intern" else None,
     )
 
-    result = GapRunner(client=FakeClient("{}")).role_requirements_for(["Finance Intern"])
-    entry = result["Finance Intern"]
+    result = GapRunner(client=FakeClient("{}")).role_requirements_for(["Operations Intern"])
+    entry = result["Operations Intern"]
 
     # soc_code/soc_title always come from the static file, never the agent.
-    assert entry["soc_code"] == "13-2051.00"
-    assert entry["soc_title"] == "Financial and Investment Analysts"
+    assert entry["soc_code"] == "13-1199.00"
+    assert entry["soc_title"] == "Business Operations Specialists, All Other"
     # must_have_skills comes from the agent (non-empty agent list wins).
     assert entry["must_have_skills"] == ["Live-researched must-have skill"]
     assert entry["requirements_source"] == "agent"
@@ -223,23 +222,24 @@ def test_role_requirements_for_reports_unmatched_when_agent_and_static_both_miss
 
 
 def test_role_requirements_for_handles_mixed_agent_and_static_results_across_roles(monkeypatch):
-    # Finance Intern has no O*NET ratings so the agent runs and wins; Operations
-    # Intern also has none but the agent misses, so it falls back to static.
+    # Operations Intern reaches the agent and its research wins; Business
+    # Analyst Intern has its own O*NET ratings so the agent never runs and it
+    # keeps the static certification lists.
     agent_data = _live_agent_requirements()
     monkeypatch.setattr(
         gap_module.role_research_agent,
         "get_role_requirements",
-        lambda role: agent_data if role == "Finance Intern" else None,
+        lambda role: agent_data if role == "Operations Intern" else None,
     )
 
     result = GapRunner(client=FakeClient("{}")).role_requirements_for(
-        ["Finance Intern", "Operations Intern"]
+        ["Operations Intern", "Business Analyst Intern"]
     )
 
-    assert result["Finance Intern"]["soc_code"] == "13-2051.00"
-    assert result["Finance Intern"]["must_have_skills"] == ["Live-researched must-have skill"]
     assert result["Operations Intern"]["soc_code"] == "13-1199.00"
-    assert result["Operations Intern"]["requirements_source"] == "static"
+    assert result["Operations Intern"]["must_have_skills"] == ["Live-researched must-have skill"]
+    assert result["Business Analyst Intern"]["soc_code"] == "13-1111.00"
+    assert result["Business Analyst Intern"]["requirements_source"] == "static"
     assert "_unmatched_roles" not in result
 
 
@@ -258,20 +258,22 @@ def test_agent_is_not_called_for_roles_onet_already_rates(monkeypatch):
     monkeypatch.setattr(gap_module.role_research_agent, "get_role_requirements", _spy)
 
     result = GapRunner(client=FakeClient("{}")).role_requirements_for(
-        ["Business Analyst Intern", "Finance Intern"]
+        ["Business Analyst Intern", "Finance Intern", "Operations Intern"]
     )
 
-    # 13-1111.00 has O*NET ratings -> skipped. 13-2051.00 has none -> researched.
-    assert called == ["Finance Intern"]
+    # 13-1111.00 has its own ratings -> skipped. 13-2051.00 borrows from a rated
+    # neighbour -> also skipped. Only 13-1199.00, with neither, is researched.
+    assert called == ["Operations Intern"]
     assert result["Business Analyst Intern"]["requirements_source"] == "static"
-    assert result["Finance Intern"]["requirements_source"] == "agent"
+    assert result["Finance Intern"]["requirements_source"] == "static"
+    assert result["Operations Intern"]["requirements_source"] == "agent"
 
 
 def test_gap_context_marks_agent_filled_roles_with_agent_provenance(monkeypatch):
     monkeypatch.setattr(
         gap_module.role_research_agent,
         "get_role_requirements",
-        lambda role: _live_agent_requirements() if role == "Finance Intern" else None,
+        lambda role: _live_agent_requirements() if role == "Operations Intern" else None,
     )
     student = sample_student()
     student["career"]["target_roles"] = ["Business Analyst Intern", "Finance Intern", "Operations Intern"]
@@ -280,10 +282,10 @@ def test_gap_context_marks_agent_filled_roles_with_agent_provenance(monkeypatch)
     by_role = context["market_requirements"]["by_role"]
 
     assert by_role["Business Analyst Intern"]["provenance"] == "onet"
+    # Borrowed from a rated neighbour, so never reached the agent.
+    assert by_role["Finance Intern"]["provenance"] == "onet_neighbor"
     # Upgraded from "none" because the agent supplied this role's requirements.
-    assert by_role["Finance Intern"]["provenance"] == "agent"
-    # Agent ran but missed, so nothing grounds this one.
-    assert by_role["Operations Intern"]["provenance"] == "none"
+    assert by_role["Operations Intern"]["provenance"] == "agent"
 
 
 def test_shift_success_with_mocked_ai_json():
@@ -563,3 +565,73 @@ def test_gap_tolerates_a_missing_readiness_score():
     client = FakeClient('{"summary": "s", "data": {"strengths": []}}')
 
     assert GapRunner(client=client).run(sample_student())["status"] == "success"
+
+
+# ------------------------------------------------------- neighbour borrowing
+# O*NET has never rated 122 of its 1,016 occupations. 29 of those have a rated
+# occupation in their Primary-Short related list, so borrowing beats live web
+# research there: instant, free, and traceable to a named occupation. The
+# condition is disclosure -- these are a NEIGHBOUR's scores.
+
+def test_unrated_role_borrows_from_its_nearest_rated_neighbour():
+    from CampusIQ_career.features.market_data import get_market_requirements
+
+    entry = get_market_requirements(["Finance Intern"])["by_role"]["Finance Intern"]
+
+    assert entry["provenance"] == "onet_neighbor"
+    assert entry["borrowed_from"]["soc"] == "13-2052.00"
+    assert entry["requirements"]["skills"], "borrowed ratings should be populated"
+    assert entry["matched"] is True
+
+
+def test_borrowing_keeps_the_targets_own_software_not_the_neighbours():
+    """Only ratings are borrowed.
+
+    Finance Intern has 33 hot technologies of its own despite having no
+    ratings; swapping the whole entry would discard real data for a
+    neighbour's.
+    """
+    from CampusIQ_career.features.market_data import get_market_requirements
+
+    finance = get_market_requirements(["Finance Intern"])["by_role"]["Finance Intern"]
+    neighbour = get_market_requirements(["Business Analyst Intern"])["by_role"]
+
+    assert finance["soc_code"] == "13-2051.00"  # still the target's own SOC
+    assert finance["hot_software"]
+    assert finance["soc_title"] == "Financial and Investment Analysts"
+
+
+def test_borrowing_is_disclosed_in_notes():
+    from CampusIQ_career.features.market_data import get_market_requirements
+
+    notes = " ".join(get_market_requirements(["Finance Intern"])["notes"])
+
+    assert "borrowed" in notes.lower()
+    assert "13-2052.00" in notes
+    assert "disclosed" in notes.lower()
+
+
+def test_role_with_no_rated_neighbour_still_falls_through_to_research():
+    from CampusIQ_career.features.market_data import get_market_requirements
+
+    entry = get_market_requirements(["Operations Intern"])["by_role"]["Operations Intern"]
+
+    # 13-1199.00 has no related occupations at all in the release.
+    assert entry["provenance"] == "none"
+    assert entry["borrowed_from"] is None
+
+
+def test_agent_is_not_called_for_a_role_that_borrowed_from_a_neighbour(monkeypatch):
+    """Borrowing must pre-empt research, not run alongside it."""
+    called: list[str] = []
+    monkeypatch.setattr(
+        gap_module.role_research_agent,
+        "get_role_requirements",
+        lambda role: called.append(role) or None,
+    )
+
+    GapRunner(client=FakeClient("{}")).role_requirements_for(
+        ["Finance Intern", "Operations Intern"]
+    )
+
+    assert called == ["Operations Intern"]

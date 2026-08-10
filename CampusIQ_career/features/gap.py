@@ -181,8 +181,13 @@ class GapRunner(CareerFeatureRunner):
         unmatched: list[str] = []
         for role in target_roles or []:
             entry = by_role.get(role)
-            onet_rated = isinstance(entry, Mapping) and entry.get("provenance") == "onet"
-            agent_result = None if onet_rated else role_research_agent.get_role_requirements(role)
+            # Borrowed-neighbour requirements count as grounded: they are real
+            # O*NET scores from a named related occupation, disclosed as such.
+            # Research is the last resort, for roles with neither their own
+            # ratings nor a rated neighbour.
+            provenance = entry.get("provenance") if isinstance(entry, Mapping) else None
+            grounded = provenance in ("onet", "onet_neighbor")
+            agent_result = None if grounded else role_research_agent.get_role_requirements(role)
             requirements = _merge_requirements(lookup.get(role), agent_result)
             if requirements:
                 matched[role] = requirements

@@ -105,6 +105,36 @@ def resolve_soc(target_role: str) -> str | None:
     return _load_role_soc_map().get(target_role)
 
 
+def _nearest_rated_neighbour(
+    entry: Mapping[str, Any], catalog: Mapping[str, Any]
+) -> tuple[dict[str, str], Mapping[str, Any]] | None:
+    """Find the closest related occupation O*NET HAS rated, or None.
+
+    O*NET has never surveyed 122 of its 1,016 occupations, and 29 of those have
+    at least one rated occupation in their Primary-Short related list -- which
+    is ordered by O*NET's own relatedness index, so the first rated hit is the
+    closest available match rather than an arbitrary one.
+
+    Borrowing beats live web research for these: it is instant, free, and
+    traceable to a named occupation the student can look up. The condition is
+    disclosure -- these are a NEIGHBOURING occupation's scores, and presenting
+    them as the target role's own would be a quiet misattribution. The caller
+    records the source in ``borrowed_from`` and the prompt is required to say so.
+
+    Returns (source_descriptor, that occupation's entry).
+    """
+    for neighbour in entry.get("related") or []:
+        if not isinstance(neighbour, Mapping):
+            continue
+        candidate = catalog.get(neighbour.get("soc"))
+        if isinstance(candidate, Mapping) and candidate.get("skills"):
+            return (
+                {"soc": neighbour.get("soc"), "title": candidate.get("title")},
+                candidate,
+            )
+    return None
+
+
 def get_market_requirements(target_roles: Sequence[str] | None) -> dict[str, Any]:
     """Build the market-requirements block injected into the GAP context.
 
@@ -167,7 +197,27 @@ def get_market_requirements(target_roles: Sequence[str] | None) -> dict[str, Any
         # "this SOC is wrong". Only usable ratings count as matched.
         rated = bool(skills)
 
-        if not soc:
+        # Borrow ONLY the ratings. Title, job zone and software stay the target
+        # occupation's own -- Finance Intern has 33 hot technologies of its own
+        # despite having no ratings, and swapping the whole entry would discard
+        # real data in favour of a neighbour's.
+        ratings = entry
+        borrowed_from = None
+        if not rated and entry:
+            neighbour = _nearest_rated_neighbour(entry, catalog)
+            if neighbour is not None:
+                borrowed_from, ratings = neighbour
+                skills = ratings.get("skills") or []
+                rated = bool(skills)
+
+        if borrowed_from:
+            notes.append(
+                f"O*NET has not rated SOC {soc} ('{role}'). Its requirements are "
+                f"borrowed from the closest related occupation O*NET has rated: "
+                f"{borrowed_from['soc']} {borrowed_from['title']}. This must be "
+                "disclosed to the student, not presented as the role's own data."
+            )
+        elif not soc:
             notes.append(
                 f"Role '{role}' has no curated SOC code in role_requirements.json; "
                 "add one there to enable O*NET grounding for it."
@@ -193,11 +243,13 @@ def get_market_requirements(target_roles: Sequence[str] | None) -> dict[str, Any
             "job_zone": entry.get("job_zone"),
             "requirements": {
                 "skills": skills,
-                "knowledge": entry.get("knowledge") or [],
-                "abilities": entry.get("abilities") or [],
+                "knowledge": ratings.get("knowledge") or [],
+                "abilities": ratings.get("abilities") or [],
             },
             "hot_software": entry.get("hot_software") or [],
-            "provenance": "onet" if rated else "none",
+            "in_demand_software": entry.get("in_demand_software") or [],
+            "provenance": ("onet_neighbor" if borrowed_from else "onet") if rated else "none",
+            "borrowed_from": borrowed_from,
             "matched": rated,
         }
 

@@ -64,6 +64,14 @@ nice-to-haves. This is the authoritative source for these roles.
 lists (`must_have_skills` / `nice_to_have_skills`) to score gaps; if they ever
 disagree with `market_requirements`, `market_requirements` governs.
 
+**`provenance: "onet_neighbor"`** — O*NET has never rated this occupation, so
+its requirements are borrowed from the closest related occupation O*NET HAS
+rated. `borrowed_from` names that occupation. You may cite the importance
+scores, but you MUST tell the student they describe the related occupation, not
+their target role — name it in plain language, e.g. "O*NET hasn't surveyed this
+exact role yet, so these come from the closest occupation it has: Personal
+Financial Advisors." Never present borrowed scores as the target role's own.
+
 **`provenance: "agent"`** — O*NET has no ratings for this occupation, so its
 requirement lists are empty and `role_requirements` carries live web research
 instead. Score against those skill lists, and tell the student in plain
