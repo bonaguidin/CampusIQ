@@ -22,6 +22,27 @@ test('authenticated dashboard covers canonical states, routing, themes, errors, 
   const browser = await chromium.launch(); t.after(async () => browser.close())
   const page = await browser.newPage()
 
+  const TAMU_ID = '75d68331-91d2-47e8-9671-2a3b065955d0'
+  const SMU_ID = '6b180bbf-66d7-4aef-b8c6-2ae534c78e9a'
+  const themes = {
+    [TAMU_ID]: { brand_primary_hex: '#500000', brand_rail_hex: '#2B0B0B', brand_on_primary_hex: '#FFFFFF' },
+    [SMU_ID]: { brand_primary_hex: '#0033A0', brand_rail_hex: '#171E2B', brand_on_primary_hex: '#FFFFFF' },
+  }
+  const themeRequests = []
+  await page.route('**/rest/v1/institutions*', async (route) => {
+    const url = new URL(route.request().url())
+    themeRequests.push(url.search)
+    const idFilter = url.searchParams.get('id')
+    const nameFilter = url.searchParams.get('name')
+    const id = idFilter?.replace(/^eq\./, '')
+    const theme = id ? themes[id] : nameFilter === 'eq.Texas A&M University' ? themes[TAMU_ID] : null
+    await route.fulfill({
+      status: 200,
+      headers: { 'content-type': 'application/vnd.pgrst.object+json' },
+      body: JSON.stringify(theme),
+    })
+  })
+
   // CASE 1: complete real identity, institution, official GPA, academics and career.
   await page.goto(`${origin}/authenticated-dashboard-preview.html?mode=complete`)
   await page.getByRole('heading', { name: 'Alex Morgan' }).waitFor()
@@ -56,7 +77,7 @@ test('authenticated dashboard covers canonical states, routing, themes, errors, 
   assert.equal(await page.evaluate(() => document.body.dataset.retried), 'yes')
   assert.equal(await page.getByText('Jordan Reyes').count(), 0)
 
-  // CASE 6: institution-neutral canonical rendering for TAMU and SMU.
+  // CASE 6: canonical institution rendering for TAMU and SMU.
   await page.goto(`${origin}/authenticated-dashboard-preview.html?mode=complete&institution=smu`)
   await page.getByText('Southern Methodist University').waitFor()
 
@@ -83,7 +104,52 @@ test('authenticated dashboard covers canonical states, routing, themes, errors, 
   assert.match(authSource, /staticJsonAdapter\.loadStudent/)
   assert.match(authSource, /sessionStorage\.removeItem\(SESSION_KEY\)/)
   assert.match(authSource, /previousUserId !== nextUserId/)
-  assert.match(authSource, /fetchInstitutionThemeByName\(institution\)/)
+  assert.match(authSource, /fetchInstitutionThemeById\(institutionId\)/)
+  assert.match(authSource, /fetchInstitutionThemeByName\(p\.student\.institution\)/)
   assert.match(dashboardSource, /return <DemoDashboardPage/)
   assert.match(dashboardSource, /return <AuthenticatedDashboard/)
+
+  // Authenticated theme resolution is keyed only by the canonical ID. The
+  // display-name variation deliberately never enters the lookup.
+  const applyById = async (id) => page.evaluate(async (institutionId) => {
+    const themeModule = await import('/src/lib/institutionTheme.ts')
+    const theme = await themeModule.fetchInstitutionThemeById(institutionId)
+    themeModule.applyInstitutionTheme(theme)
+    const style = document.documentElement.style
+    return {
+      accent: style.getPropertyValue('--accent-rgb'),
+      accentText: style.getPropertyValue('--accent-text-rgb'),
+      onAccent: style.getPropertyValue('--on-accent-rgb'),
+      rail: style.getPropertyValue('--rail-bg-rgb'),
+    }
+  }, id)
+
+  assert.deepEqual(await applyById(TAMU_ID), {
+    accent: '80 0 0', accentText: '68 0 0', onAccent: '255 255 255', rail: '43 11 11',
+  })
+  // Switching accounts replaces every institution token; TAMU values do not survive.
+  assert.deepEqual(await applyById(SMU_ID), {
+    accent: '0 51 160', accentText: '0 43 136', onAccent: '255 255 255', rail: '23 30 43',
+  })
+  assert.equal(themeRequests.some((query) => query.includes(`id=eq.${TAMU_ID}`)), true)
+  assert.equal(themeRequests.some((query) => query.includes(`id=eq.${SMU_ID}`)), true)
+
+  // Logout/reset clears inline values and exposes the neutral :root defaults.
+  const cleared = await page.evaluate(async () => {
+    const themeModule = await import('/src/lib/institutionTheme.ts')
+    themeModule.clearInstitutionTheme()
+    return {
+      inlineAccent: document.documentElement.style.getPropertyValue('--accent-rgb'),
+      computedAccent: getComputedStyle(document.documentElement).getPropertyValue('--accent-rgb').trim(),
+    }
+  })
+  assert.deepEqual(cleared, { inlineAccent: '', computedAccent: '36 36 36' })
+
+  // Demo compatibility remains the explicitly name-based path.
+  const demoTheme = await page.evaluate(async () => {
+    const themeModule = await import('/src/lib/institutionTheme.ts')
+    return themeModule.fetchInstitutionThemeByName('Texas A&M University')
+  })
+  assert.deepEqual(demoTheme, themes[TAMU_ID])
+  assert.equal(themeRequests.some((query) => query.includes('name=eq.Texas+A%26M+University')), true)
 })

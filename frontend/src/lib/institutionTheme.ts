@@ -119,11 +119,26 @@ export function clearInstitutionTheme(): void {
   style.removeProperty(ACCENT_TEXT_PROPERTY);
 }
 
-// TEMPORARY: matches on the student's free-text institution name.
-// After the adapter swap (dataAdapter.ts -> Supabase reads), this
-// becomes a foreign-key lookup on the student's institution_id
-// instead -- matching a school by free-text name is a stopgap for the
-// demo JSON path only, not the intended long-term join.
+export async function fetchInstitutionThemeById(id: string): Promise<InstitutionTheme | null> {
+  try {
+    const { data, error } = await supabase
+      .from('institutions')
+      .select('brand_primary_hex, brand_rail_hex, brand_on_primary_hex')
+      .eq('id', id)
+      .maybeSingle();
+
+    if (error || !data) {
+      return null;
+    }
+    return data as InstitutionTheme;
+  } catch {
+    return null;
+  }
+}
+
+// Legacy/demo profiles have only a display name, not the canonical institution
+// foreign key. Keep their supported lookup isolated from authenticated users,
+// whose canonical profile must resolve themes by institution ID.
 export async function fetchInstitutionThemeByName(name: string): Promise<InstitutionTheme | null> {
   try {
     const { data, error } = await supabase
