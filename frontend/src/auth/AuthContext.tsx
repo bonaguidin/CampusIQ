@@ -6,6 +6,7 @@ import { supabase } from '../lib/supabase';
 import {
   applyInstitutionTheme,
   clearInstitutionTheme,
+  fetchInstitutionThemeById,
   fetchInstitutionThemeByName,
 } from '../lib/institutionTheme';
 import { resolveStudentAccountOnce, NO_SESSION_STATE, CHECKING_STATE } from '../lib/studentAccount';
@@ -91,7 +92,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .then((p) => {
           setProfile(p);
           setSlug(savedSlug);
-          // TEMPORARY: name-based lookup, see institutionTheme.ts.
+          // Demo fixtures have no canonical institution foreign key.
           void fetchInstitutionThemeByName(p.student.institution).then(applyInstitutionTheme);
         })
         .catch(() => {
@@ -253,10 +254,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [userId, demoProfileActive, accountRetry]);
 
   useEffect(() => {
-    const institution = studentAccount.profile?.intelligence_profile.institution.name;
-    if (!profile && studentAccount.status === 'ready' && institution) {
-      void fetchInstitutionThemeByName(institution).then(applyInstitutionTheme);
-    }
+    const institutionId = studentAccount.profile?.intelligence_profile.institution.id;
+    if (profile || studentAccount.status !== 'ready') return;
+
+    // Clear first so a newly ready account never displays the previous user's
+    // colors while its own database-backed theme is loading (or if it has no
+    // canonical home institution yet).
+    clearInstitutionTheme();
+    if (!institutionId) return;
+
+    let active = true;
+    void fetchInstitutionThemeById(institutionId).then((theme) => {
+      if (active) applyInstitutionTheme(theme);
+    });
+    return () => {
+      active = false;
+    };
   }, [profile, studentAccount]);
 
   const refreshStudentAccount = useCallback((): void => {
@@ -270,7 +283,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setProfile(p);
       setSlug(newSlug);
       sessionStorage.setItem(SESSION_KEY, newSlug);
-      // TEMPORARY: name-based lookup, see institutionTheme.ts.
+      // Demo fixtures have no canonical institution foreign key.
       const theme = await fetchInstitutionThemeByName(p.student.institution);
       applyInstitutionTheme(theme);
     } finally {
