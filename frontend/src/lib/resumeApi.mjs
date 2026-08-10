@@ -41,7 +41,7 @@ export function reviewEditUrl(table, id) {
 }
 
 // Field metadata, mirroring the backend's EDITABLE_FIELDS exactly (see
-// CampusIQ_career/resume/review.py). Nothing outside these lists is editable,
+// GradusIQ_career/resume/review.py). Nothing outside these lists is editable,
 // and the backend silently strips anything else -- so sending more would fail
 // quietly rather than loudly. Kept here as data so the review screen renders
 // from one source and the set stays assertable in tests.

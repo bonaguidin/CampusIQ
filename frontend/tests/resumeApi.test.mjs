@@ -26,7 +26,7 @@ import {
 // ── field metadata must mirror the backend's EDITABLE_FIELDS ────────────────
 
 test('REVIEW_SECTIONS matches the backend EDITABLE_FIELDS lists exactly', () => {
-  // Mirrors CampusIQ_career/resume/review.py. If the backend list changes and
+  // Mirrors GradusIQ_career/resume/review.py. If the backend list changes and
   // this does not, edits to the new field would be silently stripped.
   assert.deepEqual(editableFieldNames('career_profile'), [
     'target_roles',
