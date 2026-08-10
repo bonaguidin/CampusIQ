@@ -10,51 +10,59 @@
   "results": {
     "FIT": {
       "data": {
-        "overall_fit_summary": "Operations Intern is your most realistic near-term target: DFW has entry-level roles that value Excel, teamwork, and process thinking\u2014areas you've already developed. Prioritize building process-mapping or data-analysis experience (e.g., a Google Data Analytics certificate) this year to strengthen your profile for summer 2027.",
+        "overall_fit_summary": "Your most realistic near-term step is to build the technical and analytical foundations needed for any of these roles. Consider seeking a general business internship or a rotational program that exposes you to multiple areas, rather than a specialized role at this early stage.",
         "role_matches": [
           {
             "fit_level": "low",
             "missing_signals": [
-              "No SQL or data visualization tools (Tableau/Power BI)",
-              "No experience with requirements gathering or stakeholder interviews",
-              "No portfolio or project demonstrating data-driven decision-making"
+              "SQL or other database query language",
+              "Python or R for data analysis",
+              "experience with Tableau, Power BI, or similar visualization tools",
+              "formal AI training or use of AI in analytical workflows"
             ],
-            "rationale": "DFW employers (e.g., JPMorgan, Toyota North America, AT&T) are asking intern candidates for SQL, Tableau/Power BI, and experience with data modeling or requirements gathering. You have Excel basics and presentation skills, but no structured data analysis tools or business system exposure.",
+            "rationale": "You have interests in business analytics and some foundational skills like Excel, PowerPoint, and problem solving from a class project. However, national occupational data for this role (based on Management Analysts) shows strong demands for technical tools such as SQL, Python, and data visualization software (e.g., Tableau, Power BI) that you haven't yet learned. The day-to-day work involves gathering requirements, analyzing data, and documenting findings\u2014activities you haven't practiced in a real-world setting. Your informal AI exposure is not yet enough for a role that increasingly uses AI for data analysis. As a freshman, you're early in your degree and lack the targeted coursework and project experience this role expects.",
             "role": "Business Analyst Intern",
             "supporting_signals": [
-              "Excel and PowerPoint proficiency",
-              "Market research and presentation from class project",
-              "Interest in business analytics"
-            ]
-          },
-          {
-            "fit_level": "medium",
-            "missing_signals": [
-              "No experience with inventory management, supply chain, or process mapping",
-              "No exposure to ERP systems (SAP, Oracle) or lean tools",
-              "Limited evidence of independent problem-solving in an operational context"
-            ],
-            "rationale": "Entry-level operations roles at DFW logistics and retail firms (e.g., Amazon, JCPenney, PepsiCo) often emphasize Excel, process documentation, and cross-functional collaboration. Your class project and workbook show you can organize data and communicate findings, which aligns with low-barrier ops internships.",
-            "role": "Operations Intern",
-            "supporting_signals": [
-              "Excel workbook with financial statement relationships",
-              "Team collaboration and presentation skills",
-              "Interest in operations and process improvement"
+              "Excel proficiency",
+              "written communication skills",
+              "problem solving ability",
+              "interest in business analytics",
+              "class project experience with market analysis"
             ]
           },
           {
             "fit_level": "low",
             "missing_signals": [
-              "No financial modeling or valuation experience",
-              "No coursework in corporate finance or investments",
-              "No internship or relevant work experience in a finance setting"
+              "advanced finance or accounting coursework",
+              "experience with financial modeling or analysis",
+              "familiarity with financial software (e.g., SAP, Tableau, SQL)",
+              "formal AI or automation exposure in finance contexts"
             ],
-            "rationale": "DFW finance internships (e.g., Goldman Sachs, Charles Schwab, Fidelity) typically seek students further along in coursework (e.g., intermediate accounting, corporate finance) and technical skills like financial modeling, VBA, or Bloomberg terminal experience. Your current accounting workbook is a start, but you lack the depth and tools required.",
+            "rationale": "You've completed introductory accounting and business math, which aligns with the finance area you're interested in. However, market requirement data\u2014borrowed from the related occupation of Personal Financial Advisors\u2014indicates that finance roles demand deep knowledge of economics and accounting (importance 77 out of 100) and mathematics (importance 66), far beyond your current level. The role also expects familiarity with software like SAP, SQL, and Tableau, which you haven't used. You lack finance-specific coursework or projects outside a basic accounting workbook. AI is transforming finance, but you have no formal exposure. Given your freshman standing, there are significant gaps in both knowledge and experience for a specialized finance internship.",
             "role": "Finance Intern",
             "supporting_signals": [
-              "Basic accounting and financial statement knowledge",
-              "Interest in finance career path",
-              "Class project including basic financial analysis"
+              "introductory accounting knowledge",
+              "business math skills",
+              "financial statement basics",
+              "interest in finance",
+              "Excel proficiency"
+            ]
+          },
+          {
+            "fit_level": "low",
+            "missing_signals": [
+              "no market data available to confirm specific entry-level expectations",
+              "no professional or project experience in operations",
+              "no coursework in operations management, supply chain, or process analysis"
+            ],
+            "rationale": "You've expressed interest in operations, and you bring team collaboration and problem-solving skills. However, there is no available market data for this specific role\u2014O*NET does not have occupational requirements for 'Operations Intern'\u2014so we cannot cite specific demands. Based on typical expectations for operations roles, you lack professional experience in process improvement, supply chain, or project coordination. Your freshman status means you haven't yet taken operations management or related coursework. Without a clear market picture, it's hard to recommend this as a near-term target, but your interest is a good starting point for exploration.",
+            "role": "Operations Intern",
+            "supporting_signals": [
+              "interest in operations",
+              "team collaboration skills",
+              "problem solving ability",
+              "Excel use",
+              "presentation skills from class project"
             ]
           }
         ]
@@ -62,7 +70,7 @@
       "errors": [],
       "feature": "FIT",
       "status": "success",
-      "summary": "You're a freshman targeting DFW internships in business, with foundational Excel, accounting, and presentation skills from class projects. DFW postings for BA, Ops, and Finance interns consistently require stronger technical skills (SQL, data tools) and more structured project experience, meaning you'll need to build those this year to be competitive."
+      "summary": "You're a freshman Business Administration pre-major exploring business-related internships. You have foundational Excel and presentation skills from class projects, and an interest in operations, finance, and analytics. Your target roles typically require junior-level coursework and hands-on experience that you're still building."
     },
     "GAP": {
       "data": {

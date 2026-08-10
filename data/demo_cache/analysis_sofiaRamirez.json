@@ -10,72 +10,52 @@
   "results": {
     "FIT": {
       "data": {
-        "overall_fit_summary": "Your most realistic near-term fit is a research assistant in an academic lab, where your coursework and lab basics provide a strong foundation. To move into clinical or biotech lab roles, you'll need some direct lab experience beyond classwork, which you can gain by starting in an academic lab. Your pre-health clinical volunteer path is promising but requires you to build hands-on patient experience first.",
+        "overall_fit_summary": "Your strongest near-term fit is as a Lab Assistant, where your biology coursework and lab experience align with entry-level expectations, though you will need to build more advanced lab techniques and data analysis skills.",
         "role_matches": [
           {
-            "fit_level": "high",
-            "missing_signals": [
-              "direct research experience in a lab beyond coursework",
-              "experience with specific lab equipment (e.g., pipetting calibration, PCR, microscopy)",
-              "data analysis software (e.g., Python, R, or Prism)"
-            ],
-            "rationale": "Your BIOL 213 concept map and organic chemistry reaction tracker demonstrate your ability to synthesize scientific information, a key skill for research support roles. Employers like UT Southwestern and UTSW postings emphasize candidates who can handle detailed lab documentation and follow protocols, which align with your lab notebook and wet lab basics. Your 'careful observation' and 'collaboration' soft skills are also frequently listed in academic research assistant job descriptions.",
-            "role": "Research Assistant (Academic)",
-            "supporting_signals": [
-              "wet lab technique basics",
-              "lab notebook documentation",
-              "biology concept mapping",
-              "organic chemistry mechanisms",
-              "careful observation",
-              "persistence"
-            ]
-          },
-          {
             "fit_level": "medium",
             "missing_signals": [
-              "professional lab experience (paid or internship)",
-              "knowledge of regulatory standards (GLP, GMP)",
-              "experience with laboratory equipment beyond basic coursework"
+              "No advanced lab techniques beyond basics (e.g., specimen handling, isolation)",
+              "No experience with data analysis software (e.g., SAS, Excel beyond basics)",
+              "No direct experience with experiment design or data interpretation for research"
             ],
-            "rationale": "DFW biotech and clinical labs (e.g., Charles River Labs, Quest Diagnostics) often require hands-on lab skills, attention to detail, and familiarity with safety protocols\u2014areas where you have foundational coursework experience. Your 'careful observation' and 'lab safety' skills are directly relevant. However, these postings frequently expect some previous lab work experience (even part-time or volunteer), which you lack beyond structured course labs.",
-            "role": "Lab Assistant (Biotech/Clinical)",
+            "rationale": "Your biology background and lab coursework give you a solid start for a Lab Assistant role, which involves conducting research, collecting samples, and recording data. However, you lack the advanced lab techniques and data analysis skills typically expected, and you are still early in your degree.",
+            "role": "Lab Assistant",
             "supporting_signals": [
-              "wet lab technique basics",
-              "lab safety",
-              "data recording",
-              "collaboration",
-              "Excel basics"
-            ]
-          },
-          {
-            "fit_level": "medium",
-            "missing_signals": [
-              "direct clinical exposure or certification (e.g., CPR, CNA)",
-              "evidence of patient interaction or care",
-              "volunteer history in healthcare settings"
-            ],
-            "rationale": "Your interest in healthcare and pre-health path, combined with your 'collaboration' and 'careful observation' skills, aligns with what hospitals value in volunteers (e.g., Baylor Scott & White Health, Texas Health Resources). Postings emphasize patient interaction, empathy, and reliability\u2014skills you can connect to your lab teamwork and reflective learning. However, you have no direct clinical or patient-facing experience yet, which is the core requirement for these roles.",
-            "role": "Pre-Health Clinical Volunteer",
-            "supporting_signals": [
-              "healthcare interest",
-              "collaboration",
-              "careful observation",
-              "reflective learning"
+              "Biology major providing foundational knowledge in cell biology and organic chemistry",
+              "Hands-on lab experience from coursework including wet lab basics and lab notebook documentation",
+              "Projects in molecular cell biology and organic chemistry demonstrate ability to synthesize scientific concepts",
+              "Soft skills in careful observation and collaboration align with lab work"
             ]
           },
           {
             "fit_level": "low",
             "missing_signals": [
-              "experience with qualitative research methods",
-              "knowledge of statistical software",
-              "relevant coursework in social sciences"
+              "No direct patient care or clinical experience",
+              "No knowledge of medical software (e.g., Epic)",
+              "No training in clinical procedures (vital signs, injections, sterilization)"
             ],
-            "rationale": "While your concept mapping and evidence synthesis skills could transfer to social science research, DFW postings for such roles typically require qualitative analysis skills, survey methods, or statistical software like SPSS. Your current skill set is heavily biased toward biological lab work, and you have no coursework or projects in non-lab research methods.",
-            "role": "Research Assistant (Social Science or Policy)",
+            "rationale": "While your interest in healthcare is clear, this role involves direct patient care tasks such as taking vital signs and assisting with examinations, which you have not yet experienced. The market data indicates a need for clinical knowledge and customer service skills that you currently lack, making it a weaker fit at this stage.",
+            "role": "Pre-Health Clinical Volunteer",
             "supporting_signals": [
-              "evidence synthesis",
-              "Excel basics",
-              "careful observation"
+              "Interest in healthcare and biology",
+              "Careful observation and collaboration skills useful in patient care settings",
+              "Basic lab skills from coursework (e.g., specimen collection knowledge)"
+            ]
+          },
+          {
+            "fit_level": "low",
+            "missing_signals": [
+              "No programming or statistical analysis skills (Python, R, SQL, SPSS)",
+              "No experience with database management or data cleaning",
+              "Role is data-oriented, while your interests are in wet lab biology"
+            ],
+            "rationale": "This role is centered on data analysis, statistical work, and database management, which does not match your current skills or stated interest in lab research. You would need to develop significant technical skills in data science to be competitive, and the role's core tasks are not aligned with your hands-on lab interests.",
+            "role": "Research Assistant",
+            "supporting_signals": [
+              "Biology major with strong conceptual understanding in cell biology and organic chemistry",
+              "Experience with lab documentation and data recording from coursework",
+              "Reflective learning and persistence valuable for research"
             ]
           }
         ]
@@ -83,7 +63,7 @@
       "errors": [],
       "feature": "FIT",
       "status": "success",
-      "summary": "You're a sophomore Biology major with foundational wet-lab skills and coursework in cell biology and organic chemistry, targeting research and pre-health roles in Texas. DFW employers are currently hiring entry-level lab assistants and research assistants, often requiring basic lab techniques, good documentation, and some clinical or research exposure. Your strongest immediate fit is as a lab assistant or research assistant in academic settings, where your coursework and initial lab experience align well."
+      "summary": "You are a sophomore Biology major with foundational lab skills and an interest in research and healthcare. Your target roles are Lab Assistant, Pre-Health Clinical Volunteer, and Research Assistant, each requiring different levels of technical and clinical experience. Your strongest near-term fit is as a Lab Assistant, where your biology coursework and lab experience align with entry-level expectations, though you will need to build more advanced lab techniques and data analysis skills."
     },
     "GAP": {
       "data": {

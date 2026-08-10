@@ -10,55 +10,54 @@
   "results": {
     "FIT": {
       "data": {
-        "overall_fit_summary": "Aerospace Engineering Intern is your most realistic near-term target because it directly leverages your major, coursework, and project experience while allowing you to build the industry-specific skills (CAD/CFD, simulation) that other roles require. Your solid foundation and early project work make you a competitive candidate for generalist aerospace internships that emphasize learning potential.",
+        "overall_fit_summary": "Your most realistic near-term fit is an Aerospace Engineering Intern role, because your major, interests, and early project work align closest with its combination of analysis and technical communication \u2014 but you need to build hands-on CAD or simulation experience to be competitive for sophomore-level internships.",
         "role_matches": [
           {
-            "fit_level": "high",
+            "fit_level": "medium",
             "missing_signals": [
-              "No direct internship or co-op experience yet",
-              "Limited proficiency with industry-standard CAD/CFD tools (e.g., SolidWorks, ANSYS)",
-              "No demonstrated experience with aerospace-specific software or simulation"
+              "No hands-on CAD or simulation software experience (e.g., CATIA, SolidWorks, Simulink are in-demand tools for this role)",
+              "No experience with experimental or stress testing \u2014 a core task for this internship",
+              "No formal aerospace project beyond concept briefs; lacking a design or analysis project using engineering software"
             ],
-            "rationale": "Your major and interests directly align with this role. Your project on flight concepts and use of MATLAB show relevant foundational skills. Coursework in aerodynamics and engineering mechanics provides the baseline knowledge employers seek.",
+            "rationale": "Your declared major and interest in flight dynamics, aerodynamics, and engineering analysis directly align with this role's core tasks, such as formulating mathematical models and writing technical reports. Your project on standard atmosphere, lift, drag, and orbital mechanics shows you can produce the type of technical documentation this role requires. The role demands strong written comprehension, deductive reasoning, and problem sensitivity (all importance 75+ per national occupational survey data), which you demonstrate through analytical thinking and attention to detail.",
             "role": "Aerospace Engineering Intern",
             "supporting_signals": [
               "Aerospace Engineering major",
-              "Completed project on flight dynamics and aerodynamics",
-              "MATLAB basics from vector calculus project",
-              "Analytical thinking and technical communication skills",
-              "Worked in a team on engineering assignments"
+              "Interest in flight dynamics, aerodynamics, space systems",
+              "Introduction to Flight Concept Brief project",
+              "Technical communication and analytical thinking soft skills",
+              "MATLAB basics and engineering notation from vector calculus toolkit project"
             ]
           },
           {
             "fit_level": "medium",
             "missing_signals": [
-              "No coursework or project in control systems or avionics",
-              "No experience with flight simulation or hardware",
-              "Limited exposure to systems engineering or integration"
+              "No experience with MATLAB for modeling or simulation beyond basics \u2014 this role often involves formulating computer analysis models",
+              "No direct work with flight systems or avionics concepts",
+              "Lacks familiarity with industry-standard software like CATIA, Simulink, or Python which are listed as in-demand"
             ],
-            "rationale": "Your interest in flight systems and experience with technical writing for flight concepts are relevant. However, flight systems roles often require deeper knowledge of avionics, control systems, or propulsion, which you have not yet demonstrated at the coursework level.",
+            "rationale": "This role shares the same occupational demands as Aerospace Engineering Intern per national occupational survey data, with core tasks including mathematical modeling, testing, and design of aerospace systems. Your interest in space systems and flight dynamics is relevant. Your vector calculus toolkit demonstrates foundational skills for the mathematical analysis this role requires. The role values critical thinking (78 importance) and science (75 importance), which you reflect through analytical thinking and engineering mechanics coursework.",
             "role": "Flight Systems Intern",
             "supporting_signals": [
-              "Interest in flight dynamics and space systems",
-              "Technical writing skills from project report",
-              "Engineering mechanics and thermodynamics basics",
-              "Calculus foundation applicable to control theory"
+              "Space systems interest",
+              "Multivariable calculus proficiency shown in AERO 221 project",
+              "Engineering mechanics background from coursework",
+              "Analytical thinking and team reliability soft skills"
             ]
           },
           {
-            "fit_level": "medium",
+            "fit_level": "low",
             "missing_signals": [
-              "No experience with FEA software (e.g., ANSYS, Abaqus)",
-              "No demonstrated design or stress analysis project",
-              "Limited exposure to materials science or failure analysis"
+              "No CAD or design software experience (SolidWorks, AutoCAD, Revit are in-demand)",
+              "No experience with blueprints, schematics, or mechanical system design",
+              "No project or coursework involving failure analysis or troubleshooting"
             ],
-            "rationale": "Your engineering mechanics and thermodynamics coursework, plus the free body diagram experience from your team role, align with mechanical analysis. However, these roles typically expect stronger proficiency with FEA tools and detailed design analysis, which you have not yet demonstrated.",
+            "rationale": "Your engineering mechanics and thermodynamics coursework provide a partial match to this role's emphasis on mechanical knowledge (81 importance) and production processes. However, the role's core tasks focus on reading blueprints, designing mechanical products, and investigating equipment failures \u2014 activities your profile does not currently touch. National survey data shows this role requires high deductive reasoning and problem sensitivity (both 75), which you have, but lacks your demonstrated design or manufacturing experience.",
             "role": "Mechanical Analysis Intern",
             "supporting_signals": [
-              "Engineering mechanics and thermodynamics coursework",
-              "Free body diagram experience from team assignments",
+              "Engineering mechanics and thermodynamics basics",
               "Analytical thinking and attention to detail",
-              "MATLAB basics applicable to analysis"
+              "Multivariable calculus background"
             ]
           }
         ]
@@ -66,7 +65,7 @@
       "errors": [],
       "feature": "FIT",
       "status": "success",
-      "summary": "You are a sophomore Aerospace Engineering student with foundational coursework and project experience in flight dynamics, aerodynamics, and vector calculus. You have demonstrated analytical thinking and technical communication through your course project work. The DFW market shows consistent demand for entry-level engineering interns, especially at aerospace and defense firms like Lockheed Martin, Bell Textron, and Raytheon, requiring baseline technical skills and hands-on project exposure."
+      "summary": "You are a sophomore Aerospace Engineering major with foundational coursework in aerodynamics, vector calculus, and engineering mechanics. You have early technical communication and MATLAB skills, and you are targeting aerospace and mechanical analysis internships. The market data shows these roles demand strong engineering knowledge, mathematics, and design skills, typically at a bachelor's level or beyond. You have a solid start, but your profile is still developing for entry-level competition."
     },
     "GAP": {
       "data": {

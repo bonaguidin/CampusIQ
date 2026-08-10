@@ -10,60 +10,56 @@
   "results": {
     "FIT": {
       "data": {
-        "overall_fit_summary": "Given your sophomore status and current profile, the most realistic near-term fit is Student Success Peer Mentor, where your soft skills and interest in student support align with entry-level expectations. Research Assistant is achievable with one more semester of methods coursework. People Operations Intern would require additional HR-focused development.",
+        "overall_fit_summary": "The most realistic near-term fit is Student Success Peer Mentor, where your current strengths in empathy, facilitation, and psychology coursework align closely with the role's demands. Research Assistant is a strong possibility once you build technical data analysis skills, ideally through a course or project using SPSS or R. People Operations Intern would require significant additional preparation in HR knowledge and tools before you could be competitive.",
         "role_matches": [
           {
             "fit_level": "medium",
             "missing_signals": [
-              "formal research methods course (e.g., PSYC 301)",
-              "direct lab assistant experience",
-              "IRB training"
+              "proficiency with statistical analysis software (SPSS, R, Python)",
+              "database management and data cleaning experience",
+              "ability to design and execute statistical analyses"
             ],
-            "rationale": "Your skills in literature review, APA writing, and statistical reasoning align with typical research assistant duties. DFW employers like UT Southwestern and Texas A&M often seek assistants for behavioral studies. However, most entry-level RAs expect prior lab experience or specific coursework (e.g., research methods). You have foundational knowledge but lack direct lab experience beyond classroom projects.",
+            "rationale": "Your interest in behavioral research and your background in statistical reasoning, literature review, and APA writing align with the core tasks of preparing reports, summarizing research results, and verifying data. However, the role expects hands-on experience with statistical software like SPSS, R, or Python, and you currently lack those technical data management and analysis skills.",
             "role": "Research Assistant",
             "supporting_signals": [
-              "APA-style writing",
+              "interest in behavioral research",
               "statistical reasoning",
-              "literature review",
-              "survey design basics",
-              "class research contributor experience",
-              "Culture and Diversity Literature Brief project"
+              "literature review skills",
+              "APA-style writing",
+              "involvement in research discussions on culture and bias"
             ]
           },
           {
             "fit_level": "high",
             "missing_signals": [
-              "formal peer mentoring training",
-              "knowledge of campus resources",
-              "experience leading workshops"
+              "formal training in counseling or educational guidance",
+              "knowledge of crisis intervention protocols",
+              "familiarity with academic policies and record-keeping systems"
             ],
-            "rationale": "Your empathy, facilitation, and public speaking skills directly match peer mentoring roles. DFW universities (UT Arlington, UNT, Texas A&M) hire peer mentors for first-year experience programs. You have course-based facilitation experience. Missing formal training in mentoring or academic coaching, but many programs provide onboarding.",
+            "rationale": "Your psychology major, empathy, facilitation skills, and public speaking ability directly support the core tasks of counseling students on academic and personal issues, maintaining records, and referring to services. Your interest in student support and diversity aligns with the occupation's emphasis on customer and personal service, therapy and counseling, and education and training.",
             "role": "Student Success Peer Mentor",
             "supporting_signals": [
-              "empathy",
-              "facilitation",
+              "psychology major",
+              "empathy and facilitation skills",
               "public speaking",
-              "critical reading",
-              "interest in student support",
-              "group facilitation from research team"
+              "interest in student support and diversity",
+              "critical reading and evidence synthesis"
             ]
           },
           {
             "fit_level": "low",
             "missing_signals": [
-              "HR coursework or certification",
-              "HRIS/ATS experience",
-              "business communication experience",
-              "formal internship experience"
+              "knowledge of HR laws and regulations (e.g., EEO, ADA)",
+              "experience with HR software (Workday, Oracle HRIS, applicant tracking systems)",
+              "understanding of hiring processes and employee relations"
             ],
-            "rationale": "Your interest in organizational psychology and survey design is relevant, but typical people ops interns are expected to have HR coursework, HRIS familiarity, or business-related experience. DFW companies like Toyota North America and AT&T look for interns with Excel proficiency and HR knowledge. You have Excel basics but lack HR-specific skills or internship experience in a business setting.",
+            "rationale": "Your interest in organizational psychology and survey design are good starting points, and your Excel basics and critical reading are relevant. But the role requires deep knowledge of HR laws, personnel policies, and HR software (e.g., Workday, applicant tracking systems), which you have not yet developed. The core tasks focus on hiring, employee relations, and regulatory compliance \u2014 areas outside your current experience.",
             "role": "People Operations Intern",
             "supporting_signals": [
+              "interest in organizational psychology",
               "survey design basics",
               "Excel basics",
-              "interest in organizational psychology",
-              "empathy",
-              "critical reading"
+              "critical reading and writing"
             ]
           }
         ]
@@ -71,7 +67,7 @@
       "errors": [],
       "feature": "FIT",
       "status": "success",
-      "summary": "You're a Psychology sophomore with strong foundations in research methods and student-facing soft skills. Your target roles in research, peer mentoring, and people ops are all viable, but your near-term strengths lie in student support roles, where your empathy and facilitation stand out. The DFW market offers opportunities in university peer programs and entry-level research assistant positions, though the latter may require a third-year methods course."
+      "summary": "You are a sophomore Psychology major with clear interests in behavioral research and student support. Your current skills include survey design basics, statistical reasoning, and APA writing, with some experience in research discussions. The three roles you're targeting vary in fit \u2014 your strongest alignment is with Student Success Peer Mentor, where your empathy and facilitation skills match well, while Research Assistant requires technical data skills you're still building, and People Operations Intern demands HR-specific knowledge you haven't yet developed."
     },
     "GAP": {
       "data": {

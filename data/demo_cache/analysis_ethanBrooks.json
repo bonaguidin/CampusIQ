@@ -10,53 +10,55 @@
   "results": {
     "FIT": {
       "data": {
-        "overall_fit_summary": "All three target roles are currently a low fit given your freshman standing and limited project depth. The most realistic near-term step is to build a concrete project\u2014either a simple software app or an embedded system\u2014that demonstrates your skills before applying to internships next cycle.",
+        "overall_fit_summary": "Your Computer Engineering path and interests strongly align with Computer Engineering and Embedded Systems internships, but you're at the very start of that journey. The most realistic near-term fit is a Computer Engineering Intern role, as it matches your intended major and interests\u2014but you'll need to gain C/C++ proficiency and a hardware-related project before you're competitive for most local positions.",
         "role_matches": [
           {
             "fit_level": "low",
             "missing_signals": [
-              "Proficiency in a full programming language beyond basics (e.g., Java, C++, JavaScript)",
-              "A completed software project (web, mobile, or open-source contribution)",
-              "Version control (Git) and testing skills"
+              "JavaScript, HTML/CSS, or any web development framework",
+              "Version control experience (e.g., Git)",
+              "Database or cloud familiarity (e.g., SQL, AWS)"
             ],
-            "rationale": "Your Python basics and engineering team collaboration show a starting point, and your interest in software development is relevant. However, DFW postings for software interns typically require proficiency in a full language stack (e.g., Java, C++, or web frameworks), completion of at least one full project (e.g., an app or web service), and familiarity with version control and testing. Your current portfolio only includes classroom computation exercises, not independent software.",
+            "rationale": "This role focuses on analyzing user needs, designing software, and testing systems. National occupational survey data shows it demands strong knowledge of Computers and Electronics (94 importance) and Mathematics (64). You have Python basics and problem-solving skills, but your current projects and skills are far from the hands-on software development, version control, and web frameworks this role requires. Your interests in hardware and embedded systems also don't align closely with software-only work.",
             "role": "Software Engineering Intern",
             "supporting_signals": [
               "Python basics",
-              "team collaboration",
-              "problem-solving",
-              "interest in software development"
-            ]
-          },
-          {
-            "fit_level": "low",
-            "missing_signals": [
-              "Coursework or self-study in digital logic, circuits, or computer architecture",
-              "Hands-on project with a microcontroller (e.g., Arduino, MSP430) or simulation (e.g., Verilog, SPICE)",
-              "Experience with hardware description languages or lab equipment"
-            ],
-            "rationale": "Your intended major and interest in hardware and robotics are a natural fit for this broad role. DFW companies like Texas Instruments and Raytheon look for interns with coursework in digital logic, circuits, or microcontrollers\u2014plus some hands-on lab or simulation experience. Your MATLAB basics and engineering computation help, but you haven't yet taken any CE-specific courses or built a hardware-related project.",
-            "role": "Computer Engineering Intern",
-            "supporting_signals": [
-              "intended major in computer engineering",
-              "MATLAB basics",
               "engineering computation",
-              "interests in embedded systems and hardware"
+              "problem solving",
+              "team collaboration"
             ]
           },
           {
-            "fit_level": "low",
+            "fit_level": "medium",
             "missing_signals": [
               "C or C++ programming experience",
-              "Any embedded project (e.g., using an Arduino, Raspberry Pi, or STM32)",
-              "Understanding of memory management, interrupts, or basic circuit design"
+              "Familiarity with hardware tools like Verilog, SPICE, or simulation software",
+              "Project experience building or testing hardware prototypes"
             ],
-            "rationale": "Your interest in embedded systems and robotics is a strong directional match, and your persistence and problem-solving attitude are relevant. Real DFW postings (e.g., from Lockheed Martin and other defense contractors) expect C/C++ programming, familiarity with RTOS or bare-metal development, and at least one embedded project (e.g., a sensor interface or motor control). You have no embedded-specific skills or projects yet.",
+            "rationale": "This role involves designing and testing computer hardware, writing specifications, and collaborating on hardware-software integration. National survey data gives top importance to Computers and Electronics knowledge (93), Engineering and Technology (92), and skills like Critical Thinking (75). Your interests in embedded systems, robotics, and computer hardware are a strong match, and your Python/MATLAB basics, engineering computation work, and first-year team project show you're heading in the right direction. However, you lack experience with C/C++, hardware description languages, and the kind of prototyping and testing tasks central to the role.",
+            "role": "Computer Engineering Intern",
+            "supporting_signals": [
+              "interest in embedded systems and computer hardware",
+              "Python and MATLAB basics",
+              "engineering computation portfolio",
+              "first-year team project involvement",
+              "problem solving and persistence"
+            ]
+          },
+          {
+            "fit_level": "medium",
+            "missing_signals": [
+              "C/C++ programming for embedded contexts",
+              "Experience with microcontrollers or firmware development",
+              "Knowledge of hardware-software interface concepts (e.g., registers, interrupts)"
+            ],
+            "rationale": "Embedded systems work is closely related to computer engineering, involving design of hardware and software for embedded devices. National survey data (same as Computer Engineering Intern) emphasizes Computers and Electronics (93) and Engineering and Technology (92). Your stated interests directly align, and your foundational computation skills and team collaboration are relevant. But entry-level expectations typically include hands-on experience with microcontrollers, firmware, and low-level programming languages that you haven't yet developed.",
             "role": "Embedded Systems Intern",
             "supporting_signals": [
-              "interest in embedded systems and robotics",
-              "Python basics (used in some embedded tooling)",
-              "asking for feedback and persistence"
+              "strong interest in embedded systems and robotics",
+              "Python and MATLAB basics",
+              "engineering computation and documentation experience",
+              "ability to ask for feedback and persist"
             ]
           }
         ]
@@ -64,7 +66,7 @@
       "errors": [],
       "feature": "FIT",
       "status": "success",
-      "summary": "You're a freshman switching into computer engineering with foundational Python and MATLAB skills, plus engineering project experience. Your interests in embedded systems and software align with demand in Texas, but you lack the project depth and tool-specific experience that DFW employers expect for technical internships right now."
+      "summary": "You're a freshman starting your Computer Engineering path with interests in embedded systems, robotics, and hardware. You have foundational Python and engineering computation skills, but your target roles typically require stronger programming and hardware-specific knowledge. The most realistic near-term fit is a Computer Engineering or Embedded Systems intern role, given your interests and planned major, but you'll need to build key technical skills first."
     },
     "GAP": {
       "data": {
