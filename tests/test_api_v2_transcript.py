@@ -822,6 +822,18 @@ def test_confirm_does_not_touch_another_students_rows(client, db, monkeypatch):
 def test_review_lists_unconfirmed_rows_and_flags_catalog_gaps(client, db, monkeypatch):
     patch_session(monkeypatch, db)
     _seed_unconfirmed_course(db, STUDENT_A, TAMU)
+    db.tables["academic_terms"].append(
+        {
+            "id": "term-fall-2025",
+            "student_id": STUDENT_A,
+            "institution_id": TAMU,
+            "label": "Fall 2025",
+            "year": 2025,
+            "season": "fall",
+            "sequence": 1,
+        }
+    )
+    db.tables["course_records"][0]["term_id"] = "term-fall-2025"
 
     response = client.get(REVIEW, headers=HEADERS)
 
@@ -832,6 +844,8 @@ def test_review_lists_unconfirmed_rows_and_flags_catalog_gaps(client, db, monkey
     assert row["course_code"] == "MATH 251"
     assert row["needs_catalog_review"] is True
     assert body["pending_catalog_review"] == 1
+    assert body["terms"][0]["label"] == "Fall 2025"
+    assert body["institutions"] == [{"id": TAMU, "name": "Texas A&M University"}]
     # System columns must never be projected.
     assert "student_id" not in row
     assert "confirmed_at" not in row

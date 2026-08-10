@@ -15,7 +15,14 @@ export declare const CERT_STATUS_VALUES: readonly string[];
 
 export declare function reviewEditUrl(table: string, id: string): string;
 
-export type FieldType = 'text' | 'textarea' | 'list' | 'status';
+/**
+ * `number` is part of the review system's permanent vocabulary, not a
+ * resume-only addition: transcript review needs it for credit_hours, where a
+ * silently coerced value changes a GPA. No resume section uses it today; the
+ * renderer and validation support it so transcript review does not have to
+ * retrofit the type later.
+ */
+export type FieldType = 'text' | 'textarea' | 'list' | 'status' | 'number';
 
 export interface ReviewField {
   name: string;
@@ -185,3 +192,40 @@ export declare function changedFields(
 export declare function normalizeFieldValue(value: unknown): unknown;
 export declare function parseListInput(text: string): string[];
 export declare function formatListInput(value: unknown): string;
+
+// ── review-screen model ─────────────────────────────────────────────────────
+
+export declare function isEmptyValue(value: unknown): boolean;
+
+export declare const GLYPH_READ: '·';
+export declare const GLYPH_EDITED: '✎';
+export declare const GLYPH_EMPTY: '⌀';
+
+/** null when the field is empty and unchanged (no row is rendered for it). */
+export declare function fieldGlyph(
+  original: Record<string, unknown> | null,
+  draft: Record<string, unknown> | null,
+  fieldName: string,
+): '·' | '✎' | '⌀' | null;
+
+export declare function entryGaps(table: string, row: Record<string, unknown> | null): string[];
+export declare function entryFilled(table: string, row: Record<string, unknown> | null): string[];
+
+export interface CounterRow {
+  table: SectionKey;
+  original: Record<string, unknown> | null;
+  draft: Record<string, unknown> | null;
+}
+
+export interface ReviewCounters {
+  read: number;
+  edited: number;
+  gaps: number;
+  total: number;
+  filledRatio: number;
+}
+
+export declare function reviewCounters(rows: readonly CounterRow[] | null): ReviewCounters;
+
+export declare function parseNumberInput(text: unknown): number | null;
+export declare function formatNumberInput(value: unknown): string;

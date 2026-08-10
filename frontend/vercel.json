@@ -47,6 +47,22 @@
       "destination": "/api/proxy?target=me-career-review-edit&table=:table&id=:id"
     },
     {
+      "source": "/api/v2/student/me/transcript/upload",
+      "destination": "/api/proxy?target=me-transcript-upload"
+    },
+    {
+      "source": "/api/v2/student/me/transcript/review",
+      "destination": "/api/proxy?target=me-transcript-review"
+    },
+    {
+      "source": "/api/v2/student/me/transcript/review/:id",
+      "destination": "/api/proxy?target=me-transcript-review-edit&id=:id"
+    },
+    {
+      "source": "/api/v2/student/me/transcript/confirm",
+      "destination": "/api/proxy?target=me-transcript-confirm"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

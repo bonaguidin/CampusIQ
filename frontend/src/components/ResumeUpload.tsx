@@ -4,7 +4,8 @@ import type { NormalizedUpload } from '../lib/resumeApi.mjs';
 
 interface ResumeUploadProps {
   accessToken: string;
-  onUploaded(result: NormalizedUpload): void;
+  /** `fileName` is passed through to the review masthead as provenance. */
+  onUploaded(result: NormalizedUpload, fileName: string): void;
 }
 
 const ACCEPTED = '.pdf,.docx';
@@ -61,7 +62,7 @@ export function ResumeUpload({ accessToken, onUploaded }: ResumeUploadProps) {
     try {
       const result = await uploadResume(accessToken, file);
       if (result.ok) {
-        onUploaded(result);
+        onUploaded(result, file.name);
         return;
       }
       setFailure(result);
