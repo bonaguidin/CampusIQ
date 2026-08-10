@@ -892,3 +892,77 @@ def test_blank_role_never_reaches_the_trend_agent():
 
     assert agent.get_role_trends("   ", client=client) is None
     assert client.calls == []
+
+
+# ---------------------------------------------------------------- trend TTL
+# Requirements describe a stable SOC taxonomy; trends describe "what is changing
+# right now" and go stale in months. Serving an expired trend answer would
+# quietly reintroduce the ungrounded claims this feature exists to remove.
+
+def _stamped(days_old):
+    from datetime import date, timedelta
+
+    return dict(VALID_TRENDS, _fetched_at=(date.today() - timedelta(days=days_old)).isoformat())
+
+
+def test_fresh_trend_cache_entry_is_served(searchable):
+    agent._TRENDS_CACHE_PATH.parent.mkdir(parents=True, exist_ok=True)
+    agent._TRENDS_CACHE_PATH.write_text(json.dumps({"Finance Intern": _stamped(1)}), encoding="utf-8")
+
+    client = _researched()
+    result = agent.get_role_trends("Finance Intern", client=client)
+
+    assert result == VALID_TRENDS
+    assert client.calls == []  # served from cache
+
+
+def test_expired_trend_cache_entry_is_re_researched(searchable):
+    agent._TRENDS_CACHE_PATH.parent.mkdir(parents=True, exist_ok=True)
+    agent._TRENDS_CACHE_PATH.write_text(
+        json.dumps({"Finance Intern": _stamped(agent._TRENDS_MAX_AGE_DAYS + 1)}), encoding="utf-8"
+    )
+
+    client = _researched()
+    result = agent.get_role_trends("Finance Intern", client=client)
+
+    assert result == VALID_TRENDS
+    assert client.calls, "expired entry must trigger fresh research"
+
+
+def test_untimestamped_trend_entry_counts_as_expired(searchable):
+    """Everything written before the TTL existed predates the guarantee.
+
+    "Unknown age" has to read as stale, not as valid-forever.
+    """
+    agent._TRENDS_CACHE_PATH.parent.mkdir(parents=True, exist_ok=True)
+    agent._TRENDS_CACHE_PATH.write_text(json.dumps({"Finance Intern": VALID_TRENDS}), encoding="utf-8")
+
+    client = _researched()
+    agent.get_role_trends("Finance Intern", client=client)
+
+    assert client.calls, "entry with no timestamp must be re-researched"
+
+
+def test_trend_writes_are_stamped_and_the_stamp_never_reaches_the_caller(searchable):
+    agent.get_role_trends("Finance Intern", client=_researched())
+
+    on_disk = json.loads(agent._TRENDS_CACHE_PATH.read_text(encoding="utf-8"))["Finance Intern"]
+    assert agent._FETCHED_AT_KEY in on_disk
+
+    served = agent.get_role_trends("Finance Intern", client=_researched())
+    assert agent._FETCHED_AT_KEY not in served
+    assert served == VALID_TRENDS
+
+
+def test_requirements_cache_is_not_given_a_ttl():
+    """Deliberate asymmetry: an annual taxonomy does not expire monthly."""
+    agent._CACHE_PATH.parent.mkdir(parents=True, exist_ok=True)
+    agent._CACHE_PATH.write_text(
+        json.dumps({"Software Engineering Intern": EXPECTED_VALID_RESULT}), encoding="utf-8"
+    )
+
+    client = FakeClient([_final_message(VALID_PAYLOAD)])
+    result = agent.get_role_requirements("Software Engineering Intern", client=client)
+
+    assert result == EXPECTED_VALID_RESULT
+    assert client.calls == []  # untimestamped, old, still served

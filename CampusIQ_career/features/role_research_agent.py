@@ -40,6 +40,7 @@ import os
 import re
 import threading
 import time
+from datetime import date
 from pathlib import Path
 from typing import Any, Callable, Mapping
 
@@ -78,6 +79,19 @@ _CACHE_PATH = Path(__file__).resolve().parents[2] / "data" / ".cache" / "role_re
 _TRENDS_CACHE_PATH = Path(__file__).resolve().parents[2] / "data" / ".cache" / "role_trends_cache.json"
 
 _SOC_CODE_PATTERN = re.compile(r"^\d{2}-\d{4}\.\d{2}$")
+
+# Cache freshness. Written as a reserved key alongside the payload rather than
+# wrapping it, so _validate_schema / _validate_trends see the shape they always
+# saw and drop this on the way out.
+#
+# Only trends expire. Requirements describe the SOC taxonomy and an occupation's
+# standing skill profile -- stable across years, and O*NET itself only refreshes
+# annually, so a TTL there would force re-research for no new information.
+# Trends are the opposite: "what is changing right now" is stale within months,
+# and serving a cached answer past its shelf life would quietly reintroduce the
+# problem grounding was built to fix.
+_FETCHED_AT_KEY = "_fetched_at"
+_TRENDS_MAX_AGE_DAYS = 30
 
 # Serialises the load-modify-write in _write_cache. Both cache files are
 # written from ShiftRunner's concurrent research threads.
@@ -516,24 +530,53 @@ def _load_cache(path: Path) -> dict[str, Any]:
     return data if isinstance(data, dict) else {}
 
 
+def _is_fresh(entry: Any, max_age_days: int) -> bool:
+    """Whether a cached entry is young enough to serve.
+
+    An entry with no timestamp is treated as expired, not as valid-forever:
+    every entry written before this existed predates the freshness guarantee,
+    so the safe reading is "unknown age" -> re-fetch once.
+    """
+    if not isinstance(entry, Mapping):
+        return False
+    stamp = entry.get(_FETCHED_AT_KEY)
+    if not isinstance(stamp, str):
+        return False
+    try:
+        fetched = date.fromisoformat(stamp)
+    except ValueError:
+        return False
+    return (date.today() - fetched).days <= max_age_days
+
+
 def _read_cache(
-    path: Path, role: str, validate: Callable[[Any], dict[str, Any] | None]
+    path: Path,
+    role: str,
+    validate: Callable[[Any], dict[str, Any] | None],
+    max_age_days: int | None = None,
 ) -> dict[str, Any] | None:
     entry = _load_cache(path).get(role)
+    if max_age_days is not None and not _is_fresh(entry, max_age_days):
+        return None
     # Re-validate on read (not just at write time): a stale cache entry from
     # a prior schema version, or a hand-edited file, must be treated as a
     # miss rather than returned as trusted data.
     return validate(entry)
 
 
-def _write_cache(path: Path, role: str, requirements: dict[str, Any]) -> None:
+def _write_cache(
+    path: Path, role: str, requirements: dict[str, Any], stamp: bool = False
+) -> None:
     # Load-modify-write must be atomic across threads. ShiftRunner researches a
     # student's roles concurrently, so without this two lookups finishing
     # together would each read the pre-write file and the second would clobber
     # the first's entry -- silently discarding research we already paid for.
+    record = dict(requirements)
+    if stamp:
+        record[_FETCHED_AT_KEY] = date.today().isoformat()
     with _CACHE_WRITE_LOCK:
         cache = _load_cache(path)
-        cache[role] = requirements
+        cache[role] = record
         try:
             path.parent.mkdir(parents=True, exist_ok=True)
             with path.open("w", encoding="utf-8") as handle:
@@ -591,7 +634,9 @@ def get_role_trends(role: str, client: OpenRouterClient | None = None) -> dict[s
     if not isinstance(role, str) or not role.strip():
         return None
 
-    cached = _read_cache(_TRENDS_CACHE_PATH, role, _validate_trends)
+    cached = _read_cache(
+        _TRENDS_CACHE_PATH, role, _validate_trends, max_age_days=_TRENDS_MAX_AGE_DAYS
+    )
     if cached is not None:
         logger.info("role_trends source=cache role=%s", role)
         return cached
@@ -623,6 +668,6 @@ def get_role_trends(role: str, client: OpenRouterClient | None = None) -> dict[s
         logger.info("role_trends source=none role=%s", role)
         return None
 
-    _write_cache(_TRENDS_CACHE_PATH, role, result)
+    _write_cache(_TRENDS_CACHE_PATH, role, result, stamp=True)
     logger.info("role_trends source=agent role=%s", role)
     return result
