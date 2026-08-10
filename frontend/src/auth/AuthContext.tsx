@@ -124,6 +124,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, newSession) => {
+      const previousUserId = sessionRef.current?.user.id ?? null;
+      const nextUserId = newSession?.user.id ?? null;
+      if (previousUserId !== nextUserId) {
+        setStudentAccount(newSession ? CHECKING_STATE : NO_SESSION_STATE);
+        clearInstitutionTheme();
+      }
+      sessionRef.current = newSession;
       sessionSourceRef.current = `onAuthStateChange:${_event}`;
       console.log(
         '[AuthContext] onAuthStateChange |',
@@ -245,6 +252,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, [userId, demoProfileActive, accountRetry]);
 
+  useEffect(() => {
+    const institution = studentAccount.profile?.intelligence_profile.institution.name;
+    if (!profile && studentAccount.status === 'ready' && institution) {
+      void fetchInstitutionThemeByName(institution).then(applyInstitutionTheme);
+    }
+  }, [profile, studentAccount]);
+
   const refreshStudentAccount = useCallback((): void => {
     setAccountRetry((n) => n + 1);
   }, []);
@@ -289,6 +303,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [profile, slug]);
 
   const signInWithPassword = useCallback(async (email: string, password: string): Promise<void> => {
+    setProfile(null);
+    setSlug(null);
+    sessionStorage.removeItem(SESSION_KEY);
+    clearInstitutionTheme();
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw error;
   }, []);

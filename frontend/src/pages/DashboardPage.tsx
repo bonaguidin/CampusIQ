@@ -9,6 +9,7 @@ import { ShiftAnalysisPanel } from '../components/ShiftAnalysisPanel';
 import type { ProfileCompleteness } from '../types/student';
 import { ChatPanel } from '../components/ChatPanel';
 import { GuidedTour } from '../components/GuidedTour';
+import { AuthenticatedDashboard } from './AuthenticatedDashboard';
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -244,6 +245,15 @@ const SECTION_TITLES: Record<NavSection, string> = {
 };
 
 export function DashboardPage() {
+  const { profile, studentAccount } = useAuth();
+
+  if (!profile && studentAccount.status === 'ready') {
+    return <AuthenticatedDashboard />;
+  }
+  return <DemoDashboardPage />;
+}
+
+function DemoDashboardPage() {
   const { profile, logout } = useAuth();
   const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState<NavSection>('overview');

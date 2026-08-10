@@ -20,6 +20,7 @@
 import { supabase } from './supabase';
 import { readSignupMetadata } from './signupRules.mjs';
 import type { SignupMetadata } from './signupRules.mjs';
+import type { MeProfile } from '../types/studentIntelligenceProfile';
 
 const ME_PROFILE_URL = '/api/v2/student/me/profile';
 
@@ -37,15 +38,6 @@ export type StudentAccountStatus =
   | 'absent'
   /** Provisioning was attempted and failed in a way a reload will not fix. */
   | 'error';
-
-export interface MeProfile {
-  student: {
-    id: string;
-    name: string | null;
-    institution: string | null;
-  };
-  career: unknown;
-}
 
 export interface StudentAccountState {
   status: StudentAccountStatus;
@@ -235,7 +227,7 @@ function failed(message: string): StudentAccountState {
  * is independently attemptable.
  *
  * The detection signal is NOT /api/v2/student/me/gpa's 409. That route is not
- * proxied at all (vercel.json exposes only me-analyze, me-chat and me-profile),
+ * proxied at all (the frontend exposes me-analyze, me-chat and me-profile),
  * so the browser cannot reach it. It is also not needed: profile_builder.py's
  * _resolve_institution_name returns None instead of raising where the GPA route
  * raises 409, so a half-provisioned student comes back from /me/profile as a

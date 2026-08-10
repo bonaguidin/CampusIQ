@@ -16,12 +16,9 @@ type Step = 'checking' | 'upload' | 'review' | 'recovery_error' | 'done';
  * The three-step resume flow, held on one route.
  *
  * ON THE TERMINAL STATE: confirming shows a static success screen here rather
- * than navigating anywhere. /dashboard renders blank for a real student today
- * -- DashboardPage reads the demo `profile` and dereferences profile.courses --
- * so sending them there would look like a bug rather than a success. Returning
- * to the upload step would offer another upload as if the flow continues, which
- * it does not. A static confirmation is the honest state until a real next
- * destination exists.
+ * than navigating anywhere. The authenticated dashboard is available through
+ * /dashboard; this page remains the focused resume onboarding workflow and
+ * keeps the static confirmation so the student can review the completed step.
  */
 export function ResumePage() {
   const { session } = useAuth();

@@ -8,13 +8,22 @@ export interface ChatMessage {
 }
 
 export async function sendChat(
-  slug: string,
+  identity: { slug: string | null; accessToken: string | null },
   message: string,
   history: ChatMessage[],
 ): Promise<string> {
-  const response = await fetch(`/api/students/${encodeURIComponent(slug)}/chat`, {
+  const path = identity.slug
+    ? `/api/students/${encodeURIComponent(identity.slug)}/chat`
+    : '/api/v2/student/me/chat';
+  if (!identity.slug && !identity.accessToken) {
+    throw new Error('Authenticated chat requires a session.');
+  }
+  const response = await fetch(path, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      ...(identity.slug ? {} : { Authorization: `Bearer ${identity.accessToken}` }),
+    },
     body: JSON.stringify({ message, history }),
   });
 

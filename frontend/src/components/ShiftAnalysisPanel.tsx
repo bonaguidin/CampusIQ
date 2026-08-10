@@ -14,8 +14,10 @@ import { AnalysisPanel, type AnalysisPhase } from './AnalysisPanel';
 // ai_fluency_guidance[]). PROVISIONAL: unvalidated against a real (non-mocked)
 // model response — see frontend/src/types/analysis.ts.
 export function ShiftAnalysisPanel() {
-  const { slug } = useAuth();
-  const { state, trigger } = useAnalysisRun(() => analyzeShift(slug ?? ''));
+  const { slug, session } = useAuth();
+  const { state, trigger } = useAnalysisRun(() =>
+    analyzeShift({ slug, accessToken: session?.access_token ?? null }),
+  );
 
   const phase: AnalysisPhase =
     state.phase === 'idle'
