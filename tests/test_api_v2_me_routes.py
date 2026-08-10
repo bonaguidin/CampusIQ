@@ -232,6 +232,18 @@ def test_me_analyze_returns_a_feature_result(feature, client, monkeypatch):
     }[feature]
     assert body["feature"] == expected
     assert set(body) == {"feature", "status", "summary", "data", "errors"}
+    # Asserted per feature rather than as a blanket 200: professor comments
+    # are NOT reachable for a real student. _full_profile() mirrors what
+    # build_profile_from_supabase actually returns (student/career/courses),
+    # and there is no submissions key in that shape -- nor any table behind
+    # it -- so PROFESSOR_COMMENTS skips every time. Asserting only the status
+    # code let this test pass while the feature never ran.
+    assert body["status"] == {
+        "gap": "success",
+        "fit": "success",
+        "shift": "success",
+        "professor-comments": "skipped",
+    }[feature]
 
 
 @pytest.mark.parametrize("feature", ["fit", "gap", "shift"])
@@ -278,6 +290,36 @@ def test_professor_comments_keeps_legacy_profile_path(client, monkeypatch):
 
     assert response.status_code == 200
     assert response.json()["feature"] == "PROFESSOR_COMMENTS"
+
+
+def test_professor_comments_is_unreachable_for_a_real_student(client, monkeypatch):
+    """The honest statement of today's behavior, kept deliberately explicit.
+
+    A real student's profile comes from build_profile_from_supabase, whose
+    dict has exactly student/career/courses -- Canvas submissions are mocked
+    and no submissions/submission_comments table exists in the schema. So this
+    route is live, authorized and rate-limited, and returns "skipped" for
+    every real student, always, without ever calling the model.
+
+    This asserts the gap rather than papering over it: if a real comment
+    source is ever wired in, this test fails and must be updated
+    deliberately. If the skip path silently breaks, it fails too.
+    """
+    _patch_session(monkeypatch, profile=_full_profile())
+    ai = FakeAI()
+    monkeypatch.setattr(api, "build_client", lambda: ai)
+
+    response = _call(
+        client, "post", "/api/v2/student/me/analyze/professor-comments", None
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["status"] == "skipped"
+    assert body["summary"] == "Missing required fields for this feature."
+    assert body["errors"] == ["Missing required field: submissions"]
+    assert body["data"] == {}
+    assert ai.calls == []
 
 
 def test_chat_keeps_legacy_profile_path(client, monkeypatch):

@@ -83,6 +83,25 @@ def sample_student_without_comments():
     }
 
 
+def sample_student_with_submissions_but_no_comments():
+    """Submissions exist and are graded, but no professor left feedback."""
+    return {
+        "student": {"id": 998, "name": "Graded But Silent"},
+        "courses": [{"id": 4100, "name": "Intro Seminar", "course_code": "UNIV 101"}],
+        "assignments": [{"id": 6100, "name": "Welcome Quiz", "course_id": 4100}],
+        "submissions": [
+            {"assignment_id": 6100, "user_id": 998, "score": 95, "grade": "A"},
+            {
+                "assignment_id": 6100,
+                "user_id": 998,
+                "score": 88,
+                "grade": "B+",
+                "submission_comments": [],
+            },
+        ],
+    }
+
+
 def test_academic_success_with_mocked_ai_json():
     client = FakeClient(
         """
@@ -144,6 +163,199 @@ def test_academic_skips_when_no_submissions():
     assert result["summary"] == "Missing required fields for this feature."
     assert result["errors"]
     assert client.calls == []
+
+
+def test_academic_skips_when_submissions_exist_but_carry_no_comments():
+    """Fix 1: the required_paths proxy alone would let this through.
+
+    `submissions` is non-empty, so find_missing_fields is satisfied, but there
+    is not a single comment to analyze. Sending comments_by_course: [] to the
+    model invites invention; skip instead, reusing the same skip result the
+    missing-submissions case produces.
+    """
+    client = FakeClient('{"data": {"themes": []}}')
+
+    result = AcademicRunner(client=client).run(
+        sample_student_with_submissions_but_no_comments()
+    )
+
+    assert result["feature"] == "PROFESSOR_COMMENTS"
+    assert result["status"] == "skipped"
+    assert result["summary"] == "Missing required fields for this feature."
+    assert result["errors"] == [
+        "Missing required field: submissions[].submission_comments"
+    ]
+    assert client.calls == []
+
+
+def test_academic_still_runs_for_students_who_do_have_comments():
+    """Fix 1 must not change the behavior of the populated (demo) case."""
+    client = FakeClient('{"summary": "done", "data": {"themes": []}}')
+
+    result = AcademicRunner(client=client).run(sample_student_with_comments())
+
+    assert result["status"] == "success"
+    assert len(client.calls) == 1
+
+
+def test_academic_empty_data_object_is_a_contract_violation():
+    """Fix 2: valid JSON, no themes key -- previously returned success."""
+    client = FakeClient('{"summary": "looks fine", "data": {}}')
+
+    result = AcademicRunner(client=client).run(sample_student_with_comments())
+
+    assert result["feature"] == "PROFESSOR_COMMENTS"
+    assert result["status"] == "failed"
+    assert result["data"] == {}
+    assert result["errors"] == ["AI response 'themes' must be a list."]
+
+
+def test_academic_invalid_theme_category_is_rejected():
+    """Fix 2: category outside strength|concern|praise|flag."""
+    client = FakeClient(
+        """
+        {
+          "data": {
+            "themes": [
+              {
+                "theme": "Documentation habits",
+                "category": "very bad",
+                "summary": "Professors want clearer explanations.",
+                "supporting_references": [
+                  {
+                    "course_code": "ENGR 102",
+                    "course_name": "Engineering Lab I: Computation",
+                    "paraphrase": "Asked for more explanation of code logic."
+                  }
+                ]
+              }
+            ],
+            "overall_summary": "Document more."
+          }
+        }
+        """
+    )
+
+    result = AcademicRunner(client=client).run(sample_student_with_comments())
+
+    assert result["status"] == "failed"
+    assert result["data"] == {}
+    assert result["errors"] == [
+        "themes[0].category must be one of: concern|flag|praise|strength."
+    ]
+
+
+def test_academic_malformed_theme_fields_are_rejected():
+    """Fix 2: right keys, wrong types, and a non-list supporting_references."""
+    client = FakeClient(
+        """
+        {
+          "data": {
+            "themes": [
+              {
+                "theme": 42,
+                "category": "concern",
+                "summary": null,
+                "supporting_references": "ENGR 102"
+              }
+            ]
+          }
+        }
+        """
+    )
+
+    result = AcademicRunner(client=client).run(sample_student_with_comments())
+
+    assert result["status"] == "failed"
+    assert result["errors"] == [
+        "themes[0].theme must be a string.",
+        "themes[0].summary must be a string.",
+        "themes[0].supporting_references must be a list.",
+    ]
+
+
+def test_academic_hallucinated_citation_is_rejected():
+    """Fix 3: a well-formed citation to a course with no comments.
+
+    PHYS 208 is not among the courses this student has professor comments
+    from (ENGR 102 and MATH 151), so the reference cannot be supported by
+    anything the model was shown.
+    """
+    client = FakeClient(
+        """
+        {
+          "data": {
+            "themes": [
+              {
+                "theme": "Lab technique",
+                "category": "praise",
+                "summary": "Professors consistently praise your lab work.",
+                "supporting_references": [
+                  {
+                    "course_code": "ENGR 102",
+                    "course_name": "Engineering Lab I: Computation",
+                    "paraphrase": "Noted your code worked as intended."
+                  },
+                  {
+                    "course_code": "PHYS 208",
+                    "course_name": "Electricity and Optics",
+                    "paraphrase": "Praised your experimental setup."
+                  }
+                ]
+              }
+            ],
+            "overall_summary": "Strong lab work."
+          }
+        }
+        """
+    )
+
+    result = AcademicRunner(client=client).run(sample_student_with_comments())
+
+    assert result["status"] == "failed"
+    assert result["data"] == {}
+    assert result["errors"] == [
+        "themes[0].supporting_references[1].course_code 'PHYS 208' is not a "
+        "course this student has professor comments from."
+    ]
+
+
+def test_academic_accepts_citations_to_real_commented_courses():
+    """Fix 3 must not reject legitimate citations."""
+    client = FakeClient(
+        """
+        {
+          "data": {
+            "themes": [
+              {
+                "theme": "Documentation habits",
+                "category": "concern",
+                "summary": "Professors want clearer written explanations.",
+                "supporting_references": [
+                  {
+                    "course_code": "ENGR 102",
+                    "course_name": "Engineering Lab I: Computation",
+                    "paraphrase": "Asked for more explanation of code logic."
+                  },
+                  {
+                    "course_code": "MATH 151",
+                    "course_name": "Calculus I",
+                    "paraphrase": "Flagged algebra slips on exams."
+                  }
+                ]
+              }
+            ],
+            "overall_summary": "Document your process more."
+          }
+        }
+        """
+    )
+
+    result = AcademicRunner(client=client).run(sample_student_with_comments())
+
+    assert result["status"] == "success"
+    assert result["errors"] == []
+    assert result["data"]["themes"][0]["theme"] == "Documentation habits"
 
 
 def test_academic_malformed_ai_json_returns_failed_result():
