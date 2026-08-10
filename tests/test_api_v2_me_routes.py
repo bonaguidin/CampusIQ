@@ -234,6 +234,89 @@ def test_me_analyze_returns_a_feature_result(feature, client, monkeypatch):
     assert set(body) == {"feature", "status", "summary", "data", "errors"}
 
 
+@pytest.mark.parametrize("feature", ["fit", "gap", "shift"])
+def test_authenticated_career_analysis_is_canonical_first(feature, client, monkeypatch):
+    _patch_session(monkeypatch, profile=_full_profile())
+    canonical = object()
+    calls = []
+    monkeypatch.setattr(
+        api,
+        "build_student_intelligence_profile",
+        lambda client, sid: calls.append(("canonical", sid)) or canonical,
+    )
+    monkeypatch.setattr(
+        api,
+        "canonical_to_legacy_profile",
+        lambda value: calls.append(("adapter", value)) or _full_profile(),
+    )
+    monkeypatch.setattr(
+        api,
+        "build_profile_from_supabase",
+        lambda client, sid: pytest.fail("career analysis must not rebuild the legacy profile"),
+    )
+    monkeypatch.setattr(api, "build_client", lambda: FakeAI())
+
+    response = _call(client, "post", f"/api/v2/student/me/analyze/{feature}", None)
+
+    assert response.status_code == 200
+    assert calls == [("canonical", STUDENT_UUID), ("adapter", canonical)]
+    assert set(response.json()) == {"feature", "status", "summary", "data", "errors"}
+
+
+def test_professor_comments_keeps_legacy_profile_path(client, monkeypatch):
+    _patch_session(monkeypatch, profile=_full_profile())
+    monkeypatch.setattr(
+        api,
+        "build_student_intelligence_profile",
+        lambda client, sid: pytest.fail("professor comments are outside Phase 3"),
+    )
+    monkeypatch.setattr(api, "build_client", lambda: FakeAI())
+
+    response = _call(
+        client, "post", "/api/v2/student/me/analyze/professor-comments", None
+    )
+
+    assert response.status_code == 200
+    assert response.json()["feature"] == "PROFESSOR_COMMENTS"
+
+
+def test_chat_keeps_legacy_profile_path(client, monkeypatch):
+    _patch_session(monkeypatch, profile=_full_profile())
+    monkeypatch.setattr(
+        api,
+        "build_student_intelligence_profile",
+        lambda client, sid: pytest.fail("chat is outside Phase 3"),
+    )
+    monkeypatch.setattr(api, "build_client", lambda: FakeAI("legacy chat"))
+
+    response = _call(
+        client, "post", "/api/v2/student/me/chat", {"message": "hi", "history": []}
+    )
+
+    assert response.status_code == 200
+    assert response.json()["reply"] == "legacy chat"
+
+
+@pytest.mark.parametrize("feature", ["fit", "gap", "shift"])
+def test_demo_career_analysis_does_not_build_a_canonical_profile(
+    feature, client, monkeypatch
+):
+    profile = _full_profile()
+    profile["student"]["id"] = 601
+    monkeypatch.setattr(api, "load_profile_for_slug", lambda request, slug: profile)
+    monkeypatch.setattr(
+        api,
+        "build_student_intelligence_profile",
+        lambda client, sid: pytest.fail("demo analysis must remain static-JSON-backed"),
+    )
+    monkeypatch.setattr(api, "build_client", lambda: FakeAI())
+
+    response = client.post(f"/api/students/jordanReyes/analyze/{feature}")
+
+    assert response.status_code == 200
+    assert set(response.json()) == {"feature", "status", "summary", "data", "errors"}
+
+
 def test_me_chat_returns_a_reply(client, monkeypatch):
     _patch_session(monkeypatch, profile=_full_profile())
     fake = FakeAI("Here is your advice.")
