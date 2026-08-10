@@ -143,6 +143,16 @@ def _patch_session(monkeypatch, profile=None, student_rows=None):
             "build_profile_from_supabase",
             lambda client, sid: type("R", (), {"profile": profile})(),
         )
+        monkeypatch.setattr(
+            api,
+            "build_student_intelligence_profile",
+            lambda client, sid: type(
+                "Canonical",
+                (),
+                {"model_dump": lambda self, mode=None: {"contract_version": "1.0"}},
+            )(),
+        )
+        monkeypatch.setattr(api, "canonical_to_legacy_profile", lambda canonical: profile)
     return rows
 
 
@@ -202,6 +212,7 @@ def test_me_profile_returns_the_profile(client, monkeypatch):
     assert body["student"]["id"] == STUDENT_UUID
     assert body["student"]["institution"] == "Texas A&M University"
     assert body["career"]["target_roles"] == ["SWE Intern"]
+    assert body["intelligence_profile"]["contract_version"] == "1.0"
 
 
 @pytest.mark.parametrize("feature", ["gap", "fit", "shift", "professor-comments"])
