@@ -552,3 +552,126 @@ export function parseListInput(text) {
 export function formatListInput(value) {
   return Array.isArray(value) ? value.join(', ') : ''
 }
+
+// ── review-screen model ─────────────────────────────────────────────────────
+//
+// The redesigned review screen renders from three derived facts: whether a
+// field is filled, whether the student changed it, and how many of each exist
+// across the whole page. All three live here rather than in CareerReview.tsx
+// for the reason this module exists at all -- `node --test` cannot load .tsx,
+// so logic placed in the component is logic that cannot be tested. The
+// component keeps only rendering and DOM effects.
+
+/** A field the student has not filled in: null, blank, or an empty list. */
+export function isEmptyValue(value) {
+  const normalized = normalizeFieldValue(value)
+  if (normalized === null || normalized === undefined) return true
+  if (Array.isArray(normalized)) return normalized.length === 0
+  if (typeof normalized === 'string') return normalized.trim() === ''
+  return false
+}
+
+/** Glyphs shown in each field row's left gutter. */
+export const GLYPH_READ = '·'    // · straight from the resume
+export const GLYPH_EDITED = '✎'  // ✎ changed by the student
+export const GLYPH_EMPTY = '⌀'   // ⌀ emptied out by the student
+
+/**
+ * Which glyph a field row shows.
+ *
+ * `original` is the server's row, `draft` the working copy. Comparing the two
+ * -- rather than tracking a "touched" flag -- means a student who types a
+ * change and then types it back reverts to "·", which is honest: the stored
+ * value did come straight from the resume.
+ */
+export function fieldGlyph(original, draft, fieldName) {
+  const before = normalizeFieldValue(original ? original[fieldName] : null)
+  const after = normalizeFieldValue(draft ? draft[fieldName] : null)
+  const changed = !sameValue(before, after)
+  if (isEmptyValue(after)) return changed ? GLYPH_EMPTY : null
+  return changed ? GLYPH_EDITED : GLYPH_READ
+}
+
+/** Editable field names on this row that are currently empty, in field order. */
+export function entryGaps(table, row) {
+  const section = REVIEW_SECTIONS[table]
+  if (!section) return []
+  return section.fields.filter((field) => isEmptyValue(row ? row[field.name] : null)).map((f) => f.name)
+}
+
+/** Editable field names on this row that are currently filled, in field order. */
+export function entryFilled(table, row) {
+  const section = REVIEW_SECTIONS[table]
+  if (!section) return []
+  return section.fields
+    .filter((field) => !isEmptyValue(row ? row[field.name] : null))
+    .map((f) => f.name)
+}
+
+/**
+ * The three ledger counters, computed across every row on the page.
+ *
+ * `read` counts filled-and-unchanged, `edited` counts changed-and-still-filled,
+ * `gaps` counts empty. They partition `total` exactly -- the commit bar and the
+ * ledger both read this one function so they can never disagree, which is the
+ * whole point of deriving it in one place.
+ *
+ * `rows` is a list of { table, original, draft } -- the caller assembles it
+ * from whatever it has, so this stays free of section-shape knowledge.
+ */
+export function reviewCounters(rows) {
+  let read = 0
+  let edited = 0
+  let gaps = 0
+
+  for (const entry of rows || []) {
+    const section = REVIEW_SECTIONS[entry.table]
+    if (!section) continue
+    for (const field of section.fields) {
+      const glyph = fieldGlyph(entry.original, entry.draft, field.name)
+      if (glyph === GLYPH_READ) read += 1
+      else if (glyph === GLYPH_EDITED) edited += 1
+      else gaps += 1
+    }
+  }
+
+  const total = read + edited + gaps
+  return {
+    read,
+    edited,
+    gaps,
+    total,
+    // Progress is "how much of the document we have something for", which is
+    // what the bar under the counters fills to.
+    filledRatio: total === 0 ? 1 : (total - gaps) / total,
+  }
+}
+
+/**
+ * Coerce a `number` field's raw input.
+ *
+ * Returns null for anything unusable, INCLUDING an empty string -- an emptied
+ * number field is a legitimate "not stated", handled by the caller reverting or
+ * clearing. Rejects rather than rounds: a credit_hours the student typed as
+ * "3 hours" is a mistake to surface, not a 3 to assume. Mirrors the backend's
+ * coerce_credit_hours (GradusIQ_career/transcript/parser.py), including its
+ * refusal to accept booleans or non-finite values.
+ */
+export function parseNumberInput(text) {
+  if (typeof text === 'number') {
+    return Number.isFinite(text) ? text : null
+  }
+  if (typeof text !== 'string') return null
+  const trimmed = text.trim()
+  if (trimmed === '') return null
+  if (!/^-?\d*\.?\d+$/.test(trimmed)) return null
+  const parsed = Number(trimmed)
+  return Number.isFinite(parsed) ? parsed : null
+}
+
+/** Display form for a `number` field. Empty string when not stated. */
+export function formatNumberInput(value) {
+  if (typeof value === 'number' && Number.isFinite(value)) return String(value)
+  if (typeof value === 'string' && parseNumberInput(value) !== null) return value.trim()
+  return ''
+}

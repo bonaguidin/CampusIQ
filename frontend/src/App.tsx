@@ -3,6 +3,7 @@ import { LoginPage } from './pages/LoginPage';
 import { SignUpPage } from './pages/SignUpPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { ResumePage } from './pages/ResumePage';
+import { TranscriptPage } from './pages/TranscriptPage';
 import { RequireAuth } from './auth/RequireAuth';
 import { RequireStudentAccount } from './auth/RequireStudentAccount';
 
@@ -37,6 +38,10 @@ export default function App() {
             <ResumePage />
           </RequireStudentAccount>
         }
+      />
+      <Route
+        path="/transcript"
+        element={<RequireStudentAccount><TranscriptPage /></RequireStudentAccount>}
       />
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>

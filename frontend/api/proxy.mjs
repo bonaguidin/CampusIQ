@@ -50,6 +50,10 @@ const ME_TARGETS = Object.assign(Object.create(null), {
   'me-chat': { method: 'POST', needsFeature: false },
   'me-profile': { method: 'GET', needsFeature: false },
   'me-resume-upload': { method: 'POST', needsFeature: false, binary: true },
+  'me-transcript-upload': { method: 'POST', needsFeature: false, binary: true },
+  'me-transcript-review': { method: 'GET', needsFeature: false },
+  'me-transcript-review-edit': { method: 'PATCH', needsFeature: false, needsTranscriptRecord: true },
+  'me-transcript-confirm': { method: 'POST', needsFeature: false },
   'me-career-confirm': { method: 'POST', needsFeature: false },
   'me-career-review': { method: 'GET', needsFeature: false },
   // `needsRecord` marks the one target whose backend path is not fixed: it
@@ -100,6 +104,12 @@ function meBackendPath(target, feature, reviewTable, recordId) {
   if (target === 'me-chat') return '/api/v2/student/me/chat'
   if (target === 'me-profile') return '/api/v2/student/me/profile'
   if (target === 'me-resume-upload') return '/api/v2/student/me/resume/upload'
+  if (target === 'me-transcript-upload') return '/api/v2/student/me/transcript/upload'
+  if (target === 'me-transcript-review') return '/api/v2/student/me/transcript/review'
+  if (target === 'me-transcript-confirm') return '/api/v2/student/me/transcript/confirm'
+  if (target === 'me-transcript-review-edit') {
+    return `/api/v2/student/me/transcript/review/${encodeURIComponent(recordId)}`
+  }
   if (target === 'me-career-confirm') return '/api/v2/student/me/career/confirm'
   if (target === 'me-career-review') return '/api/v2/student/me/career/review'
   if (target === 'me-career-review-edit') {
@@ -136,6 +146,9 @@ export function createProxyHandler({ env = process.env, fetchImpl = globalThis.f
           return jsonError(400, 'Invalid analysis route.')
         }
         if (spec.needsRecord && (!REVIEW_TABLES.has(reviewTable) || !RECORD_ID_PATTERN.test(recordId))) {
+          return jsonError(400, 'Invalid analysis route.')
+        }
+        if (spec.needsTranscriptRecord && !RECORD_ID_PATTERN.test(recordId)) {
           return jsonError(400, 'Invalid analysis route.')
         }
         isBinaryTarget = spec.binary === true

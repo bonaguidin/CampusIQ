@@ -1,10 +1,16 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '../auth/useAuth';
 import { ResumeUpload } from '../components/ResumeUpload';
 import { CareerReview } from '../components/CareerReview';
-import type { NormalizedConfirm, NormalizedUpload } from '../lib/resumeApi.mjs';
+import { fetchCareerReview } from '../api/resume';
+import type {
+  NormalizedConfirm,
+  NormalizedReview,
+  NormalizedUpload,
+  ReviewSections,
+} from '../lib/resumeApi.mjs';
 
-type Step = 'upload' | 'review' | 'done';
+type Step = 'checking' | 'upload' | 'review' | 'recovery_error' | 'done';
 
 /**
  * The three-step resume flow, held on one route.
@@ -19,24 +25,50 @@ type Step = 'upload' | 'review' | 'done';
  */
 export function ResumePage() {
   const { session } = useAuth();
-  const [step, setStep] = useState<Step>('upload');
-  const [uploaded, setUploaded] = useState<NormalizedUpload | null>(null);
-  const [confirmed, setConfirmed] = useState<NormalizedConfirm | null>(null);
-
   const accessToken = session?.access_token ?? '';
 
-  // RequireStudentAccount guarantees a session before this renders; this is a
-  // belt-and-braces guard, not an expected state.
-  if (!accessToken) {
-    return (
-      <div className="loading-screen">
-        <div className="spinner" role="status" aria-label="Loading" />
-      </div>
-    );
-  }
+  return accessToken ? <ResumeFlow accessToken={accessToken} /> : <ResumeLoading />;
+}
 
-  function handleUploaded(result: NormalizedUpload) {
+export function ResumeFlow({ accessToken }: { accessToken: string }) {
+  const [step, setStep] = useState<Step>('checking');
+  const [uploaded, setUploaded] = useState<NormalizedUpload | null>(null);
+  const [confirmed, setConfirmed] = useState<NormalizedConfirm | null>(null);
+  const [recoveredSections, setRecoveredSections] = useState<ReviewSections | null>(null);
+  const [recoveryFailure, setRecoveryFailure] = useState<NormalizedReview | null>(null);
+  const [recoveryAttempt, setRecoveryAttempt] = useState(0);
+  // Provenance for the review masthead. Held here because it is the only place
+  // that sees both the upload and the review step.
+  const [source, setSource] = useState<{ name: string; at: Date } | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    setStep('checking');
+    setRecoveryFailure(null);
+    void fetchCareerReview(accessToken).then((result) => {
+      if (!active) return;
+      if (!result.ok) {
+        setRecoveryFailure(result);
+        setStep('recovery_error');
+        return;
+      }
+      if (result.pendingCount > 0) {
+        setRecoveredSections(result.sections);
+        setStep('review');
+      } else {
+        setRecoveredSections(null);
+        setStep('upload');
+      }
+    });
+    return () => {
+      active = false;
+    };
+  }, [accessToken, recoveryAttempt]);
+
+  function handleUploaded(result: NormalizedUpload, fileName: string) {
     setUploaded(result);
+    setRecoveredSections(null);
+    setSource({ name: fileName, at: new Date() });
     setStep('review');
   }
 
@@ -45,12 +77,47 @@ export function ResumePage() {
     setStep('done');
   }
 
+  if (step === 'checking') return <ResumeLoading />;
+
+  if (step === 'recovery_error') {
+    return (
+      <div className="login-bg">
+        <div className="login-card">
+          <div className="login-header">
+            <h1 className="login-logo">GradusIQ</h1>
+            <p className="login-subtitle">Could not check your resume</p>
+          </div>
+          <div className="login-form">
+            <p className="login-error" role="alert">
+              {recoveryFailure?.message ?? 'Your saved review could not be checked.'}
+            </p>
+            <button
+              type="button"
+              className="btn btn-primary btn-full"
+              onClick={() => setRecoveryAttempt((attempt) => attempt + 1)}
+            >
+              Try again
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (step === 'upload') {
     return <ResumeUpload accessToken={accessToken} onUploaded={handleUploaded} />;
   }
 
   if (step === 'review') {
-    return <CareerReview accessToken={accessToken} onConfirmed={handleConfirmed} />;
+    return (
+      <CareerReview
+        accessToken={accessToken}
+        onConfirmed={handleConfirmed}
+        initialSections={recoveredSections ?? undefined}
+        sourceName={source?.name}
+        parsedAt={source?.at}
+      />
+    );
   }
 
   const total = confirmed?.totalConfirmed ?? 0;
@@ -83,6 +150,14 @@ export function ResumePage() {
           Nothing else is needed from you right now. You can close this page.
         </p>
       </div>
+    </div>
+  );
+}
+
+function ResumeLoading() {
+  return (
+    <div className="loading-screen">
+      <div className="spinner" role="status" aria-label="Checking for a saved resume review" />
     </div>
   );
 }
