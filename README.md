@@ -3,6 +3,8 @@
 AI-powered career and academic companion for Texas A&M students.
 Dallas AI Group 6 | 2026 Summer Cohort.
 
+[![CI](https://github.com/bonaguidin/GradusIQ/actions/workflows/ci.yml/badge.svg)](https://github.com/bonaguidin/GradusIQ/actions/workflows/ci.yml)
+
 © 2026 GradusIQ. All rights reserved. Unauthorized copying, modification, or distribution of this software, in whole or in part, is prohibited.
 
 ---
