@@ -100,6 +100,15 @@ test('resume page recovers persisted review across load, error, confirmation, an
   await page.getByRole('button', { name: 'Confirm all' }).click()
   await page.getByText('Your profile has been saved').waitFor()
   assert.equal(state.confirms, 1)
+
+  // The terminal screen offers a way onward instead of telling the student to
+  // close the tab. Same link, same copy as the transcript flow's ending.
+  const done = page.getByRole('link', { name: 'Go to dashboard' })
+  await done.waitFor()
+  assert.equal(await done.getAttribute('href'), '/dashboard')
+  await page.getByText(/Nothing else is needed from you right now/).waitFor()
+  assert.equal(await page.getByText('You can close this page.').count(), 0)
+
   await page.reload()
   await page.getByText('Add your resume').waitFor()
   assert.equal(await page.getByRole('heading', { name: 'Here’s what we read.' }).count(), 0)
@@ -121,4 +130,65 @@ test('resume page recovers persisted review across load, error, confirmation, an
   await page.getByRole('heading', { name: 'Here’s what we read.' }).waitFor()
   assert.equal(state.uploads, 1)
   assert.equal(await page.getByText('Add your resume').count(), 0)
+})
+
+test('a slow confirm dims the resume review too, identically to transcript', { timeout: 30_000 }, async (t) => {
+  // The overlay lives in the shared CommitBar precisely so the two flows
+  // cannot diverge here. This asserts the resume side actually receives it,
+  // rather than trusting that sharing a component is enough.
+  const apiPlugin = {
+    name: 'resume-slow-confirm-api',
+    configureServer(server) {
+      server.middlewares.use((request, response, next) => {
+        const path = request.url?.split('?')[0]
+        if (path === '/api/v2/student/me/career/review' && request.method === 'GET') {
+          response.body = PENDING
+          json(response)
+          return
+        }
+        if (path === '/api/v2/student/me/career/confirm' && request.method === 'POST') {
+          setTimeout(() => {
+            response.body = {
+              status: 'ok', scope: 'all_unconfirmed',
+              confirmed: { career_profiles: 1, certifications: 0, work_experience: 1, projects: 0 },
+              total_confirmed: 2,
+            }
+            json(response)
+          }, 1500)
+          return
+        }
+        next()
+      })
+    },
+  }
+
+  const server = await createServer({
+    root: new URL('..', import.meta.url).pathname,
+    logLevel: 'silent',
+    plugins: [apiPlugin],
+    server: { host: '127.0.0.1' },
+  })
+  await server.listen()
+  t.after(async () => server.close())
+  const address = server.httpServer?.address()
+  assert.ok(address && typeof address === 'object')
+
+  const browser = await chromium.launch()
+  t.after(async () => browser.close())
+  const page = await browser.newPage()
+
+  await page.goto(`http://127.0.0.1:${String(address.port)}/resume-recovery-preview.html`)
+  await page.getByRole('button', { name: 'Confirm all' }).click()
+
+  await page.getByText('Saving your record').waitFor()
+  await page.getByText('This can take up to a minute if the server is waking up.').waitFor()
+  assert.equal(await page.locator('.rv-confirming').count(), 1)
+
+  const button = page.getByRole('button', { name: 'Saving…' })
+  await button.waitFor()
+  assert.equal(await button.isDisabled(), true)
+  assert.equal(await page.getByRole('alert').count(), 0)
+
+  await page.getByText('Your profile has been saved').waitFor()
+  assert.equal(await page.locator('.rv-confirming').count(), 0)
 })

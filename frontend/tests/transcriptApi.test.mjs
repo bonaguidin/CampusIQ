@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { canonicalTranscriptValue, formatCreditHours, normalizeTranscriptConfirm, normalizeTranscriptPatch, normalizeTranscriptReview, normalizeTranscriptUpload, parseCreditHours, transcriptChangedFields } from '../src/lib/transcriptApi.mjs'
+import { CONFIRM_TIMEOUT_MS, REQUEST_TIMEOUT_STATUS, canonicalTranscriptValue, formatCreditHours, normalizeTranscriptConfirm, normalizeTranscriptPatch, normalizeTranscriptReview, normalizeTranscriptUpload, parseCreditHours, transcriptChangedFields } from '../src/lib/transcriptApi.mjs'
 
 test('transcript API normalizers follow the backend response shapes', () => {
   const review = normalizeTranscriptReview(200, { course_records: [{ id: '1' }], terms: [{ id: 't' }], institutions: [{ id: 'i' }], excluded_by_repeat: [], pending_catalog_review: 1 })
@@ -46,6 +46,25 @@ test('grade_scale_unverified is distinguished from ordinary 409 conflicts', () =
   // The other three 409s (no home institution, no grading scale, already
   // confirmed) carry no error code and stay ordinary conflicts.
   assert.equal(normalizeTranscriptConfirm(409, { detail: 'Student has no home institution on record.' }).kind, 'conflict')
+})
+
+test('a client timeout is its own kind, never a network failure', () => {
+  const timedOut = normalizeTranscriptConfirm(REQUEST_TIMEOUT_STATUS, null)
+  assert.equal(timedOut.ok, false)
+  assert.equal(timedOut.kind, 'timeout')
+
+  // The remedy differs from a network failure -- wait, rather than assume the
+  // app is broken -- so the copy must differ too. A cold start is the likeliest
+  // cause and the student can only make it worse by hammering the button.
+  assert.match(timedOut.message, /taking longer than expected/)
+  assert.match(timedOut.message, /still be starting up/)
+  assert.notEqual(timedOut.message, normalizeTranscriptConfirm(0, null).message)
+  assert.equal(normalizeTranscriptConfirm(0, null).kind, 'network')
+
+  // The sentinel must never be mistakable for a real HTTP status.
+  assert.ok(REQUEST_TIMEOUT_STATUS < 0)
+  // Long enough to outlast the measured 20-50s cold-start range.
+  assert.ok(CONFIRM_TIMEOUT_MS >= 60_000)
 })
 
 test('a PATCH 404 removes the row rather than reading as a server error', () => {

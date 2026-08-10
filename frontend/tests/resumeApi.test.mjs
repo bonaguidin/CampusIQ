@@ -4,6 +4,8 @@ import test from 'node:test'
 import {
   ALL_SECTIONS,
   CHILD_TABLES,
+  CONFIRM_TIMEOUT_MS,
+  REQUEST_TIMEOUT_STATUS,
   REVIEW_SECTIONS,
   changedFields,
   confirmedToSingular,
@@ -509,6 +511,26 @@ test('confirm failures return zeroed counts and a message', () => {
     assert.equal(result.confirmed.career_profile, 0)
     assert.ok(result.message.length > 0)
   }
+})
+
+test('a client timeout on confirm is its own kind with cold-start copy', () => {
+  const timedOut = normalizeConfirmResponse(REQUEST_TIMEOUT_STATUS, null)
+  assert.equal(timedOut.ok, false)
+  assert.equal(timedOut.kind, 'timeout')
+  assert.equal(timedOut.totalConfirmed, 0)
+  assert.equal(timedOut.confirmed.career_profile, 0)
+
+  // Same wording as the transcript flow's timeout: one incident, one sentence,
+  // whichever surface the student happens to be on.
+  assert.match(timedOut.message, /taking longer than expected/)
+  assert.match(timedOut.message, /still be starting up/)
+
+  // Must not be swallowed by the generic unknown-status branch, which would
+  // print "Could not confirm your records (status -1)".
+  assert.doesNotMatch(timedOut.message, /status -1/)
+
+  assert.ok(REQUEST_TIMEOUT_STATUS < 0)
+  assert.ok(CONFIRM_TIMEOUT_MS >= 60_000)
 })
 
 // ── edit diffing ────────────────────────────────────────────────────────────

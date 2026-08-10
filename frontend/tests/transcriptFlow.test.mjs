@@ -80,10 +80,64 @@ test('transcript flow covers upload, recovery, edits, repeats, failures, confirm
   await page.reload(); await page.getByRole('heading', { name: 'Verify your academic record' }).waitFor(); await page.setViewportSize({ width: 390, height: 844 }); assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true)
 
   // Confirmation clears pending server state; refresh returns to upload.
-  await page.getByRole('button', { name: 'Confirm 1 courses' }).click(); await page.getByText('Your transcript is saved').waitFor(); await page.reload(); await page.getByRole('heading', { name: 'Add your transcript' }).waitFor()
+  await page.getByRole('button', { name: 'Confirm 1 courses' }).click(); await page.getByText('Your transcript is saved').waitFor()
+
+  // The terminal screen offers a way onward. It previously ended on "a refresh
+  // will not restore this completed review" with no next step at all, which
+  // told the student what NOT to do and nothing else.
+  const done = page.getByRole('link', { name: 'Go to dashboard' })
+  await done.waitFor()
+  assert.equal(await done.getAttribute('href'), '/dashboard')
+  await page.getByText(/Nothing else is needed from you right now/).waitFor()
+
+  await page.reload(); await page.getByRole('heading', { name: 'Add your transcript' }).waitFor()
 
   // Recovery failure is explicit and retryable, never an upload fallback.
   state.recoveryFails = true; await page.reload(); await page.getByText('Could not check your transcript').waitFor(); assert.equal(await page.getByRole('heading', { name: 'Add your transcript' }).count(), 0); state.recoveryFails = false; await page.getByRole('button', { name: 'Try again' }).click(); await page.getByRole('heading', { name: 'Add your transcript' }).waitFor()
+})
+
+test('a slow confirm dims the page and says how long it may take', { timeout: 30_000 }, async (t) => {
+  // The confirm request is held open deliberately. This is the bug being
+  // covered: against a cold-started backend the request runs 20-50s, and the
+  // review page used to sit at full opacity with every field still looking
+  // editable for that entire window.
+  const plugin = { name: 'transcript-slow-confirm', configureServer(server) { server.middlewares.use((request, response, next) => {
+    const path = request.url?.split('?')[0]
+    if (path === '/api/v2/student/me/transcript/review' && request.method === 'GET') return respond(response, payload({ pending: true, row: { ...baseRow } }))
+    if (path === '/api/v2/student/me/transcript/confirm' && request.method === 'POST') { setTimeout(() => { respond(response, { status: 'ok', confirmed: 1, scope: 'all_unconfirmed', repeats: {} }) }, 1500); return }
+    next()
+  }) } }
+  const server = await createServer({ root: new URL('..', import.meta.url).pathname, logLevel: 'silent', plugins: [plugin], server: { host: '127.0.0.1' } }); await server.listen(); t.after(async () => server.close())
+  const address = server.httpServer?.address(); assert.ok(address && typeof address === 'object')
+  const browser = await chromium.launch(); t.after(async () => browser.close()); const page = await browser.newPage()
+
+  await page.goto(`http://127.0.0.1:${address.port}/transcript-preview.html`)
+  await page.getByRole('button', { name: 'Confirm 1 courses' }).click()
+
+  // The page-level signal, not just the bottom bar.
+  await page.getByText('Saving your record').waitFor()
+  await page.getByText('This can take up to a minute if the server is waking up.').waitFor()
+  assert.equal(await page.locator('.rv-confirming').count(), 1)
+
+  // The overlay covers the review CONTENT while leaving the commit bar legible
+  // on top of it -- that ordering is the whole point of its z-index.
+  const stacking = await page.evaluate(() => ({
+    overlay: Number(getComputedStyle(document.querySelector('.rv-confirming')).zIndex),
+    bar: Number(getComputedStyle(document.querySelector('.rv-commit')).zIndex),
+  }))
+  assert.ok(stacking.overlay < stacking.bar, 'the commit bar must stay above the scrim')
+
+  // The pre-existing bar behaviour is kept, not replaced.
+  const button = page.getByRole('button', { name: 'Saving…' })
+  await button.waitFor()
+  assert.equal(await button.isDisabled(), true)
+
+  // Progress, never an alert: nothing has gone wrong.
+  assert.equal(await page.getByRole('alert').count(), 0)
+
+  // And it clears on completion rather than trapping the student under it.
+  await page.getByText('Your transcript is saved').waitFor()
+  assert.equal(await page.locator('.rv-confirming').count(), 0)
 })
 
 test('confirmation blocked by an unverified grade scale reads as a status, not a failure', { timeout: 30_000 }, async (t) => {

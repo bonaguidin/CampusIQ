@@ -53,6 +53,11 @@ export type TranscriptConfirmResult = (TranscriptFailure | { ok: true; kind: 'ok
 export const TRANSCRIPT_UPLOAD_URL: string;
 export const TRANSCRIPT_REVIEW_URL: string;
 export const TRANSCRIPT_CONFIRM_URL: string;
+
+/** Re-exported from resumeApi so both flows share one timeout contract. */
+export const REQUEST_TIMEOUT_STATUS: number;
+export const CONFIRM_TIMEOUT_MS: number;
+
 export const TRANSCRIPT_FIELDS: string[];
 export const COURSE_STATUS_VALUES: readonly ['completed', 'in_progress'];
 export const TRANSCRIPT_SECTION: ReviewSection;

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../auth/useAuth';
 import { fetchTranscriptReview } from '../api/transcript';
+import { GoToDashboard } from '../components/GoToDashboard';
 import { TranscriptUpload } from '../components/TranscriptUpload';
 import { TranscriptReview } from '../components/TranscriptReview';
 import type {
@@ -117,10 +118,11 @@ export function TranscriptFlow({ accessToken }: { accessToken: string }) {
               ? 'One course has been confirmed and added to your academic record.'
               : `${String(count)} courses have been confirmed and added to your academic record.`}
           </p>
+          <GoToDashboard />
         </div>
         <p className="login-note">
-          Your GPA is calculated from these records. A refresh will not restore this completed
-          review.
+          Your GPA is calculated from these records. Nothing else is needed from you right now — a
+          refresh will not restore this completed review.
         </p>
       </div>
     </div>
