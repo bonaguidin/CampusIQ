@@ -9,6 +9,17 @@ import {
 } from '../../lib/resumeApi.mjs';
 import type { ReviewField } from '../../lib/resumeApi.mjs';
 
+/**
+ * Input types whose selection API is defined (HTML spec: text, search, url,
+ * tel, password). Every other type -- number among them -- throws on
+ * setSelectionRange rather than ignoring it.
+ */
+const SELECTABLE_INPUT_TYPES = new Set(['text', 'search', 'url', 'tel', 'password']);
+
+function isSelectableInput(node: Element): node is HTMLInputElement {
+  return node instanceof HTMLInputElement && SELECTABLE_INPUT_TYPES.has(node.type);
+}
+
 export interface FieldRowProps {
   field: ReviewField;
   idPrefix: string;
@@ -73,7 +84,13 @@ export function FieldRow({
     const node = inputRef.current;
     if (!node) return;
     node.focus();
-    if (node instanceof HTMLInputElement || node instanceof HTMLTextAreaElement) {
+    // setSelectionRange is only defined for text-like inputs. Calling it on
+    // <input type="number"> THROWS ("does not support selection"), which
+    // unmounts the card mid-edit rather than degrading -- so the guard is on
+    // the input's type, not just its element class. Textareas always support
+    // it. Caret placement is a nicety; the focus above is the part that
+    // matters, and it still happens for every type.
+    if (node instanceof HTMLTextAreaElement || isSelectableInput(node)) {
       const end = node.value.length;
       node.setSelectionRange(end, end);
     }

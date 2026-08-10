@@ -35,6 +35,13 @@ export interface ReviewSection {
   singular: string;
   titleField?: string;
   fields: readonly ReviewField[];
+  /**
+   * Explicit subtitle fields, in order. Omitted by every resume section, which
+   * keeps the derived "first two filled non-title fields" behaviour. Named by
+   * the transcript section, whose useful subtitle (credits · grade) is not the
+   * first two fields in declaration order.
+   */
+  subtitleFields?: readonly string[];
 }
 
 export declare const REVIEW_SECTIONS: Record<SectionKey, ReviewSection>;

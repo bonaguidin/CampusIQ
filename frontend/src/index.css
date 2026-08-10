@@ -2917,3 +2917,253 @@ a {
   .rv-field-flash { animation: none; background: var(--accent-tint); }
   .rv-progress-fill { transition: none; }
 }
+
+/* ── transcript review ────────────────────────────────────────────────────
+   The transcript surface reuses the rv-* card, field, ledger and commit
+   vocabulary wholesale. What follows is only the structure a transcript has
+   and a resume does not: courses grouped into terms, card-level record flags,
+   the repeat-policy section, the arithmetic cross-check, and an upload screen
+   whose failures each have their own remedy.
+
+   Same rules as the rest of this stylesheet: hairline rules, square corners,
+   mono for labels and data, serif for headings. */
+
+/* Terms are the middle level a resume has no equivalent of. Presented as a
+   section head so a term heading and a resume section heading read as the
+   same kind of thing. */
+.rv-term-meta {
+  font-family: var(--font-data);
+  font-size: 0.6875rem;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  margin: -0.75rem 0 1.1rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Card-level record flags. Deliberately not styled as errors: "needs a catalog
+   check" is a thing to look at, not a thing that went wrong. */
+.rv-card-flags {
+  list-style: none;
+  margin: 0 0 0.9rem;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.75rem;
+}
+
+.rv-card-flag {
+  font-family: var(--font-data);
+  font-size: 0.65625rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--muted);
+  border-left: 2px solid var(--line);
+  padding-left: 0.5rem;
+}
+
+/* ── repeat policy ────────────────────────────────────────────────────── */
+
+.rv-repeats-lede {
+  font-family: var(--font-ui);
+  font-size: 0.9375rem;
+  line-height: 1.62;
+  color: var(--muted);
+  margin: 0 0 1.1rem;
+  max-width: 58ch;
+}
+
+/* The counter-intuitive half of the rule, and the first thing a student will
+   dispute -- so it is set in the body ink rather than the muted grey the rest
+   of the sentence uses. */
+.rv-repeats-emphasis {
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.rv-repeats-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.rv-repeat {
+  display: grid;
+  grid-template-columns: 7rem 3rem 1fr;
+  gap: 0 1rem;
+  align-items: baseline;
+  padding: 0.7rem 0;
+  border-top: 1px solid var(--line);
+}
+
+.rv-repeat-code {
+  font-family: var(--font-data);
+  font-size: 0.8125rem;
+  color: var(--ink);
+}
+
+.rv-repeat-grade {
+  font-family: var(--font-data);
+  font-size: 0.8125rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.rv-repeat-note {
+  font-family: var(--font-ui);
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+.rv-repeats-foot {
+  font-family: var(--font-ui);
+  font-size: 0.8125rem;
+  color: var(--muted);
+  margin: 1rem 0 0;
+  max-width: 58ch;
+}
+
+/* ── cross-check ──────────────────────────────────────────────────────── */
+
+/* Advisory, never blocking: a left rule marks it as something to read, not a
+   panel that stops the flow. */
+.rv-crosscheck {
+  border-left: 2px solid var(--ink);
+  padding: 0.25rem 0 0.25rem 1.1rem;
+  margin: 2.5rem 0 0;
+}
+
+.rv-crosscheck-head {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 1.15rem;
+  letter-spacing: -0.01em;
+  margin: 0 0 0.5rem;
+  color: var(--ink);
+}
+
+.rv-crosscheck-lede {
+  font-family: var(--font-ui);
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: var(--muted);
+  margin: 0 0 0.9rem;
+  max-width: 58ch;
+}
+
+.rv-crosscheck-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.rv-crosscheck-row {
+  display: grid;
+  grid-template-columns: 9rem 7rem 1fr;
+  gap: 0 1rem;
+  align-items: baseline;
+  padding: 0.5rem 0;
+  border-top: 1px solid var(--line);
+  font-family: var(--font-data);
+  font-size: 0.75rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.rv-crosscheck-term { color: var(--ink); }
+.rv-crosscheck-values strong { color: var(--ink); font-weight: 500; }
+
+/* ── commit bar: blocked state ────────────────────────────────────────── */
+
+/* Not --error: a pending grade scale is a state of our data, not a failed
+   action, and colouring it like a failure would read as something the student
+   did wrong. */
+.rv-commit-blocked { color: var(--muted); }
+
+/* ── transcript upload ────────────────────────────────────────────────── */
+
+.rv-page-narrow { max-width: 46rem; }
+
+.rv-upload {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  align-items: flex-start;
+  padding-top: 2.5rem;
+  border-top: 1px solid var(--line);
+}
+
+.rv-upload-label {
+  font-family: var(--font-data);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.rv-upload-help,
+.rv-upload-footnote {
+  font-family: var(--font-ui);
+  font-size: 0.8125rem;
+  line-height: 1.6;
+  color: var(--muted);
+  margin: 0;
+  max-width: 58ch;
+}
+
+.rv-upload-footnote { margin-top: 2rem; }
+
+/* Each failure gets a headline naming the actual problem and a line saying
+   what to do about it; the backend's own message follows as detail. */
+.rv-upload-error {
+  border-left: 2px solid var(--error);
+  padding: 0.1rem 0 0.1rem 1rem;
+  margin: 0.5rem 0;
+  max-width: 58ch;
+}
+
+.rv-upload-error-title {
+  display: block;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 1.05rem;
+  color: var(--ink);
+  margin-bottom: 0.35rem;
+}
+
+.rv-upload-error-action {
+  font-family: var(--font-ui);
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: var(--ink);
+  margin: 0 0 0.4rem;
+}
+
+.rv-upload-error-detail {
+  font-family: var(--font-data);
+  font-size: 0.75rem;
+  line-height: 1.55;
+  color: var(--muted);
+  margin: 0;
+}
+
+.rv-upload-reset {
+  font-family: var(--font-ui);
+  font-size: 0.875rem;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--line);
+  color: var(--muted);
+  padding: 0 0 0.15rem;
+  cursor: pointer;
+}
+
+.rv-upload-reset:hover { color: var(--ink); }
+
+@media (max-width: 40rem) {
+  .rv-repeat,
+  .rv-crosscheck-row {
+    grid-template-columns: 1fr;
+    gap: 0.15rem;
+  }
+}

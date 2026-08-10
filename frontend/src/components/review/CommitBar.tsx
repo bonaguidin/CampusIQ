@@ -6,6 +6,19 @@ export interface CommitBarProps {
   justSaved: boolean;
   error: string | null;
   onConfirm(): void;
+  /**
+   * A state the student cannot act on, rather than a failed action.
+   *
+   * Distinct from `error` because the remedy is different: an error invites
+   * another attempt, this does not. When set, the confirm button is disabled --
+   * leaving it live beside "verification pending" would invite clicking a
+   * button that cannot succeed. Resume passes nothing and is unaffected.
+   */
+  blocked?: string | null;
+  /** Replaces the derived status line for surfaces counting something else. */
+  statusOverride?: string;
+  /** Replaces the "Confirm all" idle label. */
+  confirmLabel?: string;
 }
 
 /**
@@ -17,31 +30,55 @@ export interface CommitBarProps {
  * bar that promises "3 fields will stay empty" above a ledger reading 4 --
  * which would make the student distrust both numbers.
  */
-export function CommitBar({ counters, confirming, justSaved, error, onConfirm }: CommitBarProps) {
+export function CommitBar({
+  counters,
+  confirming,
+  justSaved,
+  error,
+  onConfirm,
+  blocked = null,
+  statusOverride,
+  confirmLabel = 'Confirm all',
+}: CommitBarProps) {
   const { gaps, total, edited } = counters;
 
   const status =
-    gaps > 0
+    statusOverride ??
+    (gaps > 0
       ? `Confirming now saves ${String(total - gaps)} of ${String(total)} fields. ${String(gaps)} ${
           gaps === 1 ? 'field stays' : 'fields stay'
         } empty.`
       : `All ${String(total)} fields have a value${
           edited > 0 ? `, ${String(edited)} corrected by you` : ''
-        }.`;
+        }.`);
 
   return (
     <div className="rv-commit">
       <div className="rv-commit-inner">
         <p className="rv-commit-status">
-          {error ? <span className="rv-commit-error" role="alert">{error}</span> : status}
+          {blocked ? (
+            <span className="rv-commit-blocked" role="status">
+              {blocked}
+            </span>
+          ) : error ? (
+            <span className="rv-commit-error" role="alert">{error}</span>
+          ) : (
+            status
+          )}
         </p>
         <button
           type="button"
           className="rv-commit-button"
           onClick={onConfirm}
-          disabled={confirming || justSaved}
+          disabled={confirming || justSaved || blocked !== null}
         >
-          {justSaved ? 'Saved ✓' : confirming ? 'Saving…' : 'Confirm all'}
+          {justSaved
+            ? 'Saved ✓'
+            : confirming
+              ? 'Saving…'
+              : blocked
+                ? 'Verification pending'
+                : confirmLabel}
         </button>
       </div>
     </div>
