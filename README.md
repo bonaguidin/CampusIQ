@@ -101,7 +101,7 @@ SUPABASE_PUBLISHABLE_KEY=<publishable-anon-key>
 ```
 
 `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` fail differently from the rest of
-this list: they are read per request by `CampusIQ_career/supabase_client.py`'s
+this list: they are read per request by `GradusIQ_career/supabase_client.py`'s
 `_required_env`, not at startup. Omitting them still lets the service boot and
 serve `/health` and the demo slug routes, while every session-scoped
 `/api/v2/student/me/*` request returns `503 {"detail":"SUPABASE_URL is not
@@ -152,7 +152,7 @@ falling back to its static role requirements.
 
 - Canvas data and profile-select authentication are mocked for the demo.
 - Supabase is live, but only on the session-scoped path: a runtime client
-  (`CampusIQ_career/supabase_client.py`), an applied schema (8 migrations under
+  (`GradusIQ_career/supabase_client.py`), an applied schema (10 migrations under
   `supabase/migrations/`), and RLS-scoped `/api/v2/student/me/*` routes. The
   demo dashboard described above is unaffected — it still reads mock JSON from
   `data/students/` under the profile-select auth in the preceding bullet.

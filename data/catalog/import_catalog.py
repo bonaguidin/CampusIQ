@@ -10,7 +10,7 @@ backing unique constraint, so `ON CONFLICT` would fail with a missing-constraint
 error. That reasoning does not apply here. `course_catalog` carries a real
 `unique (institution_id, code)` constraint (20260804155924_course_catalog.sql),
 so the native upsert is available and is the correct tool -- the same call
-CampusIQ_career/resume/store.py already uses for its child tables. It is also
+GradusIQ_career/resume/store.py already uses for its child tables. It is also
 what makes this script re-runnable: a second run updates in place rather than
 duplicating 1,374 rows.
 

@@ -2,7 +2,7 @@
 **Flash-tier model via OpenRouter | Campus IQ Transcript Ingestion**
 
 > **Script hands to agent:** the plain text extracted from an uploaded PDF or
-> DOCX by `CampusIQ_career/transcript/extraction.py`.
+> DOCX by `GradusIQ_career/transcript/extraction.py`.
 >
 > Like RESUME and unlike FIT/GAP/SHIFT, this prompt takes no student JSON and
 > interpolates no `{{field}}` placeholders — the transcript text is the entire
