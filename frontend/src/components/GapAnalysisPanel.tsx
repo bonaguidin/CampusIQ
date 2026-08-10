@@ -9,8 +9,10 @@ import { AnalysisPanel, type AnalysisPhase } from './AnalysisPanel';
 // PROVISIONAL: unvalidated against a real (non-mocked) model response — see
 // frontend/src/types/analysis.ts.
 export function GapAnalysisPanel() {
-  const { slug } = useAuth();
-  const { state, trigger } = useAnalysisRun(() => analyzeGap(slug ?? ''));
+  const { slug, session } = useAuth();
+  const { state, trigger } = useAnalysisRun(() =>
+    analyzeGap({ slug, accessToken: session?.access_token ?? null }),
+  );
 
   const phase: AnalysisPhase =
     state.phase === 'idle'

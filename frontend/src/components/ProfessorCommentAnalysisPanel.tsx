@@ -10,8 +10,10 @@ import { AnalysisPanel, type AnalysisPhase } from './AnalysisPanel';
 // frontend/src/types/analysis.ts. Also carries the audit's scope assumption:
 // this analyzes across ALL of the student's courses at once, not per course.
 export function ProfessorCommentAnalysisPanel() {
-  const { slug } = useAuth();
-  const { state, trigger } = useAnalysisRun(() => analyzeProfessorComments(slug ?? ''));
+  const { slug, session } = useAuth();
+  const { state, trigger } = useAnalysisRun(() =>
+    analyzeProfessorComments({ slug, accessToken: session?.access_token ?? null }),
+  );
 
   const phase: AnalysisPhase =
     state.phase === 'idle'

@@ -11,14 +11,16 @@ const SUGGESTIONS = [
 ];
 
 export function ChatPanel() {
-  const { slug, profile } = useAuth();
+  const { slug, profile, session, studentAccount } = useAuth();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
-  const firstName = profile?.student?.name?.split(' ')[0] ?? 'there';
+  const realName = studentAccount.profile?.intelligence_profile.identity.name;
+  const firstName = (profile?.student?.name ?? realName)?.split(' ')[0] ?? 'there';
+  const canSend = Boolean(slug || session?.access_token);
 
   useEffect(() => {
     const el = listRef.current;
@@ -27,14 +29,18 @@ export function ChatPanel() {
 
   async function submit(text: string) {
     const trimmed = text.trim();
-    if (!trimmed || sending || !slug) return;
+    if (!trimmed || sending || !canSend) return;
     setError(null);
     const priorHistory = messages;
     setMessages((m) => [...m, { role: 'user', content: trimmed }]);
     setInput('');
     setSending(true);
     try {
-      const reply = await sendChat(slug, trimmed, priorHistory);
+      const reply = await sendChat(
+        { slug, accessToken: session?.access_token ?? null },
+        trimmed,
+        priorHistory,
+      );
       setMessages((m) => [...m, { role: 'assistant', content: reply }]);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Something went wrong. Try again.');
@@ -70,7 +76,7 @@ export function ChatPanel() {
                   type="button"
                   className="chat-chip"
                   onClick={() => void submit(s)}
-                  disabled={sending || !slug}
+                  disabled={sending || !canSend}
                 >
                   {s}
                 </button>
@@ -111,13 +117,13 @@ export function ChatPanel() {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Ask about your grades, gaps, roles…"
-          disabled={sending || !slug}
+          disabled={sending || !canSend}
           aria-label="Message GradusIQ"
         />
         <button
           type="submit"
           className="btn btn-primary btn-sm"
-          disabled={sending || !input.trim() || !slug}
+          disabled={sending || !input.trim() || !canSend}
         >
           {sending ? '…' : 'Send'}
         </button>
