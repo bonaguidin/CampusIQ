@@ -15,8 +15,14 @@ build_student_intelligence_profile (canonical adapter)
         ↓
 StudentIntelligenceProfile (validated Pydantic domain contract)
         ↓
-Dashboard / AI / chat / reports (future Phase 2 consumers)
+Authenticated dashboard and FIT / GAP / SHIFT
 ```
+
+Authenticated FIT, GAP, and SHIFT build this contract first, then use
+`canonical_to_legacy_profile()` as an in-memory compatibility boundary for the
+existing runners and prompts. Demo analysis remains backed by static JSON.
+Authenticated chat and professor-comment analysis have not yet migrated to
+this canonical-first path.
 
 The contract contains `identity`, `institution`, `academics`, `career`,
 `completeness`, and `provenance`. Academic terms and courses contain confirmed

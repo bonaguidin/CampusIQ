@@ -4,7 +4,13 @@ from copy import deepcopy
 
 import pytest
 
-from GradusIQ_career.profile_builder import build_student_intelligence_profile
+from GradusIQ_career.features.fit import FitRunner
+from GradusIQ_career.features.gap import GapRunner
+from GradusIQ_career.features.shift import ShiftRunner
+from GradusIQ_career.profile_builder import (
+    build_student_intelligence_profile,
+    canonical_to_legacy_profile,
+)
 from GradusIQ_career.student_intelligence_profile import StudentIntelligenceProfile
 
 
@@ -170,3 +176,88 @@ def test_institution_neutral(name):
 def test_credit_classification_limitation_is_explicit():
     result = build(tables())
     assert "defaults credit_type to resident" in result.provenance.credit_type_limitation
+
+
+def test_compatibility_adapter_gives_gap_confirmed_courses_only():
+    value = tables()
+    pending = deepcopy(value["course_records"][0])
+    pending.update({"id": "course-pending", "course_code": "ENGR 102", "confirmed_at": None})
+    other_student = deepcopy(value["course_records"][0])
+    other_student.update({"id": "course-other", "student_id": "student-b"})
+    value["course_records"].extend([pending, other_student])
+
+    legacy = canonical_to_legacy_profile(build(value))
+    context = GapRunner(client=None).build_student_context(legacy)
+
+    assert [course["id"] for course in context["courses"]] == ["course-a"]
+    assert context["courses"][0] == {
+        "id": "course-a",
+        "term_id": "term-a",
+        "institution_id": IID,
+        "course_code": "ENGR 101",
+        "title": "Intro",
+        "credit_hours": 3.0,
+        "letter_grade": "A",
+        "credit_type": "resident",
+        "status": "completed",
+        "source": "transcript_parse",
+    }
+
+
+def test_compatibility_adapter_excludes_all_pending_career_data():
+    value = tables()
+    value["career_profiles"][0]["confirmed_at"] = None
+
+    legacy = canonical_to_legacy_profile(build(value))
+
+    assert legacy["career"] is None
+
+
+def test_compatibility_adapter_maps_confirmed_career_into_all_runner_contexts():
+    legacy = canonical_to_legacy_profile(build(tables()))
+
+    fit = FitRunner(client=None).build_student_context(legacy)
+    gap = GapRunner(client=None).build_student_context(legacy)
+    shift = ShiftRunner(client=None).build_student_context(legacy)
+
+    assert fit["major_current"] == "Engineering"
+    assert fit["target_roles"] == ["Engineer"]
+    assert fit["interests"] == ["systems"]
+    assert fit["skills_self_reported"]["technical"] == ["Python"]
+    assert fit["work_experience"] == [{"employer": "Acme"}]
+    assert fit["projects"] == [{"name": "Robot"}]
+    assert gap["certifications"] == [{"name": "Cloud"}]
+    assert gap["work_experience"] == [{"employer": "Acme"}]
+    assert shift["target_roles"] == ["Engineer"]
+    assert shift["skills_self_reported"]["soft"] == ["writing"]
+
+
+def test_compatibility_adapter_excludes_individually_pending_career_children():
+    value = tables()
+    for table in ("certifications", "work_experience", "projects"):
+        pending = deepcopy(value[table][0])
+        pending["id"] = f"{table}-pending"
+        pending["confirmed_at"] = None
+        value[table].append(pending)
+
+    legacy = canonical_to_legacy_profile(build(value))
+
+    assert legacy["career"]["certifications"] == [{"name": "Cloud"}]
+    assert legacy["career"]["work_experience"] == [{"employer": "Acme"}]
+    assert legacy["career"]["projects"] == [{"name": "Robot"}]
+
+
+def test_compatibility_adapter_supports_an_incomplete_profile():
+    value = tables()
+    value["career_profiles"] = []
+    value["certifications"] = []
+    value["work_experience"] = []
+    value["projects"] = []
+    value["academic_terms"] = []
+    value["course_records"] = []
+
+    legacy = canonical_to_legacy_profile(build(value))
+
+    assert legacy["career"] is None
+    assert legacy["courses"] == []
+    assert legacy["student"]["id"] == SID

@@ -395,7 +395,13 @@ def build_student_intelligence_profile(
 
 
 def canonical_to_legacy_profile(profile: StudentIntelligenceProfile) -> dict[str, Any]:
-    """Compatibility view for consumers still expecting student/career keys."""
+    """Compatibility view for consumers still expecting the demo-era shape.
+
+    Career runners read ``student`` and ``career``. GAP additionally passes the
+    top-level ``courses`` list into its prompt context. Keep that boundary as a
+    pure in-memory projection of the canonical contract: these are already the
+    confirmed-only courses selected by ``build_student_intelligence_profile``.
+    """
     career = None
     if profile.career.confirmed:
         def legacy_items(items: Sequence[Any]) -> list[dict[str, Any]]:
@@ -432,6 +438,7 @@ def canonical_to_legacy_profile(profile: StudentIntelligenceProfile) -> dict[str
             "gpa_current": None,
         },
         "career": career,
+        "courses": [course.model_dump(mode="json") for course in profile.academics.courses],
     }
 
 

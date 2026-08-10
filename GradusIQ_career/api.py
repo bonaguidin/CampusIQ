@@ -819,6 +819,19 @@ def _me_profile(request: Request) -> tuple[dict, str]:
     return build_profile_from_supabase(client, student_id).profile, str(student_id)
 
 
+def _me_canonical_feature_profile(request: Request) -> tuple[dict, str]:
+    """Build one canonical profile, then adapt it for the existing runners.
+
+    FIT/GAP/SHIFT still intentionally consume their established dictionary
+    contract. Their authenticated source of truth is canonical, however, and
+    no independent legacy database reconstruction occurs on this path.
+    """
+    client = _session_client(request)
+    student_id = _resolve_session_student_id(client)
+    canonical = build_student_intelligence_profile(client, student_id)
+    return canonical_to_legacy_profile(canonical), str(student_id)
+
+
 @router.post(
     "/api/v2/student/me/analyze/{feature}",
     dependencies=[Depends(authorize_proxy_request)],
@@ -831,7 +844,13 @@ def analyze_me(request: Request, feature: str) -> dict:
             status_code=404,
             detail=f"Unknown feature '{feature}'. Expected one of: {supported}.",
         )
-    profile, slug = _me_profile(request)
+    # Professor comments still require the demo/Canvas-era submissions shape,
+    # which StudentIntelligenceProfile deliberately does not fabricate. Keep
+    # that route on its existing legacy path; Phase 3 is career features only.
+    if internal_name in {"FIT", "GAP", "SHIFT"}:
+        profile, slug = _me_canonical_feature_profile(request)
+    else:
+        profile, slug = _me_profile(request)
     return _run_protected_feature(request, internal_name, slug, profile=profile)
 
 
