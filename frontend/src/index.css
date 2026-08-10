@@ -41,6 +41,10 @@
      verification report). */
   --accent-rgb:          36 36 36;
   --accent:              rgb(var(--accent-rgb));
+  /* Accent-colored foreground on paper/surface. Institution themes derive a
+     darker triplet from brand_primary_hex without changing --accent itself. */
+  --accent-text-rgb:     36 36 36;
+  --accent-text:         rgb(var(--accent-text-rgb));
   /* --accent-hover-rgb is set inline by institutionTheme.ts under a
      theme (lightened from brand_primary_hex); this literal is only
      the neutral, no-theme fallback. */
@@ -129,6 +133,74 @@
   /* Radius — nearly flat; instrument feel */
   --radius:    3px;
   --radius-sm: 2px;
+}
+
+/* ─── TRANSCRIPT REVIEW ─────────────────────────────────────────────────── */
+.transcript-shell {
+  min-height: 100vh;
+  background: var(--paper);
+  padding: clamp(24px, 5vw, 64px) max(20px, calc((100vw - 1080px) / 2));
+  color: var(--ink);
+}
+.transcript-paper {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-top: 3px solid var(--accent);
+  padding: clamp(20px, 4vw, 36px);
+  box-shadow: 0 12px 30px rgb(var(--ink-rgb) / .06);
+}
+.transcript-kicker { color: var(--accent-text); font: 600 var(--text-xs)/1.2 var(--font-data); letter-spacing: .12em; text-transform: uppercase; }
+.transcript-shell h1, .transcript-shell h2 { font-family: var(--font-display); font-weight: 500; }
+.transcript-shell h1 { font-size: clamp(2rem, 5vw, 3.4rem); margin-top: 8px; }
+.transcript-lede { max-width: 60ch; margin-top: 14px; color: var(--muted); }
+.transcript-upload-shell, .transcript-state { display: grid; place-items: center; }
+.transcript-upload-card, .transcript-state .transcript-paper { width: min(100%, 680px); }
+.transcript-upload-form { display: grid; gap: 14px; margin-top: 30px; }
+.transcript-upload-form label, .transcript-edit-form label { display: grid; gap: 6px; font-weight: 600; }
+.transcript-upload-form input, .transcript-edit-form input, .transcript-edit-form select { width: 100%; padding: 10px 12px; border: 1px solid var(--line); background: white; color: var(--ink); font: inherit; }
+.transcript-help, .transcript-footnote { color: var(--muted); font-size: var(--text-sm); }
+.transcript-footnote { margin-top: 28px; padding-top: 18px; border-top: 1px solid var(--line); }
+.transcript-error { padding: 12px; border: 1px solid var(--error-tint-border); background: var(--error-tint); color: var(--ink); }
+.transcript-review-header { display: flex; justify-content: space-between; align-items: end; gap: 32px; padding-bottom: 28px; border-bottom: 1px solid var(--line); }
+.transcript-review-header > div > p:last-child { color: var(--muted); margin-top: 8px; }
+.transcript-totals { display: flex; gap: 28px; flex-shrink: 0; }
+.transcript-totals div { min-width: 90px; }
+.transcript-totals dt, .transcript-course-meta dt { color: var(--muted); font: 600 var(--text-xs)/1.3 var(--font-data); text-transform: uppercase; letter-spacing: .06em; }
+.transcript-totals dd { font: 500 var(--text-xl)/1.2 var(--font-data); margin-top: 5px; }
+.transcript-notice { margin: 24px 0; padding: 15px 18px; border-left: 3px solid var(--accent); background: var(--accent-tint); }
+.transcript-term { margin-top: 22px; }
+.transcript-term > header { display: flex; align-items: baseline; justify-content: space-between; padding-bottom: 18px; }
+.transcript-term h2, .transcript-repeat-summary h2 { font-size: var(--text-xl); margin-top: 5px; }
+.transcript-course-list { border-top: 1px solid var(--line); }
+.transcript-course { padding: 20px 0; border-bottom: 1px solid var(--line); }
+.transcript-course:last-child { border-bottom: 0; padding-bottom: 0; }
+.transcript-course.needs-review { border-left: 3px solid var(--accent); padding-left: 16px; }
+.transcript-course-main { display: flex; justify-content: space-between; gap: 20px; }
+.transcript-course-main h3 { font-size: var(--text-md); margin-top: 3px; }
+.transcript-code { color: var(--accent-text); font: 600 var(--text-sm)/1.2 var(--font-data); }
+.transcript-edit-button { border: 0; background: transparent; color: var(--accent-text); text-decoration: underline; font: 600 var(--text-sm)/1 var(--font-ui); cursor: pointer; }
+.transcript-course-meta { display: grid; grid-template-columns: repeat(4, minmax(100px, 1fr)); gap: 16px; margin-top: 16px; }
+.transcript-course-meta dd { margin-top: 4px; text-transform: capitalize; }
+.transcript-flags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.transcript-flags span { padding: 5px 8px; border: 1px solid var(--accent-ghost-border); background: var(--accent-tint); font-size: var(--text-sm); }
+.transcript-edit-form { display: grid; grid-template-columns: 1fr 2fr .7fr .7fr 1fr; gap: 14px; align-items: end; }
+.transcript-edit-form h3, .transcript-edit-form .transcript-error, .transcript-edit-form .transcript-actions { grid-column: 1 / -1; }
+.transcript-actions { display: flex; gap: 10px; }
+.transcript-repeat-summary { margin-top: 22px; }
+.transcript-repeat-summary > p:last-child { margin-top: 14px; }
+.transcript-commit { position: sticky; bottom: 0; z-index: 5; display: flex; justify-content: space-between; align-items: center; gap: 24px; margin-top: 24px; padding: 18px 22px; border: 1px solid var(--line); border-top: 3px solid var(--accent); background: var(--surface); box-shadow: 0 -8px 30px rgb(var(--ink-rgb) / .1); }
+.transcript-commit p { color: var(--muted); font-size: var(--text-sm); }
+.transcript-commit .transcript-error { color: var(--ink); margin-top: 8px; }
+@media (max-width: 720px) {
+  .transcript-shell { padding: 20px 14px 110px; }
+  .transcript-review-header { display: block; }
+  .transcript-totals { margin-top: 22px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .transcript-totals div { min-width: 0; }
+  .transcript-course-meta { grid-template-columns: repeat(2, 1fr); }
+  .transcript-edit-form { grid-template-columns: 1fr 1fr; }
+  .transcript-edit-form label:nth-of-type(2) { grid-column: 1 / -1; }
+  .transcript-commit { position: fixed; left: 0; right: 0; margin: 0; padding: 12px 14px; }
+  .transcript-commit p { display: none; }
 }
 
 /* ─── RESET ───────────────────────────────────────────────────────────────── */
@@ -2253,4 +2325,457 @@ a {
   .resume-row-fields {
     grid-template-columns: 1fr;
   }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Resume review — "here's what we read"
+
+   ON THE ACCENT: the approved prototype used a fixed gold. This palette is
+   deliberately achromatic (see :root) and institutionTheme.ts overrides
+   --accent-rgb at runtime from each school's brand_primary_hex, so a fixed
+   gold would sit permanently at odds with TAMU maroon or SMU blue. Every
+   accent below therefore derives from --accent, which means the glyphs, the
+   progress fill and the save flash all take on the student's own institution
+   color. Same visual grammar as the prototype, one hue closer to home.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.rv-bg {
+  min-height: 100vh;
+  background: var(--paper);
+  color: var(--ink);
+  padding: 0 0 7rem;
+}
+
+.rv-page {
+  max-width: 56rem;
+  margin: 0 auto;
+  padding: 3rem 1.5rem 0;
+}
+
+/* ── masthead ─────────────────────────────────────────────────────────── */
+
+.rv-masthead { border-bottom: 1px solid var(--line); padding-bottom: 1.75rem; }
+
+.rv-masthead-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.rv-wordmark {
+  font-family: var(--font-data);
+  font-size: 0.75rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+
+.rv-provenance {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  font-family: var(--font-data);
+  font-size: 0.7rem;
+  color: var(--muted);
+}
+
+.rv-provenance-file {
+  max-width: 22ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rv-headline {
+  font-family: var(--font-display);
+  font-weight: 300;
+  font-size: clamp(2rem, 6vw, 3.25rem);
+  line-height: 1.05;
+  letter-spacing: -0.015em;
+  margin: 1.5rem 0 0.75rem;
+}
+
+.rv-standfirst {
+  font-family: var(--font-ui);
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--muted);
+  max-width: 46rem;
+  margin: 0;
+}
+
+.rv-inline-glyph { font-family: var(--font-data); color: var(--ink); }
+
+/* ── ledger ───────────────────────────────────────────────────────────── */
+
+.rv-ledger {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 1rem 2rem;
+  align-items: end;
+  padding: 1.5rem 0 1.25rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.rv-ledger-counts { display: flex; gap: 2.5rem; flex-wrap: wrap; }
+
+.rv-counter { display: flex; flex-direction: column; gap: 0.15rem; }
+
+.rv-counter-value {
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
+  font-size: 1.85rem;
+  line-height: 1;
+  color: var(--ink);
+  display: inline-block;
+}
+
+.rv-counter-value-gap { color: var(--accent-text); }
+
+.rv-counter-label {
+  font-family: var(--font-data);
+  font-size: 0.62rem;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+@keyframes rv-bump {
+  0%   { transform: translateY(0); }
+  40%  { transform: translateY(-0.28em); }
+  100% { transform: translateY(0); }
+}
+.rv-counter-bump { animation: rv-bump 0.32s ease-out; }
+
+.rv-ledger-actions { display: flex; justify-content: flex-end; }
+
+.rv-jump {
+  font-family: var(--font-data);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  padding: 0.5rem 0.85rem;
+  border: 1px solid var(--accent-ghost-border);
+  border-radius: 2px;
+  background: transparent;
+  color: var(--accent-text);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.rv-jump:hover:not(:disabled) { background: var(--accent-tint); }
+.rv-jump:disabled { color: var(--muted); border-color: var(--line); cursor: default; }
+
+.rv-progress {
+  grid-column: 1 / -1;
+  height: 2px;
+  background: var(--line);
+  overflow: hidden;
+}
+.rv-progress-fill {
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.35s ease-out;
+}
+
+/* ── sections ─────────────────────────────────────────────────────────── */
+
+.rv-section { margin-top: 2.75rem; }
+
+.rv-section-head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  font-family: var(--font-data);
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0 0 0.9rem;
+}
+
+.rv-section-count {
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+
+/* ── entry card ───────────────────────────────────────────────────────── */
+
+.rv-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  padding: 1.25rem 1.4rem;
+  margin-bottom: 0.9rem;
+}
+
+.rv-card-head { margin-bottom: 0.9rem; }
+
+.rv-card-title {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 1.35rem;
+  line-height: 1.2;
+  margin: 0;
+}
+
+.rv-card-sub {
+  font-family: var(--font-data);
+  font-size: 0.72rem;
+  color: var(--muted);
+  margin: 0.3rem 0 0;
+}
+
+.rv-card-locked {
+  display: inline-block;
+  margin-top: 0.5rem;
+  font-family: var(--font-data);
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.rv-card-fields { display: flex; flex-direction: column; }
+
+/* ── field row ────────────────────────────────────────────────────────── */
+
+.rv-field {
+  display: grid;
+  grid-template-columns: 1.25rem 9.5rem 1fr;
+  gap: 0 0.75rem;
+  align-items: baseline;
+  padding: 0.3rem 0;
+  border-radius: 2px;
+}
+
+.rv-glyph {
+  font-family: var(--font-data);
+  font-size: 0.85rem;
+  color: var(--muted);
+  text-align: center;
+  user-select: none;
+}
+.rv-glyph-edited { color: var(--accent-text); }
+
+.rv-field-label {
+  font-family: var(--font-data);
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+.rv-field-value {
+  font-family: var(--font-ui);
+  font-size: 0.92rem;
+  line-height: 1.55;
+  color: var(--ink);
+  min-width: 0;
+}
+
+.rv-field-button {
+  text-align: left;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  padding: 0.1rem 0.3rem;
+  margin: -0.1rem -0.3rem;
+  cursor: text;
+  font: inherit;
+  color: inherit;
+  width: 100%;
+}
+.rv-field-button:hover { background: var(--accent-tint); }
+.rv-field-button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.rv-field-locked .rv-field-value { color: var(--muted); }
+
+.rv-longtext { display: block; white-space: pre-wrap; }
+
+.rv-empty { color: var(--pending); }
+
+/* save confirmation: only rendered after the PATCH resolves */
+@keyframes rv-flash {
+  from { background: var(--accent-tint); }
+  to   { background: transparent; }
+}
+.rv-field-flash { animation: rv-flash 0.9s ease-out; }
+
+/* ── inputs ───────────────────────────────────────────────────────────── */
+
+.rv-input {
+  width: 100%;
+  font-family: var(--font-ui);
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--accent);
+  border-radius: 2px;
+  padding: 0.15rem 0.35rem;
+}
+.rv-input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+.rv-input-area { resize: vertical; }
+
+/* ── chips ────────────────────────────────────────────────────────────── */
+
+.rv-chips { display: inline-flex; flex-wrap: wrap; gap: 0.3rem; align-items: center; }
+
+.rv-chip {
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+  line-height: 1.3;
+  padding: 0.1rem 0.45rem;
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  background: var(--paper);
+}
+
+.rv-chip-count {
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.65rem;
+  color: var(--muted);
+  padding-left: 0.15rem;
+}
+
+/* ── gaps ─────────────────────────────────────────────────────────────── */
+
+.rv-gaps {
+  display: grid;
+  grid-template-columns: 1.25rem 9.5rem 1fr;
+  gap: 0 0.75rem;
+  align-items: baseline;
+  margin-top: 0.6rem;
+  padding-top: 0.7rem;
+  border-top: 1px dashed var(--line);
+}
+.rv-gaps::before { content: ''; }
+
+.rv-gaps-label {
+  font-family: var(--font-data);
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+.rv-gaps-list { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+
+.rv-gap-pill {
+  font-family: var(--font-data);
+  font-size: 0.7rem;
+  padding: 0.15rem 0.5rem;
+  border: 1px dashed var(--accent-ghost-border);
+  border-radius: 2px;
+  background: transparent;
+  color: var(--accent-text);
+  cursor: pointer;
+}
+.rv-gap-pill:hover { background: var(--accent-tint); }
+.rv-gap-pill:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+/* the ~500ms flag applied by "next gap" */
+.rv-gap-pill-flag {
+  background: var(--accent-tint);
+  border-style: solid;
+  border-color: var(--accent);
+}
+
+/* ── row messages ─────────────────────────────────────────────────────── */
+
+.rv-card-error,
+.rv-card-saved {
+  font-family: var(--font-ui);
+  font-size: 0.8rem;
+  margin: 0.7rem 0 0;
+}
+.rv-card-error { color: var(--error); }
+.rv-card-saved { color: var(--ready); }
+
+/* ── commit bar ───────────────────────────────────────────────────────── */
+
+.rv-commit {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 40;
+  background: rgb(var(--ink-rgb) / 0.04);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-top: 1px solid var(--line);
+}
+
+.rv-commit-inner {
+  max-width: 56rem;
+  margin: 0 auto;
+  padding: 0.85rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.rv-commit-status {
+  font-family: var(--font-ui);
+  font-size: 0.82rem;
+  color: var(--accent-text);
+  margin: 0;
+  min-width: 0;
+}
+.rv-commit-error { color: var(--error); }
+
+.rv-commit-button {
+  font-family: var(--font-ui);
+  font-size: 0.88rem;
+  font-weight: 500;
+  padding: 0.55rem 1.4rem;
+  border: none;
+  border-radius: 2px;
+  background: var(--accent);
+  color: var(--on-accent, #fff);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.rv-commit-button:hover:not(:disabled) { background: var(--accent-hover); }
+.rv-commit-button:disabled { opacity: 0.75; cursor: default; }
+.rv-commit-button:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+/* ── responsive ───────────────────────────────────────────────────────── */
+
+@media (max-width: 640px) {
+  .rv-page { padding: 2rem 1rem 0; }
+
+  .rv-ledger { grid-template-columns: 1fr; align-items: start; }
+  .rv-ledger-counts { gap: 1.5rem; }
+  .rv-counter-value { font-size: 1.5rem; }
+  .rv-ledger-actions { justify-content: flex-start; }
+
+  /* Label above value: a 9.5rem label column leaves too little for the value
+     on a narrow screen, and the glyph must stay beside the label to keep
+     meaning it. */
+  .rv-field,
+  .rv-gaps {
+    grid-template-columns: 1.25rem 1fr;
+  }
+  .rv-field-value { grid-column: 2; }
+  .rv-gaps-list { grid-column: 2; }
+
+  .rv-commit-inner { flex-direction: column; align-items: stretch; gap: 0.6rem; }
+  .rv-commit-button { width: 100%; }
+  .rv-commit-status { text-align: center; }
+}
+
+/* ── reduced motion ───────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  /* Functional state changes stay; only the motion goes. */
+  .rv-counter-bump { animation: none; }
+  .rv-field-flash { animation: none; background: var(--accent-tint); }
+  .rv-progress-fill { transition: none; }
 }

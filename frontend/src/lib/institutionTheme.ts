@@ -26,6 +26,13 @@ const HEX_PATTERN = /^#[0-9A-Fa-f]{6}$/;
 // lighter step up from the rest color.
 const ACCENT_HOVER_LIGHTEN = 0.15;
 
+// Foreground accent text is a distinct semantic from the decorative/filled
+// accent. Darkening the institution primary by a fixed amount preserves its
+// hue while giving normal-sized text additional contrast on the app's paper
+// surface. The review UI consumes this through --accent-text; filled controls
+// continue to use the unmodified --accent plus --on-accent.
+const ACCENT_TEXT_DARKEN = 0.15;
+
 function hexToChannels(hex: string): [number, number, number] {
   return [
     parseInt(hex.slice(1, 3), 16),
@@ -43,6 +50,11 @@ function lightenHexTowardWhite(hex: string, amount: number): string {
   return hexToChannels(hex).map(mix).join(' ');
 }
 
+function darkenHexTowardBlack(hex: string, amount: number): string {
+  const mix = (c: number) => Math.round(c * (1 - amount));
+  return hexToChannels(hex).map(mix).join(' ');
+}
+
 // Which inline custom properties a given brand_*_hex field controls.
 const PROPERTY_MAP: Array<{ field: keyof InstitutionTheme; properties: string[] }> = [
   { field: 'brand_primary_hex', properties: ['--accent-rgb', '--institution-accent-rgb'] },
@@ -54,6 +66,7 @@ const PROPERTY_MAP: Array<{ field: keyof InstitutionTheme; properties: string[] 
 // rather than a 1:1 hex passthrough, so it isn't in PROPERTY_MAP, but
 // it must still be cleared alongside everything else.
 const ACCENT_HOVER_PROPERTY = '--accent-hover-rgb';
+const ACCENT_TEXT_PROPERTY = '--accent-text-rgb';
 
 function applyOne(style: CSSStyleDeclaration, property: string, hex: string | null): void {
   if (hex === null) {
@@ -84,12 +97,14 @@ export function applyInstitutionTheme(theme: InstitutionTheme | null): void {
   const primary = theme.brand_primary_hex;
   if (primary === null) {
     style.removeProperty(ACCENT_HOVER_PROPERTY);
+    style.removeProperty(ACCENT_TEXT_PROPERTY);
   } else if (!HEX_PATTERN.test(primary)) {
     console.warn(
       `institutionTheme: invalid hex ${JSON.stringify(primary)} for ${ACCENT_HOVER_PROPERTY}; skipping`,
     );
   } else {
     style.setProperty(ACCENT_HOVER_PROPERTY, lightenHexTowardWhite(primary, ACCENT_HOVER_LIGHTEN));
+    style.setProperty(ACCENT_TEXT_PROPERTY, darkenHexTowardBlack(primary, ACCENT_TEXT_DARKEN));
   }
 }
 
@@ -101,6 +116,7 @@ export function clearInstitutionTheme(): void {
     }
   }
   style.removeProperty(ACCENT_HOVER_PROPERTY);
+  style.removeProperty(ACCENT_TEXT_PROPERTY);
 }
 
 // TEMPORARY: matches on the student's free-text institution name.

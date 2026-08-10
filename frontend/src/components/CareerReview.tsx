@@ -1,24 +1,35 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { confirmCareerRecords, fetchCareerReview, patchCareerRow } from '../api/resume';
 import {
-  CERT_STATUS_VALUES,
   CHILD_TABLES,
   REVIEW_SECTIONS,
   changedFields,
-  formatListInput,
-  parseListInput,
+  reviewCounters,
 } from '../lib/resumeApi.mjs';
 import type {
+  CounterRow,
   NormalizedConfirm,
-  ReviewField,
   ReviewRow,
   ReviewSections,
   SectionKey,
 } from '../lib/resumeApi.mjs';
+import { CommitBar } from './review/CommitBar';
+import { EntryCard } from './review/EntryCard';
+import { LedgerBar } from './review/LedgerBar';
 
 interface CareerReviewProps {
   accessToken: string;
   onConfirmed(result: NormalizedConfirm): void;
+  /** Successful page-load recovery can hydrate the review without a second GET. */
+  initialSections?: ReviewSections;
+  /**
+   * Masthead provenance. Both optional and both purely presentational -- the
+   * screen works without them, so a caller that does not have the filename (a
+   * direct link into review, say) degrades to omitting the line rather than
+   * rendering "undefined".
+   */
+  sourceName?: string;
+  parsedAt?: Date;
 }
 
 /** Per-row UI state: an inline message, and whether editing is still allowed. */
@@ -41,183 +52,82 @@ function rowKey(table: SectionKey, id: string) {
   return `${table}:${id}`;
 }
 
-function titleFor(table: SectionKey, row: ReviewRow, index: number): string {
-  const section = REVIEW_SECTIONS[table];
-  const field = section.titleField;
-  const value = field ? row[field] : null;
-  if (typeof value === 'string' && value.trim()) return value;
-  return `${section.singular} ${String(index + 1)}`;
+function draftsFromSections(sections: ReviewSections): Record<string, ReviewRow> {
+  const rows: Record<string, ReviewRow> = {};
+  if (sections.career_profile) {
+    rows[rowKey('career_profile', sections.career_profile.id)] = { ...sections.career_profile };
+  }
+  for (const table of CHILD_TABLES) {
+    for (const row of sections[table]) rows[rowKey(table, row.id)] = { ...row };
+  }
+  return rows;
 }
 
-// ── one editable field ──────────────────────────────────────────────────────
+function cloneRows(rows: Record<string, ReviewRow>): Record<string, ReviewRow> {
+  return Object.fromEntries(Object.entries(rows).map(([key, row]) => [key, { ...row }]));
+}
 
-interface FieldEditorProps {
-  field: ReviewField;
-  idPrefix: string;
-  value: unknown;
-  disabled: boolean;
-  onChange(next: unknown): void;
+const DATE_FMT = new Intl.DateTimeFormat(undefined, {
+  year: 'numeric',
+  month: 'short',
+  day: '2-digit',
+});
+
+export function CareerReview({
+  accessToken,
+  onConfirmed,
+  initialSections,
+  sourceName,
+  parsedAt,
+}: CareerReviewProps) {
+  const initialRows = useMemo(
+    () => (initialSections ? draftsFromSections(initialSections) : {}),
+    [initialSections],
+  );
+  const [sections, setSections] = useState<ReviewSections>(initialSections ?? EMPTY_SECTIONS);
+  const [drafts, setDrafts] = useState<Record<string, ReviewRow>>(initialRows);
   /**
-   * `overrides` exists for the list editor, which parses its text on blur and
-   * must commit that parsed value in the same handler. setDrafts is
-   * asynchronous, so a plain onChange-then-onCommit would diff against the
-   * pre-change draft and silently skip the edit.
+   * The rows EXACTLY as first loaded -- what the resume parse produced.
+   *
+   * Glyphs and the "edited by you" counter compare against this, never against
+   * `sections`. `sections` is replaced by the server's saved row after every
+   * PATCH, so diffing against it would erase the edit marker the instant the
+   * edit succeeded, and the counter would sit at 0 no matter how much the
+   * student corrected. Provenance is a fact about where a value came from, not
+   * about whether it currently differs from the server.
+   *
+   * `commit` still diffs against `sections` -- what to PATCH is a different
+   * question from what to mark, and sending fields that already match the
+   * server would be wrong.
    */
-  onCommit(overrides?: Record<string, unknown>): void;
-}
-
-/**
- * Comma-separated editor for a text[] column.
- *
- * Holds the RAW TEXT locally and only parses on blur. Parsing on every
- * keystroke would make the field unusable: typing "React," parses to
- * ["React"], which formats back to "React", so the comma disappears from under
- * the cursor the moment it is typed.
- */
-function ListFieldEditor({
-  field,
-  idPrefix,
-  value,
-  disabled,
-  onChange,
-  onCommit,
-}: FieldEditorProps) {
-  const id = `${idPrefix}-${field.name}`;
-  const [text, setText] = useState(() => formatListInput(value));
-  const [lastValue, setLastValue] = useState(value);
-
-  // Adopt an externally-changed value (the server's saved version, or a
-  // reverted edit) without clobbering what is being typed.
-  if (value !== lastValue) {
-    setLastValue(value);
-    setText(formatListInput(value));
-  }
-
-  return (
-    <div className="form-group">
-      <label className="form-label" htmlFor={id}>
-        {field.label}
-      </label>
-      <input
-        id={id}
-        className="form-input"
-        type="text"
-        disabled={disabled}
-        value={text}
-        placeholder="Comma separated"
-        onChange={(event) => setText(event.target.value)}
-        onBlur={() => {
-          const parsed = parseListInput(text);
-          onChange(parsed);
-          onCommit({ [field.name]: parsed });
-        }}
-      />
-    </div>
-  );
-}
-
-function FieldEditor(props: FieldEditorProps) {
-  const { field, idPrefix, value, disabled, onChange, onCommit } = props;
-  const id = `${idPrefix}-${field.name}`;
-
-  if (field.type === 'list') {
-    return <ListFieldEditor {...props} />;
-  }
-
-  if (field.type === 'textarea') {
-    return (
-      <div className="form-group">
-        <label className="form-label" htmlFor={id}>
-          {field.label}
-        </label>
-        <textarea
-          id={id}
-          className="form-textarea"
-          rows={3}
-          disabled={disabled}
-          value={typeof value === 'string' ? value : ''}
-          onChange={(event) => onChange(event.target.value)}
-          onBlur={() => onCommit()}
-        />
-      </div>
-    );
-  }
-
-  if (field.type === 'status') {
-    return (
-      <div className="form-group">
-        <label className="form-label" htmlFor={id}>
-          {field.label}
-        </label>
-        <select
-          id={id}
-          className="form-select"
-          disabled={disabled}
-          value={typeof value === 'string' ? value : ''}
-          onChange={(event) => {
-            onChange(event.target.value === '' ? null : event.target.value);
-          }}
-          onBlur={() => onCommit()}
-        >
-          <option value="">Not stated</option>
-          {CERT_STATUS_VALUES.map((status) => (
-            <option key={status} value={status}>
-              {status === 'completed' ? 'Completed' : 'In progress'}
-            </option>
-          ))}
-        </select>
-      </div>
-    );
-  }
-
-  return (
-    <div className="form-group">
-      <label className="form-label" htmlFor={id}>
-        {field.label}
-      </label>
-      <input
-        id={id}
-        className="form-input"
-        type="text"
-        disabled={disabled}
-        value={typeof value === 'string' ? value : ''}
-        onChange={(event) => onChange(event.target.value)}
-        onBlur={() => onCommit()}
-      />
-    </div>
-  );
-}
-
-// ── the screen ──────────────────────────────────────────────────────────────
-
-export function CareerReview({ accessToken, onConfirmed }: CareerReviewProps) {
-  const [sections, setSections] = useState<ReviewSections>(EMPTY_SECTIONS);
-  const [drafts, setDrafts] = useState<Record<string, ReviewRow>>({});
+  const [baseline, setBaseline] = useState<Record<string, ReviewRow>>(() => cloneRows(initialRows));
   const [rowStates, setRowStates] = useState<RowStates>({});
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(initialSections === undefined);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [confirmError, setConfirmError] = useState<string | null>(null);
   const [confirming, setConfirming] = useState(false);
+  const [justSaved, setJustSaved] = useState(false);
 
   useEffect(() => {
+    if (initialSections) {
+      const recovered = draftsFromSections(initialSections);
+      setSections(initialSections);
+      setDrafts(recovered);
+      setBaseline(cloneRows(recovered));
+      setLoadError(null);
+      setLoading(false);
+      return;
+    }
+
     let active = true;
     void (async () => {
       const result = await fetchCareerReview(accessToken);
       if (!active) return;
       if (result.ok) {
         setSections(result.sections);
-        const initial: Record<string, ReviewRow> = {};
-        if (result.sections.career_profile) {
-          initial[rowKey('career_profile', result.sections.career_profile.id)] = {
-            ...result.sections.career_profile,
-          };
-        }
-        for (const table of CHILD_TABLES) {
-          for (const row of result.sections[table]) {
-            initial[rowKey(table, row.id)] = { ...row };
-          }
-        }
+        const initial = draftsFromSections(result.sections);
         setDrafts(initial);
+        setBaseline(cloneRows(initial));
       } else {
         setLoadError(result.message);
       }
@@ -226,7 +136,7 @@ export function CareerReview({ accessToken, onConfirmed }: CareerReviewProps) {
     return () => {
       active = false;
     };
-  }, [accessToken]);
+  }, [accessToken, initialSections]);
 
   const setRowState = useCallback((key: string, state: RowState | null) => {
     setRowStates((prev) => {
@@ -242,17 +152,37 @@ export function CareerReview({ accessToken, onConfirmed }: CareerReviewProps) {
       if (table === 'career_profile') return { ...prev, career_profile: null };
       return { ...prev, [table]: prev[table].filter((row) => row.id !== id) };
     });
+    setDrafts((prev) => {
+      const next = { ...prev };
+      delete next[rowKey(table, id)];
+      return next;
+    });
+    setBaseline((prev) => {
+      const next = { ...prev };
+      delete next[rowKey(table, id)];
+      return next;
+    });
   }, []);
 
+  /**
+   * Save one row's changes. UNCHANGED from the previous implementation except
+   * for the return value: it now resolves to whether a save actually
+   * round-tripped, so FieldRow's confirmation flash fires only for a real save
+   * and not for a no-op blur or a rejected edit.
+   */
   const commit = useCallback(
-    async (table: SectionKey, original: ReviewRow, overrides?: Record<string, unknown>) => {
+    async (
+      table: SectionKey,
+      original: ReviewRow,
+      overrides?: Record<string, unknown>,
+    ): Promise<boolean> => {
       const key = rowKey(table, original.id);
       const stored = drafts[key];
-      if (!stored) return;
+      if (!stored) return false;
       const draft = overrides ? { ...stored, ...overrides } : stored;
 
       const changes = changedFields(table, original, draft);
-      if (Object.keys(changes).length === 0) return;
+      if (Object.keys(changes).length === 0) return false;
 
       const result = await patchCareerRow(accessToken, table, original.id, changes);
 
@@ -268,27 +198,28 @@ export function CareerReview({ accessToken, onConfirmed }: CareerReviewProps) {
           };
         });
         setDrafts((prev) => ({ ...prev, [key]: { ...saved } }));
-        setRowState(key, { message: 'Saved', tone: 'saved', locked: false });
-        return;
+        setRowState(key, null);
+        return true;
       }
 
       if (result.kind === 'not_found') {
         // Gone, for a reason the backend deliberately will not disclose.
         removeRow(table, original.id);
         setRowState(key, null);
-        return;
+        return false;
       }
 
       if (result.kind === 'already_confirmed') {
         // Lock it and restore the stored values -- the edit did not apply.
         setDrafts((prev) => ({ ...prev, [key]: { ...original } }));
         setRowState(key, { message: result.message, tone: 'error', locked: true });
-        return;
+        return false;
       }
 
       // conflict | invalid | anything else: keep what they typed so it can be
       // corrected, but make clear it is not saved.
       setRowState(key, { message: result.message, tone: 'error', locked: false });
+      return false;
     },
     [accessToken, drafts, removeRow, setRowState],
   );
@@ -303,7 +234,10 @@ export function CareerReview({ accessToken, onConfirmed }: CareerReviewProps) {
     try {
       const result = await confirmCareerRecords(accessToken);
       if (result.ok) {
-        onConfirmed(result);
+        // Brief acknowledgement before the page machine advances, so the click
+        // visibly did something rather than the screen simply vanishing.
+        setJustSaved(true);
+        window.setTimeout(() => onConfirmed(result), 450);
         return;
       }
       setConfirmError(result.message);
@@ -312,46 +246,45 @@ export function CareerReview({ accessToken, onConfirmed }: CareerReviewProps) {
     }
   }
 
-  function renderRow(table: SectionKey, row: ReviewRow, index: number) {
-    const key = rowKey(table, row.id);
-    const draft = drafts[key] ?? row;
-    const state = rowStates[key];
-    const locked = state?.locked ?? false;
+  /** Every rendered row, paired with its server original, for the counters. */
+  const counterRows: CounterRow[] = useMemo(() => {
+    const rows: CounterRow[] = [];
+    if (sections.career_profile) {
+      const key = rowKey('career_profile', sections.career_profile.id);
+      rows.push({
+        table: 'career_profile',
+        original: baseline[key] ?? sections.career_profile,
+        draft: drafts[key] ?? sections.career_profile,
+      });
+    }
+    for (const table of CHILD_TABLES) {
+      for (const row of sections[table]) {
+        const key = rowKey(table, row.id);
+        rows.push({ table, original: baseline[key] ?? row, draft: drafts[key] ?? row });
+      }
+    }
+    return rows;
+  }, [sections, drafts, baseline]);
 
-    return (
-      <div className="resume-row" key={key}>
-        <div className="resume-row-header">
-          <h3 className="resume-row-title">{titleFor(table, draft, index)}</h3>
-          {locked && <span className="resume-row-locked">Confirmed — read only</span>}
-        </div>
+  const counters = useMemo(() => reviewCounters(counterRows), [counterRows]);
 
-        <div className="resume-row-fields">
-          {REVIEW_SECTIONS[table].fields.map((field) => (
-            <FieldEditor
-              key={field.name}
-              field={field}
-              idPrefix={key}
-              value={draft[field.name]}
-              disabled={locked}
-              onChange={(next) => updateDraft(key, field.name, next)}
-              onCommit={(overrides) => {
-                void commit(table, row, overrides);
-              }}
-            />
-          ))}
-        </div>
-
-        {state?.message && (
-          <p
-            className={state.tone === 'error' ? 'resume-row-error' : 'resume-row-saved'}
-            role={state.tone === 'error' ? 'alert' : 'status'}
-          >
-            {state.message}
-          </p>
-        )}
-      </div>
-    );
-  }
+  /**
+   * Scroll to the first unfilled field on the page, flag it, then focus it.
+   *
+   * Queries the DOM rather than tracking gap positions in state: document order
+   * is exactly the ordering wanted, and the DOM is the only place it already
+   * exists. Focus happens after the scroll so the browser does not fight its
+   * own smooth scroll with a focus-induced jump.
+   */
+  const jumpToGap = useCallback(() => {
+    const pill = document.querySelector<HTMLButtonElement>('[data-gap-pill]');
+    if (!pill) return;
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    pill.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'center' });
+    pill.classList.add('rv-gap-pill-flag');
+    window.setTimeout(() => pill.classList.remove('rv-gap-pill-flag'), 500);
+    window.setTimeout(() => pill.focus(), reduce ? 0 : 320);
+  }, []);
 
   if (loading) {
     return (
@@ -402,59 +335,84 @@ export function CareerReview({ accessToken, onConfirmed }: CareerReviewProps) {
     );
   }
 
+  function renderCard(table: SectionKey, row: ReviewRow, index: number) {
+    const key = rowKey(table, row.id);
+    const draft = drafts[key] ?? row;
+    const state = rowStates[key];
+    return (
+      <EntryCard
+        key={key}
+        table={table}
+        // Glyph provenance compares to the resume-parsed baseline; the commit
+        // closure below still diffs against `row`, the live server version.
+        original={baseline[key] ?? row}
+        draft={draft}
+        index={index}
+        locked={state?.locked ?? false}
+        message={state?.message ?? null}
+        tone={state?.tone ?? 'saved'}
+        onChange={(fieldName, next) => updateDraft(key, fieldName, next)}
+        onCommit={(overrides) => commit(table, row, overrides)}
+      />
+    );
+  }
+
   return (
-    <div className="resume-review-bg">
-      <div className="resume-review">
-        <header className="resume-review-header">
-          <h1 className="login-logo">GradusIQ</h1>
-          <h2 className="resume-review-title">Review what we found</h2>
-          <p className="resume-intro">
-            Everything below came from your resume and is not saved to your profile yet. Correct
-            anything that is wrong — changes save as you go — then confirm.
+    <div className="rv-bg">
+      <div className="rv-page">
+        <header className="rv-masthead">
+          <div className="rv-masthead-top">
+            <span className="rv-wordmark">GradusIQ</span>
+            {(sourceName || parsedAt) && (
+              <span className="rv-provenance">
+                {sourceName && <span className="rv-provenance-file">{sourceName}</span>}
+                {parsedAt && <span>read {DATE_FMT.format(parsedAt)}</span>}
+              </span>
+            )}
+          </div>
+          <h1 className="rv-headline">Here&rsquo;s what we read.</h1>
+          <p className="rv-standfirst">
+            Every line below came off your resume and none of it is saved yet. A{' '}
+            <span className="rv-inline-glyph">·</span> means we read it as-is, a{' '}
+            <span className="rv-inline-glyph rv-glyph-edited">✎</span> means you changed it. Click
+            anything to correct it — edits save as you go.
           </p>
         </header>
 
+        <LedgerBar counters={counters} onJumpToGap={jumpToGap} />
+
         {hasProfile && sections.career_profile && (
-          <section className="resume-section">
-            <h2 className="resume-section-title">{REVIEW_SECTIONS.career_profile.label}</h2>
-            {renderRow('career_profile', sections.career_profile, 0)}
+          <section className="rv-section">
+            <h2 className="rv-section-head">
+              {REVIEW_SECTIONS.career_profile.label}
+              <span className="rv-section-count">1</span>
+            </h2>
+            {renderCard('career_profile', sections.career_profile, 0)}
           </section>
         )}
 
         {CHILD_TABLES.map((table) =>
           sections[table].length === 0 ? null : (
-            <section className="resume-section" key={table}>
-              <h2 className="resume-section-title">
+            <section className="rv-section" key={table}>
+              <h2 className="rv-section-head">
                 {REVIEW_SECTIONS[table].label}
-                <span className="resume-section-count">{sections[table].length}</span>
+                <span className="rv-section-count">{sections[table].length}</span>
               </h2>
-              {sections[table].map((row, index) => renderRow(table, row, index))}
+              {sections[table].map((row, index) => renderCard(table, row, index))}
             </section>
           ),
         )}
-
-        <footer className="resume-review-footer">
-          {confirmError && (
-            <p className="login-error" role="alert">
-              {confirmError}
-            </p>
-          )}
-          <button
-            type="button"
-            className="btn btn-primary btn-full"
-            onClick={() => {
-              void handleConfirm();
-            }}
-            disabled={confirming}
-          >
-            {confirming ? <span className="btn-loading">Saving…</span> : 'Confirm all'}
-          </button>
-          <p className="login-note">
-            Confirming saves everything above to your profile. Entries you have not corrected are
-            saved as they appear.
-          </p>
-        </footer>
       </div>
+
+      <CommitBar
+        counters={counters}
+        confirming={confirming}
+        justSaved={justSaved}
+        error={confirmError}
+        onConfirm={() => {
+          void handleConfirm();
+        }}
+      />
     </div>
   );
 }

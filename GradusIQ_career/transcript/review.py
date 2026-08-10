@@ -206,8 +206,50 @@ def load_unconfirmed(client: Any, student_id: str) -> dict[str, Any]:
 
     projected = [project_row(row, rows_by_id) for row in unconfirmed]
 
+    # Course rows intentionally carry foreign keys rather than duplicated
+    # labels. A review client nevertheless needs the human-readable term and
+    # institution names, especially after a refresh when the upload response
+    # is gone. Return only reference rows actually used by this student's
+    # pending/repeat context; RLS still scopes academic_terms to the caller.
+    term_ids = sorted({row.get("term_id") for row in projected if row.get("term_id")})
+    terms = []
+    if term_ids:
+        term_rows = rows_of(
+            client.table("academic_terms")
+            .select("id,label,year,season,sequence,institution_id")
+            .eq("student_id", student_id)
+            .in_("id", term_ids)
+            .execute()
+        )
+        terms = [
+            {key: row.get(key) for key in ("id", "label", "year", "season", "sequence", "institution_id")}
+            for row in term_rows
+        ]
+
+    institution_ids = sorted(
+        {
+            row.get("institution_id")
+            for row in [*unconfirmed, *excluded]
+            if row.get("institution_id")
+        }
+    )
+    institutions = []
+    if institution_ids:
+        institution_rows = rows_of(
+            client.table("institutions")
+            .select("id,name")
+            .in_("id", institution_ids)
+            .execute()
+        )
+        institutions = [
+            {"id": row.get("id"), "name": row.get("name")}
+            for row in institution_rows
+        ]
+
     return {
         "course_records": projected,
+        "terms": terms,
+        "institutions": institutions,
         "pending_catalog_review": sum(
             1 for row in projected if row["needs_catalog_review"]
         ),

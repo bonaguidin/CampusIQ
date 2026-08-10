@@ -433,6 +433,27 @@ test('adding a binary target leaves the JSON targets reading their body as text'
   assert.equal(calls[1].headers['Content-Type'], 'application/json')
 })
 
+test('transcript targets preserve auth, methods, paths, and binary upload bytes', async () => {
+  const calls = []
+  const handler = createProxyHandler({ env: ME_ENV, fetchImpl: async (url, options) => {
+    calls.push({ url: url.toString(), options })
+    return Response.json({ ok: true })
+  } })
+  const token = { Authorization: 'Bearer transcript-token' }
+  await handler.fetch(new Request('https://gradusiq.example/api/proxy?target=me-transcript-upload', { method: 'POST', headers: { ...token, 'Content-Type': 'application/pdf' }, body: BINARY_BODY }))
+  await handler.fetch(new Request('https://gradusiq.example/api/proxy?target=me-transcript-review', { method: 'GET', headers: token }))
+  await handler.fetch(new Request('https://gradusiq.example/api/proxy?target=me-transcript-review-edit&id=11111111-1111-4111-8111-111111111111', { method: 'PATCH', headers: { ...token, 'Content-Type': 'application/json' }, body: '{"title":"Corrected"}' }))
+  await handler.fetch(new Request('https://gradusiq.example/api/proxy?target=me-transcript-confirm', { method: 'POST', headers: token }))
+  assert.deepEqual(calls.map((call) => call.url), [
+    'https://backend.example/api/v2/student/me/transcript/upload',
+    'https://backend.example/api/v2/student/me/transcript/review',
+    'https://backend.example/api/v2/student/me/transcript/review/11111111-1111-4111-8111-111111111111',
+    'https://backend.example/api/v2/student/me/transcript/confirm',
+  ])
+  assert.ok(calls[0].options.body instanceof ArrayBuffer)
+  assert.equal(calls.every((call) => call.options.headers.Authorization === 'Bearer transcript-token'), true)
+})
+
 test('the target allowlist stays closed after adding me-resume-upload', async () => {
   let forwarded = false
   const handler = createProxyHandler({
