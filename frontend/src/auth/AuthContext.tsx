@@ -11,6 +11,8 @@ import {
 } from '../lib/institutionTheme';
 import { resolveStudentAccountOnce, NO_SESSION_STATE, CHECKING_STATE } from '../lib/studentAccount';
 import type { StudentAccountState } from '../lib/studentAccount';
+import { signupOutcome } from '../lib/signupRules.mjs';
+import type { SignupOutcome } from '../lib/signupRules.mjs';
 
 // ── Context shape ────────────────────────────────────────────────────────────
 // Two auth paths coexist for now: the original slug-based demo picker
@@ -41,11 +43,13 @@ export interface AuthContextValue {
   session: Session | null;
   user: User | null;
   signInWithPassword(email: string, password: string): Promise<void>;
+  /** Resolves to whether a session was issued, so the caller can branch
+   *  between the authenticated flow and the confirm-your-email screen. */
   signUpWithPassword(
     email: string,
     password: string,
     metadata: { name: string; institution_id: string; date_of_birth: string },
-  ): Promise<void>;
+  ): Promise<SignupOutcome>;
   signOutSession(): Promise<void>;
   studentAccount: StudentAccountState;
   refreshStudentAccount(): void;
@@ -152,7 +156,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   // On a session becoming non-null: find out whether a `students` row exists,
-  // and provision one if this is a first confirmed login after sign-up.
+  // and provision one if this is the first session after sign-up. That session
+  // arrives either from signUp() itself (confirmation disabled) or from the
+  // first login after confirming (confirmation enabled) -- this effect does not
+  // distinguish them, which is what lets one provisioning path serve both.
   //
   // Keyed on the user's id (not the Session object) plus an explicit retry
   // counter, so it runs once per signed-in user and again only when something
@@ -324,23 +331,46 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (error) throw error;
   }, []);
 
-  // Email confirmation is required on this project (mailer_autoconfirm is
-  // false, verified live), so signUp() returns no usable session -- callers must
-  // show a "check your email" screen, never navigate to the dashboard. The
-  // three metadata fields are what the provisioning step later reads back to
-  // build the students and student_institutions rows.
+  // Whether signUp() issues a session depends entirely on the project's
+  // "Confirm email" setting, which this code does not control and must not
+  // assume: with confirmation ON a user comes back with `session: null`, with
+  // it OFF the address is confirmed inline and a session is issued right here.
+  // This previously hard-assumed the former and returned void, discarding the
+  // only field that tells them apart -- so the caller had nothing to branch on
+  // and showed "check your email" for a link that was never sent.
+  //
+  // Returning the outcome rather than the raw response keeps the Supabase
+  // response shape from leaking into the page, and keeps the decision itself
+  // in signupRules.mjs where it is directly testable.
+  //
+  // NOTE ON PROVISIONING: nothing is provisioned here on purpose. A session
+  // arriving from signUp() reaches onAuthStateChange like any other, which
+  // sets `user`, which runs the provisioning effect above -- the exact same
+  // path a normal sign-in takes. Adding a second provisioning call in this
+  // callback would race that effect for the same student.
   const signUpWithPassword = useCallback(
     async (
       email: string,
       password: string,
       metadata: { name: string; institution_id: string; date_of_birth: string },
-    ): Promise<void> => {
-      const { error } = await supabase.auth.signUp({
+    ): Promise<SignupOutcome> => {
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: { data: metadata },
       });
       if (error) throw error;
+
+      const outcome = signupOutcome(data);
+      console.log(
+        '[AuthContext] signUp resolved | outcome:',
+        outcome,
+        '| user:',
+        data.user ? 'present' : 'absent',
+        '| session:',
+        data.session ? 'present' : 'absent',
+      );
+      return outcome;
     },
     [],
   );

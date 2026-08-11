@@ -148,3 +148,28 @@ export function readSignupMetadata(metadata) {
 
   return { name, institutionId, dateOfBirth };
 }
+
+/**
+ * What a successful signUp() actually produced: an authenticated account, or
+ * one that still needs its email confirmed.
+ *
+ * THE DISTINCTION IS THE SESSION, NEVER THE USER. signUp() returns a `user` in
+ * BOTH configurations, so `data.user` is not evidence of anything -- reading it
+ * as success is what produced the bug this exists to prevent: with the project's
+ * "Confirm email" turned OFF (mailer_autoconfirm true), GoTrue confirms the
+ * address inline and issues a session immediately, and the form still showed
+ * "Check your email" for a link that is never sent. Only `data.session` can
+ * separate the two, because a session is exactly the thing confirmation is
+ * withheld to prevent.
+ *
+ * Both outcomes stay supported deliberately. This is a per-project auth setting
+ * that can be switched back on at any time, and other deployments of GradusIQ
+ * may run with it enabled, so the confirmation screen is conditional -- not
+ * removed.
+ */
+export function signupOutcome(result) {
+  const session =
+    result && typeof result === 'object' && result.session !== undefined ? result.session : null;
+
+  return session ? 'authenticated' : 'confirmation-required';
+}

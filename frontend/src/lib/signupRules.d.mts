@@ -40,3 +40,12 @@ export declare function validateSignupForm(
   todayValue: string,
 ): string | null;
 export declare function readSignupMetadata(metadata: unknown): SignupMetadata | null;
+
+/**
+ * 'authenticated'          -- signUp() issued a session; the user is signed in.
+ * 'confirmation-required'  -- a user exists but no session; email must be
+ *                             confirmed before they can sign in.
+ */
+export type SignupOutcome = 'authenticated' | 'confirmation-required';
+
+export declare function signupOutcome(result: { session?: unknown } | null | undefined): SignupOutcome;

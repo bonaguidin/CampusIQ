@@ -1,18 +1,36 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/useAuth';
 import { INSTITUTIONS, todayIso, validateSignupForm } from '../lib/signupRules.mjs';
 
 /**
- * Account creation. Deliberately does NOT navigate to /dashboard on success:
- * this project requires email confirmation (mailer_autoconfirm is false,
- * verified against the live auth settings), so signUp() returns
- * `session: null` and there is no session to gate anything with yet. The
- * students row is created later, on the first confirmed login, from the
- * metadata attached here -- see lib/studentAccount.ts.
+ * Account creation, which ends in one of two places depending on a project
+ * setting this code does not control.
+ *
+ * THE BUG THIS SHAPE EXISTS TO PREVENT. This page used to treat "signUp() did
+ * not throw" as "a confirmation email is on its way", and showed the check-your-
+ * email screen unconditionally. That is only true when the project has "Confirm
+ * email" ON. With it OFF -- which is how the live project is configured
+ * (mailer_autoconfirm: true, read from /auth/v1/settings) -- GoTrue confirms
+ * the address inline and returns a session, so the student was fully signed in
+ * and fully provisioned while being told to go open a link that was never sent.
+ * The account created by the reported failure proves it: email_confirmed_at was
+ * set 51ms after created_at, last_sign_in_at was set 8ms after that, and both
+ * its students and student_institutions rows existed.
+ *
+ * So the branch is on the session, the one field that differs between the two
+ * configurations, and BOTH endings stay supported: the setting can be switched
+ * back on, and other deployments may run with it enabled.
+ *
+ * ON NOT PROVISIONING HERE. The authenticated branch only navigates. The
+ * students row is created by AuthContext's provisioning effect, which fires on
+ * the session that signUp() just produced -- the same path a normal sign-in
+ * takes. RequireAuth holds /dashboard on a spinner via `studentAccount.status`
+ * until that finishes, so navigating immediately is safe and needs no timer.
  */
 export function SignUpPage() {
   const { signUpWithPassword } = useAuth();
+  const navigate = useNavigate();
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -41,15 +59,26 @@ export function SignUpPage() {
 
     setSubmitting(true);
     try {
-      await signUpWithPassword(email.trim(), password, {
+      const outcome = await signUpWithPassword(email.trim(), password, {
         name: name.trim(),
         institution_id: institutionId,
         date_of_birth: dateOfBirth,
       });
+
+      if (outcome === 'authenticated') {
+        // Signed in already. Mirrors LoginPage's post-sign-in navigation
+        // exactly, rather than inventing a second way into the dashboard.
+        void navigate('/dashboard');
+        return;
+      }
+
       setSentTo(email.trim());
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Sign-up failed.');
     } finally {
+      // Runs on the authenticated branch too. Navigation unmounts this page, so
+      // the update is a no-op there; leaving it unconditional keeps the button
+      // from staying stuck on "Creating account…" if navigation is ever gated.
       setSubmitting(false);
     }
   }
