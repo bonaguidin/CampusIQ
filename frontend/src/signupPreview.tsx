@@ -59,6 +59,7 @@ const context = {
   signOutSession: async () => {},
   studentAccount: { status: 'no-session', profile: null, message: null },
   refreshStudentAccount: () => {},
+  reloadStudentProfile: async () => {},
 } as AuthContextValue;
 
 /** Stands in for the real /dashboard so navigation is observable without

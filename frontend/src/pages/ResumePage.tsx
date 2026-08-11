@@ -1,32 +1,26 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/useAuth';
 import { ResumeUpload } from '../components/ResumeUpload';
 import { CareerReview } from '../components/CareerReview';
-import { GoToDashboard } from '../components/GoToDashboard';
 import { fetchCareerReview } from '../api/resume';
-import type {
-  NormalizedConfirm,
-  NormalizedReview,
-  NormalizedUpload,
-  ReviewSections,
-} from '../lib/resumeApi.mjs';
+import { resumeSuccessState } from '../lib/successNotice.mjs';
+import type { NormalizedReview, NormalizedUpload, ReviewSections } from '../lib/resumeApi.mjs';
 
-type Step = 'checking' | 'upload' | 'review' | 'recovery_error' | 'done';
+/**
+ * NO 'done' STEP, BY DESIGN -- see TranscriptPage for the same decision stated
+ * in full. This page previously argued the opposite: that a static success
+ * screen let the student "review the completed step at their own pace". What
+ * that screen actually offered to review was a count of rows, and the pace it
+ * protected was the pace of pressing one more button to reach the only place
+ * the flow could go. Confirmation now navigates to /dashboard, where the saved
+ * data itself is the confirmation and DashboardSuccessNotice supplies the
+ * sentence.
+ */
+type Step = 'checking' | 'upload' | 'review' | 'recovery_error';
 
 /**
  * The three-step resume flow, held on one route.
- *
- * ON THE TERMINAL STATE: confirming shows a static success screen here rather
- * than AUTO-navigating anywhere. This page remains the focused resume
- * onboarding workflow and keeps the static confirmation so the student can
- * review the completed step at their own pace.
- *
- * What that reasoning never justified was leaving them with no exit: the
- * screen used to end on "you can close this page", which is not an answer to
- * "what now". It now offers an explicit link to /dashboard (GoToDashboard,
- * shared with the transcript flow's identical ending). Not navigating FOR them
- * and giving them nowhere to go were always two different decisions; only the
- * first one was intended.
  */
 export function ResumePage() {
   const { session } = useAuth();
@@ -36,9 +30,9 @@ export function ResumePage() {
 }
 
 export function ResumeFlow({ accessToken }: { accessToken: string }) {
+  const navigate = useNavigate();
+  const { reloadStudentProfile } = useAuth();
   const [step, setStep] = useState<Step>('checking');
-  const [uploaded, setUploaded] = useState<NormalizedUpload | null>(null);
-  const [confirmed, setConfirmed] = useState<NormalizedConfirm | null>(null);
   const [recoveredSections, setRecoveredSections] = useState<ReviewSections | null>(null);
   const [recoveryFailure, setRecoveryFailure] = useState<NormalizedReview | null>(null);
   const [recoveryAttempt, setRecoveryAttempt] = useState(0);
@@ -70,16 +64,24 @@ export function ResumeFlow({ accessToken }: { accessToken: string }) {
     };
   }, [accessToken, recoveryAttempt]);
 
-  function handleUploaded(result: NormalizedUpload, fileName: string) {
-    setUploaded(result);
+  function handleUploaded(_result: NormalizedUpload, fileName: string) {
     setRecoveredSections(null);
     setSource({ name: fileName, at: new Date() });
     setStep('review');
   }
 
-  function handleConfirmed(result: NormalizedConfirm) {
-    setConfirmed(result);
-    setStep('done');
+  /**
+   * Runs only on a confirmed backend success -- CareerReview keeps failures and
+   * timeouts on the review screen and never calls this.
+   *
+   * The canonical profile is re-read before navigating for the same reason as
+   * the transcript flow: the dashboard's career section renders from
+   * `studentAccount.profile`, which predates this confirmation and would
+   * otherwise greet the student with "no confirmed career profile yet".
+   */
+  async function handleConfirmed() {
+    await reloadStudentProfile();
+    await navigate('/dashboard', { replace: true, state: resumeSuccessState() });
   }
 
   if (step === 'checking') return <ResumeLoading />;
@@ -117,7 +119,9 @@ export function ResumeFlow({ accessToken }: { accessToken: string }) {
     return (
       <CareerReview
         accessToken={accessToken}
-        onConfirmed={handleConfirmed}
+        onConfirmed={() => {
+          void handleConfirmed();
+        }}
         initialSections={recoveredSections ?? undefined}
         sourceName={source?.name}
         parsedAt={source?.at}
@@ -125,37 +129,8 @@ export function ResumeFlow({ accessToken }: { accessToken: string }) {
     );
   }
 
-  const total = confirmed?.totalConfirmed ?? 0;
-  const skipped = uploaded?.totals.skipped_duplicate ?? 0;
-
-  return (
-    <div className="login-bg">
-      <div className="login-card">
-        <div className="login-header">
-          <h1 className="login-logo">GradusIQ</h1>
-          <p className="login-subtitle">Your profile has been saved</p>
-        </div>
-
-        <div className="login-form">
-          <p className="resume-intro">
-            {total === 1
-              ? 'One entry has been confirmed and added to your profile.'
-              : `${String(total)} entries have been confirmed and added to your profile.`}
-          </p>
-          {skipped > 0 && (
-            <p className="resume-file-note">
-              {skipped === 1
-                ? 'One entry was already on your profile and was left as it was.'
-                : `${String(skipped)} entries were already on your profile and were left as they were.`}
-            </p>
-          )}
-          <GoToDashboard />
-        </div>
-
-        <p className="login-note">Nothing else is needed from you right now.</p>
-      </div>
-    </div>
-  );
+  // No terminal state left to fall through to.
+  return <ResumeLoading />;
 }
 
 function ResumeLoading() {
