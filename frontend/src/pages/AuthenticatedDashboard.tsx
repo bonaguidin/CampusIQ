@@ -167,21 +167,38 @@ export function AuthenticatedDashboard() {
 
             {activeSection === 'career' && (
               <div className="stage-section">
-                <h2 className="career-section-heading">Career Profile</h2>
                 {!dashboard.career.confirmed ? (
-                  <div className="real-empty"><h3>Build your career profile</h3><p>Upload and confirm your resume before career facts appear here.</p><Link to="/resume" className="btn btn-primary btn-sm">Upload resume</Link></div>
+                  <>
+                    <h2 className="career-section-heading">Career Profile</h2>
+                    <div className="real-empty"><h3>Build your career profile</h3><p>Upload and confirm your resume before career facts appear here.</p><Link to="/resume" className="btn btn-primary btn-sm">Upload resume</Link></div>
+                  </>
                 ) : (
                   <>
-                    {/* Profile first, analyses second. The three panels are
-                        unchanged, but they used to fill the entire first
-                        screen -- so the Career tab opened on three "Run
-                        analysis" buttons before saying whose career, or
-                        whether there was any career data to analyse at all.
-                        Orientation belongs above action. */}
-                    <CareerProfile career={dashboard.career} />
+                    {/* Analyses first, profile second -- matching the demo
+                        dashboard's Career tab, which already orders it this
+                        way. The three panels are unchanged.
+
+                        An earlier revision put the profile on top so the tab
+                        would not open on three bare "Run analysis" buttons.
+                        Each panel now carries its own title ("Readiness Check
+                        (GAP)" and so on), so the tab still says what it is
+                        without a section heading standing in for them.
+
+                        "Career Profile" travels DOWN with the profile rather
+                        than staying at the top: it describes the record, not
+                        the analyses, and CareerSummary deliberately renders no
+                        heading of its own on the grounds that this <h2> labels
+                        it. Leaving it above the panels broke that. Its
+                        existing border-bottom also supplies the division
+                        between the two halves, which is why
+                        .career-profile-block draws no rule of its own. */}
                     <GapAnalysisPanel />
                     <FitAnalysisPanel />
                     <ShiftAnalysisPanel />
+                    <div className="career-profile-block">
+                      <h2 className="career-section-heading">Career Profile</h2>
+                      <CareerProfile career={dashboard.career} />
+                    </div>
                   </>
                 )}
               </div>
