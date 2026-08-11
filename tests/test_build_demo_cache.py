@@ -191,3 +191,58 @@ def test_merge_recomputes_status_when_requested_feature_fails(monkeypatch, _isol
     # Mixed success/failure across the merged set -> partial_success, matching
     # orchestrator.summarize_status()'s existing rule for a single full run.
     assert merged["status"] == "partial_success"
+
+
+# ---------------------------------------------------------------- mock routing
+# _MockClient used to route on `if "GAP" in blob.upper()` against the whole
+# concatenated blob, so every prompt containing the word "gap" -- SHIFT has said
+# "The gap is articulation, not adoption" since v1.0 -- got the GAP payload.
+# --mock silently only ever exercised one feature.
+
+_RUNNERS = ["GAP", "FIT", "SHIFT", "PROFESSOR_COMMENTS"]
+
+
+def _runner_for(feature):
+    from GradusIQ_career.features.orchestrator import RUNNERS
+
+    return RUNNERS[feature]
+
+
+@pytest.mark.parametrize("feature", _RUNNERS)
+def test_mock_client_routes_each_feature_to_its_own_payload(feature):
+    runner = _runner_for(feature)(client=bdc._MockClient())
+    contract_blob = json.dumps(runner.feature_contract(), indent=2)
+
+    payload = bdc._MockClient._payload_for(contract_blob)
+
+    assert payload is bdc._MockClient._PAYLOADS[feature]
+
+
+@pytest.mark.parametrize("feature", _RUNNERS)
+def test_mock_payload_matches_the_runners_output_contract(feature):
+    """The guard that would have caught the stale payloads.
+
+    Mock output that doesn't match the contract makes --mock a false green:
+    the pipeline "passes" while producing something the frontend cannot read.
+    """
+    runner = _runner_for(feature)(client=bdc._MockClient())
+
+    assert set(bdc._MockClient._PAYLOADS[feature]) == set(runner.output_contract)
+
+
+def test_mock_payload_nested_items_match_contract_item_shape():
+    # Contract list entries that are dicts describe a required item shape --
+    # SHIFT's adjacent_paths/task_shifts/durable_skills all are, and the old
+    # mock returned bare strings for them.
+    for feature in _RUNNERS:
+        runner = _runner_for(feature)(client=bdc._MockClient())
+        payload = bdc._MockClient._PAYLOADS[feature]
+        for key, spec in runner.output_contract.items():
+            if not (isinstance(spec, list) and spec and isinstance(spec[0], dict)):
+                continue
+            for item in payload[key]:
+                assert set(item) == set(spec[0]), f"{feature}.{key} item shape"
+
+
+def test_unrecognized_prompt_still_degrades_to_a_note():
+    assert "note" in bdc._MockClient._payload_for("nothing identifying here")

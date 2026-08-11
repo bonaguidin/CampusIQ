@@ -69,30 +69,95 @@ class _MockClient:
             text=json.dumps(payload), raw={"choices": []}, model="mock"
         )
 
-    @staticmethod
-    def _payload_for(blob: str) -> dict[str, Any]:
-        upper = blob.upper()
-        if "GAP" in upper:
-            return {
-                "readiness_score": 62,
-                "strengths": ["[MOCK] Strong analytical foundation from coursework"],
-                "must_have_gaps": ["[MOCK] Industry-standard tooling / internship experience"],
-                "nice_to_have_gaps": ["[MOCK] A relevant certification"],
-                "recommended_next_steps": ["[MOCK] Complete one portfolio project this term"],
-            }
-        if "FIT" in upper:
-            return {
-                "role_matches": [
-                    {"role": "[MOCK] Target Role", "fit_score": 78,
-                     "why_it_fits": "[MOCK] Aligns with declared major and interests."}
-                ]
-            }
-        if "SHIFT" in upper:
-            return {
-                "role_evolution_summary": "[MOCK] Role family is shifting toward AI-augmented workflows.",
-                "adjacent_paths": ["[MOCK] Adjacent role"],
-                "ai_articulation_coaching": ["[MOCK] Frame AI fluency as a productivity multiplier."],
-            }
+    # Routing key. base.build_messages() appends the feature contract as JSON,
+    # which carries an exact `"feature": "<NAME>"` line -- so this matches one
+    # unambiguous token rather than scanning the blob for a bare feature name.
+    #
+    # It used to test `if "GAP" in blob.upper()` first, against the prompt,
+    # contract and student context concatenated. Every prompt that happens to
+    # contain the word "gap" therefore routed to the GAP payload: SHIFT has
+    # said "The gap is articulation, not adoption" since v1.0, and FIT matches
+    # too. --mock silently only ever exercised GAP.
+    _PAYLOADS: Mapping[str, dict[str, Any]] = {
+        "GAP": {
+            "readiness_score": 62,
+            "strengths": ["[MOCK] Strong analytical foundation from coursework"],
+            "must_have_gaps": [
+                {
+                    "gap": "[MOCK] Industry-standard tooling",
+                    "why_it_matters": "[MOCK] Carries a high O*NET importance score for this role.",
+                    "how_to_close": "[MOCK] Complete one portfolio project this term.",
+                }
+            ],
+            "nice_to_have_gaps": [
+                {
+                    "gap": "[MOCK] A relevant certification",
+                    "why_it_helps": "[MOCK] Differentiates among otherwise similar candidates.",
+                    "how_to_close": "[MOCK] Sit the exam before graduation.",
+                }
+            ],
+            "recommended_next_steps": ["[MOCK] Complete one portfolio project this term"],
+        },
+        "FIT": {
+            "role_matches": [
+                {
+                    "role": "[MOCK] Target Role",
+                    "fit_level": "medium",
+                    "rationale": "[MOCK] Aligns with declared major and interests.",
+                    "supporting_signals": ["[MOCK] Relevant coursework"],
+                    "missing_signals": ["[MOCK] Internship experience"],
+                }
+            ],
+            "overall_fit_summary": "[MOCK] One realistic direction and one stretch.",
+        },
+        "SHIFT": {
+            "role_evolution_summary": "[MOCK] Role family is shifting toward AI-augmented workflows.",
+            "task_shifts": [
+                {
+                    "task": "[MOCK] Routine analysis",
+                    "changing": "[MOCK] Increasingly automated by available tooling.",
+                    "meaning": "[MOCK] Judgment about what the output means matters more.",
+                }
+            ],
+            "durable_skills": [
+                {
+                    "task": "[MOCK] Stakeholder communication",
+                    "reason": "[MOCK] Depends on context the tooling does not hold.",
+                }
+            ],
+            "adjacent_paths": [
+                {
+                    "path": "[MOCK] Adjacent role",
+                    "relevance": "[MOCK] Builds on the same coursework.",
+                    "driver": "[MOCK] Growing demand for hybrid skills.",
+                }
+            ],
+            "ai_fluency_guidance": ["[MOCK] Frame AI fluency as a productivity multiplier."],
+        },
+        "PROFESSOR_COMMENTS": {
+            "themes": [
+                {
+                    "theme": "[MOCK] Consistent preparation",
+                    "category": "strength",
+                    "summary": "[MOCK] Feedback repeatedly notes thorough preparation.",
+                    "supporting_references": [
+                        {
+                            "course_code": "[MOCK] BUSN 101",
+                            "course_name": "[MOCK] Freshman Business Initiative",
+                            "paraphrase": "[MOCK] Instructor noted strong preparation.",
+                        }
+                    ],
+                }
+            ],
+            "overall_summary": "[MOCK] Broadly positive with one recurring concern.",
+        },
+    }
+
+    @classmethod
+    def _payload_for(cls, blob: str) -> dict[str, Any]:
+        for feature, payload in cls._PAYLOADS.items():
+            if f'"feature": "{feature}"' in blob:
+                return payload
         return {"note": "[MOCK] unrecognized feature prompt"}
 
 
