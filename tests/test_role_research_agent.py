@@ -12,9 +12,10 @@ from GradusIQ_career.features import role_research_agent as agent
 
 @pytest.fixture(autouse=True)
 def _isolated_cache_path(tmp_path, monkeypatch):
-    # Every test gets its own cache file so lookups here never read/write the
-    # real data/.cache/role_research_cache.json used by the running app.
+    # Every test gets its own cache files so lookups here never read/write the
+    # real ones under data/.cache/ used by the running app.
     monkeypatch.setattr(agent, "_CACHE_PATH", tmp_path / "role_research_cache.json")
+    monkeypatch.setattr(agent, "_TRENDS_CACHE_PATH", tmp_path / "role_trends_cache.json")
 
 
 def _final_message(payload: dict) -> dict:
@@ -87,23 +88,34 @@ VALID_PAYLOAD = {
     "must_have_certifications": [],
     "nice_to_have_certifications": ["AWS Certified Cloud Practitioner"],
 }
-# 15-1252.00 (Software Developers) is not one of the 10 occupations in the
-# small real-O*NET catalog, so a fresh agent result for it is expected to
-# come back tagged "agent" (format-valid, uncorroborated), not
-# "agent_onet_corroborated".
-EXPECTED_VALID_RESULT = dict(VALID_PAYLOAD, soc_source="agent")
+# What "corroborated" means changed when build_onet.py started generating
+# data/reference/onet_soc_requirements.json: the catalog went from 10
+# occupations to all 1,016 in the release. It no longer separates well-known
+# occupations from obscure ones -- every real O*NET-SOC 2019 code is in it. It
+# now separates real codes from invented ones, which is a narrower but sharper
+# signal. The tag is deliberately kept soft (never used to reject); see
+# UNCORROBORATED_PAYLOAD for the only case that still produces "agent".
 
-# 13-2051.00 (Financial and Investment Analysts) IS one of the 10 occupations
-# in data/reference/onet_soc_requirements.json -- used to test the
-# corroborated-source tag.
+# 15-1252.00 (Software Developers) is a real occupation, so a fresh agent
+# result for it corroborates.
+EXPECTED_VALID_RESULT = dict(VALID_PAYLOAD, soc_source="agent_onet_corroborated")
+
+# 13-2051.00 (Financial and Investment Analysts) is in the catalog like every
+# other real occupation. Kept as its own fixture because it is the SOC the
+# demo's Finance Intern role maps to.
 ONET_CORROBORATED_PAYLOAD = dict(VALID_PAYLOAD, soc_code="13-2051.00", soc_title="Financial and Investment Analysts")
 
-# 17-2072.00 (Electronics Engineers) is well-formed, not in the static 14
-# curated role_requirements.json entries, and not in the small O*NET
-# catalog either -- this is the shape of the real-world case (e.g. the
-# agent's actual "Embedded Systems Intern" answer) that the old allowlist
-# guard used to silently discard.
+# 17-2072.00 (Electronics Engineers) is well-formed and NOT one of the 14
+# curated role_requirements.json entries -- the shape of the real-world case
+# (e.g. the agent's actual "Embedded Systems Intern" answer) that the old
+# allowlist guard used to silently discard. It is a real occupation, so it
+# corroborates; this fixture is about bypassing the curated list, not the tag.
 NOVEL_SOC_PAYLOAD = dict(VALID_PAYLOAD, soc_code="17-2072.00", soc_title="Electronics Engineers, Except Computer")
+
+# 99-9999.00 is format-valid but is not a real O*NET-SOC code -- the release
+# stops at major group 55. With a full catalog this is the only way to get an
+# uncorroborated result.
+UNCORROBORATED_PAYLOAD = dict(VALID_PAYLOAD, soc_code="99-9999.00", soc_title="Invented Occupation")
 
 
 def test_successful_lookup_with_mocked_tool_calls_returns_correct_schema():
@@ -149,7 +161,7 @@ def test_well_formed_soc_code_outside_the_static_allowlist_is_accepted():
 
     result = agent.get_role_requirements("Embedded Systems Intern", client=client)
 
-    assert result == dict(NOVEL_SOC_PAYLOAD, soc_source="agent")
+    assert result == dict(NOVEL_SOC_PAYLOAD, soc_source="agent_onet_corroborated")
 
 
 def test_soc_code_present_in_onet_catalog_is_corroborated():
@@ -161,11 +173,14 @@ def test_soc_code_present_in_onet_catalog_is_corroborated():
 
 
 def test_soc_code_absent_from_onet_catalog_is_uncorroborated():
-    client = FakeClient([_final_message(VALID_PAYLOAD)])
+    # Format-valid but invented. Still accepted -- corroboration is a soft
+    # signal on soc_source, never a rejection filter, so callers can decide
+    # for themselves how much to trust an uncorroborated code.
+    client = FakeClient([_final_message(UNCORROBORATED_PAYLOAD)])
 
     result = agent.get_role_requirements("Software Engineering Intern", client=client)
 
-    assert result["soc_source"] == "agent"
+    assert result == dict(UNCORROBORATED_PAYLOAD, soc_source="agent")
 
 
 def test_malformed_soc_code_format_returns_none():
@@ -727,4 +742,153 @@ def test_absent_soc_source_remains_valid_so_the_write_path_still_works():
     result = agent.get_role_requirements("Software Engineering Intern", client=client)
 
     assert result == EXPECTED_VALID_RESULT
-    assert result["soc_source"] == "agent"
+    # Which tag it lands on is decided by the catalog lookup and asserted
+    # elsewhere; what this test cares about is that one was assigned at all.
+    assert result["soc_source"] in agent._VALID_SOC_SOURCES
+
+
+# ---------------------------------------------------------------- trends
+# get_role_trends shares _run_tool_loop with get_role_requirements, so the loop
+# mechanics are already covered above. These cover what differs: the schema,
+# its bounds, and the separate cache.
+
+VALID_TRENDS = {
+    "role_evolution": "Analysis work is shifting toward validating model output.",
+    "task_shifts": ["Routine variance analysis is increasingly automated"],
+    "emerging_skills": ["Prompt-assisted modeling"],
+    "sources": ["https://example.org/report"],
+}
+
+
+@pytest.fixture
+def searchable(monkeypatch):
+    """A working web_search, so the trend loop is allowed to answer at all.
+
+    Trends require search evidence; without this the lookup correctly refuses.
+    """
+    monkeypatch.setenv("TAVILY_API_KEY", "test-key")
+    monkeypatch.setattr(
+        agent,
+        "_run_web_search",
+        lambda arguments: json.dumps({"results": [{"title": "t", "url": "u", "content": "c"}]}),
+    )
+
+
+def _researched(payload=None):
+    """A search round followed by an answer -- the shape of a real lookup."""
+    return FakeClient([_tool_call_message(), _final_message(payload or VALID_TRENDS)])
+
+
+def test_trend_lookup_returns_validated_payload(searchable):
+    client = _researched()
+
+    result = agent.get_role_trends("Finance Intern", client=client)
+
+    assert result == VALID_TRENDS
+    assert len(client.calls) == 2
+
+
+def test_trends_and_requirements_use_separate_caches(searchable):
+    """A trend result must never satisfy a requirements lookup, or vice versa.
+
+    They share a role key but not a schema, so a shared cache file would hand
+    one validator the other's payload.
+    """
+    agent.get_role_trends("Finance Intern", client=_researched())
+
+    assert agent._TRENDS_CACHE_PATH.exists()
+    assert not agent._CACHE_PATH.exists()
+    # The requirements path is unaffected by the cached trend entry.
+    assert agent._read_cache(agent._CACHE_PATH, "Finance Intern", agent._validate_schema) is None
+
+
+def test_trend_cache_hit_skips_the_agent(searchable):
+    agent.get_role_trends("Finance Intern", client=_researched())
+
+    second = _researched()
+    result = agent.get_role_trends("Finance Intern", client=second)
+
+    assert result == VALID_TRENDS
+    assert second.calls == []  # served from cache, no second research run
+
+
+def test_trend_lookup_refuses_when_search_is_unconfigured(monkeypatch):
+    """The half-configured environment must not produce recalled 'research'.
+
+    With OPENROUTER_API_KEY set but TAVILY_API_KEY missing, web_search returns
+    a well-formed empty result, the loop treats it as a completed round, and
+    the model answers from training data -- which would then be cached as
+    though researched. Refuse before spending the model call instead.
+    """
+    monkeypatch.delenv("TAVILY_API_KEY", raising=False)
+    client = _researched()
+
+    assert agent.get_role_trends("Finance Intern", client=client) is None
+    assert client.calls == []  # no model call attempted
+    assert not agent._TRENDS_CACHE_PATH.exists()
+
+
+def test_trend_answer_is_discarded_when_no_search_returned_results(monkeypatch):
+    # Search is configured but every call comes back empty (rate limit, auth
+    # failure, genuinely nothing found). The answer is then unsourced.
+    monkeypatch.setenv("TAVILY_API_KEY", "test-key")
+    monkeypatch.setattr(agent, "_run_web_search", lambda arguments: json.dumps({"results": []}))
+    client = _researched()
+
+    assert agent.get_role_trends("Finance Intern", client=client) is None
+    assert not agent._TRENDS_CACHE_PATH.exists()
+
+
+def test_trend_answer_without_any_search_is_discarded(searchable):
+    # Model answers immediately, never calling the tool. Nothing backs it.
+    client = FakeClient([_final_message(VALID_TRENDS)])
+
+    assert agent.get_role_trends("Finance Intern", client=client) is None
+
+
+def test_requirements_lookup_does_not_require_search_evidence(monkeypatch):
+    """The deliberate asymmetry between the two entry points.
+
+    Requirements degrade to data/role_requirements.json, so a thinly sourced
+    answer is still useful and gap.py can fall back regardless. Trends have no
+    fallback, so unsourced output there is fabrication.
+    """
+    monkeypatch.delenv("TAVILY_API_KEY", raising=False)
+    client = FakeClient([_tool_call_message(), _final_message(VALID_PAYLOAD)])
+
+    assert agent.get_role_requirements("Software Engineering Intern", client=client) is not None
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        {k: v for k, v in VALID_TRENDS.items() if k != "task_shifts"},  # missing key
+        dict(VALID_TRENDS, role_evolution=""),  # blank summary
+        dict(VALID_TRENDS, role_evolution="x" * 601),  # summary over cap
+        dict(VALID_TRENDS, task_shifts="not a list"),
+        dict(VALID_TRENDS, task_shifts=["x" * 201]),  # item over its cap
+        dict(VALID_TRENDS, emerging_skills=["x" * 121]),  # tighter cap for skills
+        dict(VALID_TRENDS, sources=["x" * 301]),  # looser cap for URLs
+        dict(VALID_TRENDS, task_shifts=[f"s{i}" for i in range(agent._MAX_LIST_ITEMS + 1)]),
+        dict(VALID_TRENDS, emerging_skills=[123]),  # non-string item
+    ],
+)
+def test_malformed_trend_payload_is_rejected(payload):
+    # Same bounded-surface contract as requirements: this text reaches the
+    # SHIFT prompt verbatim after being synthesized from third-party search
+    # results, so shape checks alone are not enough.
+    assert agent._validate_trends(payload) is None
+
+
+def test_trend_failure_returns_none_rather_than_raising():
+    client = FakeClient([_final_message({"role_evolution": "incomplete"})])
+
+    assert agent.get_role_trends("Finance Intern", client=client) is None
+    assert not agent._TRENDS_CACHE_PATH.exists()
+
+
+def test_blank_role_never_reaches_the_trend_agent():
+    client = FakeClient([_final_message(VALID_TRENDS)])
+
+    assert agent.get_role_trends("   ", client=client) is None
+    assert client.calls == []

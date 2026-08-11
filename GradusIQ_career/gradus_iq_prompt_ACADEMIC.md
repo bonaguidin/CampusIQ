@@ -14,13 +14,14 @@ runner's build_student_context) will need to be restructured to run once
 per course instead of once per student. Revisit if that assumption changes.
 -->
 
-> **Script hands to agent:** `{{comments_by_course}}` — professor comments grouped
+> **Script hands to agent:** `comments_by_course` — professor comments grouped
 > by course, each with course code/name, assignment name, professor name, comment
 > text, and timestamp, sourced from `submissions[].submission_comments[]` joined
 > via `assignment_id -> course_id -> courses[]`.
 >
-> `{{field_name}}` placeholders are interpolated from the student JSON. Nested
-> fields use dot notation: `{{comments_by_course[].course_code}}`.
+> Field names below are keys in the student-profile context JSON appended after
+> this prompt (nested access written as `comments_by_course[].course_code`).
+> Nothing is string-interpolated into the text -- read the values from that JSON.
 
 ---
 
@@ -45,7 +46,7 @@ paraphrase it in your own words. Do not quote professor comments verbatim.
 
 ## STUDENT PROFESSOR COMMENTS (ALL COURSES)
 
-{{comments_by_course}}
+`comments_by_course`
 
 Each entry includes: course code, course name, assignment name, professor
 name, comment text, and the date the comment was left.

@@ -31,3 +31,12 @@ def _no_live_role_research_by_default(request, monkeypatch):
         "get_role_requirements",
         lambda role, client=None: None,
     )
+    # Same reasoning for SHIFT's trend research: ShiftRunner calls
+    # get_role_trends once per target role, and it has no static fallback to
+    # short-circuit the call. Patched on the same module object gap.py holds,
+    # which is the one shift.py imports too.
+    monkeypatch.setattr(
+        gap_module.role_research_agent,
+        "get_role_trends",
+        lambda role, client=None: None,
+    )
