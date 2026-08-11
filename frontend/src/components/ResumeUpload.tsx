@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
 import { uploadResume } from '../api/resume';
+import { ProcessingStatus, processingLabel } from './ProcessingStatus';
 import type { NormalizedUpload } from '../lib/resumeApi.mjs';
 
 interface ResumeUploadProps {
@@ -59,16 +60,18 @@ export function ResumeUpload({ accessToken, onUploaded }: ResumeUploadProps) {
 
     setBusy(true);
     setFailure(null);
-    try {
-      const result = await uploadResume(accessToken, file);
-      if (result.ok) {
-        onUploaded(result, file.name);
-        return;
-      }
-      setFailure(result);
-    } finally {
-      setBusy(false);
+    const result = await uploadResume(accessToken, file);
+    if (result.ok) {
+      // `busy` is deliberately left true: onUploaded advances the page to the
+      // review, and clearing it first would flash the idle form for a frame on
+      // the way out. The processing timers are cleaned up by unmount.
+      onUploaded(result, file.name);
+      return;
     }
+    // Every failure -- parse, network, timeout -- lands here, which is what
+    // guarantees the processing state cannot outlive the request.
+    setFailure(result);
+    setBusy(false);
   }
 
   function clearSelection() {
@@ -88,30 +91,44 @@ export function ResumeUpload({ accessToken, onUploaded }: ResumeUploadProps) {
         </div>
 
         <form className="login-form" onSubmit={handleSubmit}>
-          <p className="resume-intro">
-            Upload your resume and we will pull out your experience, projects, and
-            certifications. You will get to review and correct everything before anything is
-            saved to your profile.
-          </p>
+          {/* Instructions for an action already taken. Hidden while working so
+              the panel's own trust line is the only promise on screen -- the
+              intro, the footnote and the panel otherwise say the same thing
+              three times, and three statements of "nothing is saved yet" read
+              as protesting rather than reassuring. */}
+          {!busy && (
+            <p className="resume-intro">
+              Upload your resume and we will pull out your experience, projects, and
+              certifications. You will get to review and correct everything before anything is
+              saved to your profile.
+            </p>
+          )}
 
-          <div className="form-group">
-            <label className="form-label" htmlFor="resume-file">
-              Resume file
-            </label>
-            <input
-              id="resume-file"
-              ref={inputRef}
-              className="form-input resume-file-input"
-              type="file"
-              accept={ACCEPTED}
-              disabled={busy}
-              onChange={(event) => {
-                setFile(event.target.files?.[0] ?? null);
-                setFailure(null);
-              }}
-            />
-            <p className="resume-file-note">PDF or Word (.docx), up to 10 MB.</p>
-          </div>
+          {/* The picker gives way to the processing panel rather than sitting
+              disabled beside it: the panel already names the file, so nothing
+              about what is being read is lost, and a greyed-out input next to
+              an active status reads as two competing controls. */}
+          {busy ? (
+            <ProcessingStatus kind="resume" fileName={file?.name ?? 'Your resume'} active />
+          ) : (
+            <div className="form-group">
+              <label className="form-label" htmlFor="resume-file">
+                Resume file
+              </label>
+              <input
+                id="resume-file"
+                ref={inputRef}
+                className="form-input resume-file-input"
+                type="file"
+                accept={ACCEPTED}
+                onChange={(event) => {
+                  setFile(event.target.files?.[0] ?? null);
+                  setFailure(null);
+                }}
+              />
+              <p className="resume-file-note">PDF or Word (.docx), up to 10 MB.</p>
+            </div>
+          )}
 
           {failure && (
             <div className="login-error" role="alert">
@@ -128,7 +145,7 @@ export function ResumeUpload({ accessToken, onUploaded }: ResumeUploadProps) {
             className="btn btn-primary btn-full"
             disabled={!file || busy}
           >
-            {busy ? <span className="btn-loading">Reading your resume…</span> : 'Upload resume'}
+            {busy ? processingLabel('resume') : 'Upload resume'}
           </button>
 
           {failure && !NOT_RETRYABLE.has(failure.kind) && (
@@ -143,10 +160,12 @@ export function ResumeUpload({ accessToken, onUploaded }: ResumeUploadProps) {
           )}
         </form>
 
-        <p className="login-note">
-          Reading a resume takes a few seconds. Nothing is saved to your profile until you
-          confirm it on the next screen.
-        </p>
+        {!busy && (
+          <p className="login-note">
+            Reading a resume takes a few seconds. Nothing is saved to your profile until you
+            confirm it on the next screen.
+          </p>
+        )}
       </div>
     </div>
   );

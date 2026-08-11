@@ -1928,6 +1928,150 @@ a {
   gap: var(--sp-3);
 }
 
+/* ─── DOCUMENT PROCESSING ─────────────────────────────────────────────────
+   The in-flight state for resume and transcript uploads (ProcessingStatus).
+
+   Built from tokens rather than from either upload screen's classes: the
+   resume upload sits in the centred `login-card` shell and the transcript
+   upload in the editorial `rv-page` one, and this panel has to read correctly
+   inside both without importing either one's identity.
+
+   The institution accent appears twice and only twice -- the status marker and
+   the travelling rail segment -- so a themed account reads as maroon or blue
+   ACCENTED rather than maroon or blue coloured. Everything else is neutral. */
+.dp-panel {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  text-align: left;
+}
+
+/* Long filenames truncate rather than reflowing the panel. The full name stays
+   available via the title attribute. */
+.dp-file {
+  margin: 0;
+  font-family: var(--font-data);
+  font-size: var(--text-sm);
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Reserved height so a one-line stage and a two-line stage do not move the
+   rail underneath them. Stage copy varies a lot in length by design -- the
+   longest label ("Extracting experience, projects, and certifications…") wraps
+   to two lines at every width, and measured 63px against a 54px reservation
+   before this was sized to the tallest case rather than the typical one. */
+.dp-stage {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-height: 4.25rem;
+}
+
+.dp-stage-label {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--text-base);
+  line-height: 1.45;
+  color: var(--ink);
+  animation: dp-stage-in 0.28s ease both;
+}
+
+.dp-stage-detail {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  line-height: 1.55;
+  color: var(--muted);
+}
+
+@keyframes dp-stage-in {
+  from { opacity: 0; transform: translateY(3px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.dp-marker {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent-text);
+  animation: dp-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes dp-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.35; }
+}
+
+/* Indeterminate: the segment crosses and re-enters, so it never rests at a
+   position that could be read as a percentage. */
+.dp-rail {
+  position: relative;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--line);
+  overflow: hidden;
+}
+
+.dp-rail-run {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 38%;
+  border-radius: inherit;
+  background: var(--accent-text);
+  animation: dp-rail-travel 1.65s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+@keyframes dp-rail-travel {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(363%); }
+}
+
+.dp-note {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  line-height: 1.55;
+  color: var(--muted);
+}
+
+/* Reduced motion: the travelling segment goes entirely rather than freezing.
+   A stopped segment resting partway along a track is a percentage claim we do
+   not have, and a halted pulse just looks broken.
+
+   What remains is a plain hairline rule -- the same 1px/--line divider used
+   throughout the design system, uniform across its full width so it reads as a
+   separator rather than as a bar filled to some level. That keeps the panel's
+   proportions intact instead of leaving a gap where the rail was.
+
+   The stage copy still advances: it is driven by timers in JS, not by any of
+   these animations, so nothing about understanding the state depended on
+   movement. */
+@media (prefers-reduced-motion: reduce) {
+  .dp-rail { height: 1px; }
+  .dp-rail-run { display: none; }
+  .dp-marker { animation: none; opacity: 1; }
+  .dp-stage-label { animation: none; }
+}
+
+@media (max-width: 40rem) {
+  .dp-panel { padding: var(--sp-3); }
+  .dp-stage { min-height: 4.75rem; }
+}
+
 /* ─── SPINNER ─────────────────────────────────────────────────────────────── */
 @keyframes spin {
   to { transform: rotate(360deg); }
