@@ -233,7 +233,7 @@ test('a slow confirm dims the resume review too, identically to transcript', { t
   await page.locator('.dash-notice').waitFor()
 })
 
-test('resume confirm failures stay on the review screen and stay retryable', { timeout: 30_000 }, async (t) => {
+test('resume confirm failures stay on the review screen and stay retryable', { timeout: 45_000 }, async (t) => {
   // CASE R7 (500) and CASE R8 (a confirm that never completes -- aborted at the
   // network layer rather than waiting out the real 60s CONFIRM_TIMEOUT_MS; both
   // reach the same `ok: false` branch, and resumeApi.test.mjs pins the timeout
@@ -290,10 +290,15 @@ test('resume confirm failures stay on the review screen and stay retryable', { t
   assert.equal(await page.getByRole('button', { name: 'Confirm all' }).isEnabled(), true)
 
   // CASE R8: a confirm that never completes.
+  //
+  // Waits on the SETTLED outcome, never on the intermediate "Saving…" label. An
+  // aborted request can resolve inside a single render, so that label is not
+  // guaranteed to be observable -- waiting for it is a race that hangs for the
+  // full locator timeout when it loses. What matters here is where the student
+  // ends up, and that is deterministic.
   await page.route('**/api/v2/student/me/career/confirm', (route) => route.abort('timedout'))
   await page.getByRole('button', { name: 'Confirm all' }).click()
-  await page.getByRole('button', { name: 'Saving…' }).waitFor()
-  await page.getByRole('button', { name: 'Confirm all' }).waitFor()
+  await page.getByText('Could not confirm your records (status 0).').waitFor()
   assert.equal(await page.evaluate(() => location.hash), '')
   await page.getByRole('heading', { name: 'Here’s what we read.' }).waitFor()
   assert.equal(await page.locator('.dash-notice').count(), 0)

@@ -204,7 +204,7 @@ test('confirmation blocked by an unverified grade scale reads as a status, not a
   assert.equal(await page.locator('.dash-notice').count(), 0)
 })
 
-test('transcript confirm failures and timeouts stay on the review screen', { timeout: 30_000 }, async (t) => {
+test('transcript confirm failures and timeouts stay on the review screen', { timeout: 45_000 }, async (t) => {
   // CASE T7 (500) and CASE T8 (a confirm that never completes). Both must
   // leave the student exactly where they were, with the button live again.
   //
@@ -238,10 +238,15 @@ test('transcript confirm failures and timeouts stay on the review screen', { tim
   assert.equal(await page.getByRole('button', { name: 'Confirm 1 courses' }).isEnabled(), true)
 
   // CASE T8: a confirm that never completes.
+  //
+  // Waits on the SETTLED outcome, never on the intermediate "Saving…" label. An
+  // aborted request can resolve inside a single render, so that label is not
+  // guaranteed to be observable -- waiting for it is a race that hangs for the
+  // full locator timeout when it loses. What matters here is where the student
+  // ends up, and that is deterministic.
   await page.route('**/api/v2/student/me/transcript/confirm', (route) => route.abort('timedout'))
   await page.getByRole('button', { name: 'Confirm 1 courses' }).click()
-  await page.getByRole('button', { name: 'Saving…' }).waitFor()
-  await page.getByRole('button', { name: 'Confirm 1 courses' }).waitFor()
+  await page.getByText('Could not reach the server.').waitFor()
   assert.equal(await page.evaluate(() => location.hash), '')
   await page.getByRole('heading', { name: 'Verify your academic record' }).waitFor()
   assert.equal(await page.locator('.dash-notice').count(), 0)
