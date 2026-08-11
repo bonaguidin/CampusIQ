@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/useAuth';
 import { ChatPanel } from '../components/ChatPanel';
+import { DashboardSuccessNotice } from '../components/DashboardSuccessNotice';
 import { FitAnalysisPanel } from '../components/FitAnalysisPanel';
 import { GapAnalysisPanel } from '../components/GapAnalysisPanel';
 import { ShiftAnalysisPanel } from '../components/ShiftAnalysisPanel';
@@ -135,6 +136,12 @@ export function AuthenticatedDashboard() {
         </header>
         <main className="stage-main">
           <div className="stage-inner">
+            {/* Above the section content and inside the normal flow: it is an
+                acknowledgement, not an interruption, so nothing overlays,
+                blocks, or steals focus. Outside the section switch so changing
+                tabs does not re-mount (and re-announce) it. */}
+            <DashboardSuccessNotice />
+
             {activeSection === 'overview' && (
               <div className="stage-section">
                 <ChatPanel />

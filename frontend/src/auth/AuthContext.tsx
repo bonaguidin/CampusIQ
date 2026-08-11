@@ -9,7 +9,12 @@ import {
   fetchInstitutionThemeById,
   fetchInstitutionThemeByName,
 } from '../lib/institutionTheme';
-import { resolveStudentAccountOnce, NO_SESSION_STATE, CHECKING_STATE } from '../lib/studentAccount';
+import {
+  resolveStudentAccount,
+  resolveStudentAccountOnce,
+  NO_SESSION_STATE,
+  CHECKING_STATE,
+} from '../lib/studentAccount';
 import type { StudentAccountState } from '../lib/studentAccount';
 import { signupOutcome } from '../lib/signupRules.mjs';
 import type { SignupOutcome } from '../lib/signupRules.mjs';
@@ -53,11 +58,38 @@ export interface AuthContextValue {
   signOutSession(): Promise<void>;
   studentAccount: StudentAccountState;
   refreshStudentAccount(): void;
+  /**
+   * Re-read the canonical profile in place and resolve once it has landed.
+   *
+   * Distinct from refreshStudentAccount(), which is the RETRY affordance on the
+   * account-problem screen: that one drops `studentAccount` to 'checking', and
+   * a caller still rendering behind RequireStudentAccount would be unmounted
+   * mid-flight by its own refresh. This one leaves the current state in place
+   * until the fresh one is ready, so a review screen can await it and only then
+   * hand over to the dashboard. Same canonical state, same endpoint -- there is
+   * no second profile cache anywhere in this file.
+   *
+   * Never rejects: a failed read lands as an 'error' StudentAccountState, the
+   * same as any other failed resolution.
+   */
+  reloadStudentProfile(): Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextValue | null>(null);
 
 const SESSION_KEY = 'gradus_iq_slug';
+
+/** A rejected (not merely unsuccessful) profile read, as account state. */
+function loadFailureState(err: unknown): StudentAccountState {
+  return {
+    status: 'error',
+    profile: null,
+    message:
+      err instanceof Error
+        ? `Your profile could not be loaded: ${err.message}`
+        : 'Your profile could not be loaded.',
+  };
+}
 
 // ── Provider ─────────────────────────────────────────────────────────────────
 
@@ -167,6 +199,61 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const userId = user?.id ?? null;
   const demoProfileActive = profile !== null;
 
+  /**
+   * The guards that decide whether the students-row question applies to this
+   * session at all, and the inputs for asking it.
+   *
+   * Extracted from the effect below so the in-place reload can reuse exactly
+   * the same admission rules. It stays SEPARATE from the resolution call itself
+   * because the effect must only announce 'checking' for a resolution that is
+   * actually going to run -- folding the guards into the async call would make
+   * a declined session flash a spinner.
+   */
+  const accountResolutionInputs = useCallback((): {
+    accessToken: string;
+    metadata: unknown;
+  } | null => {
+    if (!userId) return null;
+
+    // The demo picker owns the dashboard when it is active. Its profile comes
+    // from staticJsonAdapter and has no `students` row by construction (the
+    // fixtures live in data/students/*.json and were never inserted), so asking
+    // Postgres about it would produce a misleading 404 for a session that is
+    // working exactly as intended.
+    if (demoProfileActive) {
+      // Was once a fully silent return: no log, no state change. If a demo
+      // profile is somehow active for a real signed-in user, provisioning
+      // never runs and nothing anywhere says so.
+      console.warn(
+        '[AuthContext] account resolution: SKIPPED -- demo profile is active,',
+        'so the students-row question is never asked for userId:',
+        userId,
+        '| trigger:',
+        sessionSourceRef.current,
+      );
+      return null;
+    }
+
+    const current = sessionRef.current;
+    const accessToken = current?.access_token;
+    if (!accessToken) {
+      // Also silent once, and it leaves studentAccount at whatever it was.
+      // Reachable when the effect runs before sessionRef caught up.
+      console.warn(
+        '[AuthContext] account resolution: SKIPPED -- userId present but',
+        'sessionRef has no access_token yet. userId:',
+        userId,
+        '| sessionRef:',
+        current ? 'present' : 'null',
+        '| trigger:',
+        sessionSourceRef.current,
+      );
+      return null;
+    }
+
+    return { accessToken, metadata: current.user.user_metadata };
+  }, [userId, demoProfileActive]);
+
   useEffect(() => {
     if (!userId) {
       console.log(
@@ -178,41 +265,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    // The demo picker owns the dashboard when it is active. Its profile comes
-    // from staticJsonAdapter and has no `students` row by construction (the
-    // fixtures live in data/students/*.json and were never inserted), so asking
-    // Postgres about it would produce a misleading 404 for a session that is
-    // working exactly as intended.
-    if (demoProfileActive) {
-      // Currently a fully silent return: no log, no state change. If a demo
-      // profile is somehow active for a real signed-in user, provisioning
-      // never runs and nothing anywhere says so.
-      console.warn(
-        '[AuthContext] provisioning effect: SKIPPED -- demo profile is active,',
-        'so the students-row question is never asked for userId:',
-        userId,
-        '| trigger:',
-        sessionSourceRef.current,
-      );
-      return;
-    }
-
-    const current = sessionRef.current;
-    const accessToken = current?.access_token;
-    if (!accessToken) {
-      // Also fully silent today, and it leaves studentAccount at whatever it
-      // was. Reachable when the effect runs before sessionRef caught up.
-      console.warn(
-        '[AuthContext] provisioning effect: SKIPPED -- userId present but',
-        'sessionRef has no access_token yet. userId:',
-        userId,
-        '| sessionRef:',
-        current ? 'present' : 'null',
-        '| trigger:',
-        sessionSourceRef.current,
-      );
-      return;
-    }
+    const inputs = accountResolutionInputs();
+    if (!inputs) return;
 
     let active = true;
     setStudentAccount(CHECKING_STATE);
@@ -227,10 +281,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       '| userId:',
       userId,
       '| user_metadata:',
-      current.user.user_metadata,
+      inputs.metadata,
     );
 
-    resolveStudentAccountOnce(accessToken, userId, current.user.user_metadata)
+    resolveStudentAccountOnce(inputs.accessToken, userId, inputs.metadata)
       .then((next) => {
         console.log(
           '[AuthContext] resolveStudentAccountOnce resolved | status:',
@@ -245,20 +299,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .catch((err: unknown) => {
         console.error('[AuthContext] resolveStudentAccountOnce REJECTED | error:', err);
         if (!active) return;
-        setStudentAccount({
-          status: 'error',
-          profile: null,
-          message:
-            err instanceof Error
-              ? `Your profile could not be loaded: ${err.message}`
-              : 'Your profile could not be loaded.',
-        });
+        setStudentAccount(loadFailureState(err));
       });
 
     return () => {
       active = false;
     };
-  }, [userId, demoProfileActive, accountRetry]);
+  }, [userId, accountResolutionInputs, accountRetry]);
 
   useEffect(() => {
     const institutionId = studentAccount.profile?.intelligence_profile.institution.id;
@@ -282,6 +329,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const refreshStudentAccount = useCallback((): void => {
     setAccountRetry((n) => n + 1);
   }, []);
+
+  // Deliberately resolveStudentAccount, not resolveStudentAccountOnce: the
+  // caller is asking because something it just wrote must now be visible, and
+  // joining an already-running read would answer with data from before the
+  // write. The dedupe map exists to keep StrictMode's double-effect from
+  // duplicating the FIRST resolution, which is a different question.
+  const reloadStudentProfile = useCallback(async (): Promise<void> => {
+    if (!userId) return;
+    const inputs = accountResolutionInputs();
+    if (!inputs) return;
+    try {
+      setStudentAccount(await resolveStudentAccount(inputs.accessToken, userId, inputs.metadata));
+    } catch (err: unknown) {
+      console.error('[AuthContext] reloadStudentProfile REJECTED | error:', err);
+      setStudentAccount(loadFailureState(err));
+    }
+  }, [userId, accountResolutionInputs]);
 
   const login = useCallback(async (newSlug: string): Promise<void> => {
     setProfileLoading(true);
@@ -398,6 +462,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signOutSession,
     studentAccount,
     refreshStudentAccount,
+    reloadStudentProfile,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

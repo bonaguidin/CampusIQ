@@ -60,6 +60,7 @@ const context = {
   session, user: null, signInWithPassword: async () => {}, signUpWithPassword: async () => 'authenticated', signOutSession: async () => {},
   studentAccount: { status: 'ready', profile: { student: { id: 'student-real', name: profile.identity.name, institution: profile.institution.name }, career: null, intelligence_profile: profile }, message: null },
   refreshStudentAccount: () => {},
+  reloadStudentProfile: async () => {},
 } as AuthContextValue;
 
 const app = mode === 'error'
