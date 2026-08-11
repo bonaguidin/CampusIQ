@@ -349,8 +349,10 @@ export async function resolveStudentAccount(
   }
 
   if (current.status === 404) {
-    // No students row. Either a first confirmed login after sign-up, or a
-    // session with no student behind it.
+    // No students row. Either the first session after a sign-up (which is the
+    // signUp() call itself when email confirmation is disabled, or the first
+    // login after confirming when it is enabled), or a session with no student
+    // behind it.
     if (!metadata) {
       // 404 + no usable metadata: provisioning is never even attempted. For a
       // real sign-up this means readSignupMetadata rejected user_metadata.

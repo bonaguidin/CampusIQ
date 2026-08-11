@@ -8,6 +8,7 @@ import {
   isOldEnough,
   parseIsoDate,
   readSignupMetadata,
+  signupOutcome,
   todayIso,
   validateSignupForm,
 } from '../src/lib/signupRules.mjs'
@@ -181,4 +182,38 @@ test('readSignupMetadata rejects a malformed institution id or date of birth', (
   // foreign key on student_institutions.institution_id is the real authority.
   const unknown = { ...full, institution_id: '11111111-2222-3333-4444-555555555555' }
   assert.equal(readSignupMetadata(unknown)?.institutionId, '11111111-2222-3333-4444-555555555555')
+})
+
+// ── signup outcome ──────────────────────────────────────────────────────────
+// The session, not the user, is what separates the project's two "Confirm
+// email" configurations. Reading `user` as success is the production bug this
+// function exists to make impossible.
+
+test('a session in the signUp response means the student is already authenticated', () => {
+  const user = { id: 'user-1', email: 'a@example.com' }
+  assert.equal(signupOutcome({ user, session: { access_token: 'token' } }), 'authenticated')
+})
+
+test('a user with no session means confirmation is still required', () => {
+  const user = { id: 'user-1', email: 'a@example.com' }
+  assert.equal(signupOutcome({ user, session: null }), 'confirmation-required')
+})
+
+test('the outcome is decided by the session alone, never by the user', () => {
+  // Both configurations return a user, so a user cannot distinguish them. If
+  // this ever flips to reading `user`, the confirmation screen comes back for
+  // students who are already signed in -- exactly the reported bug.
+  const session = { access_token: 'token' }
+  assert.equal(signupOutcome({ user: null, session }), 'authenticated')
+  assert.equal(signupOutcome({ user: { id: 'user-1' }, session: undefined }), 'confirmation-required')
+})
+
+test('a malformed or absent signUp payload falls back to requiring confirmation', () => {
+  // Fail toward the screen that grants nothing: showing check-your-email when a
+  // session did exist is recoverable by signing in, whereas navigating to the
+  // dashboard without one lands on a bounce to /login.
+  assert.equal(signupOutcome(null), 'confirmation-required')
+  assert.equal(signupOutcome(undefined), 'confirmation-required')
+  assert.equal(signupOutcome({}), 'confirmation-required')
+  assert.equal(signupOutcome('nope'), 'confirmation-required')
 })
