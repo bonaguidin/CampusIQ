@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { uploadResume } from '../api/resume';
 import { ProcessingStatus, processingLabel } from './ProcessingStatus';
+import { RESUME_TRUST_NOTE } from '../lib/processingStages.mjs';
 import type { NormalizedUpload } from '../lib/resumeApi.mjs';
 
 interface ResumeUploadProps {
@@ -109,7 +110,14 @@ export function ResumeUpload({ accessToken, onUploaded }: ResumeUploadProps) {
               about what is being read is lost, and a greyed-out input next to
               an active status reads as two competing controls. */}
           {busy ? (
-            <ProcessingStatus kind="resume" fileName={file?.name ?? 'Your resume'} active />
+            <ProcessingStatus
+              kind="resume"
+              fileName={file?.name ?? 'Your resume'}
+              active
+              // The only place this promise appears while working -- the intro
+              // and footnote that otherwise carry it are hidden below.
+              note={RESUME_TRUST_NOTE}
+            />
           ) : (
             <div className="form-group">
               <label className="form-label" htmlFor="resume-file">

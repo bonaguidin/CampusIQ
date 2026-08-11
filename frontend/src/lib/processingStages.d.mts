@@ -12,7 +12,7 @@ export interface ProcessingStage {
 export declare const STAGE_SCHEDULE: readonly number[];
 export declare const RESUME_STAGES: readonly ProcessingStage[];
 export declare const TRANSCRIPT_STAGES: readonly ProcessingStage[];
-export declare const TRUST_NOTE: Record<ProcessingKind, string>;
+export declare const RESUME_TRUST_NOTE: string;
 export declare const BUSY_LABEL: Record<ProcessingKind, string>;
 
 export declare function stagesFor(kind: ProcessingKind): readonly ProcessingStage[];

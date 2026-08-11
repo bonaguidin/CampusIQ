@@ -91,6 +91,10 @@ export function TranscriptUpload({ accessToken, onUploaded }: TranscriptUploadPr
           {/* The picker gives way to the processing panel rather than sitting
               disabled beside it -- see ResumeUpload for the same decision. */}
           {busy ? (
+            // No `note`: the masthead standfirst above already says nothing is
+            // saved until every line is checked, and it stays put through
+            // processing. Repeating it inside the panel would be the same
+            // reassurance twice on one screen.
             <ProcessingStatus
               kind="transcript"
               fileName={file?.name ?? 'Your transcript'}

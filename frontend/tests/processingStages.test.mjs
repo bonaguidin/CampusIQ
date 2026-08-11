@@ -14,7 +14,7 @@ import {
   RESUME_STAGES,
   STAGE_SCHEDULE,
   TRANSCRIPT_STAGES,
-  TRUST_NOTE,
+  RESUME_TRUST_NOTE,
   stageIndexAt,
   stageTimeouts,
   stagesFor,
@@ -91,7 +91,7 @@ test('the last stage is a resting place, never a loop back to the first', () => 
 test('no stage claims completion, progress, or a percentage', () => {
   const everything = [...RESUME_STAGES, ...TRANSCRIPT_STAGES]
     .flatMap((stage) => [stage.label, stage.detail])
-    .concat(Object.values(TRUST_NOTE), Object.values(BUSY_LABEL))
+    .concat([RESUME_TRUST_NOTE], Object.values(BUSY_LABEL))
 
   for (const text of everything) {
     assert.equal(/\d+\s*%/.test(text), false, `"${text}" must not state a percentage`)
@@ -125,9 +125,16 @@ test('the stage hook cleans up its timers', async () => {
   assert.match(source, /if \(!active\)[\s\S]*setStage\(0\)/)
 })
 
-test('trust copy survives from the old upload screens, per kind', () => {
-  assert.match(TRUST_NOTE.resume, /review everything before it is saved/i)
-  assert.match(TRUST_NOTE.transcript, /review every course before it is added/i)
+test('the panel trust note is resume-only, so nothing can render a transcript one', async () => {
+  assert.match(RESUME_TRUST_NOTE, /review everything before it is saved/i)
   assert.equal(BUSY_LABEL.resume, 'Processing resume…')
   assert.equal(BUSY_LABEL.transcript, 'Processing transcript…')
+
+  // The transcript promise lives in that screen's masthead standfirst, which
+  // stays put through processing. There must be no per-kind note record here
+  // for a caller to reach into -- an unused transcript key is exactly what
+  // would invite the duplicate back.
+  const source = await readFile(new URL('../src/lib/processingStages.mjs', import.meta.url), 'utf8')
+  assert.equal(/export const TRUST_NOTE/.test(source), false)
+  assert.equal(/review every course before it is added/i.test(source), false)
 })

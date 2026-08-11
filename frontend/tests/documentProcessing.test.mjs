@@ -97,8 +97,15 @@ test('resume processing: status, filename, stages, disabled controls, no duplica
   await page.getByText('Reading your resume…').waitFor({ timeout: 5000 })
   await page.getByText('Extracting experience, projects, and certifications…').waitFor({ timeout: 8000 })
 
-  // Trust copy survives the redesign.
+  // Trust copy survives the redesign. On the resume screen the panel is the
+  // ONLY place it appears while working -- the intro and footnote that
+  // otherwise carry it are hidden -- so it must be here, exactly once.
   await page.getByText('You’ll review everything before it is saved to your profile.').waitFor()
+  assert.equal(await page.locator('.dp-note').count(), 1)
+  const resumePromises = (await page.locator('body').innerText())
+    .split('\n')
+    .filter((line) => /before it is saved|Nothing is saved/i.test(line))
+  assert.equal(resumePromises.length, 1, `expected one trust statement, found: ${JSON.stringify(resumePromises)}`)
 
   // The indeterminate rail is present and decorative -- never announced.
   assert.equal(await page.locator('.dp-rail').count(), 1)
@@ -249,8 +256,19 @@ test('transcript processing: status, filename, stages, disabled controls, no dup
   await page.getByText('Uploading your transcript…').waitFor()
   await page.getByText('Reading your transcript…').waitFor({ timeout: 5000 })
   await page.getByText('Extracting courses and grades…').waitFor({ timeout: 8000 })
-  await page.getByText('You’ll review every course before it is added to your academic record.').waitFor()
   assert.equal(/\d+\s*%/.test(await page.locator('body').innerText()), false)
+
+  // The "nothing is saved yet" promise is made exactly ONCE on this screen, by
+  // the masthead standfirst -- which is deliberately NOT hidden during
+  // processing, so the page hierarchy stays put and the header does not jump.
+  // The panel carries no note of its own here: two statements of the same
+  // reassurance on one screen read as protesting rather than reassuring.
+  await page.getByText(/Nothing is saved to your record until you/).waitFor()
+  const promises = (await page.locator('body').innerText())
+    .split('\n')
+    .filter((line) => /saved to your record|added to your academic record|before it is saved/i.test(line))
+  assert.equal(promises.length, 1, `expected one trust statement, found: ${JSON.stringify(promises)}`)
+  assert.equal(await page.locator('.dp-note').count(), 0, 'the transcript panel must carry no note')
 
   // CASE T2: control disabled and re-labelled.
   const button = page.getByRole('button', { name: 'Processing transcript…' })

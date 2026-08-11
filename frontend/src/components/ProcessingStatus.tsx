@@ -1,5 +1,5 @@
 import { useProcessingStage } from '../hooks/useProcessingStage';
-import { BUSY_LABEL, TRUST_NOTE, stagesFor } from '../lib/processingStages.mjs';
+import { BUSY_LABEL, stagesFor } from '../lib/processingStages.mjs';
 import type { ProcessingKind } from '../lib/processingStages.mjs';
 
 export interface ProcessingStatusProps {
@@ -9,6 +9,18 @@ export interface ProcessingStatusProps {
   fileName: string;
   /** Whether the request is in flight. Owned by the upload screen, not here. */
   active: boolean;
+  /**
+   * A closing reassurance, rendered only when supplied.
+   *
+   * OPTIONAL BECAUSE THE TWO SCREENS GENUINELY DIFFER, and the caller is the
+   * only one that can know how: the transcript upload already carries the
+   * "nothing is saved yet" promise in a masthead that stays put through
+   * processing, so a note here would repeat it; the resume upload does not, so
+   * the panel is where its promise lives. Passing the copy in rather than
+   * looking it up by `kind` keeps that judgement with the screen making it and
+   * keeps this component free of per-kind branching.
+   */
+  note?: string;
 }
 
 /**
@@ -27,7 +39,7 @@ export interface ProcessingStatusProps {
  * it reads correctly inside both without dragging one screen's identity into
  * the other.
  */
-export function ProcessingStatus({ kind, fileName, active }: ProcessingStatusProps) {
+export function ProcessingStatus({ kind, fileName, active, note }: ProcessingStatusProps) {
   const stage = useProcessingStage(active);
   const stages = stagesFor(kind);
   const current = stages[Math.min(stage, stages.length - 1)];
@@ -66,7 +78,7 @@ export function ProcessingStatus({ kind, fileName, active }: ProcessingStatusPro
         <span className="dp-rail-run" />
       </div>
 
-      <p className="dp-note">{TRUST_NOTE[kind]}</p>
+      {note && <p className="dp-note">{note}</p>}
     </div>
   );
 }

@@ -43,11 +43,22 @@ export const TRANSCRIPT_STAGES = [
   { label: 'Preparing your review…', detail: 'Laying out every course for you to check.' },
 ];
 
-/** The line that must survive from the old upload copy: nothing is saved yet. */
-export const TRUST_NOTE = {
-  resume: 'You’ll review everything before it is saved to your profile.',
-  transcript: 'You’ll review every course before it is added to your academic record.',
-};
+/**
+ * The line that must survive from the old resume upload copy: nothing is saved
+ * yet.
+ *
+ * RESUME ONLY, DELIBERATELY. The transcript upload already makes this promise
+ * in its masthead standfirst ("Nothing is saved to your record until you've
+ * checked every line"), which stays put through processing -- so a panel note
+ * there would be the same reassurance twice on one screen, and two statements
+ * of "nothing is saved yet" read as protesting rather than reassuring. The
+ * resume screen has no such standing line once its intro is hidden, so the
+ * panel is the only place its promise appears.
+ *
+ * Hence a plain string rather than a per-kind record: there is no transcript
+ * value to hold, and an unused key would invite someone to render it.
+ */
+export const RESUME_TRUST_NOTE = 'You’ll review everything before it is saved to your profile.';
 
 /** The button's active label. Concise, and never the only signal. */
 export const BUSY_LABEL = {
