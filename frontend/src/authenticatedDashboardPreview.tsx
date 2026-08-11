@@ -53,6 +53,85 @@ if (mode === 'academic' || mode === 'minimal') {
 }
 if (mode !== 'complete') profile.completeness.overall = mode === 'minimal' ? 'minimal' : 'partial';
 
+// ── Career fixtures for the Phase 3 redesign ──────────────────────────────
+// Additive and opt-in via ?career=, so every existing mode above renders
+// exactly what it did before and the assertions written against them stand.
+//
+// `rich` is the case the redesign exists for: enough skills to need collapsing,
+// a project description long enough to need a preview, an experience with no
+// duration (which must not grow an invented one), and a certification still in
+// progress. `partial` is the awkward middle -- entries but no direction, and no
+// certifications -- which is what produced the old page's three-empty-sentence
+// card.
+const careerMode = new URLSearchParams(location.search).get('career');
+
+const LONG_PROJECT_DESCRIPTION =
+  'Built a convolutional model for ECG arrhythmia classification on the MIT-BIH database, covering the full pipeline from signal preprocessing and beat segmentation through to model training, evaluation and per-class error analysis across the five AAMI categories.';
+
+if (careerMode === 'rich' || careerMode === 'partial') {
+  const rich = careerMode === 'rich';
+  profile.career = {
+    confirmed: true,
+    target_roles: rich ? ['AI Engineer', 'ML Engineer', 'Robotics Engineer'] : [],
+    interests: rich ? ['Physical AI', 'Robotics', 'LLM Systems'] : [],
+    career_goals: rich
+      ? 'Build intelligent systems at the intersection of AI and hardware, and eventually lead a small team doing the same.'
+      : null,
+    geographic_preference: rich ? 'Austin, TX' : null,
+    ai_anxiety_level: null,
+    skills: {
+      technical: [
+        'Large Language Models', 'Generative AI', 'Prompt Engineering', 'Retrieval-Augmented Generation',
+        'NLP', 'Computer Vision', 'Python', 'PyTorch', 'CUDA', 'Triton', 'C++', 'Bash',
+        'TypeScript', 'React', 'PostgreSQL', 'Docker', 'Kubernetes', 'AWS', 'NumPy', 'pandas',
+        'scikit-learn', 'Vector Databases',
+      ],
+      soft: rich ? ['Written communication', 'Mentoring'] : [],
+      ai_exposure: null,
+    },
+    certifications: rich
+      ? [
+          { name: 'NVIDIA Certified Associate', issuer: 'NVIDIA', status: 'completed', date: '2025', source: 'resume_parse' },
+          { name: 'AWS Cloud Practitioner', issuer: null, status: 'in_progress', date: null, source: 'resume_parse' },
+        ]
+      : [],
+    work_experience: [
+      { employer: 'Littlebird', role: 'AI Intern', duration: '2025 – Present', location: 'Remote', description: 'Built retrieval tooling for a document assistant, and a profiling harness that cut per-experiment setup from about forty minutes to under five.', skills_gained: ['RAG', 'PyTorch'], source: 'resume_parse' },
+      { employer: 'Aggie Data Science Club', role: 'Co-Project Manager', duration: null, location: null, description: null, skills_gained: [], source: 'resume_parse' },
+      { employer: '10Spy', role: 'Intern', duration: 'Summer 2024', location: null, description: null, skills_gained: [], source: 'resume_parse' },
+    ],
+    projects: [
+      { name: 'Deep Learning for Arrhythmia Classification', timeframe: 'Spring 2025', description: LONG_PROJECT_DESCRIPTION, tools: ['PyTorch', 'NumPy', 'MIT-BIH'], source: 'resume_parse' },
+      { name: 'Campus Scheduler', timeframe: null, description: 'A React app for course planning.', tools: [], source: 'manual' },
+    ],
+  };
+  profile.completeness.career = {
+    confirmed_profile: true,
+    target_role_present: rich,
+    skills_present: true,
+    certifications_present: rich,
+    work_experience_present: true,
+    projects_present: true,
+    ready_for_career_features: rich,
+  };
+}
+
+// A confirmed career profile with nothing in it -- the state that used to
+// render five empty rectangles.
+if (careerMode === 'bare') {
+  profile.career = {
+    confirmed: true,
+    target_roles: [], interests: [], career_goals: null, geographic_preference: null, ai_anxiety_level: null,
+    skills: { technical: [], soft: [], ai_exposure: null },
+    certifications: [], work_experience: [], projects: [],
+  };
+  profile.completeness.career = {
+    confirmed_profile: true, target_role_present: false, skills_present: false,
+    certifications_present: false, work_experience_present: false, projects_present: false,
+    ready_for_career_features: false,
+  };
+}
+
 const session = { access_token: 'real-access-token' } as Session;
 const context = {
   profile: null, slug: null, loading: false, profileLoading: false, sessionLoading: false,
@@ -60,6 +139,7 @@ const context = {
   session, user: null, signInWithPassword: async () => {}, signUpWithPassword: async () => 'authenticated', signOutSession: async () => {},
   studentAccount: { status: 'ready', profile: { student: { id: 'student-real', name: profile.identity.name, institution: profile.institution.name }, career: null, intelligence_profile: profile }, message: null },
   refreshStudentAccount: () => {},
+  reloadStudentProfile: async () => {},
 } as AuthContextValue;
 
 const app = mode === 'error'

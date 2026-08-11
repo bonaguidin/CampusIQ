@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
 import { uploadTranscript } from '../api/transcript';
+import { ProcessingStatus, processingLabel } from './ProcessingStatus';
 import type { TranscriptUploadResult } from '../lib/transcriptApi.mjs';
 
 export interface TranscriptUploadProps {
@@ -57,13 +58,17 @@ export function TranscriptUpload({ accessToken, onUploaded }: TranscriptUploadPr
     if (!file || busy) return;
     setBusy(true);
     setFailure(null);
-    try {
-      const result = await uploadTranscript(accessToken, file);
-      if (result.ok) onUploaded(result, file.name);
-      else setFailure(result);
-    } finally {
-      setBusy(false);
+    const result = await uploadTranscript(accessToken, file);
+    if (result.ok) {
+      // `busy` stays true on success -- see ResumeUpload's submit for the
+      // reasoning. The processing timers are cleaned up by unmount.
+      onUploaded(result, file.name);
+      return;
     }
+    // Every failure -- parse, network, timeout -- lands here, which is what
+    // guarantees the processing state cannot outlive the request.
+    setFailure(result);
+    setBusy(false);
   }
 
   const guidance = failure ? FAILURE_GUIDANCE[failure.kind] : null;
@@ -83,24 +88,39 @@ export function TranscriptUpload({ accessToken, onUploaded }: TranscriptUploadPr
         </header>
 
         <form onSubmit={submit} className="rv-upload">
-          <label className="rv-upload-label" htmlFor="transcript-file">
-            Transcript file
-          </label>
-          <input
-            id="transcript-file"
-            ref={input}
-            type="file"
-            accept=".pdf,.docx"
-            disabled={busy}
-            onChange={(event) => {
-              setFile(event.target.files?.[0] ?? null);
-              setFailure(null);
-            }}
-          />
-          <p className="rv-upload-help">
-            PDF or Word (.docx), up to 10 MB. Scanned documents without selectable text cannot be
-            read.
-          </p>
+          {/* The picker gives way to the processing panel rather than sitting
+              disabled beside it -- see ResumeUpload for the same decision. */}
+          {busy ? (
+            // No `note`: the masthead standfirst above already says nothing is
+            // saved until every line is checked, and it stays put through
+            // processing. Repeating it inside the panel would be the same
+            // reassurance twice on one screen.
+            <ProcessingStatus
+              kind="transcript"
+              fileName={file?.name ?? 'Your transcript'}
+              active
+            />
+          ) : (
+            <>
+              <label className="rv-upload-label" htmlFor="transcript-file">
+                Transcript file
+              </label>
+              <input
+                id="transcript-file"
+                ref={input}
+                type="file"
+                accept=".pdf,.docx"
+                onChange={(event) => {
+                  setFile(event.target.files?.[0] ?? null);
+                  setFailure(null);
+                }}
+              />
+              <p className="rv-upload-help">
+                PDF or Word (.docx), up to 10 MB. Scanned documents without selectable text cannot
+                be read.
+              </p>
+            </>
+          )}
 
           {failure && (
             <div className="rv-upload-error" role="alert">
@@ -113,7 +133,7 @@ export function TranscriptUpload({ accessToken, onUploaded }: TranscriptUploadPr
           )}
 
           <button className="rv-commit-button" type="submit" disabled={!file || busy}>
-            {busy ? 'Reading your transcript…' : 'Upload transcript'}
+            {busy ? processingLabel('transcript') : 'Upload transcript'}
           </button>
 
           {failure && (
@@ -132,10 +152,15 @@ export function TranscriptUpload({ accessToken, onUploaded }: TranscriptUploadPr
           )}
         </form>
 
-        <p className="rv-upload-footnote">
-          Reading a transcript takes a few seconds. Parsed courses stay pending until you confirm
-          them.
-        </p>
+        {/* Hidden while working: the processing panel already carries the
+            "nothing is added until you confirm" promise, and stating it twice
+            on the same screen weakens both. */}
+        {!busy && (
+          <p className="rv-upload-footnote">
+            Reading a transcript takes a few seconds. Parsed courses stay pending until you
+            confirm them.
+          </p>
+        )}
       </div>
     </div>
   );

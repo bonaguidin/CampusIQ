@@ -192,22 +192,26 @@ export function TranscriptReview({
     setConfirming(true);
     setConfirmError(null);
     setConfirmBlocked(null);
-    try {
-      const result = await confirmTranscript(accessToken);
-      if (result.ok) {
-        setJustSaved(true);
-        window.setTimeout(() => onConfirmed(result), 450);
-        return;
-      }
-      // A pending grade scale is not a failed action -- it is a state of our
-      // data that the student can do nothing about, and the backend models it
-      // as its own 409 code for exactly that reason. Rendering it as an error
-      // beside a retry button would invite them to keep clicking.
-      if (result.kind === 'grade_scale_unverified') setConfirmBlocked(result.message);
-      else setConfirmError(result.message);
-    } finally {
-      setConfirming(false);
+    const result = await confirmTranscript(accessToken);
+    if (result.ok) {
+      setJustSaved(true);
+      // `confirming` is deliberately NOT cleared on success. onConfirmed hands
+      // over to the dashboard, and the handover includes re-reading the
+      // canonical profile -- dropping the overlay here would expose a review
+      // screen that still looks editable but describes records that are now
+      // confirmed and gone. It clears when this screen unmounts.
+      window.setTimeout(() => onConfirmed(result), 450);
+      return;
     }
+    // A pending grade scale is not a failed action -- it is a state of our
+    // data that the student can do nothing about, and the backend models it
+    // as its own 409 code for exactly that reason. Rendering it as an error
+    // beside a retry button would invite them to keep clicking.
+    if (result.kind === 'grade_scale_unverified') setConfirmBlocked(result.message);
+    else setConfirmError(result.message);
+    // Every non-ok outcome -- API failure, timeout, block, validation -- lands
+    // here: the screen stays put, usable, and (except when blocked) retryable.
+    setConfirming(false);
   }
 
   const jumpToCheck = useCallback(() => {

@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import { chromium } from 'playwright'
 import { createServer } from 'vite'
+import { meProfile } from './fixtures/meProfile.mjs'
 
 const ROW_ID = '11111111-1111-4111-8111-111111111111'
 const REPEAT_ID = '22222222-2222-4222-8222-222222222222'
@@ -16,16 +17,17 @@ const payload = (state) => ({ course_records: state.pending ? [state.row] : [], 
 function respond(response, body, status = 200) { response.statusCode = status; response.setHeader('content-type', 'application/json'); response.end(JSON.stringify(status === 200 ? body : { detail: body })) }
 
 test('transcript flow covers upload, recovery, edits, repeats, failures, confirmation, and mobile', { timeout: 45_000 }, async (t) => {
-  const state = { pending: false, recoveryFails: false, uploadFails: false, editFails: false, row: { ...baseRow }, uploads: 0, patches: [] }
+  const state = { pending: false, recoveryFails: false, uploadFails: false, editFails: false, row: { ...baseRow }, uploads: 0, patches: [], academicsConfirmed: false, profileReads: 0 }
   const plugin = { name: 'transcript-api', configureServer(server) { server.middlewares.use((request, response, next) => {
     const path = request.url?.split('?')[0]
+    if (path === '/api/v2/student/me/profile' && request.method === 'GET') { state.profileReads++; return respond(response, meProfile({ academics: state.academicsConfirmed })) }
     if (path === '/api/v2/student/me/transcript/review' && request.method === 'GET') return state.recoveryFails ? respond(response, 'Could not load course records for review.', 502) : respond(response, payload(state))
     if (path === '/api/v2/student/me/transcript/upload' && request.method === 'POST') { state.uploads++; if (state.uploadFails) return respond(response, { error: 'extraction_failed', extraction_status: 'encrypted', message: 'This looks like a scanned transcript.' }, 422); state.pending = true; return respond(response, { status: 'ok', warnings: [], rejected: [], written: { course_records: { inserted: 1, skipped_duplicate: 0 } }, catalog: { matched: 0, unmatched: 1, misses: ['MATH 251'] }, cross_check: { ok: false, terms_checked: 1, terms_skipped: 0, mismatches: [{ term_label: 'Fall 2025', field: 'gpa', printed: 3.5, computed: 3.0, difference: 0.5 }] } }) }
     if (path === `/api/v2/student/me/transcript/review/${ROW_ID}` && request.method === 'PATCH') { if (state.editFails) return respond(response, 'The grade was rejected.', 422); let body=''; request.on('data', (chunk) => { body += chunk }); request.on('end', () => { const parsed = JSON.parse(body); state.patches.push(parsed); state.row = { ...state.row, ...parsed, title: 'Server-canonical title' }; respond(response, state.row) }); return }
-    if (path === '/api/v2/student/me/transcript/confirm' && request.method === 'POST') { state.pending = false; return respond(response, { status: 'ok', confirmed: 1, scope: 'all_unconfirmed', repeats: {} }) }
+    if (path === '/api/v2/student/me/transcript/confirm' && request.method === 'POST') { state.pending = false; state.academicsConfirmed = true; return respond(response, { status: 'ok', confirmed: 1, scope: 'all_unconfirmed', repeats: {} }) }
     next()
   }) } }
-  const server = await createServer({ root: new URL('..', import.meta.url).pathname, logLevel: 'silent', plugins: [plugin], server: { host: '127.0.0.1' } }); await server.listen(); t.after(async () => server.close())
+  const server = await createServer({ root: new URL('..', import.meta.url).pathname, cacheDir: new URL('../node_modules/.vite-transcript-flow', import.meta.url).pathname, logLevel: 'silent', plugins: [plugin], server: { host: '127.0.0.1' } }); await server.listen(); t.after(async () => server.close())
   const address = server.httpServer?.address(); assert.ok(address && typeof address === 'object'); const url = `http://127.0.0.1:${address.port}/transcript-preview.html`
   const browser = await chromium.launch(); t.after(async () => browser.close()); const page = await browser.newPage()
 
@@ -79,18 +81,46 @@ test('transcript flow covers upload, recovery, edits, repeats, failures, confirm
   // Pending state survives refresh and remains usable on mobile without page overflow.
   await page.reload(); await page.getByRole('heading', { name: 'Verify your academic record' }).waitFor(); await page.setViewportSize({ width: 390, height: 844 }); assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true)
 
-  // Confirmation clears pending server state; refresh returns to upload.
-  await page.getByRole('button', { name: 'Confirm 1 courses' }).click(); await page.getByText('Your transcript is saved').waitFor()
+  // CASE T1: a confirmed backend success goes straight to the dashboard.
+  const profileReadsBeforeConfirm = state.profileReads
+  await page.getByRole('button', { name: 'Confirm 1 courses' }).click()
+  await page.waitForFunction(() => location.hash === '#/dashboard')
 
-  // The terminal screen offers a way onward. It previously ended on "a refresh
-  // will not restore this completed review" with no next step at all, which
-  // told the student what NOT to do and nothing else.
-  const done = page.getByRole('link', { name: 'Go to dashboard' })
-  await done.waitFor()
-  assert.equal(await done.getAttribute('href'), '/dashboard')
-  await page.getByText(/Nothing else is needed from you right now/).waitFor()
+  // CASE T4: the dashboard says what happened, as an accessible status.
+  const notice = page.locator('[role="status"] .dash-notice')
+  await notice.waitFor()
+  assert.equal(await notice.innerText().then((t) => t.includes('Transcript saved — 1 course added to your academic record.')), true)
 
-  await page.reload(); await page.getByRole('heading', { name: 'Add your transcript' }).waitFor()
+  // CASES T2/T3: the terminal screen and its button are gone, not relocated.
+  assert.equal(await page.getByText('Your transcript is saved').count(), 0)
+  assert.equal(await page.getByRole('link', { name: 'Go to dashboard' }).count(), 0)
+  assert.equal(await page.getByRole('button', { name: 'Go to dashboard' }).count(), 0)
+
+  // CASE T5: the canonical profile was re-read as part of the handover.
+  assert.ok(state.profileReads > profileReadsBeforeConfirm, 'confirmation must refetch /me/profile')
+
+  // The confirm above happened at 390px (set for the mobile check), so the
+  // notice is verified at the narrow layout before anything widens it.
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true)
+  await page.setViewportSize({ width: 1280, height: 900 })
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true)
+
+  // CASE T6: and the newly confirmed course is on screen, not the pre-confirm
+  // empty state -- which is what a stale profile would have rendered.
+  await page.getByRole('button', { name: 'Academic' }).click()
+  await page.getByText('MATH 251').waitFor()
+  assert.equal(await page.getByRole('link', { name: 'Upload transcript' }).count(), 0)
+
+  // The notice is about one transition: it must not survive a reload of the
+  // dashboard, and it must be dismissible before then.
+  await page.locator('.dash-notice-dismiss').click()
+  assert.equal(await page.locator('.dash-notice').count(), 0)
+  await page.reload()
+  await page.getByRole('button', { name: 'Academic' }).waitFor()
+  assert.equal(await page.locator('.dash-notice').count(), 0)
+
+  // CASE T11: the confirmed review does not come back.
+  await page.goto(`${url}#/`); await page.getByRole('heading', { name: 'Add your transcript' }).waitFor()
 
   // Recovery failure is explicit and retryable, never an upload fallback.
   state.recoveryFails = true; await page.reload(); await page.getByText('Could not check your transcript').waitFor(); assert.equal(await page.getByRole('heading', { name: 'Add your transcript' }).count(), 0); state.recoveryFails = false; await page.getByRole('button', { name: 'Try again' }).click(); await page.getByRole('heading', { name: 'Add your transcript' }).waitFor()
@@ -103,11 +133,12 @@ test('a slow confirm dims the page and says how long it may take', { timeout: 30
   // editable for that entire window.
   const plugin = { name: 'transcript-slow-confirm', configureServer(server) { server.middlewares.use((request, response, next) => {
     const path = request.url?.split('?')[0]
+    if (path === '/api/v2/student/me/profile' && request.method === 'GET') return respond(response, meProfile({ academics: true }))
     if (path === '/api/v2/student/me/transcript/review' && request.method === 'GET') return respond(response, payload({ pending: true, row: { ...baseRow } }))
     if (path === '/api/v2/student/me/transcript/confirm' && request.method === 'POST') { setTimeout(() => { respond(response, { status: 'ok', confirmed: 1, scope: 'all_unconfirmed', repeats: {} }) }, 1500); return }
     next()
   }) } }
-  const server = await createServer({ root: new URL('..', import.meta.url).pathname, logLevel: 'silent', plugins: [plugin], server: { host: '127.0.0.1' } }); await server.listen(); t.after(async () => server.close())
+  const server = await createServer({ root: new URL('..', import.meta.url).pathname, cacheDir: new URL('../node_modules/.vite-transcript-flow', import.meta.url).pathname, logLevel: 'silent', plugins: [plugin], server: { host: '127.0.0.1' } }); await server.listen(); t.after(async () => server.close())
   const address = server.httpServer?.address(); assert.ok(address && typeof address === 'object')
   const browser = await chromium.launch(); t.after(async () => browser.close()); const page = await browser.newPage()
 
@@ -135,19 +166,23 @@ test('a slow confirm dims the page and says how long it may take', { timeout: 30
   // Progress, never an alert: nothing has gone wrong.
   assert.equal(await page.getByRole('alert').count(), 0)
 
-  // And it clears on completion rather than trapping the student under it.
-  await page.getByText('Your transcript is saved').waitFor()
+  // It stays up THROUGH the handover -- the review screen is never handed back
+  // looking editable for records that no longer exist -- and it is gone once
+  // the dashboard has replaced it.
+  await page.waitForFunction(() => location.hash === '#/dashboard')
   assert.equal(await page.locator('.rv-confirming').count(), 0)
+  await page.locator('.dash-notice').waitFor()
 })
 
 test('confirmation blocked by an unverified grade scale reads as a status, not a failure', { timeout: 30_000 }, async (t) => {
   const plugin = { name: 'transcript-gate', configureServer(server) { server.middlewares.use((request, response, next) => {
     const path = request.url?.split('?')[0]
+    if (path === '/api/v2/student/me/profile' && request.method === 'GET') return respond(response, meProfile())
     if (path === '/api/v2/student/me/transcript/review' && request.method === 'GET') return respond(response, payload({ pending: true, row: { ...baseRow } }))
     if (path === '/api/v2/student/me/transcript/confirm' && request.method === 'POST') return respond(response, { error: 'grade_scale_unverified', message: "Course records for Texas A&M University can't be confirmed yet - grade scale verification is pending." }, 409)
     next()
   }) } }
-  const server = await createServer({ root: new URL('..', import.meta.url).pathname, logLevel: 'silent', plugins: [plugin], server: { host: '127.0.0.1' } }); await server.listen(); t.after(async () => server.close())
+  const server = await createServer({ root: new URL('..', import.meta.url).pathname, cacheDir: new URL('../node_modules/.vite-transcript-flow', import.meta.url).pathname, logLevel: 'silent', plugins: [plugin], server: { host: '127.0.0.1' } }); await server.listen(); t.after(async () => server.close())
   const address = server.httpServer?.address(); assert.ok(address && typeof address === 'object')
   const browser = await chromium.launch(); t.after(async () => browser.close()); const page = await browser.newPage()
 
@@ -160,4 +195,62 @@ test('confirmation blocked by an unverified grade scale reads as a status, not a
   await page.getByRole('button', { name: 'Verification pending' }).waitFor()
   assert.equal(await page.getByRole('button', { name: 'Verification pending' }).isDisabled(), true)
   assert.equal(await page.getByRole('alert').count(), 0)
+
+  // CASE T9: a block is not a success. Nothing navigates, the review is still
+  // on screen and usable, and no success notice was invented.
+  assert.equal(await page.evaluate(() => location.hash), '')
+  await page.getByRole('heading', { name: 'Verify your academic record' }).waitFor()
+  assert.equal(await page.locator('.rv-confirming').count(), 0)
+  assert.equal(await page.locator('.dash-notice').count(), 0)
+})
+
+test('transcript confirm failures and timeouts stay on the review screen', { timeout: 45_000 }, async (t) => {
+  // CASE T7 (500) and CASE T8 (a confirm that never completes). Both must
+  // leave the student exactly where they were, with the button live again.
+  //
+  // T8 aborts the request at the network layer rather than letting the real
+  // CONFIRM_TIMEOUT_MS (60s) elapse. That is the same branch either way -- the
+  // client-side abort produces REQUEST_TIMEOUT_STATUS, which normalizes to an
+  // `ok: false` confirm result exactly like this does, and transcriptApi.test
+  // .mjs already pins that mapping. What is untested without this is the
+  // SCREEN's half of it: that an unfinished confirm does not navigate.
+  const plugin = { name: 'transcript-confirm-failures', configureServer(server) { server.middlewares.use((request, response, next) => {
+    const path = request.url?.split('?')[0]
+    if (path === '/api/v2/student/me/profile' && request.method === 'GET') return respond(response, meProfile())
+    if (path === '/api/v2/student/me/transcript/review' && request.method === 'GET') return respond(response, payload({ pending: true, row: { ...baseRow } }))
+    if (path === '/api/v2/student/me/transcript/confirm' && request.method === 'POST') return respond(response, 'The record could not be confirmed.', 500)
+    next()
+  }) } }
+  const server = await createServer({ root: new URL('..', import.meta.url).pathname, cacheDir: new URL('../node_modules/.vite-transcript-failures', import.meta.url).pathname, logLevel: 'silent', plugins: [plugin], server: { host: '127.0.0.1' } }); await server.listen(); t.after(async () => server.close())
+  const address = server.httpServer?.address(); assert.ok(address && typeof address === 'object')
+  const browser = await chromium.launch(); t.after(async () => browser.close()); const page = await browser.newPage()
+  const url = `http://127.0.0.1:${address.port}/transcript-preview.html`
+
+  // CASE T7: API failure.
+  await page.goto(url)
+  await page.getByRole('button', { name: 'Confirm 1 courses' }).click()
+  await page.getByText('The record could not be confirmed.').waitFor()
+  assert.equal(await page.evaluate(() => location.hash), '')
+  await page.getByRole('heading', { name: 'Verify your academic record' }).waitFor()
+  assert.equal(await page.locator('.dash-notice').count(), 0)
+  // The confirming state resolved cleanly and retry is available.
+  assert.equal(await page.locator('.rv-confirming').count(), 0)
+  assert.equal(await page.getByRole('button', { name: 'Confirm 1 courses' }).isEnabled(), true)
+
+  // CASE T8: a confirm that never completes.
+  //
+  // Waits on the SETTLED outcome, never on the intermediate "Saving…" label. An
+  // aborted request can resolve inside a single render, so that label is not
+  // guaranteed to be observable -- waiting for it is a race that hangs for the
+  // full locator timeout when it loses. What matters here is where the student
+  // ends up, and that is deterministic.
+  await page.route('**/api/v2/student/me/transcript/confirm', (route) => route.abort('timedout'))
+  await page.getByRole('button', { name: 'Confirm 1 courses' }).click()
+  await page.getByText('Could not reach the server.').waitFor()
+  assert.equal(await page.evaluate(() => location.hash), '')
+  await page.getByRole('heading', { name: 'Verify your academic record' }).waitFor()
+  assert.equal(await page.locator('.dash-notice').count(), 0)
+  assert.equal(await page.locator('.rv-confirming').count(), 0)
+  // Retry remains possible: the button is live and clicking it re-requests.
+  assert.equal(await page.getByRole('button', { name: 'Confirm 1 courses' }).isEnabled(), true)
 })

@@ -231,19 +231,20 @@ export function CareerReview({
   async function handleConfirm() {
     setConfirming(true);
     setConfirmError(null);
-    try {
-      const result = await confirmCareerRecords(accessToken);
-      if (result.ok) {
-        // Brief acknowledgement before the page machine advances, so the click
-        // visibly did something rather than the screen simply vanishing.
-        setJustSaved(true);
-        window.setTimeout(() => onConfirmed(result), 450);
-        return;
-      }
-      setConfirmError(result.message);
-    } finally {
-      setConfirming(false);
+    const result = await confirmCareerRecords(accessToken);
+    if (result.ok) {
+      // Brief acknowledgement before the page machine advances, so the click
+      // visibly did something rather than the screen simply vanishing.
+      setJustSaved(true);
+      // `confirming` stays true on success on purpose -- see TranscriptReview's
+      // handleConfirm for the reasoning. It clears when this screen unmounts.
+      window.setTimeout(() => onConfirmed(result), 450);
+      return;
     }
+    // API failure, timeout and validation all land here: the screen stays put
+    // and remains retryable.
+    setConfirmError(result.message);
+    setConfirming(false);
   }
 
   /** Every rendered row, paired with its server original, for the counters. */
