@@ -2283,13 +2283,9 @@ a {
   color: var(--ink);
 }
 
-.real-profile-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--sp-4);
-}
-
-.real-profile-card,
+/* .real-profile-grid / .real-profile-card / .real-item* were the old Career
+   grid of five equal cards. Removed with it; the Academic tab's table and the
+   not-yet-confirmed empty state below are the remaining users of `real-*`. */
 .real-empty {
   padding: var(--sp-5);
   border: 1px solid var(--line);
@@ -2297,25 +2293,16 @@ a {
   background: var(--surface);
 }
 
-.real-profile-card h3,
 .real-empty h3 {
   margin-top: 0;
 }
 
-.real-item-list,
-.real-item,
 .real-course-table,
 .real-course-row {
   display: grid;
   gap: var(--sp-2);
 }
 
-.real-item {
-  padding-block: var(--sp-2);
-  border-bottom: 1px solid var(--line);
-}
-
-.real-item span,
 .real-course-row small,
 .real-note {
   color: var(--muted);
@@ -2335,12 +2322,413 @@ a {
 }
 
 @media (max-width: 640px) {
-  .real-profile-grid {
-    grid-template-columns: 1fr;
-  }
-
   .real-course-row {
     grid-template-columns: 1fr;
+  }
+}
+
+/* ─── CAREER PROFILE ──────────────────────────────────────────────────────
+   The authenticated Career section.
+
+   The organising idea is that space follows information weight. The old grid
+   gave a 300-word project and an empty certifications list identical
+   rectangles; here the columns are deliberately unequal (direction is short,
+   skills are long), and an empty section shrinks to a line instead of
+   reserving a card.
+
+   Hierarchy comes from type, rules and spacing rather than from boxes, which
+   is why almost nothing below draws a border and nothing draws a shadow. */
+.cp {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-10);
+}
+
+/* ── summary strip ── */
+.cp-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--sp-6);
+  padding-bottom: var(--sp-5);
+  border-bottom: 1px solid var(--line);
+}
+
+.cp-summary-roles {
+  margin: 0;
+  max-width: 46ch;
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  line-height: 1.25;
+  color: var(--ink);
+}
+
+.cp-summary-roles--absent {
+  font-family: var(--font-ui);
+  font-size: var(--text-md);
+  color: var(--muted);
+}
+
+.cp-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-8);
+  margin: 0;
+}
+
+.cp-metric { display: flex; flex-direction: column-reverse; gap: var(--sp-1); }
+
+.cp-metric-value {
+  margin: 0;
+  font-family: var(--font-data);
+  font-size: var(--text-2xl);
+  line-height: 1;
+  color: var(--ink);
+}
+
+.cp-metric-label {
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* ── unequal columns ── */
+.cp-grid { display: grid; gap: var(--sp-10); align-items: start; }
+
+/* Direction is a handful of short fields; skills can be dozens of chips. The
+   ratio is the point -- equal columns are what forced the comma wall. */
+.cp-grid--split { grid-template-columns: minmax(0, 4fr) minmax(0, 6fr); }
+.cp-grid--reverse { grid-template-columns: minmax(0, 6fr) minmax(0, 4fr); }
+
+/* ── section shell ── */
+.cp-section { min-width: 0; }
+
+.cp-section-head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-4);
+  padding-bottom: var(--sp-2);
+  border-bottom: 1px solid var(--line);
+}
+
+.cp-section-title {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+
+.cp-section-count {
+  font-family: var(--font-data);
+  font-size: var(--text-xs);
+  color: var(--muted);
+}
+
+.cp-subhead {
+  margin: 0 0 var(--sp-2);
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* ── career direction ── */
+.cp-direction { display: flex; flex-direction: column; gap: var(--sp-5); }
+.cp-field { min-width: 0; }
+
+.cp-roles {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.cp-roles li {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  line-height: 1.3;
+  color: var(--ink);
+}
+
+.cp-inline-list,
+.cp-prose {
+  margin: 0;
+  font-size: var(--text-base);
+  line-height: 1.6;
+  color: var(--ink);
+  max-width: 60ch;
+}
+
+.cp-inline-list { color: var(--muted); }
+
+/* ── absences: one line, never a rectangle ── */
+.cp-absent { display: flex; flex-direction: column; align-items: flex-start; gap: var(--sp-2); }
+
+.cp-absent-line {
+  margin: 0;
+  font-size: var(--text-base);
+  color: var(--ink);
+}
+
+.cp-absent-help {
+  margin: 0;
+  max-width: 56ch;
+  font-size: var(--text-sm);
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+.cp-absent-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  font-size: var(--text-sm);
+  color: var(--accent-text);
+  border-bottom: 1px solid var(--accent-ghost-border);
+  padding-bottom: 1px;
+  text-decoration: none;
+}
+
+.cp-absent-link:hover { border-bottom-color: var(--accent-text); }
+
+/* ── skills ── */
+.cp-skills { display: flex; flex-direction: column; gap: var(--sp-5); align-items: flex-start; }
+.cp-skill-group { width: 100%; min-width: 0; }
+
+.cp-chips {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.cp-chips--tight { gap: var(--sp-1); margin-top: var(--sp-2); }
+
+/* Neutral by default. The institution accent is an interaction and emphasis
+   colour here, not a fill -- forty maroon pills would drown the page. */
+.cp-chip {
+  padding: 4px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  line-height: 1.4;
+  color: var(--ink);
+}
+
+.cp-chip--quiet {
+  background: none;
+  color: var(--muted);
+  font-family: var(--font-data);
+  font-size: var(--text-xs);
+}
+
+/* ── expanders (skills + projects share one control) ── */
+/* min-height is the WCAG 2.5.8 target minimum (24px). These read as text
+   links by design, but they are the only controls on the page and a 19px
+   tap target is a real miss on a phone -- the height is bought with padding
+   so the underline still sits close to the label. */
+.cp-more {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: 24px;
+  padding: 4px 0;
+  border: none;
+  border-bottom: 1px solid var(--accent-ghost-border);
+  background: none;
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  color: var(--accent-text);
+  cursor: pointer;
+}
+
+.cp-more:hover { border-bottom-color: var(--accent-text); }
+
+/* ── experience timeline ── */
+.cp-timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.cp-tl-item {
+  position: relative;
+  padding: 0 0 var(--sp-6) var(--sp-6);
+  border-left: 1px solid var(--line);
+}
+
+.cp-tl-item:last-child { padding-bottom: 0; border-left-color: transparent; }
+
+/* The one place the institution colour is a fill, and it is 7px wide. */
+.cp-tl-marker {
+  position: absolute;
+  left: -4px;
+  top: 5px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent-text);
+}
+
+.cp-tl-body { min-width: 0; }
+
+.cp-tl-org {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  line-height: 1.25;
+  color: var(--ink);
+}
+
+.cp-tl-role {
+  margin: var(--sp-1) 0 0;
+  font-size: var(--text-base);
+  color: var(--ink);
+}
+
+.cp-tl-meta,
+.cp-cert-meta,
+.cp-project-when {
+  font-family: var(--font-data);
+  font-size: var(--text-xs);
+  color: var(--muted);
+}
+
+.cp-tl-meta { margin: var(--sp-1) 0 0; }
+
+.cp-tl-desc {
+  margin: var(--sp-2) 0 0;
+  max-width: 62ch;
+  font-size: var(--text-sm);
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+/* ── certifications ── */
+.cp-certs {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.cp-cert { min-width: 0; }
+
+.cp-cert-name {
+  margin: 0;
+  font-size: var(--text-base);
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--ink);
+}
+
+.cp-cert-meta { margin: var(--sp-1) 0 0; display: block; }
+
+.cp-cert-status {
+  display: inline-block;
+  margin-top: var(--sp-2);
+  padding: 1px 6px;
+  border: 1px solid var(--pending-tint);
+  border-radius: var(--radius-sm);
+  background: var(--pending-tint);
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  color: var(--muted);
+}
+
+.cp-cert-status--done {
+  border-color: var(--ready-border);
+  background: var(--ready-tint);
+  color: var(--ready);
+}
+
+/* ── projects ── */
+/* align-items: start so a one-line project does not inherit the height of a
+   paragraph-long one. Equal-height cards over unequal content is precisely
+   what made the old grid feel like empty rectangles. */
+.cp-projects {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(20rem, 1fr));
+  align-items: start;
+  gap: var(--sp-6);
+}
+
+.cp-project {
+  min-width: 0;
+  padding: var(--sp-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-2);
+}
+
+.cp-project-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  width: 100%;
+}
+
+.cp-project-name {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-md);
+  line-height: 1.3;
+  color: var(--ink);
+}
+
+.cp-project-body {
+  margin: 0;
+  font-size: var(--text-sm);
+  line-height: 1.65;
+  color: var(--muted);
+}
+
+@media (max-width: 60rem) {
+  /* Tablet: the unequal split stops paying for itself once each column is
+     under ~26rem, so both stack rather than becoming two cramped strips. */
+  .cp-grid--split,
+  .cp-grid--reverse { grid-template-columns: minmax(0, 1fr); gap: var(--sp-8); }
+  .cp { gap: var(--sp-8); }
+}
+
+@media (max-width: 40rem) {
+  .cp-summary { align-items: flex-start; gap: var(--sp-5); }
+  .cp-metric-value { font-size: var(--text-xl); }
+  .cp-projects { grid-template-columns: minmax(0, 1fr); }
+
+  /* A balanced 2x2 rather than the flex wrap's 3 + 1. Three metrics happened to
+     fit one row at 390px and "Certifications" -- the longest label -- dropped
+     alone underneath, which read as a wrapping accident rather than a layout.
+     Explicit columns make the second row deliberate and keep the widest label
+     from setting the rhythm for the other three. */
+  .cp-metrics {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--sp-5) var(--sp-4);
+    width: 100%;
   }
 }
 

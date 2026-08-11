@@ -15,7 +15,7 @@ test('authenticated dashboard covers canonical states, routing, themes, errors, 
     }
     next()
   }) } }
-  const server = await createServer({ root: new URL('..', import.meta.url).pathname, logLevel: 'silent', plugins: [apiPlugin], server: { host: '127.0.0.1' } })
+  const server = await createServer({ root: new URL('..', import.meta.url).pathname, cacheDir: new URL('../node_modules/.vite-auth-dashboard', import.meta.url).pathname, logLevel: 'silent', plugins: [apiPlugin], server: { host: '127.0.0.1' } })
   await server.listen(); t.after(async () => server.close())
   const address = server.httpServer?.address(); assert.ok(address && typeof address === 'object')
   const origin = `http://127.0.0.1:${String(address.port)}`
@@ -51,7 +51,11 @@ test('authenticated dashboard covers canonical states, routing, themes, errors, 
   await page.getByRole('button', { name: 'Academic' }).click()
   await page.getByText('CS 101').waitFor()
   await page.getByRole('button', { name: 'Career' }).click()
-  await page.getByText('Software Engineer').waitFor()
+  // Target roles now appear twice by design -- once as the Career summary
+  // headline, once in the Career direction list -- so both are named rather
+  // than matched loosely.
+  await page.locator('.cp-summary-roles').getByText('Software Engineer').waitFor()
+  await page.locator('.cp-roles li').getByText('Software Engineer').waitFor()
   await page.getByText('Cloud Fundamentals').waitFor()
 
   // CASE 2: career only renders academic onboarding.

@@ -7,6 +7,7 @@ import { createServer } from 'vite'
 test('resume review interaction and responsive behavior', { timeout: 30_000 }, async (t) => {
   const server = await createServer({
     root: new URL('..', import.meta.url).pathname,
+    cacheDir: new URL('../node_modules/.vite-review-interaction', import.meta.url).pathname,
     logLevel: 'silent',
     server: { host: '127.0.0.1' },
   })

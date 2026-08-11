@@ -6,8 +6,8 @@ import { DashboardSuccessNotice } from '../components/DashboardSuccessNotice';
 import { FitAnalysisPanel } from '../components/FitAnalysisPanel';
 import { GapAnalysisPanel } from '../components/GapAnalysisPanel';
 import { ShiftAnalysisPanel } from '../components/ShiftAnalysisPanel';
+import { CareerProfile } from '../components/career/CareerProfile';
 import { buildDashboardViewModel } from '../data/dashboardViewModel';
-import type { CanonicalCareerItem } from '../types/studentIntelligenceProfile';
 
 type NavSection = 'overview' | 'academic' | 'career';
 
@@ -16,41 +16,6 @@ const NAV_ITEMS: Array<{ key: NavSection; label: string }> = [
   { key: 'academic', label: 'Academic' },
   { key: 'career', label: 'Career' },
 ];
-
-function text(item: CanonicalCareerItem, key: string): string | null {
-  const value = item[key];
-  return typeof value === 'string' && value.trim() ? value : null;
-}
-
-function ItemList({
-  title,
-  items,
-  primary,
-  secondary,
-}: {
-  title: string;
-  items: CanonicalCareerItem[];
-  primary: string;
-  secondary: string;
-}) {
-  return (
-    <section className="real-profile-card">
-      <h3>{title}</h3>
-      {items.length ? (
-        <div className="real-item-list">
-          {items.map((item, index) => (
-            <article key={`${text(item, primary) ?? title}-${String(index)}`} className="real-item">
-              <strong>{text(item, primary) ?? 'Untitled'}</strong>
-              {text(item, secondary) && <span>{text(item, secondary)}</span>}
-            </article>
-          ))}
-        </div>
-      ) : (
-        <p className="empty-state">No confirmed {title.toLowerCase()} yet.</p>
-      )}
-    </section>
-  );
-}
 
 export function AuthenticatedDashboard() {
   const { studentAccount, signOutSession } = useAuth();
@@ -207,16 +172,16 @@ export function AuthenticatedDashboard() {
                   <div className="real-empty"><h3>Build your career profile</h3><p>Upload and confirm your resume before career facts appear here.</p><Link to="/resume" className="btn btn-primary btn-sm">Upload resume</Link></div>
                 ) : (
                   <>
+                    {/* Profile first, analyses second. The three panels are
+                        unchanged, but they used to fill the entire first
+                        screen -- so the Career tab opened on three "Run
+                        analysis" buttons before saying whose career, or
+                        whether there was any career data to analyse at all.
+                        Orientation belongs above action. */}
+                    <CareerProfile career={dashboard.career} />
                     <GapAnalysisPanel />
                     <FitAnalysisPanel />
                     <ShiftAnalysisPanel />
-                    <div className="real-profile-grid">
-                      <section className="real-profile-card"><h3>Goals and interests</h3><p>{dashboard.career.career_goals ?? 'No career goal provided.'}</p><p>{dashboard.career.target_roles.join(', ') || 'No target roles provided.'}</p><p>{dashboard.career.interests.join(', ') || 'No interests provided.'}</p></section>
-                      <section className="real-profile-card"><h3>Skills</h3><p>{dashboard.career.skills.technical.join(', ') || 'No technical skills confirmed.'}</p><p>{dashboard.career.skills.soft.join(', ') || 'No soft skills confirmed.'}</p></section>
-                      <ItemList title="Certifications" items={dashboard.career.certifications} primary="name" secondary="issuer" />
-                      <ItemList title="Experience" items={dashboard.career.work_experience} primary="employer" secondary="role" />
-                      <ItemList title="Projects" items={dashboard.career.projects} primary="name" secondary="description" />
-                    </div>
                   </>
                 )}
               </div>

@@ -79,6 +79,7 @@ test('resume page recovers persisted review across load, error, confirmation, an
 
   const server = await createServer({
     root: new URL('..', import.meta.url).pathname,
+    cacheDir: new URL('../node_modules/.vite-resume-recovery', import.meta.url).pathname,
     logLevel: 'silent',
     plugins: [apiPlugin],
     server: { host: '127.0.0.1' },
@@ -131,7 +132,9 @@ test('resume page recovers persisted review across load, error, confirmation, an
   // CASE R6: the newly confirmed career data is on screen, not the pre-confirm
   // empty state -- which is what a stale profile would have rendered.
   await page.getByRole('button', { name: 'Career' }).click()
-  await page.getByText('Software Engineer').waitFor()
+  // The redesigned Career section shows a target role in both the summary and
+  // the direction list, so this names the one it means.
+  await page.locator('.cp-roles li').getByText('Software Engineer').waitFor()
   assert.equal(await page.getByRole('link', { name: 'Upload resume' }).count(), 0)
 
   // The notice belongs to one transition: dismissible, and gone after a reload.
@@ -202,6 +205,7 @@ test('a slow confirm dims the resume review too, identically to transcript', { t
 
   const server = await createServer({
     root: new URL('..', import.meta.url).pathname,
+    cacheDir: new URL('../node_modules/.vite-resume-recovery', import.meta.url).pathname,
     logLevel: 'silent',
     plugins: [apiPlugin],
     server: { host: '127.0.0.1' },
