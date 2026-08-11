@@ -111,8 +111,12 @@ def test_invalid_feature_name_raises_clear_value_error():
 
 
 def test_one_feature_fails_but_others_still_run():
+    # GAP gets two unparseable responses because base.py re-asks once before
+    # giving up. A single bad response would now succeed on the retry and this
+    # test would stop exercising the "one feature fails" path at all.
     client = QueueClient([
         feature_response("FIT"),
+        "{not-json",
         "{not-json",
         feature_response("SHIFT"),
     ])
@@ -123,8 +127,28 @@ def test_one_feature_fails_but_others_still_run():
     assert result["results"]["FIT"]["status"] == "success"
     assert result["results"]["GAP"]["status"] == "failed"
     assert result["results"]["SHIFT"]["status"] == "success"
-    assert len(client.calls) == 3
+    assert len(client.calls) == 4  # 1 FIT + 2 GAP attempts + 1 SHIFT
     assert result["errors"]
+
+
+def test_one_bad_response_is_retried_rather_than_failing_the_feature():
+    """The reason the test above needs two bad responses.
+
+    A malformed response is a sampling accident -- observed once in 24 live
+    runs, and it parsed fine on re-ask both times.
+    """
+    client = QueueClient([
+        feature_response("FIT"),
+        "{not-json",
+        feature_response("GAP"),
+        feature_response("SHIFT"),
+    ])
+
+    result = run_career_analysis(sample_student(), client)
+
+    assert result["status"] == "success"
+    assert result["results"]["GAP"]["status"] == "success"
+    assert len(client.calls) == 4  # GAP took two attempts
 
 
 def test_all_skipped_returns_skipped():
@@ -158,13 +182,14 @@ def test_mixed_success_and_skip_returns_partial_success():
 
 
 def test_all_failed_returns_failed():
-    client = QueueClient(["{bad", "{bad", "{bad"])
+    # Two attempts per feature: each re-asks once before failing.
+    client = QueueClient(["{bad"] * 6)
 
     result = run_career_analysis(sample_student(), client)
 
     assert result["status"] == "failed"
     assert all(item["status"] == "failed" for item in result["results"].values())
-    assert len(client.calls) == 3
+    assert len(client.calls) == 6
     assert len(result["errors"]) == 3
 
 

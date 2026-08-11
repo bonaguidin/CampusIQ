@@ -635,3 +635,89 @@ def test_agent_is_not_called_for_a_role_that_borrowed_from_a_neighbour(monkeypat
     )
 
     assert called == ["Operations Intern"]
+
+
+# ---------------------------------------------------------------- parse retry
+# One live failure in 24 runs: "Malformed AI JSON response: Expecting ','
+# delimiter: line 1 column 28086" -- an unescaped quote deep inside a long
+# response. It parsed fine on both re-asks, so it is a sampling accident rather
+# than a bad request.
+
+class SequenceClient:
+    """Returns scripted response texts in order, counting calls."""
+
+    def __init__(self, texts):
+        self._texts = list(texts)
+        self.calls = []
+
+    def complete(self, **kwargs):
+        self.calls.append(kwargs)
+        return AIResponse(text=self._texts.pop(0), raw={"choices": []}, model="fake-model")
+
+
+class RaisingClient:
+    def __init__(self, exc):
+        self._exc = exc
+        self.calls = []
+
+    def complete(self, **kwargs):
+        self.calls.append(kwargs)
+        raise self._exc
+
+
+def test_unparseable_response_is_retried_once_and_succeeds():
+    client = SequenceClient(["{not-json", _GAP_SUCCESS_JSON])
+
+    result = GapRunner(client=client).run(sample_student())
+
+    assert result["status"] == "success"
+    assert result["data"]["readiness_score"] == 6
+    assert len(client.calls) == 2
+
+
+def test_two_unparseable_responses_fail_the_feature():
+    client = SequenceClient(["{not-json", "{still-not-json"])
+
+    result = GapRunner(client=client).run(sample_student())
+
+    assert result["status"] == "failed"
+    assert result["data"] == {}
+    assert len(client.calls) == 2  # stops at the cap, does not loop
+    # The parser reports several distinct shapes of broken JSON; asserting the
+    # exact wording would pin this test to parser.py's phrasing rather than to
+    # the behaviour under test.
+    assert result["errors"] and "JSON" in result["errors"][0]
+
+
+def test_request_errors_are_not_retried():
+    """A refused or misconfigured request fails identically the second time.
+
+    Retrying would just double the cost of an outage.
+    """
+    from CampusIQ_career.ai.errors import AIRequestError
+
+    client = RaisingClient(AIRequestError("upstream 500"))
+
+    result = GapRunner(client=client).run(sample_student())
+
+    assert result["status"] == "failed"
+    assert len(client.calls) == 1
+
+
+def test_retry_reuses_the_same_messages_without_rebuilding_context(monkeypatch):
+    """Context is built once. GAP's may call the research agent and SHIFT's
+    does live trend research -- a bad response is no reason to redo that."""
+    builds = []
+    original = GapRunner.build_student_context
+
+    def counting(self, profile):
+        builds.append(1)
+        return original(self, profile)
+
+    monkeypatch.setattr(GapRunner, "build_student_context", counting)
+    client = SequenceClient(["{not-json", _GAP_SUCCESS_JSON])
+
+    GapRunner(client=client).run(sample_student())
+
+    assert len(client.calls) == 2
+    assert len(builds) == 1, "context must not be rebuilt on retry"

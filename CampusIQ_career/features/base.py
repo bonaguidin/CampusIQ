@@ -1,6 +1,7 @@
 """Shared contracts and helpers for Campus IQ feature runners."""
 
 import json
+import logging
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any, Literal, Mapping, Protocol, Sequence
@@ -9,9 +10,17 @@ from CampusIQ_career.ai.errors import AIConfigError, AIRequestError, AIResponseP
 from CampusIQ_career.ai.parser import parse_ai_json_response
 
 
+logger = logging.getLogger(__name__)
+
 FeatureStatus = Literal["success", "skipped", "failed"]
 
 PROMPT_DIR = Path(__file__).resolve().parents[1]
+
+# One re-ask on an unparseable response. Two attempts, not more: a second
+# failure on the same messages points at a systematic problem (a prompt that
+# invites prose, a model that can't hold the format) which retrying will not
+# fix, and each attempt is a full paid call.
+_PARSE_ATTEMPTS = 2
 
 
 @dataclass(frozen=True)
@@ -55,20 +64,58 @@ class CareerFeatureRunner:
                 errors=[f"Missing required field: {field_name}" for field_name in missing_fields],
             ).to_dict()
 
+        # Built once, outside the retry loop. build_student_context is not free
+        # for every runner -- GAP's may call the research agent, SHIFT's does
+        # live trend research -- and a retry is for a bad *response*, not a bad
+        # request. Re-deriving the context would repeat that work for nothing.
         try:
             prompt_template = load_prompt_template(self.prompt_path)
-            response = self.client.complete(
-                messages=self.build_messages(student_profile, prompt_template),
-                role=self.role,
-            )
-            parsed = parse_ai_json_response(response.text)
-        except (OSError, AIConfigError, AIRequestError, AIResponseParseError, ValueError) as exc:
+            messages = self.build_messages(student_profile, prompt_template)
+        except (OSError, ValueError) as exc:
             return FeatureResult(
                 feature=self.feature,
                 status="failed",
                 summary=f"{self.feature} analysis failed.",
                 data={},
                 errors=[str(exc)],
+            ).to_dict()
+
+        parsed = None
+        last_parse_error: AIResponseParseError | None = None
+        for attempt in range(1, _PARSE_ATTEMPTS + 1):
+            try:
+                response = self.client.complete(messages=messages, role=self.role)
+                parsed = parse_ai_json_response(response.text)
+                break
+            except AIResponseParseError as exc:
+                # Retried because this is a sampling accident, not a bad
+                # request: an unescaped quote inside a long string, or a
+                # structural slip. Observed once in 24 live runs, and it
+                # succeeded on re-ask both times. Deliberately NOT retried for
+                # config/request errors -- a missing key or a refused request
+                # fails identically the second time, and re-sending would just
+                # double the cost of an outage.
+                last_parse_error = exc
+                logger.warning(
+                    "%s: unparseable response on attempt %d/%d: %s",
+                    self.feature, attempt, _PARSE_ATTEMPTS, exc,
+                )
+            except (AIConfigError, AIRequestError, ValueError) as exc:
+                return FeatureResult(
+                    feature=self.feature,
+                    status="failed",
+                    summary=f"{self.feature} analysis failed.",
+                    data={},
+                    errors=[str(exc)],
+                ).to_dict()
+
+        if parsed is None:
+            return FeatureResult(
+                feature=self.feature,
+                status="failed",
+                summary=f"{self.feature} analysis failed.",
+                data={},
+                errors=[str(last_parse_error)],
             ).to_dict()
 
         data = parsed.get("data", parsed)
