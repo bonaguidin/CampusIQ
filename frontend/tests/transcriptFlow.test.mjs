@@ -27,7 +27,7 @@ test('transcript flow covers upload, recovery, edits, repeats, failures, confirm
     if (path === '/api/v2/student/me/transcript/confirm' && request.method === 'POST') { state.pending = false; state.academicsConfirmed = true; return respond(response, { status: 'ok', confirmed: 1, scope: 'all_unconfirmed', repeats: {} }) }
     next()
   }) } }
-  const server = await createServer({ root: new URL('..', import.meta.url).pathname, logLevel: 'silent', plugins: [plugin], server: { host: '127.0.0.1' } }); await server.listen(); t.after(async () => server.close())
+  const server = await createServer({ root: new URL('..', import.meta.url).pathname, cacheDir: new URL('../node_modules/.vite-transcript-flow', import.meta.url).pathname, logLevel: 'silent', plugins: [plugin], server: { host: '127.0.0.1' } }); await server.listen(); t.after(async () => server.close())
   const address = server.httpServer?.address(); assert.ok(address && typeof address === 'object'); const url = `http://127.0.0.1:${address.port}/transcript-preview.html`
   const browser = await chromium.launch(); t.after(async () => browser.close()); const page = await browser.newPage()
 
@@ -138,7 +138,7 @@ test('a slow confirm dims the page and says how long it may take', { timeout: 30
     if (path === '/api/v2/student/me/transcript/confirm' && request.method === 'POST') { setTimeout(() => { respond(response, { status: 'ok', confirmed: 1, scope: 'all_unconfirmed', repeats: {} }) }, 1500); return }
     next()
   }) } }
-  const server = await createServer({ root: new URL('..', import.meta.url).pathname, logLevel: 'silent', plugins: [plugin], server: { host: '127.0.0.1' } }); await server.listen(); t.after(async () => server.close())
+  const server = await createServer({ root: new URL('..', import.meta.url).pathname, cacheDir: new URL('../node_modules/.vite-transcript-flow', import.meta.url).pathname, logLevel: 'silent', plugins: [plugin], server: { host: '127.0.0.1' } }); await server.listen(); t.after(async () => server.close())
   const address = server.httpServer?.address(); assert.ok(address && typeof address === 'object')
   const browser = await chromium.launch(); t.after(async () => browser.close()); const page = await browser.newPage()
 
@@ -182,7 +182,7 @@ test('confirmation blocked by an unverified grade scale reads as a status, not a
     if (path === '/api/v2/student/me/transcript/confirm' && request.method === 'POST') return respond(response, { error: 'grade_scale_unverified', message: "Course records for Texas A&M University can't be confirmed yet - grade scale verification is pending." }, 409)
     next()
   }) } }
-  const server = await createServer({ root: new URL('..', import.meta.url).pathname, logLevel: 'silent', plugins: [plugin], server: { host: '127.0.0.1' } }); await server.listen(); t.after(async () => server.close())
+  const server = await createServer({ root: new URL('..', import.meta.url).pathname, cacheDir: new URL('../node_modules/.vite-transcript-flow', import.meta.url).pathname, logLevel: 'silent', plugins: [plugin], server: { host: '127.0.0.1' } }); await server.listen(); t.after(async () => server.close())
   const address = server.httpServer?.address(); assert.ok(address && typeof address === 'object')
   const browser = await chromium.launch(); t.after(async () => browser.close()); const page = await browser.newPage()
 
