@@ -43,6 +43,15 @@ from GradusIQ_career.profile_builder import (
     build_student_intelligence_profile,
     canonical_to_legacy_profile,
 )
+from GradusIQ_career.planning.planned import (
+    PlannedCourseError,
+    add_planned,
+    ensure_term_row,
+    list_planned,
+    remove_planned,
+)
+from GradusIQ_career.planning.search import CatalogSearchError, search_catalog
+from GradusIQ_career.planning.term_view import fetch_terms_view
 from GradusIQ_career.resume.extraction import extract_resume_text
 from GradusIQ_career.resume.parser import parse_resume_text
 from GradusIQ_career.resume.review import (
@@ -1336,6 +1345,145 @@ def patch_me_transcript_review(request: Request, row_id: str, body: dict) -> dic
         raise HTTPException(status_code=502, detail="Could not update the course record.") from exc
 
 
+# ── v2: term-organized academic planning ─────────────────────────────────────
+# Additive to the transcript surface above and disjoint from it: no route here
+# reads or writes course_records, and none of them can change a GPA. They exist
+# so the Academic Record tab can be organized by term and so a student can plan
+# a term that has not started.
+
+
+class PlannedCourseRequest(BaseModel):
+    """One planned course.
+
+    `year`/`season` rather than a term_id: the term being planned for is
+    frequently one the student has no academic_terms row for yet, so there is
+    no id to send. The route resolves them to a row, creating it if needed.
+
+    `catalog_course_id` is accepted but never trusted for display -- title and
+    credit_hours are taken from this body, which is what the student saw in the
+    search result they clicked.
+    """
+
+    course_code: str
+    year: int | None = None
+    season: str | None = None
+    term_label: str | None = None
+    title: str | None = None
+    credit_hours: float | None = None
+    catalog_course_id: str | None = None
+
+
+@router.get(
+    "/api/v2/student/me/terms",
+    dependencies=[Depends(authorize_proxy_request)],
+)
+def get_me_terms(request: Request) -> dict:
+    client = _session_client(request)
+    student_id = _resolve_session_student_id(client)
+    institution_id = _home_institution_id(client, student_id)
+
+    try:
+        view = fetch_terms_view(client, student_id, institution_id)
+    except Exception as exc:  # noqa: BLE001 -- RLS denial or transport
+        raise HTTPException(status_code=502, detail="Could not load terms.") from exc
+
+    return {"terms": view.terms, "upcoming_term_key": view.upcoming_term_key}
+
+
+@router.get(
+    "/api/v2/student/me/planned-courses",
+    dependencies=[Depends(authorize_proxy_request)],
+)
+def get_me_planned_courses(request: Request, term_id: str | None = None) -> dict:
+    client = _session_client(request)
+    student_id = _resolve_session_student_id(client)
+
+    try:
+        planned = list_planned(client, student_id, term_id=term_id)
+    except Exception as exc:  # noqa: BLE001 -- RLS denial or transport
+        raise HTTPException(status_code=502, detail="Could not load planned courses.") from exc
+
+    return {"planned_courses": [row.to_dict() for row in planned]}
+
+
+@router.post(
+    "/api/v2/student/me/planned-courses",
+    dependencies=[Depends(authorize_proxy_request)],
+)
+def post_me_planned_course(request: Request, body: PlannedCourseRequest) -> dict:
+    client = _session_client(request)
+    student_id = _resolve_session_student_id(client)
+    institution_id = _home_institution_id(client, student_id)
+
+    term_id: str | None = None
+    try:
+        if body.year is not None and body.season is not None:
+            term_id = ensure_term_row(
+                client,
+                student_id,
+                institution_id,
+                body.year,
+                body.season,
+                label=body.term_label,
+            )
+        planned = add_planned(
+            client,
+            student_id,
+            institution_id,
+            course_code=body.course_code,
+            term_id=term_id,
+            title=body.title,
+            credit_hours=body.credit_hours,
+            catalog_course_id=body.catalog_course_id,
+        )
+    except PlannedCourseError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except HTTPException:
+        raise
+    except Exception as exc:  # noqa: BLE001 -- RLS denial or transport
+        raise HTTPException(status_code=502, detail="Could not save the planned course.") from exc
+
+    return {"planned_course": planned.to_dict()}
+
+
+@router.delete(
+    "/api/v2/student/me/planned-courses/{planned_id}",
+    dependencies=[Depends(authorize_proxy_request)],
+)
+def delete_me_planned_course(request: Request, planned_id: str) -> dict:
+    client = _session_client(request)
+    student_id = _resolve_session_student_id(client)
+
+    try:
+        removed = remove_planned(client, student_id, planned_id)
+    except Exception as exc:  # noqa: BLE001 -- RLS denial or transport
+        raise HTTPException(status_code=502, detail="Could not remove the planned course.") from exc
+
+    if not removed:
+        # 404 for both "no such row" and "another student's row", matching the
+        # transcript review edit route: RLS makes them indistinguishable, and a
+        # 403 would confirm the row exists.
+        raise HTTPException(status_code=404, detail="No such planned course.")
+    return {"removed": planned_id}
+
+
+@router.get(
+    "/api/v2/student/me/catalog/search",
+    dependencies=[Depends(authorize_proxy_request)],
+)
+def get_me_catalog_search(request: Request, q: str = "", limit: int = 20) -> dict:
+    client = _session_client(request)
+    student_id = _resolve_session_student_id(client)
+    institution_id = _home_institution_id(client, student_id)
+
+    try:
+        results = search_catalog(client, institution_id, q, limit)
+    except CatalogSearchError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+
+    return {"results": [row.to_dict() for row in results], "query": q}
+
+
 def create_app(config: APIConfig | None = None) -> FastAPI:
     # Fail the deploy, not the first request: a placeholder model ID would
     # otherwise surface as an opaque 502 (chat) or a silent status="failed"
@@ -1361,12 +1509,13 @@ def create_app(config: APIConfig | None = None) -> FastAPI:
     application.add_middleware(
         CORSMiddleware,
         allow_origins=list(active_config.allowed_origins),
-        # PATCH is here for consistency with the routes this app actually
-        # exposes, not because the live path needs it: the browser talks to a
-        # same-origin Vercel proxy, and the proxy-to-backend hop is
-        # server-to-server, where CORS does not apply. Omitting it would leave
-        # the policy contradicting the route table for no reason.
-        allow_methods=["GET", "PATCH", "POST", "OPTIONS"],
+        # PATCH and DELETE are here for consistency with the routes this app
+        # actually exposes, not because the live path needs them: the browser
+        # talks to a same-origin Vercel proxy, and the proxy-to-backend hop is
+        # server-to-server, where CORS does not apply. Omitting them would
+        # leave the policy contradicting the route table for no reason.
+        # DELETE joined the list with the planned-course removal route.
+        allow_methods=["DELETE", "GET", "PATCH", "POST", "OPTIONS"],
         allow_headers=["Content-Type", PROXY_SECRET_HEADER],
     )
     application.include_router(router)

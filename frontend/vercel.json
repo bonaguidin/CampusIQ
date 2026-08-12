@@ -63,6 +63,28 @@
       "destination": "/api/proxy?target=me-transcript-confirm"
     },
     {
+      "source": "/api/v2/student/me/terms",
+      "destination": "/api/proxy?target=me-terms"
+    },
+    {
+      "source": "/api/v2/student/me/planned-courses/:id",
+      "destination": "/api/proxy?target=me-planned-course-remove&id=:id"
+    },
+    {
+      "source": "/api/v2/student/me/catalog/search",
+      "destination": "/api/proxy?target=me-catalog-search&q=:q",
+      "has": [{ "type": "query", "key": "q" }]
+    },
+    {
+      "source": "/api/v2/student/me/planned-courses",
+      "destination": "/api/proxy?target=me-planned-courses&term_id=:term_id",
+      "has": [{ "type": "query", "key": "term_id" }]
+    },
+    {
+      "source": "/api/v2/student/me/planned-courses",
+      "destination": "/api/proxy?target=me-planned-courses"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

@@ -64,6 +64,24 @@ const ME_TARGETS = Object.assign(Object.create(null), {
   // allowlist independently -- the double check mirrors how ALLOWED_FEATURES
   // is already enforced in both places.
   'me-career-review-edit': { method: 'PATCH', needsFeature: false, needsRecord: true },
+  // Term-organized Academic Record.
+  //
+  // `me-planned-courses` is the one target that admits TWO methods, via
+  // `methods` instead of `method`. Listing and adding share a path
+  // (/planned-courses), and a Vercel rewrite matches on path only -- it cannot
+  // route GET and POST to different targets. Splitting them would have meant
+  // inventing a second URL for one of the two purely to work around the
+  // rewrite table. The allowlist stays closed either way: a method absent from
+  // the array is rejected by the same check that rejects a wrong single
+  // method.
+  //
+  // `me-planned-course-remove` is the first DELETE on this proxy; the method
+  // guard at the top of the handler was widened to admit it, and DELETE
+  // remains reachable only through this entry.
+  'me-terms': { method: 'GET', needsFeature: false },
+  'me-planned-courses': { methods: ['GET', 'POST'], needsFeature: false, optionalTermId: true },
+  'me-planned-course-remove': { method: 'DELETE', needsFeature: false, needsPlannedRecord: true },
+  'me-catalog-search': { method: 'GET', needsFeature: false, needsQuery: true },
 })
 const ME_ANALYZE_FEATURES = new Set(['gap', 'fit', 'shift', 'professor-comments'])
 
@@ -76,6 +94,15 @@ const REVIEW_TABLES = new Set([
 ])
 const RECORD_ID_PATTERN =
   /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/
+
+// Catalog search is the only target carrying free text through to the backend.
+// The value is length-capped and restricted to characters that appear in a
+// course code or title, then re-encoded into the forwarded query string --
+// never concatenated into a path. Everything the backend does with it is a
+// bound parameter to search_course_catalog(), so this bound is defence in
+// depth rather than the only thing standing between a caller and a query.
+const MAX_SEARCH_QUERY_LENGTH = 64
+const SEARCH_QUERY_PATTERN = /^[A-Za-z0-9 .,'&:/+-]{1,64}$/
 
 function jsonError(status, detail) {
   return Response.json({ detail }, { status })
@@ -100,7 +127,22 @@ function backendPath(student, feature) {
   return `/api/students/${slug}/analyze/${feature}`
 }
 
-function meBackendPath(target, feature, reviewTable, recordId) {
+function meBackendPath(target, feature, reviewTable, recordId, searchQuery, termId) {
+  if (target === 'me-terms') return '/api/v2/student/me/terms'
+  if (target === 'me-planned-courses') {
+    // The only forwarded query string besides search. Built here from a
+    // validated UUID rather than by copying the inbound search params, so a
+    // caller cannot append parameters of their own to a backend route.
+    return termId
+      ? `/api/v2/student/me/planned-courses?term_id=${encodeURIComponent(termId)}`
+      : '/api/v2/student/me/planned-courses'
+  }
+  if (target === 'me-planned-course-remove') {
+    return `/api/v2/student/me/planned-courses/${encodeURIComponent(recordId)}`
+  }
+  if (target === 'me-catalog-search') {
+    return `/api/v2/student/me/catalog/search?q=${encodeURIComponent(searchQuery)}`
+  }
   if (target === 'me-chat') return '/api/v2/student/me/chat'
   if (target === 'me-profile') return '/api/v2/student/me/profile'
   if (target === 'me-resume-upload') return '/api/v2/student/me/resume/upload'
@@ -122,7 +164,7 @@ export function createProxyHandler({ env = process.env, fetchImpl = globalThis.f
   return {
     async fetch(request) {
       const method = request.method
-      if (method !== 'POST' && method !== 'GET' && method !== 'PATCH') {
+      if (method !== 'POST' && method !== 'GET' && method !== 'PATCH' && method !== 'DELETE') {
         return jsonError(405, 'Method not allowed.')
       }
 
@@ -132,6 +174,8 @@ export function createProxyHandler({ env = process.env, fetchImpl = globalThis.f
       const feature = requestUrl.searchParams.get('feature') ?? ''
       const reviewTable = requestUrl.searchParams.get('table') ?? ''
       const recordId = requestUrl.searchParams.get('id') ?? ''
+      const searchQuery = requestUrl.searchParams.get('q') ?? ''
+      const termId = requestUrl.searchParams.get('term_id') ?? ''
 
       const isMeTarget = target !== ''
       let path
@@ -139,7 +183,13 @@ export function createProxyHandler({ env = process.env, fetchImpl = globalThis.f
 
       if (isMeTarget) {
         const spec = ME_TARGETS[target]
-        if (!spec || method !== spec.method) {
+        // Array.isArray, not a truthiness check on spec.methods: an inherited
+        // property would not survive it, which is the same property
+        // Object.create(null) is protecting above.
+        const methodAllowed = Array.isArray(spec?.methods)
+          ? spec.methods.includes(method)
+          : method === spec?.method
+        if (!spec || !methodAllowed) {
           return jsonError(400, 'Invalid analysis route.')
         }
         if (spec.needsFeature && !ME_ANALYZE_FEATURES.has(feature)) {
@@ -151,8 +201,23 @@ export function createProxyHandler({ env = process.env, fetchImpl = globalThis.f
         if (spec.needsTranscriptRecord && !RECORD_ID_PATTERN.test(recordId)) {
           return jsonError(400, 'Invalid analysis route.')
         }
+        if (spec.needsPlannedRecord && !RECORD_ID_PATTERN.test(recordId)) {
+          return jsonError(400, 'Invalid analysis route.')
+        }
+        if (
+          spec.needsQuery &&
+          (searchQuery.length > MAX_SEARCH_QUERY_LENGTH || !SEARCH_QUERY_PATTERN.test(searchQuery))
+        ) {
+          return jsonError(400, 'Invalid analysis route.')
+        }
+        // term_id is optional -- absent means "all terms" -- but must be a
+        // UUID when present rather than an arbitrary string appended to a
+        // backend query string.
+        if (spec.optionalTermId && termId !== '' && !RECORD_ID_PATTERN.test(termId)) {
+          return jsonError(400, 'Invalid analysis route.')
+        }
         isBinaryTarget = spec.binary === true
-        path = meBackendPath(target, feature, reviewTable, recordId)
+        path = meBackendPath(target, feature, reviewTable, recordId, searchQuery, termId)
       } else {
         // PATCH exists only for the session-scoped review edit above. The
         // slug-addressed surface stays GET/POST-only: without this guard a

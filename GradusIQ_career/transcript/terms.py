@@ -52,18 +52,47 @@ from typing import Any, Iterable, Mapping
 from .store_helpers import rows_of
 
 
-# Season vocabulary. academic_terms.season carries NO check constraint, so this
-# set is the application's own contract, not a database one -- which is exactly
-# why it is normalized here rather than trusted from the model.
+# Season vocabulary. academic_terms.season carries NO check constraint (still
+# true as of 2026-08-11: an insert with season='NotASeason' is rejected only by
+# the student_id foreign key), so this set is the application's own contract,
+# not a database one -- which is exactly why it is normalized here rather than
+# trusted from the model. academic_term_dates.season DOES carry a CHECK
+# constraint listing exactly these six values; that table is written only by
+# code that emits this vocabulary, and the migration explains the asymmetry.
+#
+# THE VALUES ARE ORDINALS, NOT IDENTIFIERS. Nothing persists them -- they are
+# read only through .get() to build sort keys (chronological_key below, and
+# repeats._chronological_key). So inserting a season renumbers the ones after
+# it harmlessly; no stored row means anything different afterwards.
+#
+# May and August are SMU intersession terms, and their positions are fixed by
+# SMU's own published calendar rather than by preference -- from the Coursedog
+# snapshot for 2026: May 16-Jun 2, Summer Jun 3-Aug 4, August Aug 6-20, Fall
+# Aug 24-Dec 16. Each begins after the one before it ends, so the ordering is
+# the only one the dates admit.
 SEASON_ORDER: Mapping[str, int] = {
     "Winter": 0,
     "Spring": 1,
-    "Summer": 2,
-    "Fall": 3,
+    "May": 2,
+    "Summer": 3,
+    "August": 4,
+    "Fall": 5,
 }
 
 # Spellings seen on real transcripts, mapped to the canonical season. Keys are
 # compared casefolded.
+#
+# "may" and "august" resolve to their own seasons rather than folding into
+# Summer/Fall. SMU runs both as separate terms with separate registration and
+# separate calendar entries, so folding them would merge two distinct terms
+# onto one (year, season) -- which is the key terms.py reuses academic_terms
+# rows by, and the key academic_term_dates is unique on. A student's May 2026
+# course and their Summer 2026 course would land in the same bucket.
+#
+# "maymester" stays mapped to Summer, deliberately and against the grain of
+# the line above -- an explicit call rather than an oversight. It is the one
+# spelling that has never appeared in SMU's calendar (which says "May 2026"),
+# and changing it would repoint whatever transcripts printed it.
 SEASON_ALIASES: Mapping[str, str] = {
     "fall": "Fall",
     "autumn": "Fall",
@@ -81,7 +110,9 @@ SEASON_ALIASES: Mapping[str, str] = {
     "january": "Winter",
     "jan": "Winter",
     "maymester": "Summer",
-    "may": "Summer",
+    "may": "May",
+    "august": "August",
+    "aug": "August",
 }
 
 _YEAR_PATTERN = re.compile(r"\b(19|20)\d{2}\b")

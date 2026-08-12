@@ -3,10 +3,23 @@ import test from 'node:test'
 import { readFile } from 'node:fs/promises'
 import { chromium } from 'playwright'
 import { createServer } from 'vite'
+import { planningRoutes } from './fixtures/planningRoutes.mjs'
 
 test('authenticated dashboard covers canonical states, routing, themes, errors, demo separation, and mobile', { timeout: 45_000 }, async (t) => {
   const requests = []
+  // The Academic Record tab renders the term view. Its Fall 2025 term id
+  // matches the preview harness's own course row, so that course is reachable
+  // by selecting its term; Fall 2026 is the upcoming term the dropdown opens
+  // on and the one planning is offered for.
+  const planning = planningRoutes({
+    terms: [
+      { key: '2025-Fall', id: 'term-1', label: 'Fall 2025', year: 2025, season: 'Fall', sequence: 1, start_date: '2025-08-25', end_date: '2025-12-17', enrolled: true, is_upcoming: false },
+      { key: '2026-Fall', id: null, label: 'Fall 2026', year: 2026, season: 'Fall', sequence: null, start_date: '2026-08-24', end_date: '2026-12-10', enrolled: false, is_upcoming: true },
+    ],
+  })
   const apiPlugin = { name: 'dashboard-api', configureServer(server) { server.middlewares.use((request, response, next) => {
+    const path = request.url?.split('?')[0]
+    if (planning.handle(path, request.method, request, response)) return undefined
     if (request.url?.startsWith('/api/v2/student/me/analyze/')) {
       requests.push({ url: request.url, authorization: request.headers.authorization })
       response.statusCode = 200; response.setHeader('content-type', 'application/json')
@@ -49,7 +62,45 @@ test('authenticated dashboard covers canonical states, routing, themes, errors, 
   await page.getByText('Texas A&M University').waitFor()
   await page.getByText('Official GPA').first().waitFor()
   await page.getByRole('button', { name: 'Academic' }).click()
+
+  // The term view opens on the UPCOMING term, not on the term holding the
+  // student's coursework -- planning happens in the term that has not started.
+  await page.locator('#term-select').waitFor()
+  assert.equal(await page.locator('#term-select').inputValue(), '2026-Fall')
+  await page.getByText('Aug 24, 2026').waitFor()
+  await page.locator('.term-badge--upcoming').waitFor()
+
+  // Selecting the term that does hold coursework shows it.
+  await page.locator('#term-select').selectOption('2025-Fall')
   await page.getByText('CS 101').waitFor()
+
+  // Planning: search, add, see it listed as distinctly PLANNED, remove it.
+  await page.locator('#term-select').selectOption('2026-Fall')
+  await page.locator('#course-search').fill('CSCE 2')
+  await page.getByText('Data Structures and Algorithms').waitFor()
+  await page.getByRole('button', { name: 'Add' }).first().click()
+  await page.locator('.real-course-row--planned').waitFor()
+
+  // A planned course must never be presentable as completed coursework: it
+  // carries its own badge, sits in its own list, and says it counts toward
+  // nothing.
+  const plannedRow = page.locator('.real-course-row--planned').first()
+  await plannedRow.getByText('CSCE 221').waitFor()
+  await plannedRow.locator('.planned-badge').waitFor()
+  await page.getByText(/not counted in GPA or hours/).waitFor()
+  assert.equal(await page.locator('.real-course-row--planned .planned-badge').count(), 1)
+  // 4 credits came from the catalog result, not invented by the UI.
+  await plannedRow.getByText('4 credits').waitFor()
+  assert.equal(planning.state.planned.length, 1)
+
+  // Re-searching the same course offers no second add.
+  await page.locator('#course-search').fill('CSCE 22')
+  await page.getByRole('button', { name: 'Planned' }).first().waitFor()
+
+  await plannedRow.getByRole('button', { name: /Remove CSCE 221/ }).click()
+  await page.locator('.real-course-row--planned').waitFor({ state: 'detached' })
+  assert.equal(planning.state.planned.length, 0)
+
   await page.getByRole('button', { name: 'Career' }).click()
   // Target roles now appear twice by design -- once as the Career summary
   // headline, once in the Career direction list -- so both are named rather

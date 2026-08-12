@@ -3811,3 +3811,200 @@ a {
     gap: 0.15rem;
   }
 }
+
+/* ─── TERM PLANNER ────────────────────────────────────────────────────────
+   The Academic Record's term view: a term dropdown, that term's coursework,
+   and the planned-course search.
+
+   The one visual idea worth stating: a PLANNED course must never be mistaken
+   for a course the student took. They arrive from different tables and mean
+   different things -- a planned row has no grade, is unverified, and counts
+   toward no GPA and no earned hours -- so they are given their own section,
+   their own heading with that caveat spelled out, a dashed left edge, and a
+   badge. The dashed edge does the work at a glance; the badge does it for
+   anyone reading a row in isolation; the heading note does it for anyone
+   wondering why the credits do not add up to the hours stat above.
+
+   Achromatic throughout, matching the rest of the sheet: the "planned" state
+   is carried by border style and weight, never by a hue an institution's
+   brand color could collide with. */
+
+.term-planner {
+  display: grid;
+  gap: var(--sp-6);
+}
+
+.term-planner-loading,
+.term-search-hint {
+  color: var(--muted);
+  font-size: 0.875rem;
+  margin: var(--sp-2) 0 0;
+}
+
+.term-planner-error {
+  color: var(--ink);
+  font-size: 0.875rem;
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--line);
+  border-left-width: 3px;
+  background: var(--surface);
+  margin: 0;
+}
+
+.term-planner-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3);
+  padding-bottom: var(--sp-4);
+  border-bottom: 1px solid var(--line);
+}
+
+.term-select-label {
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.term-select {
+  font-family: var(--font-ui);
+  font-size: 1rem;
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--ink);
+  max-width: 100%;
+}
+
+.term-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-left: auto;
+}
+
+.term-badge {
+  font-size: 0.6875rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.15rem var(--sp-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  color: var(--muted);
+}
+
+/* The upcoming term is the one the dropdown opens on, so its badge is the
+   only one that reads as foreground. */
+.term-badge--upcoming {
+  border-color: var(--ink);
+  color: var(--ink);
+}
+
+.term-dates {
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+.term-dates--unknown {
+  font-style: italic;
+}
+
+.term-courses-heading {
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0 0 var(--sp-3);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-3);
+}
+
+.term-courses-note {
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 0.75rem;
+}
+
+.real-course-row--planned {
+  border-left: 2px dashed var(--line);
+  padding-left: var(--sp-3);
+}
+
+.planned-badge {
+  display: inline-block;
+  width: fit-content;
+  font-size: 0.625rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  border: 1px dashed var(--line);
+  border-radius: var(--radius-sm);
+  padding: 0.05rem var(--sp-2);
+  margin-bottom: var(--sp-1);
+}
+
+.term-search-label {
+  display: block;
+  font-size: 0.875rem;
+  color: var(--muted);
+  margin-bottom: var(--sp-2);
+}
+
+.term-search-input {
+  font-family: var(--font-ui);
+  font-size: 1rem;
+  width: 100%;
+  max-width: 26rem;
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.term-search-results {
+  list-style: none;
+  margin: var(--sp-4) 0 0;
+  padding: 0;
+  border-top: 1px solid var(--line);
+}
+
+.term-search-result {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3) 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.term-search-result-main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-width: 0;
+}
+
+.term-search-result-main small,
+.term-search-result-credits {
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+@media (max-width: 640px) {
+  .term-planner-header {
+    align-items: flex-start;
+  }
+
+  .term-meta {
+    margin-left: 0;
+  }
+
+  .term-search-result {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+}

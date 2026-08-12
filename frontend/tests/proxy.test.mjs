@@ -24,15 +24,28 @@ test('server proxy rejects missing configuration without forwarding', async () =
 test('server proxy validates method, student slug, and feature', async () => {
   const handler = createProxyHandler({ env: {}, fetchImpl: async () => new Response() })
 
-  // Methods other than GET/POST are rejected outright.
+  // Methods the proxy carries for no route at all are rejected outright.
   assert.equal(
     (await handler.fetch(new Request(REQUEST_URL, { method: 'PUT' }))).status,
     405,
   )
+  // DELETE became a method the proxy accepts when the planned-course removal
+  // target was added, so it no longer stops at the 405 method gate. It must
+  // still never reach a slug-addressed AI route: the slug branch admits only
+  // GET and POST, so this is a 400 rather than a forwarded request.
+  let forwardedDelete = false
+  const deleteHandler = createProxyHandler({
+    env: { GRADUSIQ_BACKEND_URL: 'https://backend.example', GRADUSIQ_PROXY_SECRET: 's' },
+    fetchImpl: async () => {
+      forwardedDelete = true
+      return new Response()
+    },
+  })
   assert.equal(
-    (await handler.fetch(new Request(REQUEST_URL, { method: 'DELETE' }))).status,
-    405,
+    (await deleteHandler.fetch(new Request(REQUEST_URL, { method: 'DELETE' }))).status,
+    400,
   )
+  assert.equal(forwardedDelete, false)
   // GET is now a valid method, but only for read features -- a GET naming an
   // AI feature is a method/feature mismatch (400), never a triggered AI call.
   assert.equal((await handler.fetch(new Request(REQUEST_URL))).status, 400)
@@ -774,10 +787,26 @@ test('PATCH is confined to the review-edit target and never reaches the slug sur
 test('genuinely unsupported methods are still 405', async () => {
   const handler = createProxyHandler({ env: ME_ENV, fetchImpl: async () => new Response() })
 
-  for (const method of ['PUT', 'DELETE', 'HEAD', 'OPTIONS']) {
+  // DELETE left this list when the planned-course removal target was added --
+  // it is now a method the proxy carries, so it passes the 405 gate and is
+  // rejected further down by the target's own method check. The case below
+  // pins that it is still refused on a target that does not declare it.
+  for (const method of ['PUT', 'HEAD', 'OPTIONS']) {
     const response = await handler.fetch(new Request(REVIEW_URL, { method }))
     assert.equal(response.status, 405, `${method} should be 405`)
   }
+
+  let forwarded = false
+  const strict = createProxyHandler({
+    env: ME_ENV,
+    fetchImpl: async () => {
+      forwarded = true
+      return new Response()
+    },
+  })
+  const response = await strict.fetch(new Request(REVIEW_URL, { method: 'DELETE' }))
+  assert.equal(response.status, 400, 'DELETE on a non-DELETE target should be 400')
+  assert.equal(forwarded, false)
 })
 
 test('me targets reject wrong method, unknown target, and bad feature', async () => {
@@ -809,4 +838,170 @@ test('me targets reject wrong method, unknown target, and bad feature', async ()
   assert.equal(unknownTarget.status, 400)
   assert.equal(badFeature.status, 400)
   assert.equal(forwarded, false)
+})
+
+// ── term-organized Academic Record targets ──────────────────────────────────
+
+const PLANNING_ENV = {
+  GRADUSIQ_BACKEND_URL: 'https://backend.example',
+  GRADUSIQ_PROXY_SECRET: 'proxy-secret',
+}
+
+function planningHandler() {
+  const seen = []
+  const handler = createProxyHandler({
+    env: PLANNING_ENV,
+    fetchImpl: async (url, init) => {
+      seen.push({ url: url.toString(), method: init.method, headers: init.headers })
+      return new Response('{}', { status: 200, headers: { 'content-type': 'application/json' } })
+    },
+  })
+  return { handler, seen }
+}
+
+test('me-terms forwards a GET with Authorization and the proxy secret', async () => {
+  const { handler, seen } = planningHandler()
+  const response = await handler.fetch(
+    new Request('https://gradusiq.example/api/proxy?target=me-terms', {
+      method: 'GET',
+      headers: { Authorization: 'Bearer token-abc' },
+    }),
+  )
+
+  assert.equal(response.status, 200)
+  assert.equal(seen[0].url, 'https://backend.example/api/v2/student/me/terms')
+  assert.equal(seen[0].headers.Authorization, 'Bearer token-abc')
+  assert.equal(seen[0].headers['X-GradusIQ-Proxy-Secret'], 'proxy-secret')
+})
+
+test('me-planned-courses accepts both GET and POST on one path', async () => {
+  // Listing and adding share a URL, and a Vercel rewrite cannot route on
+  // method -- so this target declares `methods`, and both must pass.
+  for (const method of ['GET', 'POST']) {
+    const { handler, seen } = planningHandler()
+    const response = await handler.fetch(
+      new Request('https://gradusiq.example/api/proxy?target=me-planned-courses', {
+        method,
+        headers: { Authorization: 'Bearer t' },
+        ...(method === 'POST' ? { body: '{"course_code":"CSCE 121"}' } : {}),
+      }),
+    )
+    assert.equal(response.status, 200)
+    assert.equal(seen[0].url, 'https://backend.example/api/v2/student/me/planned-courses')
+    assert.equal(seen[0].method, method)
+  }
+})
+
+test('me-planned-courses rejects a method outside its methods array', async () => {
+  const { handler, seen } = planningHandler()
+  const response = await handler.fetch(
+    new Request('https://gradusiq.example/api/proxy?target=me-planned-courses', {
+      method: 'PATCH',
+    }),
+  )
+  assert.equal(response.status, 400)
+  assert.equal(seen.length, 0)
+})
+
+test('me-planned-courses forwards a valid term_id and rejects a malformed one', async () => {
+  const uuid = '11111111-2222-3333-4444-555555555555'
+  const { handler, seen } = planningHandler()
+  await handler.fetch(
+    new Request(`https://gradusiq.example/api/proxy?target=me-planned-courses&term_id=${uuid}`, {
+      method: 'GET',
+    }),
+  )
+  assert.equal(
+    seen[0].url,
+    `https://backend.example/api/v2/student/me/planned-courses?term_id=${uuid}`,
+  )
+
+  const { handler: bad, seen: badSeen } = planningHandler()
+  const response = await bad.fetch(
+    new Request(
+      'https://gradusiq.example/api/proxy?target=me-planned-courses&term_id=' +
+        encodeURIComponent('../../secret'),
+      { method: 'GET' },
+    ),
+  )
+  assert.equal(response.status, 400)
+  assert.equal(badSeen.length, 0)
+})
+
+test('me-planned-course-remove is DELETE-only and requires a UUID', async () => {
+  const uuid = '11111111-2222-3333-4444-555555555555'
+  const { handler, seen } = planningHandler()
+  await handler.fetch(
+    new Request(`https://gradusiq.example/api/proxy?target=me-planned-course-remove&id=${uuid}`, {
+      method: 'DELETE',
+    }),
+  )
+  assert.equal(seen[0].url, `https://backend.example/api/v2/student/me/planned-courses/${uuid}`)
+  assert.equal(seen[0].method, 'DELETE')
+
+  for (const [method, id] of [['GET', uuid], ['DELETE', 'not-a-uuid'], ['DELETE', '']]) {
+    const { handler: bad, seen: badSeen } = planningHandler()
+    const response = await bad.fetch(
+      new Request(
+        `https://gradusiq.example/api/proxy?target=me-planned-course-remove&id=${encodeURIComponent(id)}`,
+        { method },
+      ),
+    )
+    assert.equal(response.status, 400)
+    assert.equal(badSeen.length, 0)
+  }
+})
+
+test('me-catalog-search forwards an encoded query and rejects junk', async () => {
+  const { handler, seen } = planningHandler()
+  await handler.fetch(
+    new Request(
+      'https://gradusiq.example/api/proxy?target=me-catalog-search&q=' +
+        encodeURIComponent('MATH 251'),
+      { method: 'GET' },
+    ),
+  )
+  assert.equal(
+    seen[0].url,
+    'https://backend.example/api/v2/student/me/catalog/search?q=MATH%20251',
+  )
+
+  const rejected = ['', '<script>', 'a'.repeat(65), 'drop%00table']
+  for (const query of rejected) {
+    const { handler: bad, seen: badSeen } = planningHandler()
+    const response = await bad.fetch(
+      new Request(
+        `https://gradusiq.example/api/proxy?target=me-catalog-search&q=${encodeURIComponent(query)}`,
+        { method: 'GET' },
+      ),
+    )
+    assert.equal(response.status, 400, `expected ${JSON.stringify(query)} to be rejected`)
+    assert.equal(badSeen.length, 0)
+  }
+})
+
+test('the planning targets do not forward Authorization on the slug branch', async () => {
+  // The me-target/slug distinction must survive the new entries: a slug
+  // request still forwards no inbound credential.
+  const { handler, seen } = planningHandler()
+  await handler.fetch(
+    new Request('https://gradusiq.example/api/proxy?student=jordanReyes&feature=profile', {
+      method: 'GET',
+      headers: { Authorization: 'Bearer leaked' },
+    }),
+  )
+  assert.equal(seen[0].headers.Authorization, undefined)
+})
+
+test('the target allowlist stays closed after adding the planning targets', async () => {
+  const { handler, seen } = planningHandler()
+  for (const target of ['me-planned', 'planned-courses', 'me-terms-x', 'constructor', '__proto__']) {
+    const response = await handler.fetch(
+      new Request(`https://gradusiq.example/api/proxy?target=${encodeURIComponent(target)}`, {
+        method: 'GET',
+      }),
+    )
+    assert.equal(response.status, 400, `expected ${target} to be rejected`)
+  }
+  assert.equal(seen.length, 0)
 })

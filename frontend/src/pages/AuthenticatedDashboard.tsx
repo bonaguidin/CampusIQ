@@ -6,6 +6,7 @@ import { DashboardSuccessNotice } from '../components/DashboardSuccessNotice';
 import { FitAnalysisPanel } from '../components/FitAnalysisPanel';
 import { GapAnalysisPanel } from '../components/GapAnalysisPanel';
 import { ShiftAnalysisPanel } from '../components/ShiftAnalysisPanel';
+import { TermPlanner } from '../components/TermPlanner';
 import { CareerProfile } from '../components/career/CareerProfile';
 import { buildDashboardViewModel } from '../data/dashboardViewModel';
 
@@ -18,7 +19,11 @@ const NAV_ITEMS: Array<{ key: NavSection; label: string }> = [
 ];
 
 export function AuthenticatedDashboard() {
-  const { studentAccount, signOutSession } = useAuth();
+  const { studentAccount, signOutSession, session } = useAuth();
+  // The term view reads planned_courses and the catalog through the session
+  // bearer token. Absent one, the section falls back to the flat course list
+  // below rather than rendering an empty planner.
+  const accessToken = session?.access_token ?? null;
   const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState<NavSection>('overview');
   const [railOpen, setRailOpen] = useState(false);
@@ -150,15 +155,25 @@ export function AuthenticatedDashboard() {
                       <div className="overview-stat"><span className="overview-stat-value">{dashboard.projectedGpa?.toFixed(2) ?? '—'}</span><span className="overview-stat-label">Projected GPA</span></div>
                       <div className="overview-stat"><span className="overview-stat-value">{dashboard.earnedHours}</span><span className="overview-stat-label">Earned Hours</span></div>
                     </div>
-                    <div className="real-course-table" role="table" aria-label="Confirmed courses">
-                      {dashboard.courses.map((course) => (
-                        <div className="real-course-row" role="row" key={course.id}>
-                          <span role="cell"><strong>{course.course_code}</strong><small>{course.title ?? 'Untitled course'}</small></span>
-                          <span role="cell">{course.credit_hours} credits</span>
-                          <span role="cell">{course.letter_grade ?? 'In progress'}</span>
+                    {/* The flat all-courses list is replaced by the term view:
+                        one term at a time, chosen from a dropdown that opens on
+                        the upcoming term. The GPA/hours stats above stay
+                        cumulative and unfiltered -- they are the whole record,
+                        and scoping them to one term would quietly change what
+                        "Official GPA" means. */}
+                    {accessToken
+                      ? <TermPlanner accessToken={accessToken} courses={dashboard.courses} />
+                      : (
+                        <div className="real-course-table" role="table" aria-label="Confirmed courses">
+                          {dashboard.courses.map((course) => (
+                            <div className="real-course-row" role="row" key={course.id}>
+                              <span role="cell"><strong>{course.course_code}</strong><small>{course.title ?? 'Untitled course'}</small></span>
+                              <span role="cell">{course.credit_hours} credits</span>
+                              <span role="cell">{course.letter_grade ?? 'In progress'}</span>
+                            </div>
+                          ))}
                         </div>
-                      ))}
-                    </div>
+                      )}
                     {dashboard.repeatExclusions.length > 0 && <p className="real-note">{dashboard.repeatExclusions.length} course attempt(s) excluded from GPA by the institution repeat policy.</p>}
                   </>
                 )}

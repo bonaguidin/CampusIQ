@@ -1,0 +1,322 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  MIN_SEARCH_LENGTH,
+  SEARCH_DEBOUNCE_MS,
+  TERM_STATUS_LABELS,
+  formatCredits,
+  formatTermDates,
+  pickDefaultTermKey,
+  plannedCodes,
+  termCourseGroups,
+  termStatus,
+} from '../lib/termPlanning.mjs';
+import type {
+  CatalogSearchResult,
+  PlannedCourse,
+  PlanningTerm,
+} from '../lib/termPlanning.mjs';
+import {
+  addPlannedCourse,
+  fetchPlannedCourses,
+  fetchTerms,
+  removePlannedCourse,
+  searchCatalog,
+} from '../api/planning';
+
+/**
+ * The Academic Record's term view: a term dropdown, that term's coursework, and
+ * -- for a term that has not started -- a search box for planning courses.
+ *
+ * TWO DATA SOURCES, DELIBERATELY NOT MERGED. Completed and in-progress rows
+ * come from course_records via the profile the dashboard already holds.
+ * Planned rows come from planned_courses, a different table, fetched here. They
+ * render in separate lists with separate styling: a planned course carries no
+ * grade, has not been verified against a transcript, and counts toward nothing.
+ * Merging them into one list would make "you have 15 credits this term" mean
+ * two different things depending on which rows happened to be in it.
+ */
+
+interface TermPlannerProps {
+  accessToken: string;
+  /** course_records rows the dashboard already loaded, for the selected term. */
+  courses: Array<{
+    id: string;
+    course_code: string;
+    title: string | null;
+    credit_hours: number | string;
+    letter_grade: string | null;
+    term_id: string | null;
+  }>;
+}
+
+export function TermPlanner({ accessToken, courses }: TermPlannerProps) {
+  const [terms, setTerms] = useState<PlanningTerm[]>([]);
+  const [selectedKey, setSelectedKey] = useState<string | null>(null);
+  const [planned, setPlanned] = useState<PlannedCourse[]>([]);
+  const [termsLoaded, setTermsLoaded] = useState(false);
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState<CatalogSearchResult[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [busyCode, setBusyCode] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  // `today` is captured once per mount rather than read at each comparison, so
+  // a term cannot change status midway through a render pass.
+  const today = useMemo(() => new Date(), []);
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      const result = await fetchTerms(accessToken);
+      if (cancelled) return;
+      setTerms(result.terms);
+      setSelectedKey(
+        pickDefaultTermKey({ terms: result.terms, upcoming_term_key: result.upcomingTermKey }),
+      );
+      setTermsLoaded(true);
+    })();
+    return () => { cancelled = true; };
+  }, [accessToken]);
+
+  // Every planned course for the student, not per-term: the payload is small,
+  // and refetching on each dropdown change would make switching terms flicker
+  // through an empty list.
+  const loadPlanned = useCallback(async () => {
+    const result = await fetchPlannedCourses(accessToken);
+    setPlanned(result.plannedCourses);
+  }, [accessToken]);
+
+  useEffect(() => { void loadPlanned(); }, [loadPlanned]);
+
+  const selectedTerm = useMemo(
+    () => terms.find((term) => term.key === selectedKey) ?? null,
+    [terms, selectedKey],
+  );
+
+  const status = selectedTerm ? termStatus(selectedTerm, today) : 'unknown';
+  // Planning is offered for a term that has not started. A term already
+  // underway or finished shows its coursework and no search box -- adding a
+  // "plan" to a term whose registration closed is not a thing to offer.
+  const canPlan = status === 'upcoming' || status === 'unknown';
+
+  const { records, planned: plannedForTerm } = useMemo(
+    () => termCourseGroups(selectedTerm?.id ?? null, courses, planned),
+    [selectedTerm, courses, planned],
+  );
+
+  const alreadyPlanned = useMemo(() => plannedCodes(plannedForTerm), [plannedForTerm]);
+
+  // Debounced search. The timer is cleared on every keystroke and on unmount,
+  // so at most one request is in flight per pause.
+  const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (searchTimer.current) clearTimeout(searchTimer.current);
+    const trimmed = query.trim();
+    if (trimmed.length < MIN_SEARCH_LENGTH) {
+      setResults([]);
+      setSearching(false);
+      return undefined;
+    }
+    setSearching(true);
+    searchTimer.current = setTimeout(() => {
+      void (async () => {
+        const result = await searchCatalog(accessToken, trimmed);
+        setResults(result.results);
+        setSearching(false);
+      })();
+    }, SEARCH_DEBOUNCE_MS);
+    return () => { if (searchTimer.current) clearTimeout(searchTimer.current); };
+  }, [query, accessToken]);
+
+  async function handleAdd(result: CatalogSearchResult) {
+    if (!selectedTerm) return;
+    setBusyCode(result.code);
+    setError(null);
+    const response = await addPlannedCourse(accessToken, {
+      course_code: result.code,
+      year: selectedTerm.year,
+      season: selectedTerm.season,
+      term_label: selectedTerm.label,
+      title: result.title,
+      // Only a fixed-credit course carries its hours across. A variable-credit
+      // course (credit_min !== credit_max) is left null rather than guessing
+      // which end of the range the student will register for.
+      credit_hours:
+        result.credit_min !== null && result.credit_min === result.credit_max
+          ? result.credit_min
+          : null,
+      catalog_course_id: result.id,
+    });
+    setBusyCode(null);
+    if (!response.ok) {
+      setError(response.message);
+      return;
+    }
+    // Refetch rather than pushing the returned row: adding a course to a term
+    // the student had never enrolled in creates its academic_terms row, so the
+    // term list itself may now have an id it did not have a moment ago.
+    await loadPlanned();
+    if (selectedTerm.id === null) {
+      const refreshed = await fetchTerms(accessToken);
+      setTerms(refreshed.terms);
+    }
+  }
+
+  async function handleRemove(id: string) {
+    setError(null);
+    const response = await removePlannedCourse(accessToken, id);
+    if (!response.ok) {
+      setError('Could not remove that course.');
+      return;
+    }
+    setPlanned((current) => current.filter((row) => row.id !== id));
+  }
+
+  if (!termsLoaded) return <p className="term-planner-loading">Loading terms…</p>;
+
+  if (terms.length === 0) {
+    return (
+      <p className="empty-state">
+        No terms on record yet. Upload a transcript, or check back once your institution&rsquo;s
+        academic calendar is loaded.
+      </p>
+    );
+  }
+
+  const dateRange = selectedTerm ? formatTermDates(selectedTerm) : null;
+  const statusLabel = TERM_STATUS_LABELS[status];
+
+  return (
+    <div className="term-planner">
+      <div className="term-planner-header">
+        <label className="term-select-label" htmlFor="term-select">Term</label>
+        <select
+          id="term-select"
+          className="term-select"
+          value={selectedKey ?? ''}
+          onChange={(event) => setSelectedKey(event.target.value)}
+        >
+          {terms.map((term) => (
+            <option key={term.key} value={term.key}>
+              {term.label}
+              {term.enrolled ? '' : ' (no coursework yet)'}
+            </option>
+          ))}
+        </select>
+        <div className="term-meta">
+          {statusLabel && <span className={`term-badge term-badge--${status}`}>{statusLabel}</span>}
+          {dateRange
+            ? <span className="term-dates">{dateRange}</span>
+            : <span className="term-dates term-dates--unknown">Calendar dates not on record</span>}
+        </div>
+      </div>
+
+      {error && <p className="term-planner-error" role="alert">{error}</p>}
+
+      <section className="term-courses">
+        <h3 className="term-courses-heading">Coursework</h3>
+        {records.length === 0 ? (
+          <p className="empty-state">No confirmed coursework in this term.</p>
+        ) : (
+          <div className="real-course-table" role="table" aria-label="Coursework in this term">
+            {records.map((course) => (
+              <div className="real-course-row" role="row" key={course.id}>
+                <span role="cell">
+                  <strong>{course.course_code}</strong>
+                  <small>{course.title ?? 'Untitled course'}</small>
+                </span>
+                <span role="cell">{course.credit_hours} credits</span>
+                <span role="cell">{course.letter_grade ?? 'In progress'}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
+      {plannedForTerm.length > 0 && (
+        <section className="term-courses term-courses--planned">
+          <h3 className="term-courses-heading">
+            Planned
+            <span className="term-courses-note">Not yet taken &middot; not counted in GPA or hours</span>
+          </h3>
+          <div className="real-course-table" role="table" aria-label="Planned courses in this term">
+            {plannedForTerm.map((course) => (
+              <div className="real-course-row real-course-row--planned" role="row" key={course.id}>
+                <span role="cell">
+                  <span className="planned-badge">Planned</span>
+                  <strong>{course.course_code}</strong>
+                  <small>{course.title ?? 'Untitled course'}</small>
+                </span>
+                <span role="cell">
+                  {course.credit_hours === null ? 'Credits TBD' : `${course.credit_hours} credits`}
+                </span>
+                <span role="cell">
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-sm"
+                    onClick={() => { void handleRemove(course.id); }}
+                    aria-label={`Remove ${course.course_code} from your plan`}
+                  >
+                    Remove
+                  </button>
+                </span>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {canPlan && (
+        <section className="term-search">
+          <h3 className="term-courses-heading">Plan a course</h3>
+          <label className="term-search-label" htmlFor="course-search">
+            Search your course catalog by code or title
+          </label>
+          <input
+            id="course-search"
+            className="term-search-input"
+            type="search"
+            value={query}
+            placeholder="e.g. CSCE 121 or Data Structures"
+            onChange={(event) => setQuery(event.target.value)}
+            autoComplete="off"
+          />
+          {query.trim().length > 0 && query.trim().length < MIN_SEARCH_LENGTH && (
+            <p className="term-search-hint">Keep typing…</p>
+          )}
+          {searching && <p className="term-search-hint">Searching…</p>}
+          {!searching && query.trim().length >= MIN_SEARCH_LENGTH && results.length === 0 && (
+            <p className="term-search-hint">
+              No matches. Search matches the start of a course code or title.
+            </p>
+          )}
+          {results.length > 0 && (
+            <ul className="term-search-results">
+              {results.map((result) => {
+                const isPlanned = alreadyPlanned.has(result.code.toUpperCase());
+                const credits = formatCredits(result.credit_min, result.credit_max);
+                return (
+                  <li className="term-search-result" key={result.id}>
+                    <span className="term-search-result-main">
+                      <strong>{result.code}</strong>
+                      <small>{result.title}</small>
+                    </span>
+                    {credits && <span className="term-search-result-credits">{credits}</span>}
+                    <button
+                      type="button"
+                      className="btn btn-primary btn-sm"
+                      disabled={isPlanned || busyCode === result.code}
+                      onClick={() => { void handleAdd(result); }}
+                    >
+                      {isPlanned ? 'Planned' : busyCode === result.code ? 'Adding…' : 'Add'}
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </section>
+      )}
+    </div>
+  );
+}
