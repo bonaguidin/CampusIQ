@@ -177,6 +177,13 @@ def test_cors_allows_exactly_the_methods_the_app_exposes():
     and always sends Access-Control-Request-Method: POST, so it passes
     identically whatever the method list contains. This varies the method
     instead, which is the thing that changed when PATCH was added.
+
+    DELETE joined the allowed list when the planned-course removal route
+    (DELETE /api/v2/student/me/planned-courses/{id}) was added. The assertion
+    below is derived from the router rather than restated as a literal, so the
+    next route carrying a new method updates it by existing -- which is what
+    this test is actually for. PUT stays in the negative case: no route uses
+    it, so it must stay out.
     """
     test_client = TestClient(api.create_app(make_test_config()))
 
@@ -189,13 +196,25 @@ def test_cors_allows_exactly_the_methods_the_app_exposes():
             },
         )
 
-    for method in ("GET", "POST", "PATCH"):
+    # Every method any route actually declares, read off the router itself.
+    exposed = {
+        method
+        for route in api.router.routes
+        for method in getattr(route, "methods", set())
+        if method not in {"HEAD", "OPTIONS"}
+    }
+    assert {"GET", "POST", "PATCH", "DELETE"} <= exposed, (
+        f"router no longer exposes the methods this test assumes: {sorted(exposed)}"
+    )
+
+    for method in sorted(exposed):
         response = preflight(method)
         allowed = response.headers.get("access-control-allow-methods", "")
         assert method in allowed, f"{method} should be allowed, got {allowed!r}"
 
     # Methods the app exposes no route for stay out.
-    for method in ("DELETE", "PUT"):
+    for method in ("PUT", "TRACE"):
+        assert method not in exposed, f"{method} now has a route; update this test"
         response = preflight(method)
         assert method not in response.headers.get("access-control-allow-methods", "")
 

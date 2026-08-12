@@ -1,0 +1,171 @@
+{
+  "source": "https://app.coursedog.com/api/v1/southernmethodist_peoplesoft_direct/general/terms",
+  "institution": "Southern Methodist University",
+  "fetched_on": "2026-08-11",
+  "window": {
+    "start": "2025-01-01",
+    "end": "2027-08-31"
+  },
+  "terms": [
+    {
+      "year": 2025,
+      "season": "Spring",
+      "label": "Spring 2025",
+      "start_date": "2025-01-21",
+      "end_date": "2025-05-14",
+      "source": "coursedog",
+      "source_last_checked": "2026-08-11",
+      "_coursedog_term_id": "1252"
+    },
+    {
+      "year": 2025,
+      "season": "May",
+      "label": "May 2025",
+      "start_date": "2025-05-15",
+      "end_date": "2025-05-30",
+      "source": "coursedog",
+      "source_last_checked": "2026-08-11",
+      "_coursedog_term_id": "1253"
+    },
+    {
+      "year": 2025,
+      "season": "Summer",
+      "label": "Summer 2025",
+      "start_date": "2025-06-02",
+      "end_date": "2025-08-05",
+      "source": "coursedog",
+      "source_last_checked": "2026-08-11",
+      "_coursedog_term_id": "1254"
+    },
+    {
+      "year": 2025,
+      "season": "August",
+      "label": "August 2025",
+      "start_date": "2025-08-07",
+      "end_date": "2025-08-21",
+      "source": "coursedog",
+      "source_last_checked": "2026-08-11",
+      "_coursedog_term_id": "1256"
+    },
+    {
+      "year": 2025,
+      "season": "Fall",
+      "label": "Fall 2025",
+      "start_date": "2025-08-25",
+      "end_date": "2025-12-17",
+      "source": "coursedog",
+      "source_last_checked": "2026-08-11",
+      "_coursedog_term_id": "1257"
+    },
+    {
+      "year": 2026,
+      "season": "Winter",
+      "label": "January 2026",
+      "start_date": "2025-12-18",
+      "end_date": "2026-01-16",
+      "source": "coursedog",
+      "source_last_checked": "2026-08-11",
+      "_coursedog_term_id": "1261"
+    },
+    {
+      "year": 2026,
+      "season": "Spring",
+      "label": "Spring 2026",
+      "start_date": "2026-01-20",
+      "end_date": "2026-05-14",
+      "source": "coursedog",
+      "source_last_checked": "2026-08-11",
+      "_coursedog_term_id": "1262"
+    },
+    {
+      "year": 2026,
+      "season": "May",
+      "label": "May 2026",
+      "start_date": "2026-05-16",
+      "end_date": "2026-06-02",
+      "source": "coursedog",
+      "source_last_checked": "2026-08-11",
+      "_coursedog_term_id": "1263"
+    },
+    {
+      "year": 2026,
+      "season": "Summer",
+      "label": "Summer 2026",
+      "start_date": "2026-06-03",
+      "end_date": "2026-08-04",
+      "source": "coursedog",
+      "source_last_checked": "2026-08-11",
+      "_coursedog_term_id": "1264"
+    },
+    {
+      "year": 2026,
+      "season": "August",
+      "label": "August 2026",
+      "start_date": "2026-08-06",
+      "end_date": "2026-08-20",
+      "source": "coursedog",
+      "source_last_checked": "2026-08-11",
+      "_coursedog_term_id": "1266"
+    },
+    {
+      "year": 2026,
+      "season": "Fall",
+      "label": "Fall 2026",
+      "start_date": "2026-08-24",
+      "end_date": "2026-12-16",
+      "source": "coursedog",
+      "source_last_checked": "2026-08-11",
+      "_coursedog_term_id": "1267"
+    },
+    {
+      "year": 2027,
+      "season": "Winter",
+      "label": "January 2027",
+      "start_date": "2026-12-17",
+      "end_date": "2027-01-15",
+      "source": "coursedog",
+      "source_last_checked": "2026-08-11",
+      "_coursedog_term_id": "1271"
+    },
+    {
+      "year": 2027,
+      "season": "Spring",
+      "label": "Spring 2027",
+      "start_date": "2027-01-19",
+      "end_date": "2027-05-12",
+      "source": "coursedog",
+      "source_last_checked": "2026-08-11",
+      "_coursedog_term_id": "1272"
+    },
+    {
+      "year": 2027,
+      "season": "May",
+      "label": "May 2027",
+      "start_date": "2027-05-13",
+      "end_date": "2027-05-28",
+      "source": "coursedog",
+      "source_last_checked": "2026-08-11",
+      "_coursedog_term_id": "1273"
+    },
+    {
+      "year": 2027,
+      "season": "Summer",
+      "label": "Summer 2027",
+      "start_date": "2027-06-01",
+      "end_date": "2027-08-04",
+      "source": "coursedog",
+      "source_last_checked": "2026-08-11",
+      "_coursedog_term_id": "1274"
+    },
+    {
+      "year": 2027,
+      "season": "August",
+      "label": "August 2027",
+      "start_date": "2027-08-05",
+      "end_date": "2027-08-19",
+      "source": "coursedog",
+      "source_last_checked": "2026-08-11",
+      "_coursedog_term_id": "1276"
+    }
+  ]
+}
