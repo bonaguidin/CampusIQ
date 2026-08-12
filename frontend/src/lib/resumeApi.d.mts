@@ -112,7 +112,13 @@ export interface NormalizedUpload {
   written: WrittenCounts;
   totals: WrittenTotals;
   careerProfile: CareerProfileOutcome | null;
+  academics: ResumeAcademicFacts;
   errors: string[];
+}
+
+export interface ResumeAcademicFacts {
+  major_current: string | null;
+  expected_graduation: string | null;
 }
 
 export declare function normalizeUploadResponse(

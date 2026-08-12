@@ -65,7 +65,11 @@ from GradusIQ_career.resume.review import (
     apply_edit,
     load_unconfirmed,
 )
-from GradusIQ_career.resume.store import confirm_career_rows, store_parsed_resume
+from GradusIQ_career.resume.store import (
+    confirm_career_rows,
+    store_parsed_resume,
+    write_confirmed_academic_facts,
+)
 from GradusIQ_career.supabase_client import SupabaseConfigError, build_client_for_token
 from GradusIQ_career.transcript.catalog import match_courses
 from GradusIQ_career.transcript.crosscheck import cross_check_terms
@@ -1030,6 +1034,11 @@ EXTRACTION_STATUS_CODES = {
 }
 
 
+class ResumeAcademicFactsRequest(BaseModel):
+    major_current: str | None = None
+    expected_graduation: str | None = None
+
+
 class ConfirmRequest(BaseModel):
     """Optional subset selection for the confirm route.
 
@@ -1043,6 +1052,7 @@ class ConfirmRequest(BaseModel):
     certifications: list[str] = []
     work_experience: list[str] = []
     projects: list[str] = []
+    academics: ResumeAcademicFactsRequest | None = None
 
     def is_empty(self) -> bool:
         return not (
@@ -1131,6 +1141,7 @@ def upload_me_resume(request: Request, file: UploadFile = File(...)) -> dict:
         raise HTTPException(status_code=502, detail="Could not save the parsed resume.") from exc
 
     response.update(report.to_dict())
+    response["academics"] = parsed.academics
     return response
 
 
@@ -1142,10 +1153,28 @@ def confirm_me_career(request: Request, body: ConfirmRequest | None = None) -> d
     client = _session_client(request)
     student_id = _resolve_session_student_id(client)
 
-    selection = None if body is None or body.is_empty() else body.model_dump()
+    selection = None if body is None or body.is_empty() else body.model_dump(exclude={"academics"})
+    academics = body.academics.model_dump() if body is not None and body.academics else None
+
+    if academics:
+        major = academics.get("major_current")
+        graduation = academics.get("expected_graduation")
+        if major is not None:
+            major = major.strip()
+            if not major or len(major) > 120:
+                raise HTTPException(status_code=422, detail="major_current must be 1-120 characters.")
+            academics["major_current"] = major
+        if graduation is not None and not _GRADUATION_PATTERN.fullmatch(graduation.strip()):
+            raise HTTPException(
+                status_code=422,
+                detail='expected_graduation must use "Spring YYYY" or "Fall YYYY".',
+            )
+        if graduation is not None:
+            academics["expected_graduation"] = graduation.strip()
 
     try:
         confirmed = confirm_career_rows(client, student_id, selection=selection)
+        academic_rows_updated = write_confirmed_academic_facts(client, student_id, academics)
     except Exception as exc:  # noqa: BLE001 -- RLS denial or transport
         raise HTTPException(status_code=502, detail="Could not confirm career records.") from exc
 
@@ -1154,6 +1183,7 @@ def confirm_me_career(request: Request, body: ConfirmRequest | None = None) -> d
         "scope": "selection" if selection else "all_unconfirmed",
         "confirmed": confirmed,
         "total_confirmed": sum(confirmed.values()),
+        "academic_rows_updated": academic_rows_updated,
     }
 
 

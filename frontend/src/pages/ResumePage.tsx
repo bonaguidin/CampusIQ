@@ -5,7 +5,12 @@ import { ResumeUpload } from '../components/ResumeUpload';
 import { CareerReview } from '../components/CareerReview';
 import { fetchCareerReview } from '../api/resume';
 import { resumeSuccessState } from '../lib/successNotice.mjs';
-import type { NormalizedReview, NormalizedUpload, ReviewSections } from '../lib/resumeApi.mjs';
+import type {
+  NormalizedReview,
+  NormalizedUpload,
+  ResumeAcademicFacts,
+  ReviewSections,
+} from '../lib/resumeApi.mjs';
 
 /**
  * NO 'done' STEP, BY DESIGN -- see TranscriptPage for the same decision stated
@@ -39,6 +44,7 @@ export function ResumeFlow({ accessToken }: { accessToken: string }) {
   // Provenance for the review masthead. Held here because it is the only place
   // that sees both the upload and the review step.
   const [source, setSource] = useState<{ name: string; at: Date } | null>(null);
+  const [academicFacts, setAcademicFacts] = useState<ResumeAcademicFacts | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -64,8 +70,9 @@ export function ResumeFlow({ accessToken }: { accessToken: string }) {
     };
   }, [accessToken, recoveryAttempt]);
 
-  function handleUploaded(_result: NormalizedUpload, fileName: string) {
+  function handleUploaded(result: NormalizedUpload, fileName: string) {
     setRecoveredSections(null);
+    setAcademicFacts(result.academics);
     setSource({ name: fileName, at: new Date() });
     setStep('review');
   }
@@ -125,6 +132,7 @@ export function ResumeFlow({ accessToken }: { accessToken: string }) {
         initialSections={recoveredSections ?? undefined}
         sourceName={source?.name}
         parsedAt={source?.at}
+        academicFacts={academicFacts ?? undefined}
       />
     );
   }

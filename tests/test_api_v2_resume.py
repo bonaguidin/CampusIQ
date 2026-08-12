@@ -21,6 +21,7 @@ from reportlab.pdfgen import canvas as rl_canvas
 
 from GradusIQ_career import api
 from GradusIQ_career.ai.types import AIResponse
+from GradusIQ_career.profile_builder import build_student_intelligence_profile
 
 
 TEST_PROXY_SECRET = "test-proxy-secret"
@@ -96,6 +97,10 @@ def image_only_pdf() -> bytes:
 
 GOOD_PARSE = {
     "status": "ok",
+    "academics": {
+        "major_current": "Computer Engineering",
+        "expected_graduation": "May 2029",
+    },
     "profile": {
         "target_roles": ["Software Engineering Intern"],
         "interests": ["backend"],
@@ -151,6 +156,10 @@ class FakeDB:
             "certifications": [],
             "work_experience": [],
             "projects": [],
+            "student_institutions": [],
+            "institutions": [],
+            "academic_terms": [],
+            "course_records": [],
         }
         self._next = 0
 
@@ -777,6 +786,96 @@ def test_confirm_with_empty_body_confirms_everything(client, db, monkeypatch):
 
     assert body["scope"] == "all_unconfirmed"
     assert body["total_confirmed"] == 4
+
+
+def test_confirm_writes_reviewed_academic_facts_without_touching_declarations(
+    client, db, monkeypatch
+):
+    student = db.tables["students"][0]
+    student.update(
+        {
+            "major_current": "Electrical Engineering",
+            "major_intended": "N/A",
+            "expected_graduation": "Fall 2030",
+        }
+    )
+    seed_unconfirmed(db, STUDENT_A, "cp-a")
+    profile = db.tables["career_profiles"][0]
+    profile.update({"target_roles": [], "interests": [], "ai_anxiety_level": None})
+    patch_session(monkeypatch, db, student_id=STUDENT_A)
+
+    response = client.post(
+        CONFIRM,
+        headers=HEADERS,
+        json={
+            "academics": {
+                "major_current": "Computer Engineering",
+                "expected_graduation": "Spring 2029",
+            }
+        },
+    )
+
+    assert response.status_code == 200, response.text
+    assert response.json()["academic_rows_updated"] == 1
+    assert student["major_current"] == "Computer Engineering"
+    assert student["expected_graduation"] == "Spring 2029"
+    assert student["major_intended"] == "N/A"
+    assert profile["target_roles"] == []
+    assert profile["interests"] == []
+    assert profile["ai_anxiety_level"] is None
+
+
+def test_confirm_omitted_academic_facts_do_not_clear_existing_values(client, db, monkeypatch):
+    student = db.tables["students"][0]
+    student.update(
+        {
+            "major_current": "Computer Science",
+            "major_intended": "Mathematics",
+            "expected_graduation": "Fall 2028",
+        }
+    )
+    seed_unconfirmed(db, STUDENT_A, "cp-a")
+    patch_session(monkeypatch, db, student_id=STUDENT_A)
+
+    response = client.post(CONFIRM, headers=HEADERS, json={"academics": {}})
+
+    assert response.status_code == 200
+    assert response.json()["academic_rows_updated"] == 0
+    assert student["major_current"] == "Computer Science"
+    assert student["major_intended"] == "Mathematics"
+    assert student["expected_graduation"] == "Fall 2028"
+
+
+def test_resume_confirmation_flows_into_canonical_dashboard_fields(client, db, monkeypatch):
+    patch_session(monkeypatch, db, student_id=STUDENT_A)
+    monkeypatch.setattr(api, "build_client", lambda: FakeAI())
+
+    uploaded = upload(
+        client,
+        content=make_pdf(
+            [
+                "Bachelor of Science in Computer Engineering",
+                "Expected Graduation: May 2029",
+                "Skills: Python, TypeScript",
+                "Praxigen - Software Engineering Intern",
+            ]
+        ),
+    )
+    facts = uploaded.json()["academics"]
+    confirmed = client.post(CONFIRM, headers=HEADERS, json={"academics": facts})
+
+    assert confirmed.status_code == 200, confirmed.text
+    canonical = build_student_intelligence_profile(FakeSupabase(db, STUDENT_A), STUDENT_A)
+    assert canonical.academics.summary.major_current == "Computer Engineering"
+    assert canonical.identity.expected_graduation == "Spring 2029"
+    assert canonical.career.confirmed is True
+    assert canonical.career.skills.technical == ["Python", "SQL"]
+    display_major = (
+        canonical.academics.summary.major_current
+        or canonical.academics.summary.major_intended
+        or "Major not provided"
+    )
+    assert display_major == "Computer Engineering"
 
 
 def test_confirm_requires_a_session(client, db, monkeypatch):

@@ -268,6 +268,7 @@ export function normalizeUploadResponse(httpStatus, body) {
     written: normalizeWritten(null),
     totals: writtenTotals(null),
     careerProfile: null,
+    academics: { major_current: null, expected_graduation: null },
     errors: [],
   }
 
@@ -288,6 +289,16 @@ export function normalizeUploadResponse(httpStatus, body) {
         written: normalizeWritten(body.written),
         totals: writtenTotals(body.written),
         careerProfile: body.career_profile ?? null,
+        academics: {
+          major_current:
+            typeof body.academics?.major_current === 'string'
+              ? body.academics.major_current
+              : null,
+          expected_graduation:
+            typeof body.academics?.expected_graduation === 'string'
+              ? body.academics.expected_graduation
+              : null,
+        },
       }
     }
 

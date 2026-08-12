@@ -20,6 +20,7 @@ into the student's permanent record.
 """
 
 import json
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Literal, Mapping
@@ -50,6 +51,11 @@ MAX_PROMPT_CHARS = 60_000
 
 PROFILE_LIST_FIELDS = ("target_roles", "interests", "skills_technical", "skills_soft")
 
+GRADUATION_PATTERN = re.compile(
+    r"^(?P<label>spring|fall|may|dec(?:ember)?)\s+(?P<year>20\d{2})$",
+    re.IGNORECASE,
+)
+
 # (field name, required key, optional scalar fields, optional list fields)
 ITEM_SPECS = {
     "certifications": ("name", ("issuer", "status", "date"), ()),
@@ -59,6 +65,10 @@ ITEM_SPECS = {
 
 OUTPUT_CONTRACT: Mapping[str, Any] = {
     "status": "ok|not_a_resume|unparseable",
+    "academics": {
+        "major_current": "string|null (only when explicitly stated)",
+        "expected_graduation": "string|null (copy the explicit date/season text)",
+    },
     "profile": {
         "target_roles": ["string"],
         "interests": ["string"],
@@ -105,6 +115,7 @@ class ResumeContractError(ValueError):
 @dataclass(frozen=True)
 class ParsedResume:
     status: ParseStatus
+    academics: dict[str, str | None] = field(default_factory=dict)
     profile: dict[str, list[str]] = field(default_factory=dict)
     certifications: list[dict[str, Any]] = field(default_factory=list)
     work_experience: list[dict[str, Any]] = field(default_factory=list)
@@ -120,6 +131,7 @@ class ParsedResume:
             or self.work_experience
             or self.projects
             or any(self.profile.values())
+            or any(self.academics.values())
         )
 
 
@@ -170,6 +182,19 @@ def _clean_str(value: Any) -> str | None:
         return None
     trimmed = value.strip()[:MAX_FIELD_CHARS].strip()
     return trimmed or None
+
+
+def normalize_expected_graduation(value: Any) -> str | None:
+    """Map explicit resume dates to the database's two-season contract."""
+    cleaned = _clean_str(value)
+    if cleaned is None:
+        return None
+    match = GRADUATION_PATTERN.fullmatch(cleaned)
+    if match is None:
+        return None
+    label = match.group("label").casefold()
+    season = "Spring" if label in {"spring", "may"} else "Fall"
+    return f"{season} {match.group('year')}"
 
 
 def _clean_str_list(value: Any) -> list[str]:
@@ -284,12 +309,31 @@ def validate_parsed_resume(payload: Mapping[str, Any]) -> ParsedResume:
     profile_source: Mapping[str, Any] = raw_profile or {}
     profile = {name: _clean_str_list(profile_source.get(name)) for name in PROFILE_LIST_FIELDS}
 
-    unexpected = set(payload) - {"status", "profile", *ITEM_SPECS}
+    raw_academics = payload.get("academics")
+    if raw_academics is not None and not isinstance(raw_academics, Mapping):
+        warnings.append(
+            f"academics: expected an object, got {type(raw_academics).__name__}; ignored"
+        )
+        raw_academics = None
+    academics_source: Mapping[str, Any] = raw_academics or {}
+    major_current = _clean_str(academics_source.get("major_current"))
+    raw_graduation = _clean_str(academics_source.get("expected_graduation"))
+    expected_graduation = normalize_expected_graduation(raw_graduation)
+    if raw_graduation is not None and expected_graduation is None:
+        warnings.append(
+            f"academics.expected_graduation: unrecognized value {raw_graduation!r}; ignored"
+        )
+
+    unexpected = set(payload) - {"status", "academics", "profile", *ITEM_SPECS}
     if unexpected:
         warnings.append(f"ignored unexpected top-level key(s): {sorted(unexpected)}")
 
     return ParsedResume(
         status="ok",
+        academics={
+            "major_current": major_current,
+            "expected_graduation": expected_graduation,
+        },
         profile=profile,
         certifications=_clean_items(payload.get("certifications"), "certifications", warnings),
         work_experience=_clean_items(payload.get("work_experience"), "work_experience", warnings),

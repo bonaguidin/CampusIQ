@@ -9,6 +9,7 @@ import {
 import type {
   CounterRow,
   NormalizedConfirm,
+  ResumeAcademicFacts,
   ReviewRow,
   ReviewSections,
   SectionKey,
@@ -30,6 +31,7 @@ interface CareerReviewProps {
    */
   sourceName?: string;
   parsedAt?: Date;
+  academicFacts?: ResumeAcademicFacts;
 }
 
 /** Per-row UI state: an inline message, and whether editing is still allowed. */
@@ -79,6 +81,7 @@ export function CareerReview({
   initialSections,
   sourceName,
   parsedAt,
+  academicFacts,
 }: CareerReviewProps) {
   const initialRows = useMemo(
     () => (initialSections ? draftsFromSections(initialSections) : {}),
@@ -107,6 +110,9 @@ export function CareerReview({
   const [confirmError, setConfirmError] = useState<string | null>(null);
   const [confirming, setConfirming] = useState(false);
   const [justSaved, setJustSaved] = useState(false);
+  const [academicDraft, setAcademicDraft] = useState<ResumeAcademicFacts>(
+    academicFacts ?? { major_current: null, expected_graduation: null },
+  );
 
   useEffect(() => {
     if (initialSections) {
@@ -231,7 +237,7 @@ export function CareerReview({
   async function handleConfirm() {
     setConfirming(true);
     setConfirmError(null);
-    const result = await confirmCareerRecords(accessToken);
+    const result = await confirmCareerRecords(accessToken, academicDraft);
     if (result.ok) {
       // Brief acknowledgement before the page machine advances, so the click
       // visibly did something rather than the screen simply vanishing.
@@ -314,8 +320,13 @@ export function CareerReview({
   }
 
   const hasProfile = sections.career_profile !== null;
+  const hasAcademicFacts = Boolean(
+    academicFacts?.major_current || academicFacts?.expected_graduation,
+  );
   const pending =
-    (hasProfile ? 1 : 0) + CHILD_TABLES.reduce((n, t) => n + sections[t].length, 0);
+    (hasProfile ? 1 : 0) +
+    (hasAcademicFacts ? 1 : 0) +
+    CHILD_TABLES.reduce((n, t) => n + sections[t].length, 0);
 
   if (pending === 0) {
     return (
@@ -381,6 +392,53 @@ export function CareerReview({
         </header>
 
         <LedgerBar counters={counters} onJumpToGap={jumpToGap} />
+
+        {hasAcademicFacts && (
+          <section className="rv-section">
+            <h2 className="rv-section-head">
+              Academic facts
+              <span className="rv-section-count">1</span>
+            </h2>
+            <article className="rv-card">
+              <header className="rv-card-head">
+                <h3 className="rv-card-title">Education</h3>
+              </header>
+              <div className="rv-card-fields">
+                {academicFacts?.major_current && (
+                  <label className="form-group">
+                    <span className="form-label">Current major</span>
+                    <input
+                      className="form-input"
+                      value={academicDraft.major_current ?? ''}
+                      onChange={(event) =>
+                        setAcademicDraft((current) => ({
+                          ...current,
+                          major_current: event.target.value || null,
+                        }))
+                      }
+                    />
+                  </label>
+                )}
+                {academicFacts?.expected_graduation && (
+                  <label className="form-group">
+                    <span className="form-label">Expected graduation</span>
+                    <input
+                      className="form-input"
+                      value={academicDraft.expected_graduation ?? ''}
+                      onChange={(event) =>
+                        setAcademicDraft((current) => ({
+                          ...current,
+                          expected_graduation: event.target.value || null,
+                        }))
+                      }
+                    />
+                    <small>Use Spring YYYY or Fall YYYY.</small>
+                  </label>
+                )}
+              </div>
+            </article>
+          </section>
+        )}
 
         {hasProfile && sections.career_profile && (
           <section className="rv-section">

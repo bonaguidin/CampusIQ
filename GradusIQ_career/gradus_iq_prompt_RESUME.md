@@ -46,6 +46,15 @@ The text was machine-extracted and may be imperfect:
 
 ## WHAT TO EXTRACT
 
+**academics** — explicit current academic facts:
+- `major_current`: the student's current major only when directly stated in
+  an education entry, such as "Bachelor of Science in Computer Engineering".
+  Return `Computer Engineering` in that example. Do not infer a major from
+  skills, projects, coursework, departments, or work history.
+- `expected_graduation`: copy the explicit graduation month/season and year,
+  such as `May 2029` or `Fall 2028`. Do not convert a month into a season and
+  do not infer a date from classification, dates attended, or degree type.
+
 **profile** — signals about the student overall:
 - `target_roles`: roles the student is explicitly seeking. Take these from an
   objective/summary statement if one exists. An empty list is correct when the
@@ -67,9 +76,10 @@ description's verbs.
 **projects** — each with `name` (required), and `timeframe`, `description`,
 `tools` where stated.
 
-Education, GPA, and coursework are deliberately NOT extracted here. Those
-belong to the academic side of the record, which has its own source of truth,
-and a resume's self-reported GPA must never overwrite it.
+Apart from the two explicit facts above, education, GPA, and coursework are
+deliberately NOT extracted here. Those belong to the academic side of the
+record, which has its own source of truth, and a resume's self-reported GPA
+must never overwrite it. Never populate intended major from a resume.
 
 ## STATUS
 
