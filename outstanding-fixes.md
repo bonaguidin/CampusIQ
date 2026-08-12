@@ -80,6 +80,7 @@ Proposed agents, roughly in order of leverage:
 - [ ] **PCA (Professor Comment Analyzer) has never been audited this session.** Every other feature turned out shakier than it looked on inspection. PCA's data source (Canvas) is mocked, so it may have the same fabrication problem FIT had.
 - [ ] **Design consistency pass, once the review screen pattern settles.** Worth checking whether FIT/GAP/SHIFT displays and the GPA view still look like the old generic-form aesthetic. Note: the career-profile section on the authenticated dashboard was reordered 2026-08-12 (analysis panels now above the profile, matching the demo page) — worth including in this pass.
 - [ ] **Surface data provenance to students, not just internally.** Real `catalog_year` / `source_last_checked` fields exist but never reach the UI.
+- [ ] **`authenticatedDashboardPreview.tsx` doesn't wire up institution theming.** The harness substitutes its own `AuthContext.Provider value`, so `institutionTheme.ts`'s effects never run and every preview renders with the neutral `:root` accent regardless of `?institution=`. Confirmed `institutionTheme.ts` itself is correct — driving it directly with TAMU's `#500000` produces the expected tokens. Harness-only gap. Low priority: previews stay functionally useful, just not visually representative of a themed institution. Found 2026-08-12 verifying the profile-completion modal.
 - [ ] **Stale `CampusIQ`/`campus_iq` brand-string leftovers found post-rename.** Confirmed remaining as of the last full sweep:
   - `transcript/parser.py:205` — `"You are Campus IQ."` ships to the model at runtime. Highest priority — it's model-facing, not just a comment.
   - `gradus_iq_prompt_TRANSCRIPT.md` — 3 brand-string hits
@@ -87,7 +88,7 @@ Proposed agents, roughly in order of leverage:
   - `data/catalog/fetch_smu_catalog.py:65` — `User-Agent: CampusIQ-catalog-fetch/1.0` header string
   - 3 SQL migration files — stale path references inside comments only, inside already-applied migrations. Do not edit applied migrations to fix; track separately if it matters.
   - `.env.example` — `CAMPUSIQ_MODEL_ACADEMIC`/`_CAREER` unread by any code post-rename. Currently harmless (defaults match), but silently misleading.
-- [ ] **Verify `frontend/src/api/resume.ts:5` header name matches backend.** Comment references `X-CampusIQ-Proxy-Secret`; current backend var is `GRADUSIQ_PROXY_SECRET`. Confirm this isn't a live auth mismatch — low effort, worth ruling out.
+- [x] ~~Verify `frontend/src/api/resume.ts:5` header name matches backend~~ — resolved. Confirmed 2026-08-12: **not a live auth mismatch**, only a stale comment. The header actually sent is `X-GradusIQ-Proxy-Secret` (`frontend/vite.config.ts:18`, asserted throughout `frontend/tests/proxy.test.mjs`); nothing reads the `CampusIQ` spelling. Comment corrected in `05831c0`.
 - [x] ~~`onet-data-load` branch~~ — confirmed with Kasheia and deleted 2026-08-11. Was a strict subset of the grounding work now merged to main.
 - [ ] **`ats-fetcher` work is a single point of failure.** Per dev's `STATUS.md`, the fetcher implementation and `skill_terms_review.csv` exist only on one local branch on one machine — untracked corpus, no remote copy, no history anywhere. Accepted risk per the file, but worth confirming whether `skill_terms_review.csv` is reusable before it's the only copy left.
 - [ ] **4 grounding-related commits never remapped/merged, deliberately deferred.** From `feat/gap-shift-grounding`, still living only on that branch (pre-rename paths): SHIFT concurrency (`a5b5ae0`, `ThreadPoolExecutor` around `get_role_trends`), 30-day trend-cache expiry (`f1e1635`), `.env` loading in `build_demo_cache.py` (`31cdc5a`), and a generic parse-retry loop in `base.run()` (`48aa9fb`). None were in scope for the FIT/GAP fabrication fix. The retry loop touches `base.py` and will need the same signature care the FIT/GAP work needed if picked up later — though `validate_data` is now settled, which makes it easier than it would have been.
@@ -106,5 +107,5 @@ Proposed agents, roughly in order of leverage:
 8. Add an end-to-end smoke test before the next production deploy
 9. Audit PCA — the one core feature never checked this session
 10. Clean up stale brand strings, starting with `transcript/parser.py:205`
-11. Confirm `frontend/src/api/resume.ts` header name against backend
+11. ~~Confirm `frontend/src/api/resume.ts` header name against backend~~ — done, stale comment only, no auth mismatch
 12. Extend O*NET role coverage toward full 14/14
