@@ -27,13 +27,27 @@ import {
  * The Academic Record's term view: a term dropdown, that term's coursework, and
  * -- for a term that has not started -- a search box for planning courses.
  *
- * TWO DATA SOURCES, DELIBERATELY NOT MERGED. Completed and in-progress rows
- * come from course_records via the profile the dashboard already holds.
- * Planned rows come from planned_courses, a different table, fetched here. They
- * render in separate lists with separate styling: a planned course carries no
- * grade, has not been verified against a transcript, and counts toward nothing.
- * Merging them into one list would make "you have 15 credits this term" mean
- * two different things depending on which rows happened to be in it.
+ * TWO DATA SOURCES, NEVER CONFLATED. Completed and in-progress rows come from
+ * course_records via the profile the dashboard already holds. Planned rows come
+ * from planned_courses, a different table, fetched here. A planned course
+ * carries no grade, has not been verified against a transcript, and counts
+ * toward nothing, so it always keeps its own badge, its own dashed styling and
+ * its Remove control -- whichever list it is sitting in.
+ *
+ * WHERE THEY SIT DEPENDS ON THE TERM. For the upcoming term (`is_upcoming`,
+ * computed server-side in term_view.py) planned rows render inside Coursework,
+ * after the confirmed ones: that term is the student's working set, and reading
+ * "what am I taking next semester" out of two stacked tables is reading one
+ * list that happens to be split. For any term further out, planned rows stay in
+ * their own Planned section -- there is no confirmed coursework to interleave
+ * with yet, and the separation is what makes a speculative term legible as
+ * speculative.
+ *
+ * Note that `is_upcoming` is NOT the same predicate as termStatus()'s
+ * 'upcoming'. The latter means "has not started", which is true of every future
+ * term; is_upcoming names the single next one. The search box gates on the
+ * former (planning is offered for any term not yet begun); this merge gates on
+ * the latter.
  */
 
 interface TermPlannerProps {
@@ -105,6 +119,40 @@ export function TermPlanner({ accessToken, courses }: TermPlannerProps) {
   );
 
   const alreadyPlanned = useMemo(() => plannedCodes(plannedForTerm), [plannedForTerm]);
+
+  // Server's flag, not a client-side re-derivation: term_view.py compares
+  // against the server's date, and two clocks disagreeing about which term is
+  // next would move courses between sections on a page refresh.
+  const mergePlanned = selectedTerm?.is_upcoming === true;
+  const inlinePlanned = mergePlanned ? plannedForTerm : [];
+  const separatePlanned = mergePlanned ? [] : plannedForTerm;
+
+  // No sort is applied to either list. Both arrive ordered -- records in the
+  // order the dashboard's profile read returned them, planned rows by
+  // created_at (planned.py) -- and planned rows follow confirmed ones because
+  // that is the order of certainty, which is what the merged list is ranked by.
+  const renderPlannedRow = (course: PlannedCourse) => (
+    <div className="real-course-row real-course-row--planned" role="row" key={course.id}>
+      <span role="cell">
+        <span className="planned-badge">Planned</span>
+        <strong>{course.course_code}</strong>
+        <small>{course.title ?? 'Untitled course'}</small>
+      </span>
+      <span role="cell">
+        {course.credit_hours === null ? 'Credits TBD' : `${course.credit_hours} credits`}
+      </span>
+      <span role="cell">
+        <button
+          type="button"
+          className="btn btn-ghost btn-sm"
+          onClick={() => { void handleRemove(course.id); }}
+          aria-label={`Remove ${course.course_code} from your plan`}
+        >
+          Remove
+        </button>
+      </span>
+    </div>
+  );
 
   // Debounced search. The timer is cleared on every keystroke and on unmount,
   // so at most one request is in flight per pause.
@@ -214,8 +262,19 @@ export function TermPlanner({ accessToken, courses }: TermPlannerProps) {
       {error && <p className="term-planner-error" role="alert">{error}</p>}
 
       <section className="term-courses">
-        <h3 className="term-courses-heading">Coursework</h3>
-        {records.length === 0 ? (
+        <h3 className="term-courses-heading">
+          Coursework
+          {/* The section header goes away when planned rows move in here, but
+              the caveat it carried does not: it is a disclosure about the rows
+              themselves, and it matters more, not less, once they sit beside
+              graded ones. */}
+          {inlinePlanned.length > 0 && (
+            <span className="term-courses-note">
+              Planned courses are not yet taken &middot; not counted in GPA or hours
+            </span>
+          )}
+        </h3>
+        {records.length === 0 && inlinePlanned.length === 0 ? (
           <p className="empty-state">No confirmed coursework in this term.</p>
         ) : (
           <div className="real-course-table" role="table" aria-label="Coursework in this term">
@@ -229,39 +288,19 @@ export function TermPlanner({ accessToken, courses }: TermPlannerProps) {
                 <span role="cell">{course.letter_grade ?? 'In progress'}</span>
               </div>
             ))}
+            {inlinePlanned.map(renderPlannedRow)}
           </div>
         )}
       </section>
 
-      {plannedForTerm.length > 0 && (
+      {separatePlanned.length > 0 && (
         <section className="term-courses term-courses--planned">
           <h3 className="term-courses-heading">
             Planned
             <span className="term-courses-note">Not yet taken &middot; not counted in GPA or hours</span>
           </h3>
           <div className="real-course-table" role="table" aria-label="Planned courses in this term">
-            {plannedForTerm.map((course) => (
-              <div className="real-course-row real-course-row--planned" role="row" key={course.id}>
-                <span role="cell">
-                  <span className="planned-badge">Planned</span>
-                  <strong>{course.course_code}</strong>
-                  <small>{course.title ?? 'Untitled course'}</small>
-                </span>
-                <span role="cell">
-                  {course.credit_hours === null ? 'Credits TBD' : `${course.credit_hours} credits`}
-                </span>
-                <span role="cell">
-                  <button
-                    type="button"
-                    className="btn btn-ghost btn-sm"
-                    onClick={() => { void handleRemove(course.id); }}
-                    aria-label={`Remove ${course.course_code} from your plan`}
-                  >
-                    Remove
-                  </button>
-                </span>
-              </div>
-            ))}
+            {separatePlanned.map(renderPlannedRow)}
           </div>
         </section>
       )}

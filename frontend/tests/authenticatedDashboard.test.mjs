@@ -10,11 +10,14 @@ test('authenticated dashboard covers canonical states, routing, themes, errors, 
   // The Academic Record tab renders the term view. Its Fall 2025 term id
   // matches the preview harness's own course row, so that course is reachable
   // by selecting its term; Fall 2026 is the upcoming term the dropdown opens
-  // on and the one planning is offered for.
+  // on and the one planning is offered for. Spring 2027 is a third, further-out
+  // term: not started, so plannable, but NOT is_upcoming -- which is the pair
+  // the merged-vs-separate rendering of planned courses turns on.
   const planning = planningRoutes({
     terms: [
       { key: '2025-Fall', id: 'term-1', label: 'Fall 2025', year: 2025, season: 'Fall', sequence: 1, start_date: '2025-08-25', end_date: '2025-12-17', enrolled: true, is_upcoming: false },
       { key: '2026-Fall', id: null, label: 'Fall 2026', year: 2026, season: 'Fall', sequence: null, start_date: '2026-08-24', end_date: '2026-12-10', enrolled: false, is_upcoming: true },
+      { key: '2027-Spring', id: null, label: 'Spring 2027', year: 2027, season: 'Spring', sequence: null, start_date: '2027-01-19', end_date: '2027-05-11', enrolled: false, is_upcoming: false },
     ],
   })
   const apiPlugin = { name: 'dashboard-api', configureServer(server) { server.middlewares.use((request, response, next) => {
@@ -82,8 +85,8 @@ test('authenticated dashboard covers canonical states, routing, themes, errors, 
   await page.locator('.real-course-row--planned').waitFor()
 
   // A planned course must never be presentable as completed coursework: it
-  // carries its own badge, sits in its own list, and says it counts toward
-  // nothing.
+  // carries its own badge, its own dashed row, a Remove control, and says it
+  // counts toward nothing -- whichever list it is sitting in.
   const plannedRow = page.locator('.real-course-row--planned').first()
   await plannedRow.getByText('CSCE 221').waitFor()
   await plannedRow.locator('.planned-badge').waitFor()
@@ -93,11 +96,37 @@ test('authenticated dashboard covers canonical states, routing, themes, errors, 
   await plannedRow.getByText('4 credits').waitFor()
   assert.equal(planning.state.planned.length, 1)
 
+  // In the UPCOMING term the planned row sits inside Coursework, and there is
+  // no separate Planned section left to label.
+  await page.locator('[aria-label="Coursework in this term"] .real-course-row--planned').waitFor()
+  assert.equal(await page.locator('.term-courses--planned').count(), 0)
+
   // Re-searching the same course offers no second add.
   await page.locator('#course-search').fill('CSCE 22')
   await page.getByRole('button', { name: 'Planned' }).first().waitFor()
 
   await plannedRow.getByRole('button', { name: /Remove CSCE 221/ }).click()
+  await page.locator('.real-course-row--planned').waitFor({ state: 'detached' })
+  assert.equal(planning.state.planned.length, 0)
+
+  // A term FURTHER OUT than the upcoming one keeps the two sections apart: it
+  // has no confirmed coursework to interleave with, so a merged list would
+  // present a wholly speculative term as though it were a settled one.
+  await page.locator('#term-select').selectOption('2027-Spring')
+  await page.locator('#course-search').fill('CSCE 2')
+  await page.getByText('Data Structures and Algorithms').waitFor()
+  await page.getByRole('button', { name: 'Add' }).first().click()
+  await page.locator('.term-courses--planned .real-course-row--planned').waitFor()
+  await page.locator('.term-courses--planned').getByText('Planned', { exact: true }).first().waitFor()
+  assert.equal(
+    await page.locator('[aria-label="Coursework in this term"] .real-course-row--planned').count(),
+    0,
+  )
+  // The same row styling and controls survive the relocation.
+  const futureRow = page.locator('.term-courses--planned .real-course-row--planned').first()
+  await futureRow.locator('.planned-badge').waitFor()
+  await futureRow.getByRole('button', { name: /Remove CSCE 221/ }).waitFor()
+  await futureRow.getByRole('button', { name: /Remove CSCE 221/ }).click()
   await page.locator('.real-course-row--planned').waitFor({ state: 'detached' })
   assert.equal(planning.state.planned.length, 0)
 
