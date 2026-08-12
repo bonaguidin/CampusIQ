@@ -280,8 +280,11 @@ def test_gap_context_marks_agent_filled_roles_with_agent_provenance(monkeypatch)
     by_role = context["market_requirements"]["by_role"]
 
     assert by_role["Business Analyst Intern"]["provenance"] == "onet"
-    # Upgraded from "none" because the agent supplied this role's requirements.
-    assert by_role["Finance Intern"]["provenance"] == "agent"
+    # Borrowed from a rated neighbour rather than researched: 13-2051.00 has no
+    # O*NET ratings of its own but 13-2052.00 is in its related list, and
+    # neighbour borrowing is decided in market_data before the agent is
+    # consulted. Was "agent" before that change landed.
+    assert by_role["Finance Intern"]["provenance"] == "onet_neighbor"
     # Agent ran but missed, so nothing grounds this one.
     assert by_role["Operations Intern"]["provenance"] == "none"
 
@@ -464,3 +467,68 @@ def test_shift_reports_every_role_when_trend_research_is_unavailable(monkeypatch
     assert context["role_trends"] == {"_unresearched_roles": ["Business Analyst Intern"]}
     # Local O*NET grounding is unaffected by the research outage.
     assert context["shift_signals"]["by_role"]["Business Analyst Intern"]["related"]
+
+
+# ------------------------------------------------------- neighbour borrowing
+# O*NET has never rated 122 of its 1,016 occupations. 29 of those have a rated
+# occupation in their Primary-Short related list, so borrowing beats live web
+# research there: instant, free, and traceable to a named occupation. The
+# condition is disclosure -- these are a NEIGHBOUR's scores.
+#
+# Ported by hand from aab5927, whose own hunk could not be applied: its patch
+# context was interleaved with 8d46afe's readiness-score tests and a5b5ae0's
+# SHIFT concurrency additions, neither of which lands in this pass.
+#
+# aab5927's sixth test in this block,
+# test_agent_is_not_called_for_a_role_that_borrowed_from_a_neighbour, is
+# deliberately NOT ported: it asserts GapRunner.role_requirements_for skips the
+# agent for a borrowed role, which is aab5927's gap.py change. That change is
+# deferred with the rest of the GAP work, and dev's gap.py still skips only on
+# provenance == "onet", so the test would fail. It belongs with gap.py.
+
+
+def test_unrated_role_borrows_from_its_nearest_rated_neighbour():
+    from GradusIQ_career.features.market_data import get_market_requirements
+
+    entry = get_market_requirements(["Finance Intern"])["by_role"]["Finance Intern"]
+
+    assert entry["provenance"] == "onet_neighbor"
+    assert entry["borrowed_from"]["soc"] == "13-2052.00"
+    assert entry["requirements"]["skills"], "borrowed ratings should be populated"
+    assert entry["matched"] is True
+
+
+def test_borrowing_keeps_the_targets_own_software_not_the_neighbours():
+    """Only ratings are borrowed.
+
+    Finance Intern has 33 hot technologies of its own despite having no
+    ratings; swapping the whole entry would discard real data for a
+    neighbour's.
+    """
+    from GradusIQ_career.features.market_data import get_market_requirements
+
+    finance = get_market_requirements(["Finance Intern"])["by_role"]["Finance Intern"]
+
+    assert finance["soc_code"] == "13-2051.00"  # still the target's own SOC
+    assert finance["hot_software"]
+    assert finance["soc_title"] == "Financial and Investment Analysts"
+
+
+def test_borrowing_is_disclosed_in_notes():
+    from GradusIQ_career.features.market_data import get_market_requirements
+
+    notes = " ".join(get_market_requirements(["Finance Intern"])["notes"])
+
+    assert "borrowed" in notes.lower()
+    assert "13-2052.00" in notes
+    assert "disclosed" in notes.lower()
+
+
+def test_role_with_no_rated_neighbour_still_falls_through_to_research():
+    from GradusIQ_career.features.market_data import get_market_requirements
+
+    entry = get_market_requirements(["Operations Intern"])["by_role"]["Operations Intern"]
+
+    # 13-1199.00 has no related occupations at all in the release.
+    assert entry["provenance"] == "none"
+    assert entry["borrowed_from"] is None

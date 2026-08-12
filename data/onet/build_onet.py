@@ -128,9 +128,16 @@ def build_reference(occ_rows, rating_rows, sw_rows, jz_rows, tasks, related, ver
             items.sort(key=lambda i: (-i["importance"], i["name"]))
 
     hot = defaultdict(list)
-    for code, _soc6, product, _category, is_hot, _in_demand in sw_rows:
+    in_demand = defaultdict(list)
+    for code, _soc6, product, _category, is_hot, is_in_demand in sw_rows:
         if is_hot:
             hot[code].append(product)
+        # O*NET flags these separately: Hot Technology is "frequently included in
+        # employer job postings", In Demand is "certification or skill frequently
+        # required". Both were extracted to CSV from the start; only hot was
+        # reaching the app.
+        if is_in_demand:
+            in_demand[code].append(product)
 
     zones = {code: int(zone) for code, _soc6, zone in jz_rows if zone.isdigit()}
 
@@ -153,10 +160,11 @@ def build_reference(occ_rows, rating_rows, sw_rows, jz_rows, tasks, related, ver
         domains = by_domain.get(code, {})
         skills = domains.get("essential_skill", [])
         software = sorted(set(hot.get(code, [])))
+        demanded = sorted(set(in_demand.get(code, [])))
         tasks_for_code = core_tasks.get(code, [])
         if skills:
             status = "onet_full"
-        elif software or tasks_for_code:
+        elif software or demanded or tasks_for_code:
             status = "partial_onet_profile"
         else:
             status = "no_data"
@@ -168,6 +176,7 @@ def build_reference(occ_rows, rating_rows, sw_rows, jz_rows, tasks, related, ver
             "knowledge": domains.get("knowledge", []),
             "abilities": domains.get("ability", []),
             "hot_software": software,
+            "in_demand_software": demanded,
             "core_tasks": tasks_for_code,
             "related": [entry for _idx, entry in sorted(related_by_soc.get(code, []))],
             "_data_status": status,
@@ -366,6 +375,8 @@ def main():
             print(f"  {key:<27} {status[key]:>6,}")
         print(f"  with hot software           "
               f"{sum(1 for e in reference['roles'].values() if e['hot_software']):>6,}")
+        print(f"  with in-demand software     "
+              f"{sum(1 for e in reference['roles'].values() if e['in_demand_software']):>6,}")
         print(f"  with related occupations    "
               f"{sum(1 for e in reference['roles'].values() if e['related']):>6,}")
 
