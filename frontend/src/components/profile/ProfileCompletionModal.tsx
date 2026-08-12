@@ -35,7 +35,7 @@ export function ProfileCompletionModal({ request, onClose, onComplete }: Props) 
   if (!profile || !session) return null;
   return <div className="profile-modal-overlay" onMouseDown={(event) => { if (event.target === event.currentTarget && !saving) onClose(); }}>
     <div className="profile-modal" role="dialog" aria-modal="true" aria-labelledby="profile-modal-title" aria-describedby="profile-modal-description" tabIndex={-1} ref={dialogRef}>
-      <header className="profile-modal-header"><div><h2 id="profile-modal-title">Complete your profile</h2><p id="profile-modal-description">Add or update the details CampusIQ uses for personalized guidance.</p></div><button type="button" className="profile-modal-close" aria-label="Close profile completion" onClick={onClose} disabled={saving}>×</button></header>
+      <header className="profile-modal-header"><div><h2 id="profile-modal-title">Complete your profile</h2><p id="profile-modal-description">Add or update the details GradusIQ uses for personalized guidance.</p></div><button type="button" className="profile-modal-close" aria-label="Close profile completion" onClick={onClose} disabled={saving}>×</button></header>
       <ProfileCompletionForm profile={profile} accessToken={session.access_token} missingFields={request.missingFields} feature={request.feature} onCancel={onClose} onSavingChange={updateSaving} onSaved={async () => { await reloadStudentProfile(); onComplete(); }} />
     </div>
   </div>;

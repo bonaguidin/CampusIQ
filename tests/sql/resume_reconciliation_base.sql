@@ -3,6 +3,15 @@ create schema auth;
 create role authenticated;
 create role anon;
 
+-- Supabase's hosted bootstrap grants EXECUTE on newly created functions
+-- directly to anon and authenticated, in addition to the PUBLIC grant Postgres
+-- gives by default. Reproduce it here or this harness cannot observe the very
+-- posture 20260812180000 exists to correct: a SECURITY DEFINER function that
+-- revokes PUBLIC still leaves anon holding a direct grant, and every guard
+-- asserting otherwise passes trivially against a vanilla cluster.
+alter default privileges in schema public
+  grant execute on functions to anon, authenticated;
+
 create function auth.uid() returns uuid
 language sql stable
 as $$ select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid $$;

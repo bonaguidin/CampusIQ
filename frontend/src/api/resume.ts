@@ -2,7 +2,7 @@
 //
 // Every call is a same-origin relative path so it goes through the Vercel
 // proxy (frontend/api/proxy.mjs), which is the only path that can reach the
-// backend: it attaches the server-only X-CampusIQ-Proxy-Secret, and the
+// backend: it attaches the server-only X-GradusIQ-Proxy-Secret, and the
 // backend's CORS allow_headers does not include Authorization, so a direct
 // cross-origin call from the browser would fail preflight regardless.
 //

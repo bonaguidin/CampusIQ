@@ -108,6 +108,11 @@ do $$ begin
   if (select ai_anxiety_level from career_profiles where student_id='10000000-0000-0000-0000-000000000001') <> 'low' then raise exception 'AI anxiety changed'; end if;
   if (select duration from work_experience where id='40000000-0000-0000-0000-000000000001') <> 'Jun 2026 - Aug 2026' then raise exception 'experience not updated'; end if;
   if (select source from work_experience where id='40000000-0000-0000-0000-000000000001') <> 'resume_parse' then raise exception 'provenance changed'; end if;
+  -- Seeded confirmed_at is 2026-01-01Z, so "not null" cannot detect a dropped
+  -- refresh the way it can on the rows inserted below. profile_builder.py drops
+  -- the whole career block when this is null, and a stale stamp is the same
+  -- class of failure, so the assertion is that applying MOVED it.
+  if (select confirmed_at from career_profiles where student_id='10000000-0000-0000-0000-000000000001') <= '2026-01-01Z'::timestamptz then raise exception 'career profile confirmation not refreshed'; end if;
   if not exists(select 1 from projects where name='SAFE-AGENT' and source='resume_parse' and confirmed_at is not null) then raise exception 'project not added'; end if;
   if not exists(select 1 from certifications where name='NVIDIA Associate' and source='resume_parse' and confirmed_at is not null) then raise exception 'certification not added'; end if;
   if (select status from resume_reconciliations where id='30000000-0000-0000-0000-000000000001') <> 'applied' then raise exception 'reconciliation not applied'; end if;
