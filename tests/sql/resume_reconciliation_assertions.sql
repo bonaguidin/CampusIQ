@@ -1,6 +1,26 @@
 \set ON_ERROR_STOP on
 
 do $$
+declare
+  function_oid oid := 'public.apply_resume_reconciliation(uuid)'::regprocedure::oid;
+begin
+  if has_function_privilege('anon', function_oid, 'EXECUTE') then
+    raise exception 'anon should not have RPC execute';
+  end if;
+  if not has_function_privilege('authenticated', function_oid, 'EXECUTE') then
+    raise exception 'authenticated should retain RPC execute';
+  end if;
+  if exists (
+    select 1 from pg_proc p
+    cross join lateral aclexplode(coalesce(p.proacl, acldefault('f', p.proowner))) privilege
+    where p.oid = function_oid and privilege.grantee = 0
+      and privilege.privilege_type = 'EXECUTE'
+  ) then
+    raise exception 'PUBLIC should not have RPC execute';
+  end if;
+end $$;
+
+do $$
 begin
   begin insert into resume_reconciliations(student_id, status)
     values ('10000000-0000-0000-0000-000000000001', 'bad');

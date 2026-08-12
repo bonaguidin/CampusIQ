@@ -11,7 +11,10 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 BASE = ROOT / "tests/sql/resume_reconciliation_base.sql"
-MIGRATION = ROOT / "supabase/migrations/20260812170000_resume_reconciliation_staging.sql"
+MIGRATIONS = (
+    ROOT / "supabase/migrations/20260812170000_resume_reconciliation_staging.sql",
+    ROOT / "supabase/migrations/20260812180000_restrict_resume_reconciliation_rpc.sql",
+)
 ASSERTIONS = ROOT / "tests/sql/resume_reconciliation_assertions.sql"
 PG_BIN = Path("/opt/homebrew/opt/postgresql@17/bin")
 
@@ -46,7 +49,7 @@ def test_resume_reconciliation_migration_and_rpc(tmp_path):
                 "-o", f"-p {port} -k /tmp", "-w", "-t", "15", "start",
             ]
         )
-        for sql in (BASE, MIGRATION):
+        for sql in (BASE, *MIGRATIONS):
             _run([str(PG_BIN / "psql"), "-v", "ON_ERROR_STOP=1", "-f", str(sql)], env=env)
         _seed(env)
         _run([str(PG_BIN / "psql"), "-f", str(ASSERTIONS)], env=env)
