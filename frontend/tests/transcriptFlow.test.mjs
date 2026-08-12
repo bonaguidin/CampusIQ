@@ -3,6 +3,7 @@ import test from 'node:test'
 import { chromium } from 'playwright'
 import { createServer } from 'vite'
 import { meProfile } from './fixtures/meProfile.mjs'
+import { planningRoutes } from './fixtures/planningRoutes.mjs'
 
 const ROW_ID = '11111111-1111-4111-8111-111111111111'
 const REPEAT_ID = '22222222-2222-4222-8222-222222222222'
@@ -18,8 +19,18 @@ function respond(response, body, status = 200) { response.statusCode = status; r
 
 test('transcript flow covers upload, recovery, edits, repeats, failures, confirmation, and mobile', { timeout: 45_000 }, async (t) => {
   const state = { pending: false, recoveryFails: false, uploadFails: false, editFails: false, row: { ...baseRow }, uploads: 0, patches: [], academicsConfirmed: false, profileReads: 0 }
+  // The Academic Record tab renders the term view, which calls three planning
+  // routes on mount. Its terms are keyed to the meProfile fixture's own
+  // term_id so the confirmed MATH 251 row lands under a selectable term.
+  const planning = planningRoutes({
+    terms: [
+      { key: '2025-Fall', id: '33333333-3333-4333-8333-333333333333', label: 'Fall 2025', year: 2025, season: 'Fall', sequence: 1, start_date: '2025-08-25', end_date: '2025-12-17', enrolled: true, is_upcoming: false },
+      { key: '2026-Fall', id: null, label: 'Fall 2026', year: 2026, season: 'Fall', sequence: null, start_date: '2026-08-24', end_date: '2026-12-10', enrolled: false, is_upcoming: true },
+    ],
+  })
   const plugin = { name: 'transcript-api', configureServer(server) { server.middlewares.use((request, response, next) => {
     const path = request.url?.split('?')[0]
+    if (planning.handle(path, request.method, request, response)) return undefined
     if (path === '/api/v2/student/me/profile' && request.method === 'GET') { state.profileReads++; return respond(response, meProfile({ academics: state.academicsConfirmed })) }
     if (path === '/api/v2/student/me/transcript/review' && request.method === 'GET') return state.recoveryFails ? respond(response, 'Could not load course records for review.', 502) : respond(response, payload(state))
     if (path === '/api/v2/student/me/transcript/upload' && request.method === 'POST') { state.uploads++; if (state.uploadFails) return respond(response, { error: 'extraction_failed', extraction_status: 'encrypted', message: 'This looks like a scanned transcript.' }, 422); state.pending = true; return respond(response, { status: 'ok', warnings: [], rejected: [], written: { course_records: { inserted: 1, skipped_duplicate: 0 } }, catalog: { matched: 0, unmatched: 1, misses: ['MATH 251'] }, cross_check: { ok: false, terms_checked: 1, terms_skipped: 0, mismatches: [{ term_label: 'Fall 2025', field: 'gpa', printed: 3.5, computed: 3.0, difference: 0.5 }] } }) }
@@ -107,7 +118,15 @@ test('transcript flow covers upload, recovery, edits, repeats, failures, confirm
 
   // CASE T6: and the newly confirmed course is on screen, not the pre-confirm
   // empty state -- which is what a stale profile would have rendered.
+  //
+  // The Academic tab now opens on the UPCOMING term (Fall 2026), so the
+  // confirmed Fall 2025 course is one dropdown selection away rather than
+  // immediately visible. The assertion's point is unchanged -- the row exists
+  // and the empty state is gone -- so it selects the course's own term first.
   await page.getByRole('button', { name: 'Academic' }).click()
+  await page.locator('#term-select').waitFor()
+  assert.equal(await page.locator('#term-select').inputValue(), '2026-Fall')
+  await page.locator('#term-select').selectOption('2025-Fall')
   await page.getByText('MATH 251').waitFor()
   assert.equal(await page.getByRole('link', { name: 'Upload transcript' }).count(), 0)
 
