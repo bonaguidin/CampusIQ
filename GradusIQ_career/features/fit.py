@@ -3,6 +3,7 @@
 from typing import Any, Mapping
 
 from .base import CareerFeatureRunner
+from .market_data import get_market_requirements, get_shift_signals
 
 # Sentinel value used in the data for "not switching majors" (Decision (b) —
 # it stays in the data as-is; FIT resolves around it here in feature logic).
@@ -50,7 +51,24 @@ class FitRunner(CareerFeatureRunner):
         student = student_profile.get("student", {})
         career = student_profile.get("career", {})
         effective_major, major_status = _resolve_major(student)
+        target_roles = career.get("target_roles", [])
+        # FIT had no market data at all, so every fit judgement was the model's
+        # own recall presented as analysis -- and its prompt asked for a "DFW
+        # market signal" it was never given, so it invented employers.
+        #
+        # It reuses GAP's and SHIFT's providers rather than growing its own:
+        # requirements + provenance answer "what does this role demand", and
+        # core_tasks answer "what does this job actually involve day to day",
+        # which is what matching interests to roles needs.
+        #
+        # Deliberately no research agent. Matching a student to roles doesn't
+        # justify a tool loop, and an unrated occupation still has tasks and
+        # tooling to match against -- so FIT stays a single fast call.
+        market = get_market_requirements(target_roles)
+        signals = get_shift_signals(target_roles)
         return {
+            "market_requirements": market,
+            "role_context": signals,
             "effective_major": effective_major,
             "major_status": major_status,
             "major_current": student.get("major_current") or student.get("major"),

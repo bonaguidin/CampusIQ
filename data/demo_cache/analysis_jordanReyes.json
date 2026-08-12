@@ -10,45 +10,59 @@
   "results": {
     "FIT": {
       "data": {
-        "overall_fit_summary": "Finance Intern is your strongest near-term match due to your accounting project work, though Business Analyst roles remain viable with additional data skills development.",
+        "overall_fit_summary": "Your most realistic near-term step is to build the technical and analytical foundations needed for any of these roles. Consider seeking a general business internship or a rotational program that exposes you to multiple areas, rather than a specialized role at this early stage.",
         "role_matches": [
           {
-            "fit_level": "medium",
+            "fit_level": "low",
             "missing_signals": [
-              "Experience with financial modeling beyond basic equations",
-              "Exposure to industry software like QuickBooks or SAP"
+              "SQL or other database query language",
+              "Python or R for data analysis",
+              "experience with Tableau, Power BI, or similar visualization tools",
+              "formal AI training or use of AI in analytical workflows"
             ],
-            "rationale": "Your Accounting Practice Workbook project shows hands-on experience with financial statements and Excel, aligning with core finance tasks. DFW employers specifically seek interns who can apply basic accounting principles.",
-            "role": "Finance Intern",
-            "supporting_signals": [
-              "DFW finance internships prioritize Excel proficiency and financial statement literacy",
-              "Local postings emphasize debit/credit understanding for entry-level roles"
-            ]
-          },
-          {
-            "fit_level": "medium",
-            "missing_signals": [
-              "Data visualization experience (e.g., Tableau/Power BI)",
-              "Quantitative analysis beyond introductory business math"
-            ],
-            "rationale": "Your Market Brief project demonstrates market research and PowerPoint storytelling skills relevant to business analysis. DFW employers value these competencies for translating data into actionable insights.",
+            "rationale": "You have interests in business analytics and some foundational skills like Excel, PowerPoint, and problem solving from a class project. However, national occupational data for this role (based on Management Analysts) shows strong demands for technical tools such as SQL, Python, and data visualization software (e.g., Tableau, Power BI) that you haven't yet learned. The day-to-day work involves gathering requirements, analyzing data, and documenting findings\u2014activities you haven't practiced in a real-world setting. Your informal AI exposure is not yet enough for a role that increasingly uses AI for data analysis. As a freshman, you're early in your degree and lack the targeted coursework and project experience this role expects.",
             "role": "Business Analyst Intern",
             "supporting_signals": [
-              "DFW entry-level BA roles highlight market research and presentation skills",
-              "Local job ads consistently request PowerPoint proficiency"
+              "Excel proficiency",
+              "written communication skills",
+              "problem solving ability",
+              "interest in business analytics",
+              "class project experience with market analysis"
             ]
           },
           {
             "fit_level": "low",
             "missing_signals": [
-              "Process mapping or workflow documentation experience",
-              "Coursework/projects in logistics or inventory management"
+              "advanced finance or accounting coursework",
+              "experience with financial modeling or analysis",
+              "familiarity with financial software (e.g., SAP, Tableau, SQL)",
+              "formal AI or automation exposure in finance contexts"
             ],
-            "rationale": "While you have operations interest and team collaboration skills, your projects lack direct process optimization experience. DFW operations roles prioritize candidates with workflow documentation or efficiency analysis exposure.",
+            "rationale": "You've completed introductory accounting and business math, which aligns with the finance area you're interested in. However, market requirement data\u2014borrowed from the related occupation of Personal Financial Advisors\u2014indicates that finance roles demand deep knowledge of economics and accounting (importance 77 out of 100) and mathematics (importance 66), far beyond your current level. The role also expects familiarity with software like SAP, SQL, and Tableau, which you haven't used. You lack finance-specific coursework or projects outside a basic accounting workbook. AI is transforming finance, but you have no formal exposure. Given your freshman standing, there are significant gaps in both knowledge and experience for a specialized finance internship.",
+            "role": "Finance Intern",
+            "supporting_signals": [
+              "introductory accounting knowledge",
+              "business math skills",
+              "financial statement basics",
+              "interest in finance",
+              "Excel proficiency"
+            ]
+          },
+          {
+            "fit_level": "low",
+            "missing_signals": [
+              "no market data available to confirm specific entry-level expectations",
+              "no professional or project experience in operations",
+              "no coursework in operations management, supply chain, or process analysis"
+            ],
+            "rationale": "You've expressed interest in operations, and you bring team collaboration and problem-solving skills. However, there is no available market data for this specific role\u2014O*NET does not have occupational requirements for 'Operations Intern'\u2014so we cannot cite specific demands. Based on typical expectations for operations roles, you lack professional experience in process improvement, supply chain, or project coordination. Your freshman status means you haven't yet taken operations management or related coursework. Without a clear market picture, it's hard to recommend this as a near-term target, but your interest is a good starting point for exploration.",
             "role": "Operations Intern",
             "supporting_signals": [
-              "DFW operations internships emphasize problem-solving with Excel",
-              "Local employers seek interns who understand supply chain fundamentals"
+              "interest in operations",
+              "team collaboration skills",
+              "problem solving ability",
+              "Excel use",
+              "presentation skills from class project"
             ]
           }
         ]
@@ -56,67 +70,78 @@
       "errors": [],
       "feature": "FIT",
       "status": "success",
-      "summary": "As a freshman Business Administration student, you bring foundational Excel skills, financial statement knowledge, and presentation experience from class projects. The DFW market seeks these core business skills for internships but expects more applied experience and specialized tools."
+      "summary": "You're a freshman Business Administration pre-major exploring business-related internships. You have foundational Excel and presentation skills from class projects, and an interest in operations, finance, and analytics. Your target roles typically require junior-level coursework and hands-on experience that you're still building."
     },
     "GAP": {
       "data": {
         "must_have_gaps": [
           {
-            "gap": "Critical Thinking (skill)",
-            "how_to_close": "Enroll in critical thinking-focused courses like logic or philosophy before fall 2026",
-            "why_it_matters": "O*NET importance score of 78 - foundational for analyzing business problems"
+            "gap": "Administration and Management knowledge",
+            "how_to_close": "Enroll in an introductory management course (e.g., MGMT 209 or MGMT 211) within your next two semesters to build formal understanding of organizational structure and business operations.",
+            "why_it_matters": "National occupational survey data rates this knowledge area at 84 out of 100 for Management Analysts (your Business Analyst Intern target)\u2014it is considered essential for the role."
           },
           {
-            "gap": "Active Listening (skill)",
-            "how_to_close": "Practice through communication-intensive courses and student organization participation",
-            "why_it_matters": "O*NET importance score of 78 - essential for stakeholder communication"
+            "gap": "Customer and Personal Service knowledge",
+            "how_to_close": "Seek a part-time customer-facing role or volunteer position that involves client interaction, or take a course in services marketing (e.g., MKTG 321).",
+            "why_it_matters": "Rated 75 out of 100 for Management Analysts, this is a must-have for engaging stakeholders and understanding client needs."
           },
           {
-            "gap": "Administration & Management Knowledge",
-            "how_to_close": "Complete BUSN 101 course focusing on organizational structures and management principles",
-            "why_it_matters": "O*NET importance score of 84 - crucial for business process understanding"
+            "gap": "Economics and Accounting knowledge",
+            "how_to_close": "Continue with your accounting sequence (ACCT 230 next) and add a microeconomics course (ECON 202) to deepen your understanding of economic principles.",
+            "why_it_matters": "Personal Financial Advisors, the closest occupation national survey data covers for your Finance Intern target, rate this at 77 out of 100. It is a must-have for that role."
           },
           {
-            "gap": "English Language Knowledge",
-            "how_to_close": "Concentrate on ENGL 104 coursework and practice business writing techniques",
-            "why_it_matters": "O*NET importance score of 93 - fundamental for documentation and reporting"
+            "gap": "Organizational and time management skills (demonstrated through structured projects)",
+            "how_to_close": "Take on a leadership role in a student organization (e.g., project chair for a business club event) where you plan timelines and coordinate tasks.",
+            "why_it_matters": "Current job-market research identifies these as must-haves for Operations Interns\u2014employers look for evidence of managing competing priorities."
+          },
+          {
+            "gap": "Data analysis skills with SQL",
+            "how_to_close": "Complete the SQL module in your Google Data Analytics Certificate\u2014it covers querying, joins, and aggregation. Then build a small dataset analysis project using a public dataset (e.g., from Kaggle).",
+            "why_it_matters": "For both Business Analyst Intern (must-have per role-specific research) and Finance Intern (nice-to-have but expected in competitive pools), SQL is the most commonly cited tool. Your profile lacks any database or query experience."
           }
         ],
         "nice_to_have_gaps": [
           {
-            "gap": "Active Learning",
-            "how_to_close": "Join business case competitions to practice iterative problem-solving",
-            "why_it_helps": "Improves adaptability to new business environments and tools"
+            "gap": "Mathematics knowledge (beyond business math)",
+            "how_to_close": "Take a statistics course (e.g., STAT 211) that covers descriptive and inferential statistics.",
+            "why_it_helps": "Rated 66 out of 100 for Management Analysts and 68 for Personal Financial Advisors\u2014having stronger quantitative reasoning can differentiate you."
           },
           {
-            "gap": "Google Data Analytics Certificate",
-            "how_to_close": "Complete your in-progress certification modules by Summer 2026",
-            "why_it_helps": "Differentiates you in data-driven internship applications"
+            "gap": "Tableau or Power BI",
+            "how_to_close": "After the Google Data Analytics Certificate, practice building dashboards in Tableau Public using the same project dataset.",
+            "why_it_helps": "Both tools appear in hot technology lists for Business Analyst and Finance Intern roles\u2014they make your data work visible and compelling."
           },
           {
-            "gap": "Operations Process Knowledge",
-            "how_to_close": "Develop a personal project analyzing campus operations workflows",
-            "why_it_helps": "Relevant for Operations Intern role context"
+            "gap": "CFA Level I candidate status (Finance Intern)",
+            "how_to_close": "Plan to register for the CFA Level I exam in your junior year; start reviewing the curriculum through free resources early.",
+            "why_it_helps": "Listed as a nice-to-have credential for Finance Interns\u2014signals commitment to finance careers."
+          },
+          {
+            "gap": "Six Sigma Yellow Belt (Operations Intern)",
+            "how_to_close": "Complete a free online Six Sigma Yellow Belt course (Coursera or ASQ) in under 10 hours to get foundational knowledge.",
+            "why_it_helps": "Current job-market research shows process improvement knowledge can differentiate candidates for Operations roles."
           }
         ],
-        "readiness_score": 2,
+        "readiness_score": 3,
         "recommended_next_steps": [
-          "Complete ENGL 104 with focus on business writing (closes English Language gap)",
-          "Maximize BUSN 101 projects to build administration knowledge (closes Management gap)",
-          "Join Debate Club or Model UN to develop active listening through structured practice",
-          "Finalize Google Data Analytics Certificate modules by August 2026",
-          "Create an operations analysis project documenting campus systems by fall 2026"
+          "Complete the Google Data Analytics Certificate by end of summer\u2014focus on the SQL and data visualization modules, then build a public project portfolio.",
+          "Enroll in a management or organizational behavior course in your sophomore year to address the Administration and Management knowledge gap.",
+          "Practice financial statement analysis beyond your introductory accounting\u2014use public company 10-Ks to model a simple income statement and balance sheet in Excel.",
+          "Join a student business organization (e.g., Mays Business Council) and take on a project coordinator role to demonstrate organizational and time management skills.",
+          "Prepare a 2-page 'skills gap tracker' for each target role\u2014map your courses and projects to the must-have knowledge areas so you can actively check them off each semester."
         ],
         "strengths": [
-          "Proficiency in Excel: Frame as practical application through your Accounting Practice Workbook project and business case work",
-          "Presentation skills: Highlight through your market brief project delivery and PowerPoint storytelling experience",
-          "Bloomberg Market Concepts certification: Position as early industry knowledge acquisition in financial markets"
+          "Bloomberg Market Concepts (BMC) certification completed\u2014directly relevant to the Finance Intern role and signals financial market awareness.",
+          "Google Data Analytics Certificate in progress\u2014this will build SQL, spreadsheet, and visualization skills that apply across all three roles.",
+          "Basic Excel proficiency and introductory accounting coursework provide a foundation for financial modeling and data analysis.",
+          "Team collaboration, presentation, and written communication skills demonstrated through your Freshman Business Initiative project and class team work."
         ]
       },
       "errors": [],
       "feature": "GAP",
       "status": "success",
-      "summary": "As a freshman, you've started building foundational business skills but have significant gaps in core competencies required for your target roles. Based on O*NET standards for Business Analyst roles, your most urgent need is developing critical thinking, active listening, and administration knowledge through focused coursework. Consistent effort in closing these gaps will strengthen your readiness by graduation."
+      "summary": "You are early in your college journey with a strong foundation in communication and basic business concepts, but significant technical and domain knowledge gaps remain. The single most important thing you need to address is building hands-on data analysis skills\u2014starting with SQL and a data visualization tool\u2014to meet employer expectations for all three target roles."
     },
     "PROFESSOR_COMMENTS": {
       "data": {
@@ -206,56 +231,70 @@
       "data": {
         "adjacent_paths": [
           {
-            "driver": "DFW companies need professionals who can bridge data science outputs and business decisions",
-            "path": "Business Intelligence Analyst",
-            "relevance": "Leverages your Excel skills and interest in analytics while introducing AI-powered visualization tools"
+            "driver": "AI is automating scheduling and status updates, so project managers are focusing more on stakeholder alignment and risk management.",
+            "path": "Project Management Specialist",
+            "relevance": "Your team collaboration and problem-solving skills align well with coordinating projects, timelines, and cross-functional teams \u2014 a natural pivot from business analysis."
           },
           {
-            "driver": "Operations teams increasingly seek staff who can implement automation while managing human factors",
-            "path": "Process Automation Specialist",
-            "relevance": "Builds on your operations interest through optimizing workflows with AI tools"
+            "driver": "AI handles routine risk calculations, but interpreting complex scenarios and regulatory changes keeps this role deeply human.",
+            "path": "Financial Risk Specialist",
+            "relevance": "Your financial statement basics and interest in finance make this a solid path. You'd assess and mitigate risks using data \u2014 a role that requires human judgment over automated outputs."
+          },
+          {
+            "driver": "Demand for people who can bridge business context and technical AI work is growing fast, as firms need interpretation, not just computation.",
+            "path": "Data Scientist (with further skill development)",
+            "relevance": "You already have business math and an interest in analytics. Building Python or SQL skills would open this path where you design models and validate AI insights."
           }
         ],
         "ai_fluency_guidance": [
-          "What you can already say: 'I use AI tools for brainstorming solutions and accelerating research, helping me quickly explore multiple angles for business problems while maintaining critical evaluation of outputs.'",
-          "What to build toward: Complete a business-specific AI certification (like Google's AI for Business) and document one case study applying AI tools to optimize a finance or operations workflow in your coursework."
+          "I regularly use AI tools like ChatGPT to brainstorm ideas and organize study notes. I'm learning how to write better prompts to get more useful outputs, and I understand that reviewing AI's work is just as important as generating it.",
+          "Take a short business-focused AI course (e.g., 'AI for Business' on LinkedIn Learning) and then practice using AI to summarize financial statements or draft a process flow for an operations scenario. That will give you a concrete example to discuss in interviews."
         ],
         "durable_skills": [
           {
-            "reason": "Understanding nuanced business needs requires human empathy and active listening",
-            "task": "Stakeholder requirement gathering"
+            "reason": "AI cannot replace the nuanced conversations needed to uncover true business needs and build trust with people across different roles.",
+            "task": "Conferring with stakeholders to understand problems and gather requirements"
           },
           {
-            "reason": "Aligning teams with conflicting priorities demands interpersonal negotiation",
-            "task": "Cross-functional collaboration"
+            "reason": "AI suggests patterns, but human judgment is required to evaluate feasibility, consider context, and apply business logic.",
+            "task": "Analyzing data and developing creative solutions or alternatives"
           },
           {
-            "reason": "Translating data insights into actionable plans requires business context AI lacks",
-            "task": "Strategic recommendations"
+            "reason": "Adapting communication and teaching methods to different audiences is a deeply human skill that requires empathy and real-time feedback.",
+            "task": "Training others on new systems or procedures"
           },
           {
-            "reason": "Unforeseen operational disruptions need human adaptability beyond AI training data",
-            "task": "Crisis problem-solving"
+            "reason": "Spotting where AI can add value and rethinking processes requires systems thinking and change management that AI lacks.",
+            "task": "Identifying automation opportunities and designing improved workflows"
+          },
+          {
+            "reason": "Evaluating bias in AI outputs and compliance with regulations depends on human values and context \u2014 a growing area of responsibility.",
+            "task": "Making ethical judgments and ensuring fairness in AI use"
           }
         ],
-        "role_evolution_summary": "Business roles are rapidly integrating AI for data processing and forecasting, shifting human focus toward strategic interpretation and stakeholder communication. For your target internships, the biggest change is AI handling routine analytics while elevating the value of contextual decision-making.",
+        "role_evolution_summary": "Across your three target internship roles, the biggest shift is from doing manual data entry, drafting, and research to curating and validating AI-generated work. Interns are now expected to use business judgment to interpret outputs, spot errors, and focus on stakeholder communication and process improvement. AI is becoming a tool you work alongside, not a replacement for your role.",
         "task_shifts": [
           {
-            "changing": "AI now automates pulling data from multiple sources into standardized reports",
-            "meaning": "Your ability to interpret patterns and identify business implications becomes more crucial",
-            "task": "Data aggregation and basic reporting"
+            "changing": "AI tools now generate first drafts of requirements, acceptance criteria, and user stories from meeting notes or prompts.",
+            "meaning": "Your value shifts to reviewing, refining, and ensuring those drafts align with actual business needs \u2014 critical thinking and stakeholder understanding matter more.",
+            "task": "Drafting business requirements documents (Business Analyst Intern)"
           },
           {
-            "changing": "AI algorithms generate predictive models faster than manual methods",
-            "meaning": "You'll need stronger critical thinking to validate outputs against real-world business constraints",
-            "task": "Forecasting and trend projections"
+            "changing": "AI-powered tools automatically populate and clean spreadsheets, handle data aggregation from multiple sources.",
+            "meaning": "Focus on verifying data accuracy, interpreting trends, and asking the right questions about what the numbers mean for decisions.",
+            "task": "Data entry and spreadsheet population (Finance Intern)"
+          },
+          {
+            "changing": "Generative AI assistants draft routine emails, schedule meetings, and summarize communications.",
+            "meaning": "Your human skill is in customizing tone, handling sensitive situations, and building relationships \u2014 AI can start the draft, but you finish the connection.",
+            "task": "Email drafting and routine correspondence (Operations Intern)"
           }
         ]
       },
       "errors": [],
       "feature": "SHIFT",
       "status": "success",
-      "summary": "Focus on strengthening your critical thinking and communication skills while gradually building AI fluency through business applications. Your foundation in Excel and business fundamentals positions you well to learn how AI enhances\u2014not replaces\u2014roles in finance and operations. Employers value your ability to interpret insights more than technical AI expertise."
+      "summary": "Your target roles in business, finance, and operations are shifting from routine tasks to strategic oversight. The key is learning how to work with AI tools to validate and interpret outputs, not fear them. You already have foundational business skills and informal AI exposure that put you on the right track."
     }
   },
   "status": "success",
