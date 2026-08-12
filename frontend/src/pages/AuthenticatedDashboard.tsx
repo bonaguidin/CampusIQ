@@ -8,6 +8,8 @@ import { GapAnalysisPanel } from '../components/GapAnalysisPanel';
 import { ShiftAnalysisPanel } from '../components/ShiftAnalysisPanel';
 import { TermPlanner } from '../components/TermPlanner';
 import { CareerProfile } from '../components/career/CareerProfile';
+import { ProfileCompletionContext, type ProfileCompletionRequest } from '../components/profile/ProfileCompletionContext';
+import { ProfileCompletionModal } from '../components/profile/ProfileCompletionModal';
 import { buildDashboardViewModel } from '../data/dashboardViewModel';
 
 type NavSection = 'overview' | 'academic' | 'career';
@@ -27,6 +29,8 @@ export function AuthenticatedDashboard() {
   const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState<NavSection>('overview');
   const [railOpen, setRailOpen] = useState(false);
+  const [profileRequest, setProfileRequest] = useState<ProfileCompletionRequest | null>(null);
+  const [profileSaved, setProfileSaved] = useState(false);
   const canonical = studentAccount.profile?.intelligence_profile;
   const dashboard = useMemo(
     () => (canonical ? buildDashboardViewModel(canonical) : null),
@@ -50,7 +54,7 @@ export function AuthenticatedDashboard() {
   }
 
   return (
-    <div className="shell" data-dashboard-source="authenticated">
+    <ProfileCompletionContext.Provider value={setProfileRequest}><div className="shell" data-dashboard-source="authenticated" data-profile-modal-open={profileRequest ? 'true' : undefined}>
       {railOpen && <div className="rail-overlay" onClick={() => setRailOpen(false)} aria-hidden="true" />}
       <aside className={`rail${railOpen ? ' rail--open' : ''}`} aria-label="Dashboard navigation">
         <div className="rail-identity">
@@ -221,6 +225,8 @@ export function AuthenticatedDashboard() {
           </div>
         </main>
       </div>
-    </div>
+      {profileSaved && <div className="profile-save-notice" role="status">Profile saved. Your guidance now uses the latest details.<button type="button" aria-label="Dismiss profile saved message" onClick={() => setProfileSaved(false)}>×</button></div>}
+      {profileRequest && <ProfileCompletionModal request={profileRequest} onClose={() => setProfileRequest(null)} onComplete={() => { setProfileRequest(null); setProfileSaved(true); }} />}
+    </div></ProfileCompletionContext.Provider>
   );
 }

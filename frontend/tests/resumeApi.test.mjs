@@ -167,6 +167,10 @@ const OK_BODY = {
   model: 'deepseek/deepseek-v4-flash',
   warnings: ['certifications[0]: status coerced'],
   career_profile: { outcome: 'created', id: 'cp-1' },
+  academics: {
+    major_current: 'Computer Engineering',
+    expected_graduation: 'Spring 2029',
+  },
   written: {
     certifications: { inserted: 1, skipped_duplicate: 0 },
     work_experience: { inserted: 2, skipped_duplicate: 1 },
@@ -184,6 +188,10 @@ test('upload ok carries counts, warnings, model and the bootstrap outcome', () =
   assert.equal(result.model, 'deepseek/deepseek-v4-flash')
   assert.deepEqual(result.warnings, ['certifications[0]: status coerced'])
   assert.deepEqual(result.careerProfile, { outcome: 'created', id: 'cp-1' })
+  assert.deepEqual(result.academics, {
+    major_current: 'Computer Engineering',
+    expected_graduation: 'Spring 2029',
+  })
   assert.deepEqual(result.totals, { inserted: 3, skipped_duplicate: 1, total: 4 })
   assert.deepEqual(result.errors, [])
 })

@@ -230,3 +230,29 @@ def confirm_career_rows(
         confirmed[table] = len(_rows(query.execute()))
 
     return confirmed
+
+
+def write_confirmed_academic_facts(
+    client: Any,
+    student_id: str,
+    academics: Mapping[str, Any] | None,
+) -> int:
+    """Persist only reviewed, non-null resume facts for the authenticated student."""
+    if not academics:
+        return 0
+
+    payload: dict[str, str] = {}
+    major = academics.get("major_current")
+    graduation = academics.get("expected_graduation")
+    if isinstance(major, str) and major.strip():
+        payload["major_current"] = major.strip()
+    if isinstance(graduation, str) and graduation.strip():
+        payload["expected_graduation"] = graduation.strip()
+    if not payload:
+        return 0
+
+    payload["updated_at"] = _now_iso()
+    rows = _rows(
+        client.table("students").update(payload).eq("id", student_id).execute()
+    )
+    return len(rows)

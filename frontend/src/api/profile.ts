@@ -4,7 +4,7 @@ export interface ProfileChanges {
   classification?: string;
   major_current?: string;
   major_intended?: string;
-  expected_graduation?: string;
+  expected_graduation?: string | null;
   ai_anxiety_level?: 'low' | 'moderate' | 'high' | 'not_sure' | null;
   target_roles?: string[];
   interests?: string[];

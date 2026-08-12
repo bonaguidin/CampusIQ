@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import type { MissingField } from '../types/analysis';
+import { useProfileCompletionModal } from './profile/ProfileCompletionContext';
 
 export type AnalysisPhase = 'idle' | 'loading' | 'skipped' | 'failed' | 'success';
 
@@ -42,6 +43,7 @@ export function AnalysisPanel({
   missingFields = [],
   children,
 }: AnalysisPanelProps) {
+  const openProfileCompletion = useProfileCompletionModal();
   return (
     <div className="card analysis-panel">
       <div className="editable-section-header">
@@ -84,9 +86,7 @@ export function AnalysisPanel({
             {missingFields.map((field) => (
               <li key={field.path} className="section-error-item">
                 <span className="missing-field-label">{field.label}</span>
-                <Link className="missing-field-link" to={profileCompletionHref(field.path)}>
-                  Add this
-                </Link>
+                {openProfileCompletion ? <button className="missing-field-link" type="button" onClick={(event) => openProfileCompletion({ feature: title.match(/\((FIT|GAP|SHIFT)\)/)?.[1] ?? title, missingFields, trigger: event.currentTarget })}>Complete profile</button> : <Link className="missing-field-link" to={profileCompletionHref(field.path)}>Add this</Link>}
               </li>
             ))}
           </ul>

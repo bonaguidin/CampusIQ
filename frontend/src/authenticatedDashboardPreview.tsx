@@ -15,10 +15,10 @@ const institution = new URLSearchParams(location.search).get('institution') === 
 
 const base: StudentIntelligenceProfile = {
   contract_version: '1.0',
-  identity: { student_id: 'student-real', name: 'Alex Morgan', classification: 'Sophomore', expected_graduation: '2028-05', onboarding_stage: 3 },
+  identity: { student_id: 'student-real', name: 'Alex Morgan', classification: 'Sophomore', expected_graduation: 'Spring 2028', onboarding_stage: 3 },
   institution: { id: 'institution-real', name: institution, relationship: 'home' },
   academics: {
-    summary: { major_current: 'Computer Science', major_intended: 'Data Science', confirmed_course_count: 1, completed_hours: 3, in_progress_hours: 0, earned_hours: 3 },
+    summary: { major_current: 'Computer Science', major_intended: 'N/A', confirmed_course_count: 1, completed_hours: 3, in_progress_hours: 0, earned_hours: 3 },
     terms: [{ id: 'term-1', institution_id: 'institution-real', label: 'Fall 2025', year: 2025, season: 'fall', sequence: 1 }],
     courses: [{ id: 'course-1', term_id: 'term-1', institution_id: 'institution-real', course_code: 'CS 101', title: 'Introduction to Computing', credit_hours: 3, letter_grade: 'A', credit_type: 'resident', status: 'completed', source: 'transcript_parse' }],
     gpa: { official: 4, projected: 4, computable: true, source: 'gpa_service' },
@@ -139,7 +139,7 @@ const context = {
   session, user: null, signInWithPassword: async () => {}, signUpWithPassword: async () => 'authenticated', signOutSession: async () => {},
   studentAccount: { status: 'ready', profile: { student: { id: 'student-real', name: profile.identity.name, institution: profile.institution.name }, career: null, intelligence_profile: profile }, message: null },
   refreshStudentAccount: () => {},
-  reloadStudentProfile: async () => {},
+  reloadStudentProfile: async () => { document.body.dataset.profileReloaded = 'yes'; },
 } as AuthContextValue;
 
 const app = mode === 'error'

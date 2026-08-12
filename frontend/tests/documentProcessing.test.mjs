@@ -21,7 +21,7 @@ const PARSED_CAREER = {
   work_experience: [{ id: 'w-1', source: 'resume_parse', employer: 'Acme', role: 'Intern', duration: null, location: null, description: null, skills_gained: ['TypeScript'] }],
   projects: [],
 }
-const RESUME_UPLOAD_OK = { status: 'ok', extraction: { status: 'ok', page_count: 1 }, warnings: [], model: 'test', career_profile: { outcome: 'inserted' }, written: { certifications: { inserted: 0, skipped_duplicate: 0 }, work_experience: { inserted: 1, skipped_duplicate: 0 }, projects: { inserted: 0, skipped_duplicate: 0 } } }
+const RESUME_UPLOAD_OK = { status: 'ok', extraction: { status: 'ok', page_count: 1 }, warnings: [], model: 'test', career_profile: { outcome: 'inserted' }, academics: { major_current: 'Computer Engineering', expected_graduation: 'Spring 2029' }, written: { certifications: { inserted: 0, skipped_duplicate: 0 }, work_experience: { inserted: 1, skipped_duplicate: 0 }, projects: { inserted: 0, skipped_duplicate: 0 } } }
 const TRANSCRIPT_UPLOAD_OK = { status: 'ok', warnings: [], rejected: [], written: { course_records: { inserted: 1, skipped_duplicate: 0 } }, catalog: { matched: 1, unmatched: 0, misses: [] }, cross_check: { ok: true, terms_checked: 1, terms_skipped: 0, mismatches: [] } }
 
 function send(response, body, status = 200) {
@@ -138,6 +138,8 @@ test('resume processing: status, filename, stages, disabled controls, no duplica
   // CASE R4 / P6: the backend answer immediately overrides the visual stage.
   state.release()
   await page.getByRole('heading', { name: 'Here’s what we read.' }).waitFor()
+  assert.equal(await page.getByLabel('Current major').inputValue(), 'Computer Engineering')
+  assert.equal(await page.getByLabel('Expected graduation').inputValue(), 'Spring 2029')
   assert.equal(await page.locator('.dp-panel').count(), 0, 'processing must not survive the handover')
 })
 

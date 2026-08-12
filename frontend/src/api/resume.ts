@@ -29,6 +29,7 @@ import type {
   NormalizedPatch,
   NormalizedReview,
   NormalizedUpload,
+  ResumeAcademicFacts,
 } from '../lib/resumeApi.mjs';
 
 /** Status 0 means "the request never reached the server". */
@@ -127,7 +128,10 @@ export async function patchCareerRow(
   return normalizePatchResponse(status, body);
 }
 
-export async function confirmCareerRecords(accessToken: string): Promise<NormalizedConfirm> {
+export async function confirmCareerRecords(
+  accessToken: string,
+  academics?: ResumeAcademicFacts,
+): Promise<NormalizedConfirm> {
   // No body: the backend treats an absent/empty selection as "confirm
   // everything still unconfirmed", which is this stage's only mode.
   //
@@ -137,7 +141,11 @@ export async function confirmCareerRecords(accessToken: string): Promise<Normali
   // sit on "Saving…" forever with no failure path.
   const { status, body } = await send(
     CONFIRM_URL,
-    { method: 'POST', headers: authHeaders(accessToken) },
+    {
+      method: 'POST',
+      headers: { ...authHeaders(accessToken), 'Content-Type': 'application/json' },
+      body: JSON.stringify(academics ? { academics } : {}),
+    },
     CONFIRM_TIMEOUT_MS,
   );
   return normalizeConfirmResponse(status, body);
