@@ -4041,7 +4041,14 @@ a {
 .profile-card .profile-completion-form { padding-inline: 0; }
 .profile-context { margin: 0; padding: var(--sp-3) var(--sp-4); border-radius: var(--radius); background: rgb(var(--accent-rgb) / 0.09); color: rgb(var(--accent-rgb)); }
 .profile-form-section { display: grid; gap: var(--sp-4); }
-.profile-form-section h3 { margin: 0; font-size: var(--text-md); }
+/* Section headings reuse .editable-section-title (the app's uppercase eyebrow);
+   only margin and color are set here so the shared class keeps ownership of
+   type. --ink (not the class's --muted) is what separates a section heading
+   from the .form-label eyebrows nested under it, which are otherwise the
+   same size, weight, case and letter-spacing. */
+.profile-form-section h3 { margin: 0; color: var(--ink); }
+/* Hairline between sections -- the same 1px/--line divider used app-wide. */
+.profile-form-section + .profile-form-section { padding-top: var(--sp-5); border-top: 1px solid var(--line); }
 .profile-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sp-4); }
 .profile-completion-form label, .profile-form-field { display: grid; gap: var(--sp-2); min-width: 0; font-weight: 600; }
 .profile-completion-form input:not([type='radio']), .profile-completion-form select { width: 100%; padding: var(--sp-3); border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); color: var(--ink); font: inherit; }

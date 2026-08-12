@@ -15,5 +15,5 @@ export function ProfileCompletionPage() {
   const profile = studentAccount.profile?.intelligence_profile; const path = params.get('field');
   if (!profile || !session) return null;
   const missingFields = path && LABELS[path] ? [{ path, label: LABELS[path] }] : [];
-  return <main className="profile-page"><div className="profile-card"><header className="profile-modal-header"><div><h1>Complete your profile</h1><p>Add or update the details CampusIQ uses for personalized guidance.</p></div></header><ProfileCompletionForm profile={profile} accessToken={session.access_token} missingFields={missingFields} onCancel={() => void navigate('/dashboard')} onSaved={async () => { await reloadStudentProfile(); void navigate('/dashboard'); }} /></div></main>;
+  return <main className="profile-page"><div className="profile-card"><header className="profile-modal-header"><div><h1>Complete your profile</h1><p>Add or update the details GradusIQ uses for personalized guidance.</p></div></header><ProfileCompletionForm profile={profile} accessToken={session.access_token} missingFields={missingFields} onCancel={() => void navigate('/dashboard')} onSaved={async () => { await reloadStudentProfile(); void navigate('/dashboard'); }} /></div></main>;
 }
