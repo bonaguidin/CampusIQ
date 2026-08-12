@@ -7,6 +7,7 @@ import { planningRoutes } from './fixtures/planningRoutes.mjs'
 
 test('authenticated dashboard covers canonical states, routing, themes, errors, demo separation, and mobile', { timeout: 45_000 }, async (t) => {
   const requests = []
+  const profilePatches = []
   // The Academic Record tab renders the term view. Its Fall 2025 term id
   // matches the preview harness's own course row, so that course is reachable
   // by selecting its term; Fall 2026 is the upcoming term the dropdown opens
@@ -36,6 +37,16 @@ test('authenticated dashboard covers canonical states, routing, themes, errors, 
         errors: ['Missing required field: AI comfort level'],
         missing_fields: [{ path: 'career.ai_anxiety_level', label: 'AI comfort level' }],
       }))
+      return
+    }
+    if (path === '/api/v2/student/me/profile' && request.method === 'PATCH') {
+      let body = ''; request.on('data', (chunk) => { body += chunk })
+      request.on('end', () => {
+        profilePatches.push(JSON.parse(body))
+        response.setHeader('content-type', 'application/json')
+        if (profilePatches.length === 1) { response.statusCode = 502; response.end(JSON.stringify({ detail: 'Could not save your profile.' })) }
+        else { response.statusCode = 200; response.end(JSON.stringify({ ok: true })) }
+      })
       return
     }
     next()
@@ -181,17 +192,46 @@ test('authenticated dashboard covers canonical states, routing, themes, errors, 
   }
   await page.getByText(/missing information/).first().waitFor()
 
-  // A skipped analysis names the field in the student's language and offers a
-  // way in. The dotted path is what the link carries, never what is rendered.
+  // A skipped analysis names the field in the student's language and opens a
+  // modal without unmounting the dashboard or exposing the dotted path.
   const skipped = page.locator('.analysis-skipped').first()
   await skipped.getByText('AI comfort level').waitFor()
   assert.equal(await page.getByText('career.ai_anxiety_level').count(), 0)
-  const fixLink = skipped.getByRole('link', { name: 'Add this' }).first()
-  await fixLink.waitFor()
-  assert.equal(
-    await fixLink.getAttribute('href'),
-    '/profile/complete?field=career.ai_anxiety_level',
-  )
+  const trigger = skipped.getByRole('button', { name: 'Complete profile' }).first()
+  await trigger.click()
+  const dialog = page.getByRole('dialog', { name: 'Complete your profile' })
+  await dialog.waitFor()
+  assert.equal(await page.locator('[data-dashboard-source="authenticated"]').count(), 1)
+  assert.equal(await dialog.getByLabel('Intended major').inputValue(), 'N/A')
+  assert.equal(await dialog.getByLabel('Season').inputValue(), 'Spring')
+  assert.equal(await dialog.getByLabel('Year').inputValue(), '2028')
+  await dialog.locator('.tag-chip').filter({ hasText: 'Software Engineer' }).waitFor()
+  await dialog.locator('.tag-chip').filter({ hasText: 'TypeScript' }).waitFor()
+  await dialog.getByLabel('Moderate').check()
+  await dialog.getByRole('button', { name: 'Save changes' }).click()
+  await dialog.getByRole('alert').waitFor()
+  assert.equal(await dialog.count(), 1, 'failed save keeps the modal open')
+  await dialog.getByRole('button', { name: 'Save changes' }).click()
+  await dialog.waitFor({ state: 'detached' })
+  assert.deepEqual(profilePatches.at(-1), { ai_anxiety_level: 'moderate' })
+  assert.equal(await page.evaluate(() => document.body.dataset.profileReloaded), 'yes')
+  await page.getByRole('status').filter({ hasText: 'Profile saved' }).waitFor()
+  assert.equal(await page.getByRole('heading', { name: 'Career Profile' }).count(), 1)
+
+  // FIT uses the same modal host; Escape closes it and restores trigger focus.
+  const fitSkipped = page.locator('.analysis-panel').filter({ hasText: 'Role Fit (FIT)' }).locator('.analysis-skipped')
+  const fitTrigger = fitSkipped.getByRole('button', { name: 'Complete profile' }).first()
+  await fitTrigger.click(); await dialog.waitFor(); await page.keyboard.press('Escape')
+  await dialog.waitFor({ state: 'detached' })
+  assert.equal(await fitTrigger.evaluate((node) => node === document.activeElement), true)
+  await fitTrigger.click(); await dialog.waitFor(); await dialog.getByRole('button', { name: 'Cancel' }).click(); await dialog.waitFor({ state: 'detached' })
+  await fitTrigger.click(); await dialog.waitFor(); await dialog.getByRole('button', { name: 'Close profile completion' }).click(); await dialog.waitFor({ state: 'detached' })
+
+  // The mobile sheet stays within the viewport and remains internally scrollable.
+  await page.setViewportSize({ width: 390, height: 844 }); await fitTrigger.click(); await dialog.waitFor()
+  assert.equal(await dialog.evaluate((node) => node.getBoundingClientRect().width <= innerWidth), true)
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true)
+  await page.keyboard.press('Escape'); await dialog.waitFor({ state: 'detached' })
 
   assert.deepEqual(requests.map(({ url }) => url), [
     '/api/v2/student/me/analyze/gap',
