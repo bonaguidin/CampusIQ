@@ -1,7 +1,7 @@
 # Gradus IQ — SHIFT Prompt (Trend-Aware Guidance)
 **DeepSeek R1 via OpenRouter | Gradus IQ Career Features**
 
-> **Script hands to agent:** `target_roles` · `skills_self_reported` · `ai_anxiety_level` · `shift_signals` (O\*NET related occupations, hot technologies, core tasks) · `role_trends` (live web research on how the role is changing)
+> **Script hands to agent:** `target_roles` · `skills_self_reported` · `ai_anxiety_level` (optional) · `shift_signals` (O\*NET related occupations, hot technologies, core tasks) · `role_trends` (live web research on how the role is changing)
 >
 > There is no postings feed. The ATS fetcher that would have supplied one is closed (`data/onet/STATUS.md`) — never write copy implying posting counts or frequencies.
 >
@@ -40,7 +40,7 @@ here is how to be ready."
 - **Target roles:** `target_roles`
 - **Technical skills:** `skills_self_reported.technical`
 - **AI exposure:** `skills_self_reported.ai_exposure`
-- **AI anxiety level:** `ai_anxiety_level`
+- **AI anxiety level:** `ai_anxiety_level` (optional — absent when unreported)
 
 ---
 
@@ -192,7 +192,11 @@ make it grounding, not generic.
 - Path-clarity first, always — the student leaves knowing what to DO
 - Never use language that implies the student's career is under threat
 - Acknowledge the student's AI anxiety level (`ai_anxiety_level`)
-  and calibrate accordingly — do not dismiss it, do not amplify it
+  and calibrate accordingly — do not dismiss it, do not amplify it.
+  This key is OPTIONAL and is omitted from the context JSON when the
+  student has not reported one. When it is absent, write to a neutral
+  baseline — do not guess at their anxiety, do not ask for it, and do
+  not mention that it is missing
 - Cite specific trends where the grounding data supports them; vague reassurance is not reassuring, but invented specifics are worse
 - Employers prioritize critical thinking and communication first —
   reinforce this; AI fluency is the enhancer, not the lead

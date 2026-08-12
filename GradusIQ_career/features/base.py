@@ -13,6 +13,57 @@ FeatureStatus = Literal["success", "skipped", "failed"]
 
 PROMPT_DIR = Path(__file__).resolve().parents[1]
 
+# Human labels for every path any runner gates on. THE SINGLE SOURCE OF TRUTH:
+# GAP, FIT, SHIFT and PROFESSOR_COMMENTS all skip through the one gate in
+# CareerFeatureRunner.run, so a label written here cannot drift between
+# features the way a per-feature map or a frontend copy would.
+#
+# These are the words the student reads when an analysis will not run, so they
+# name the thing they would go and fill in -- "AI comfort level", not
+# "career.ai_anxiety_level", and not the column name either. The dotted path
+# still travels alongside the label (see MissingField) for the deep link and
+# for logs; it is simply never the thing rendered.
+FIELD_LABELS: Mapping[str, str] = {
+    "student.expected_graduation": "Expected graduation",
+    "student.major_intended": "Intended major",
+    "career.target_roles": "Target roles",
+    "career.interests": "Career interests",
+    "career.ai_anxiety_level": "AI comfort level",
+    "career.skills_self_reported": "Skills",
+    "career.work_experience": "Work experience",
+    "submissions": "Course submissions",
+    "submissions[].submission_comments": "Professor feedback on your submissions",
+}
+
+
+def field_label(path: str) -> str:
+    """Human label for a gated path, falling back to a readable form of it.
+
+    The fallback exists so that adding a path to some runner's required_paths
+    and forgetting this map degrades to "Career goals" rather than to a raw
+    dotted path leaking into the UI -- a missing entry should read as slightly
+    generic, not as a bug the student is looking at.
+    """
+    known = FIELD_LABELS.get(path)
+    if known:
+        return known
+    leaf = path.split(".")[-1].replace("[]", "").replace("_", " ").strip()
+    return leaf[:1].upper() + leaf[1:] if leaf else path
+
+
+@dataclass(frozen=True)
+class MissingField:
+    """One unmet precondition, in both registers.
+
+    `path` is what the code gates on; `label` is what the student reads. They
+    are carried together rather than the frontend re-deriving one from the
+    other, which would put a second copy of FIELD_LABELS in TypeScript and
+    guarantee the two eventually disagree.
+    """
+
+    path: str
+    label: str
+
 
 @dataclass(frozen=True)
 class FeatureResult:
@@ -21,6 +72,11 @@ class FeatureResult:
     summary: str
     data: dict[str, Any] = field(default_factory=dict)
     errors: list[str] = field(default_factory=list)
+    # Populated only on the skip path. `errors` stays a flat list of strings
+    # because it also carries transport failures and contract violations, which
+    # have no field to point at -- widening it to a union would make every
+    # consumer type-check something that is a string in most cases.
+    missing_fields: list[MissingField] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -55,12 +111,17 @@ class CareerFeatureRunner:
             student_profile, self.required_paths
         ) or self.additional_missing_fields(student_profile)
         if missing_fields:
+            resolved = [MissingField(path=path, label=field_label(path)) for path in missing_fields]
             return FeatureResult(
                 feature=self.feature,
                 status="skipped",
                 summary="Missing required fields for this feature.",
                 data={},
-                errors=[f"Missing required field: {field_name}" for field_name in missing_fields],
+                # Labelled here too, not just in missing_fields: these strings
+                # reach logs and any caller that predates missing_fields, and a
+                # raw dotted path is no more useful in a log line than on screen.
+                errors=[f"Missing required field: {item.label}" for item in resolved],
+                missing_fields=resolved,
             ).to_dict()
 
         try:

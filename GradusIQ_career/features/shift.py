@@ -10,10 +10,15 @@ from .market_data import get_shift_signals
 class ShiftRunner(CareerFeatureRunner):
     feature = "SHIFT"
     prompt_filename = "gradus_iq_prompt_SHIFT.md"
+    # ai_anxiety_level is deliberately NOT gated on. It calibrates SHIFT's tone
+    # -- how much reassurance to offer about AI -- and everything the feature
+    # actually reasons over (target roles, skills, O*NET signals, live trends)
+    # is present without it. Blocking the whole analysis on an optional
+    # self-report was withholding the answer to punish an incomplete profile.
+    # See build_student_context: absent, it is omitted rather than sent empty.
     required_paths = (
         "career.target_roles",
         "career.skills_self_reported",
-        "career.ai_anxiety_level",
     )
     output_contract: Mapping[str, Any] = {
         "role_evolution_summary": "string",
@@ -44,14 +49,13 @@ class ShiftRunner(CareerFeatureRunner):
         student = student_profile.get("student", {})
         career = student_profile.get("career", {})
         target_roles = career.get("target_roles", [])
-        return {
+        context = {
             "major_current": student.get("major_current") or student.get("major"),
             "major_intended": student.get("major_intended") or student.get("major"),
             "classification": student.get("classification"),
             "target_roles": target_roles,
             "interests": career.get("interests", []),
             "skills_self_reported": career.get("skills_self_reported", {}),
-            "ai_anxiety_level": career.get("ai_anxiety_level", ""),
             "career_goals": career.get("career_goals", ""),
             # Local O*NET grounding: adjacent occupations, hot technologies and
             # core tasks. Free and instant -- it is already on disk.
@@ -61,6 +65,18 @@ class ShiftRunner(CareerFeatureRunner):
             # SHIFT to stay generic rather than invent a trend for them.
             "role_trends": self.role_trends_for(target_roles),
         }
+
+        # Omitted entirely when unset, rather than sent as "". The prompt asks
+        # the model to acknowledge the student's stated AI anxiety and
+        # calibrate to it; an empty string is not a level, and handing one over
+        # invites the model to characterize a feeling the student never
+        # reported. Absent, the key simply is not in the JSON, and the prompt's
+        # TONE GUIDANCE makes that branch explicit.
+        ai_anxiety_level = career.get("ai_anxiety_level")
+        if isinstance(ai_anxiety_level, str) and ai_anxiety_level.strip():
+            context["ai_anxiety_level"] = ai_anxiety_level
+
+        return context
 
     def role_trends_for(self, target_roles: Any) -> dict[str, Any]:
         """Research current trends for each target role, skipping failures.

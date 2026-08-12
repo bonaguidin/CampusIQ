@@ -7,12 +7,27 @@
 
 export type FeatureStatus = 'success' | 'skipped' | 'failed';
 
+/**
+ * One unmet precondition behind a 'skipped' result. `label` is authored in
+ * base.py's FIELD_LABELS and is the only thing shown to a student; `path` is
+ * the dotted profile path, carried for the deep link and never rendered.
+ *
+ * Optional on FeatureResult because a response produced before base.py started
+ * sending it -- anything cached, replayed or captured in an older fixture --
+ * has `errors` but no `missing_fields`.
+ */
+export interface MissingField {
+  path: string;
+  label: string;
+}
+
 export interface FeatureResult<T> {
   feature: string;
   status: FeatureStatus;
   summary: string;
   data: T;
   errors: string[];
+  missing_fields?: MissingField[];
 }
 
 // ── GAP (readiness check) — gap.py output_contract ──────────────────────────

@@ -13,13 +13,15 @@ Student identity here is the dashboard "slug" (e.g. "jordanReyes"), matching the
 import hmac
 import json
 import os
+import re
 import threading
 import time
 from collections import deque
 from contextlib import contextmanager
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from pathlib import Path
-from typing import Iterator
+from typing import Iterator, Literal
 from pydantic import BaseModel
 
 from dotenv import load_dotenv
@@ -841,6 +843,43 @@ def _me_canonical_feature_profile(request: Request) -> tuple[dict, str]:
     return canonical_to_legacy_profile(canonical), str(student_id)
 
 
+class ProfileUpdateRequest(BaseModel):
+    """Editable, student-authored profile fields; omitted fields stay untouched."""
+
+    classification: str | None = None
+    major_current: str | None = None
+    major_intended: str | None = None
+    expected_graduation: str | None = None
+    ai_anxiety_level: Literal["low", "moderate", "high", "not_sure"] | None = None
+    target_roles: list[str] | None = None
+    interests: list[str] | None = None
+    skills_technical: list[str] | None = None
+    skills_soft: list[str] | None = None
+
+
+_GRADUATION_PATTERN = re.compile(r"^(Spring|Fall) 20[0-9]{2}$")
+
+
+def _clean_profile_text(value: str | None, field: str) -> str | None:
+    if value is None:
+        return None
+    cleaned = value.strip()
+    if not cleaned:
+        raise HTTPException(status_code=422, detail=f"{field} cannot be blank.")
+    if len(cleaned) > 120:
+        raise HTTPException(status_code=422, detail=f"{field} is too long.")
+    return cleaned
+
+
+def _clean_profile_list(value: list[str] | None, field: str) -> list[str] | None:
+    if value is None:
+        return None
+    cleaned = [item.strip() for item in value if item.strip()]
+    if len(cleaned) > 30 or any(len(item) > 120 for item in cleaned):
+        raise HTTPException(status_code=422, detail=f"{field} contains too many or overly long items.")
+    return list(dict.fromkeys(cleaned))
+
+
 @router.post(
     "/api/v2/student/me/analyze/{feature}",
     dependencies=[Depends(authorize_proxy_request)],
@@ -886,6 +925,77 @@ def get_me_profile(request: Request) -> dict:
     student_id = _resolve_session_student_id(client)
     # Additive evolution: retain the runner/dashboard compatibility keys while
     # exposing the validated domain contract under an explicit versioned key.
+    canonical = build_student_intelligence_profile(client, student_id)
+    legacy = canonical_to_legacy_profile(canonical)
+    return {**legacy, "intelligence_profile": canonical.model_dump(mode="json")}
+
+
+@router.patch(
+    "/api/v2/student/me/profile",
+    dependencies=[Depends(authorize_proxy_request)],
+)
+def update_me_profile(request: Request, body: ProfileUpdateRequest) -> dict:
+    """Partially update the caller's own profile and refresh confirmation."""
+    supplied = body.model_fields_set
+    if not supplied:
+        raise HTTPException(status_code=422, detail="Supply at least one editable field.")
+
+    student_fields = {"classification", "major_current", "major_intended", "expected_graduation"}
+    student_changes = {
+        field: _clean_profile_text(getattr(body, field), field)
+        for field in supplied & student_fields
+    }
+    graduation = student_changes.get("expected_graduation")
+    if graduation is not None and not _GRADUATION_PATTERN.fullmatch(graduation):
+        raise HTTPException(
+            status_code=422,
+            detail='expected_graduation must use "Spring YYYY" or "Fall YYYY".',
+        )
+    career_user_changes = {}
+    if "ai_anxiety_level" in supplied:
+        career_user_changes["ai_anxiety_level"] = body.ai_anxiety_level
+    for field in supplied & {"target_roles", "interests", "skills_technical", "skills_soft"}:
+        career_user_changes[field] = _clean_profile_list(getattr(body, field), field)
+
+    client = _session_client(request)
+    student_id = _resolve_session_student_id(client)
+    stamp = datetime.now(timezone.utc).isoformat()
+
+    try:
+        if student_changes:
+            student_changes["updated_at"] = stamp
+            (
+                client.table("students")
+                .update(student_changes)
+                .eq("id", student_id)
+                .execute()
+            )
+
+        career_rows = (
+            client.table("career_profiles")
+            .select("id")
+            .eq("student_id", student_id)
+            .execute()
+            .data
+        )
+        career_changes = {"confirmed_at": stamp, "updated_at": stamp}
+        career_changes.update(career_user_changes)
+        if career_rows:
+            (
+                client.table("career_profiles")
+                .update(career_changes)
+                .eq("student_id", student_id)
+                .execute()
+            )
+        else:
+            client.table("career_profiles").insert(
+                {"student_id": student_id, "source": "manual", **career_changes}
+            ).execute()
+    except HTTPException:
+        raise
+    except Exception as exc:  # noqa: BLE001 -- RLS, constraint, or transport
+        raise HTTPException(status_code=502, detail="Could not update your profile.") from exc
+
     canonical = build_student_intelligence_profile(client, student_id)
     legacy = canonical_to_legacy_profile(canonical)
     return {**legacy, "intelligence_profile": canonical.model_dump(mode="json")}

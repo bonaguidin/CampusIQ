@@ -26,7 +26,16 @@ test('authenticated dashboard covers canonical states, routing, themes, errors, 
     if (request.url?.startsWith('/api/v2/student/me/analyze/')) {
       requests.push({ url: request.url, authorization: request.headers.authorization })
       response.statusCode = 200; response.setHeader('content-type', 'application/json')
-      response.end(JSON.stringify({ feature: 'GAP', status: 'skipped', summary: '', data: {}, errors: ['missing'] }))
+      // Mirrors base.py's skip result: `errors` carries the human sentence,
+      // `missing_fields` carries the label and the dotted path together.
+      response.end(JSON.stringify({
+        feature: 'GAP',
+        status: 'skipped',
+        summary: '',
+        data: {},
+        errors: ['Missing required field: AI comfort level'],
+        missing_fields: [{ path: 'career.ai_anxiety_level', label: 'AI comfort level' }],
+      }))
       return
     }
     next()
@@ -171,6 +180,19 @@ test('authenticated dashboard covers canonical states, routing, themes, errors, 
     await page.locator('.analysis-panel').filter({ hasText: title }).getByRole('button', { name: 'Run analysis' }).click()
   }
   await page.getByText(/missing information/).first().waitFor()
+
+  // A skipped analysis names the field in the student's language and offers a
+  // way in. The dotted path is what the link carries, never what is rendered.
+  const skipped = page.locator('.analysis-skipped').first()
+  await skipped.getByText('AI comfort level').waitFor()
+  assert.equal(await page.getByText('career.ai_anxiety_level').count(), 0)
+  const fixLink = skipped.getByRole('link', { name: 'Add this' }).first()
+  await fixLink.waitFor()
+  assert.equal(
+    await fixLink.getAttribute('href'),
+    '/profile/complete?field=career.ai_anxiety_level',
+  )
+
   assert.deepEqual(requests.map(({ url }) => url), [
     '/api/v2/student/me/analyze/gap',
     '/api/v2/student/me/analyze/fit',
