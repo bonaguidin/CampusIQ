@@ -202,11 +202,23 @@ test('authenticated dashboard covers canonical states, routing, themes, errors, 
   const dialog = page.getByRole('dialog', { name: 'Complete your profile' })
   await dialog.waitFor()
   assert.equal(await page.locator('[data-dashboard-source="authenticated"]').count(), 1)
-  assert.equal(await dialog.getByLabel('Intended major').inputValue(), 'N/A')
+  // The stored 'N/A' is an answer, not a typed major: it unticks the switch
+  // and leaves the gated field empty rather than echoing the sentinel back.
+  const switching = dialog.getByLabel("I'm planning to switch majors")
+  assert.equal(await switching.isChecked(), false)
+  assert.equal(await dialog.getByLabel('Intended major').inputValue(), '')
+  assert.equal(await dialog.getByLabel('Intended major').isDisabled(), true)
+  await switching.check()
+  assert.equal(await dialog.getByLabel('Intended major').isDisabled(), false)
+  await switching.uncheck()
   assert.equal(await dialog.getByLabel('Season').inputValue(), 'Spring')
   assert.equal(await dialog.getByLabel('Year').inputValue(), '2028')
   await dialog.locator('.tag-chip').filter({ hasText: 'Software Engineer' }).waitFor()
-  await dialog.locator('.tag-chip').filter({ hasText: 'TypeScript' }).waitFor()
+  // Skills live on /resume now, so the modal offers no editor for them.
+  assert.equal(await dialog.locator('.tag-chip').filter({ hasText: 'TypeScript' }).count(), 0)
+  await dialog.getByRole('link', { name: 'resume review' }).waitFor()
+  // No AI radio is selected while ai_anxiety_level is null.
+  assert.equal(await dialog.locator('input[name="ai-comfort"]:checked').count(), 0)
   await dialog.getByLabel('Moderate').check()
   await dialog.getByRole('button', { name: 'Save changes' }).click()
   await dialog.getByRole('alert').waitFor()

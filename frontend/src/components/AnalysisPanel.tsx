@@ -21,6 +21,16 @@ export function profileCompletionHref(path: string): string {
   return `${PROFILE_COMPLETION_PATH}?field=${encodeURIComponent(path)}`;
 }
 
+/**
+ * The gaps the profile-completion surface cannot close.
+ *
+ * Skills and work experience are parsed from the résumé and edited on /resume;
+ * the completion form deliberately owns neither. Sending these to the modal
+ * opened a dialog with no field for the thing that was missing, so they route
+ * to the surface that can actually fix them instead.
+ */
+const RESUME_OWNED_PATHS = new Set(['career.skills_self_reported', 'career.work_experience']);
+
 interface AnalysisPanelProps {
   title: string;
   invitation: string;
@@ -86,7 +96,11 @@ export function AnalysisPanel({
             {missingFields.map((field) => (
               <li key={field.path} className="section-error-item">
                 <span className="missing-field-label">{field.label}</span>
-                {openProfileCompletion ? <button className="missing-field-link" type="button" onClick={(event) => openProfileCompletion({ feature: title.match(/\((FIT|GAP|SHIFT)\)/)?.[1] ?? title, missingFields, trigger: event.currentTarget })}>Complete profile</button> : <Link className="missing-field-link" to={profileCompletionHref(field.path)}>Add this</Link>}
+                {RESUME_OWNED_PATHS.has(field.path)
+                  ? <Link className="missing-field-link" to="/resume">Review résumé</Link>
+                  : openProfileCompletion
+                    ? <button className="missing-field-link" type="button" onClick={(event) => openProfileCompletion({ feature: title.match(/\((FIT|GAP|SHIFT)\)/)?.[1] ?? title, missingFields: missingFields.filter((entry) => !RESUME_OWNED_PATHS.has(entry.path)), trigger: event.currentTarget })}>Complete profile</button>
+                    : <Link className="missing-field-link" to={profileCompletionHref(field.path)}>Add this</Link>}
               </li>
             ))}
           </ul>

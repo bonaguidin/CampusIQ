@@ -2,11 +2,18 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../auth/useAuth';
 import { ProfileCompletionForm } from '../components/profile/ProfileCompletionForm';
 
+/**
+ * The fields this page can focus -- i.e. exactly the fields its form owns.
+ *
+ * career.skills_self_reported and career.work_experience are absent on
+ * purpose: they belong to /resume (see RESUME_OWNED_PATHS in AnalysisPanel),
+ * and naming them here would let ?field= highlight something the form no
+ * longer renders. An unknown path already falls through to no highlight.
+ */
 const LABELS: Record<string, string> = {
   'student.major_intended': 'Intended major', 'student.expected_graduation': 'Expected graduation',
   'career.target_roles': 'Target roles', 'career.interests': 'Career interests',
-  'career.skills_self_reported': 'Skills', 'career.ai_anxiety_level': 'AI comfort level',
-  'career.work_experience': 'Work experience',
+  'career.ai_anxiety_level': 'AI comfort level',
 };
 
 export function ProfileCompletionPage() {
