@@ -4057,6 +4057,15 @@ a {
 /* Checkbox rows read left-to-right, against the form's default label grid. */
 .profile-completion-form label.profile-form-check { display: flex; flex-direction: row; align-items: center; gap: var(--sp-2); font-weight: 500; cursor: pointer; }
 .profile-completion-form :is(input[type='checkbox'], input[type='radio']) { width: auto; accent-color: rgb(var(--accent-rgb)); cursor: pointer; }
+/* The gated field's helper sits between two things it could belong to: the
+   input it describes, and the muted eyebrow of the next field group. At the
+   section's uniform --sp-4 it was equidistant from both (8px label gap + 8px
+   small margin above, 16px section gap below), so it read as floating rather
+   than as this field's caption. The extra --sp-3 below breaks the tie by
+   proximity, without touching the shared `small` rule -- that rule's
+   margin-top is what spaces the AI-comfort helper, which sits in a fieldset
+   with no grid gap of its own to fall back on. */
+.profile-form-field--gated { margin-bottom: var(--sp-3); }
 /* A gated field still has to be readable, so it dims rather than greying out. */
 .profile-completion-form input:disabled { background: var(--neutral-surface); color: var(--muted); cursor: not-allowed; }
 /* Where a field lives when it does not live here. Muted and un-boxed: it is a
