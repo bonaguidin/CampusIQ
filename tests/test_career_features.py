@@ -150,19 +150,22 @@ def _live_agent_requirements():
 
 
 def test_role_requirements_for_uses_agent_skills_but_static_soc_code(monkeypatch):
+    # Operations Intern (13-1199.00) is the only demo role that reaches the
+    # agent: no O*NET ratings AND no related occupations to borrow from.
+    # Finance Intern used to qualify, but now borrows from a rated neighbour.
     agent_data = _live_agent_requirements()
     monkeypatch.setattr(
         gap_module.role_research_agent,
         "get_role_requirements",
-        lambda role: agent_data if role == "Business Analyst Intern" else None,
+        lambda role: agent_data if role == "Operations Intern" else None,
     )
 
-    result = GapRunner(client=FakeClient("{}")).role_requirements_for(["Business Analyst Intern"])
-    entry = result["Business Analyst Intern"]
+    result = GapRunner(client=FakeClient("{}")).role_requirements_for(["Operations Intern"])
+    entry = result["Operations Intern"]
 
     # soc_code/soc_title always come from the static file, never the agent.
-    assert entry["soc_code"] == "13-1111.00"
-    assert entry["soc_title"] == "Management Analysts"
+    assert entry["soc_code"] == "13-1199.00"
+    assert entry["soc_title"] == "Business Operations Specialists, All Other"
     # must_have_skills comes from the agent (non-empty agent list wins).
     assert entry["must_have_skills"] == ["Live-researched must-have skill"]
     assert entry["requirements_source"] == "agent"
@@ -219,22 +222,77 @@ def test_role_requirements_for_reports_unmatched_when_agent_and_static_both_miss
 
 
 def test_role_requirements_for_handles_mixed_agent_and_static_results_across_roles(monkeypatch):
+    # Operations Intern reaches the agent and its research wins; Business
+    # Analyst Intern has its own O*NET ratings so the agent never runs and it
+    # keeps the static lists.
     agent_data = _live_agent_requirements()
     monkeypatch.setattr(
         gap_module.role_research_agent,
         "get_role_requirements",
-        lambda role: agent_data if role == "Business Analyst Intern" else None,
+        lambda role: agent_data if role == "Operations Intern" else None,
     )
 
     result = GapRunner(client=FakeClient("{}")).role_requirements_for(
-        ["Business Analyst Intern", "Operations Intern"]
+        ["Operations Intern", "Business Analyst Intern"]
     )
 
-    assert result["Business Analyst Intern"]["soc_code"] == "13-1111.00"
-    assert result["Business Analyst Intern"]["must_have_skills"] == ["Live-researched must-have skill"]
     assert result["Operations Intern"]["soc_code"] == "13-1199.00"
-    assert result["Operations Intern"]["requirements_source"] == "static"
+    assert result["Operations Intern"]["must_have_skills"] == ["Live-researched must-have skill"]
+    assert result["Operations Intern"]["requirements_source"] == "agent"
+    assert result["Business Analyst Intern"]["soc_code"] == "13-1111.00"
+    assert result["Business Analyst Intern"]["requirements_source"] == "static"
     assert "_unmatched_roles" not in result
+
+
+def test_agent_is_not_called_for_roles_onet_already_rates(monkeypatch):
+    """The core of the gap-fill change: research is spent only where it is needed.
+
+    The agent used to run for every role while the prompt forbade using its
+    skill lists wherever O*NET data existed -- research paid for and discarded.
+    """
+    called: list[str] = []
+
+    def _spy(role):
+        called.append(role)
+        return _live_agent_requirements()
+
+    monkeypatch.setattr(gap_module.role_research_agent, "get_role_requirements", _spy)
+
+    result = GapRunner(client=FakeClient("{}")).role_requirements_for(
+        ["Business Analyst Intern", "Finance Intern", "Operations Intern"]
+    )
+
+    # 13-1111.00 has its own ratings -> skipped. 13-2051.00 borrows from a rated
+    # neighbour -> also skipped. Only 13-1199.00, with neither, is researched.
+    assert called == ["Operations Intern"]
+    assert result["Business Analyst Intern"]["requirements_source"] == "static"
+    # Borrowed, so the agent never ran for it and the static lists stand.
+    assert result["Finance Intern"]["requirements_source"] == "static"
+    assert result["Operations Intern"]["requirements_source"] == "agent"
+
+
+def test_gap_context_marks_agent_filled_roles_with_agent_provenance(monkeypatch):
+    monkeypatch.setattr(
+        gap_module.role_research_agent,
+        "get_role_requirements",
+        lambda role: _live_agent_requirements() if role == "Operations Intern" else None,
+    )
+    student = sample_student()
+    student["career"]["target_roles"] = ["Business Analyst Intern", "Finance Intern", "Operations Intern"]
+
+    context = GapRunner(client=FakeClient("{}")).build_student_context(student)
+    by_role = context["market_requirements"]["by_role"]
+
+    assert by_role["Business Analyst Intern"]["provenance"] == "onet"
+    # Borrowed from a rated neighbour rather than researched: 13-2051.00 has no
+    # O*NET ratings of its own but 13-2052.00 is in its related list, and
+    # neighbour borrowing is decided in market_data before the agent is
+    # consulted. Was "agent" before that change landed.
+    assert by_role["Finance Intern"]["provenance"] == "onet_neighbor"
+    # Upgraded from "none" because the agent supplied this role's requirements.
+    # Operations Intern carries that case now: Finance Intern borrows from a
+    # rated neighbour, so it never reaches the agent at all.
+    assert by_role["Operations Intern"]["provenance"] == "agent"
 
 
 def test_shift_success_with_mocked_ai_json():
@@ -338,3 +396,358 @@ def test_test_student_factory_is_isolated_between_tests():
     first["career"]["target_roles"].append("Changed")
 
     assert second["career"]["target_roles"] == ["Business Analyst Intern", "Operations Intern"]
+
+
+# ---------------------------------------------------------------- SHIFT grounding
+# SHIFT used to send the model nothing but student self-report, so every
+# role-specific claim was recall. These cover the two blocks that replaced that.
+
+def test_shift_signals_ground_adjacent_paths_tools_and_tasks():
+    from GradusIQ_career.features.market_data import get_shift_signals
+
+    signals = get_shift_signals(["Business Analyst Intern"])
+    entry = signals["by_role"]["Business Analyst Intern"]
+
+    assert entry["soc_code"] == "13-1111.00"
+    assert entry["grounded"] is True
+    # Five Primary-Short related occupations, each with a resolved title --
+    # this is what adjacent_paths must be drawn from instead of invented.
+    assert len(entry["related"]) == 5
+    assert all(r["soc"] and r["title"] for r in entry["related"])
+    assert entry["hot_software"]
+    assert entry["core_tasks"]
+
+
+def test_shift_signals_survive_an_occupation_with_no_ratings():
+    """Finance Intern has no O*NET importance scores but does have tools.
+
+    SHIFT consumes tools/tasks/neighbours, not ratings, so it stays grounded
+    for a role GAP has to fall back to the research agent for.
+    """
+    from GradusIQ_career.features.market_data import get_shift_signals
+
+    entry = get_shift_signals(["Finance Intern"])["by_role"]["Finance Intern"]
+
+    assert entry["soc_code"] == "13-2051.00"
+    assert entry["hot_software"]
+    assert entry["grounded"] is True
+
+
+def test_shift_context_carries_both_grounding_blocks(monkeypatch):
+    from GradusIQ_career.features import shift as shift_module
+
+    trends = {
+        "role_evolution": "Shifting toward validating model output.",
+        "task_shifts": ["Routine variance analysis is increasingly automated"],
+        "emerging_skills": ["Prompt-assisted modeling"],
+        "sources": ["https://example.org/report"],
+    }
+    monkeypatch.setattr(
+        shift_module.role_research_agent,
+        "get_role_trends",
+        lambda role, client=None: trends if role == "Business Analyst Intern" else None,
+    )
+    student = sample_student()
+    student["career"]["target_roles"] = ["Business Analyst Intern", "Operations Intern"]
+
+    context = ShiftRunner(client=FakeClient("{}")).build_student_context(student)
+
+    assert context["shift_signals"]["by_role"]["Business Analyst Intern"]["grounded"] is True
+    assert context["role_trends"]["Business Analyst Intern"] == trends
+    # A role research missed is named, not silently absent -- the prompt keys
+    # off this to stay generic instead of improvising a trend.
+    assert context["role_trends"]["_unresearched_roles"] == ["Operations Intern"]
+
+
+def test_shift_reports_every_role_when_trend_research_is_unavailable(monkeypatch):
+    from GradusIQ_career.features import shift as shift_module
+
+    monkeypatch.setattr(
+        shift_module.role_research_agent, "get_role_trends", lambda role, client=None: None
+    )
+    student = sample_student()
+    student["career"]["target_roles"] = ["Business Analyst Intern"]
+
+    context = ShiftRunner(client=FakeClient("{}")).build_student_context(student)
+
+    assert context["role_trends"] == {"_unresearched_roles": ["Business Analyst Intern"]}
+    # Local O*NET grounding is unaffected by the research outage.
+    assert context["shift_signals"]["by_role"]["Business Analyst Intern"]["related"]
+
+
+# ------------------------------------------------------- neighbour borrowing
+# O*NET has never rated 122 of its 1,016 occupations. 29 of those have a rated
+# occupation in their Primary-Short related list, so borrowing beats live web
+# research there: instant, free, and traceable to a named occupation. The
+# condition is disclosure -- these are a NEIGHBOUR's scores.
+#
+# Ported by hand from aab5927, whose own hunk could not be applied: its patch
+# context was interleaved with 8d46afe's readiness-score tests and a5b5ae0's
+# SHIFT concurrency additions, neither of which lands in this pass.
+#
+# The agent-skip test at the end of this block was held back from the FIT
+# remap because it asserts GapRunner.role_requirements_for behaviour, and
+# gap.py was not touched there. gap.py has since landed, so it is here.
+
+
+def test_unrated_role_borrows_from_its_nearest_rated_neighbour():
+    from GradusIQ_career.features.market_data import get_market_requirements
+
+    entry = get_market_requirements(["Finance Intern"])["by_role"]["Finance Intern"]
+
+    assert entry["provenance"] == "onet_neighbor"
+    assert entry["borrowed_from"]["soc"] == "13-2052.00"
+    assert entry["requirements"]["skills"], "borrowed ratings should be populated"
+    assert entry["matched"] is True
+
+
+def test_borrowing_keeps_the_targets_own_software_not_the_neighbours():
+    """Only ratings are borrowed.
+
+    Finance Intern has 33 hot technologies of its own despite having no
+    ratings; swapping the whole entry would discard real data for a
+    neighbour's.
+    """
+    from GradusIQ_career.features.market_data import get_market_requirements
+
+    finance = get_market_requirements(["Finance Intern"])["by_role"]["Finance Intern"]
+
+    assert finance["soc_code"] == "13-2051.00"  # still the target's own SOC
+    assert finance["hot_software"]
+    assert finance["soc_title"] == "Financial and Investment Analysts"
+
+
+def test_borrowing_is_disclosed_in_notes():
+    from GradusIQ_career.features.market_data import get_market_requirements
+
+    notes = " ".join(get_market_requirements(["Finance Intern"])["notes"])
+
+    assert "borrowed" in notes.lower()
+    assert "13-2052.00" in notes
+    assert "disclosed" in notes.lower()
+
+
+def test_role_with_no_rated_neighbour_still_falls_through_to_research():
+    from GradusIQ_career.features.market_data import get_market_requirements
+
+    entry = get_market_requirements(["Operations Intern"])["by_role"]["Operations Intern"]
+
+    # 13-1199.00 has no related occupations at all in the release.
+    assert entry["provenance"] == "none"
+    assert entry["borrowed_from"] is None
+
+
+def test_agent_is_not_called_for_a_role_that_borrowed_from_a_neighbour(monkeypatch):
+    """Borrowing must pre-empt research, not run alongside it."""
+    called: list[str] = []
+    monkeypatch.setattr(
+        gap_module.role_research_agent,
+        "get_role_requirements",
+        lambda role: called.append(role) or None,
+    )
+
+    GapRunner(client=FakeClient("{}")).role_requirements_for(
+        ["Finance Intern", "Operations Intern"]
+    )
+
+    assert called == ["Operations Intern"]
+
+
+# ---------------------------------------------------- readiness-score guard
+# Ported alongside gap.py's guard. The hook these exercise is
+# base.CareerFeatureRunner.validate_data, whose signature is
+# (data, student_profile) -> list[str]; GapRunner's override ignores the
+# profile, academic.py's does not.
+
+
+@pytest.mark.parametrize("score", ["0.32", "11", "-1", "7.5", '"8"', "true"])
+def test_gap_rejects_out_of_scale_readiness_score(score):
+    # A live run returned readiness_score 0.32 for a student whose roles mostly
+    # lacked O*NET data. It passed every check that existed, because
+    # api.py's _matches_contract only asks whether the value is a number.
+    client = FakeClient(
+        '{"summary": "s", "data": {"readiness_score": ' + score + ', "strengths": []}}'
+    )
+
+    result = GapRunner(client=client).run(sample_student())
+
+    assert result["status"] == "failed"
+    assert "readiness_score" in result["errors"][0]
+
+
+@pytest.mark.parametrize("score", ["0", "7", "10"])
+def test_gap_accepts_whole_numbers_on_the_zero_to_ten_scale(score):
+    client = FakeClient(
+        '{"summary": "s", "data": {"readiness_score": ' + score + ', "strengths": []}}'
+    )
+
+    assert GapRunner(client=client).run(sample_student())["status"] == "success"
+
+
+def test_gap_tolerates_a_missing_readiness_score():
+    # Absence renders as nothing; a wrong value renders as a confident
+    # falsehood. Only the second is what the guard exists to stop.
+    client = FakeClient('{"summary": "s", "data": {"strengths": []}}')
+
+    assert GapRunner(client=client).run(sample_student())["status"] == "success"
+
+
+# ----------------------------------------------------------- FIT grounding
+# FIT used to build its context from the student profile alone, so every fit
+# judgement was the model's own recall presented as analysis -- and its prompt
+# asked for a "DFW market signal" it was never given, so it invented employers.
+# These assert the market data is actually in the context, which is the whole
+# of the fix: the prompt can only cite what the runner hands it.
+
+
+def test_fit_context_carries_market_requirements_and_role_context():
+    student = sample_student()
+    student["career"]["target_roles"] = ["Business Analyst Intern", "Finance Intern"]
+
+    context = FitRunner(client=FakeClient("{}")).build_student_context(student)
+
+    # Both providers, keyed per role. Without these the model has no market
+    # facts at all and the prompt's citation rules have nothing to bind to.
+    assert "market_requirements" in context, "FIT context must carry market data"
+    assert "role_context" in context, "FIT context must carry occupation tasks"
+    assert set(context["market_requirements"]["by_role"]) == {
+        "Business Analyst Intern",
+        "Finance Intern",
+    }
+    assert set(context["role_context"]["by_role"]) == {
+        "Business Analyst Intern",
+        "Finance Intern",
+    }
+
+
+def test_fit_context_carries_provenance_for_a_resolved_soc_role():
+    student = sample_student()
+    student["career"]["target_roles"] = ["Business Analyst Intern", "Finance Intern"]
+
+    by_role = FitRunner(client=FakeClient("{}")).build_student_context(student)[
+        "market_requirements"
+    ]["by_role"]
+
+    # 13-1111.00 is rated directly by O*NET.
+    assert by_role["Business Analyst Intern"]["provenance"] == "onet"
+    assert by_role["Business Analyst Intern"]["requirements"]["skills"]
+
+    # 13-2051.00 is not, and borrows from 13-2052.00. FIT inherits the same
+    # four provenance values GAP uses, so the prompt can disclose the borrowing
+    # rather than presenting a neighbour's scores as this role's own.
+    assert by_role["Finance Intern"]["provenance"] == "onet_neighbor"
+    assert by_role["Finance Intern"]["borrowed_from"]["title"] == "Personal Financial Advisors"
+
+
+def test_fit_context_carries_core_tasks_for_interest_matching():
+    """core_tasks is the signal FIT matches interests against.
+
+    A role title alone invites the model to reason from the name; the
+    occupation's actual day-to-day work is what makes "does this student's
+    interest genuinely match" answerable from data.
+    """
+    student = sample_student()
+    student["career"]["target_roles"] = ["Business Analyst Intern"]
+
+    entry = FitRunner(client=FakeClient("{}")).build_student_context(student)[
+        "role_context"
+    ]["by_role"]["Business Analyst Intern"]
+
+    assert entry["core_tasks"], "core_tasks must be populated for a rated role"
+    assert entry["soc_code"] == "13-1111.00"
+
+
+def test_fit_runner_does_not_invoke_the_research_agent(monkeypatch):
+    """FIT is a single call by design; matching does not justify a tool loop.
+
+    NOT a regression check on the grounding change -- this passes against the
+    pre-grounding runner too, which called nothing at all. It guards the
+    decision going forward: the obvious way to "improve" FIT is to give it
+    GAP's research agent, which would turn a ~30s call into a tool loop and
+    contradict the prompt's claim that its two context blocks "are the only
+    market facts you have".
+    """
+    called: list[str] = []
+    monkeypatch.setattr(
+        gap_module.role_research_agent,
+        "get_role_requirements",
+        lambda role: called.append(role) or None,
+    )
+    student = sample_student()
+    student["career"]["target_roles"] = ["Finance Intern", "Operations Intern"]
+
+    FitRunner(client=FakeClient("{}")).build_student_context(student)
+
+    assert called == []
+
+
+# ------------------------------------------------------- O*NET catalog cache
+# data/reference/onet_soc_requirements.json is 5.5MB, and every provider entry
+# point reads it. These pin that it is parsed once per process rather than once
+# per call, and that a failed read is not cached as an empty catalog.
+
+
+def _reset_onet_cache():
+    from GradusIQ_career.features import market_data
+
+    market_data._onet_cache = None
+
+
+def test_onet_catalog_is_parsed_once_across_many_provider_calls(monkeypatch):
+    from GradusIQ_career.features import market_data
+
+    _reset_onet_cache()
+    parses = {"n": 0}
+    real_path = market_data._DATA_PATH
+
+    class _CountingPath:
+        """Proxies the real Path, counting opens. Path forbids setattr."""
+
+        def open(self, *args, **kwargs):
+            parses["n"] += 1
+            return real_path.open(*args, **kwargs)
+
+    monkeypatch.setattr(market_data, "_DATA_PATH", _CountingPath())
+
+    for _ in range(3):
+        market_data.get_market_requirements(["Business Analyst Intern", "Finance Intern"])
+        market_data.get_shift_signals(["Business Analyst Intern"])
+
+    # Six provider calls, one parse. Before memoization this was six.
+    assert parses["n"] == 1, f"expected a single parse, got {parses['n']}"
+    _reset_onet_cache()
+
+
+def test_onet_cache_returns_the_same_data_it_did_uncached():
+    """Memoization must be a pure no-op on the returned value."""
+    from GradusIQ_career.features import market_data
+
+    _reset_onet_cache()
+    first = market_data.get_market_requirements(["Business Analyst Intern", "Finance Intern"])
+    second = market_data.get_market_requirements(["Business Analyst Intern", "Finance Intern"])
+
+    assert first == second
+    assert first["by_role"]["Business Analyst Intern"]["provenance"] == "onet"
+    assert first["by_role"]["Finance Intern"]["provenance"] == "onet_neighbor"
+    _reset_onet_cache()
+
+
+def test_a_failed_onet_read_is_not_cached(monkeypatch, tmp_path):
+    """A transient read failure must not pin an empty catalog for the process.
+
+    Caching {} would silently degrade every role to provenance "none" until
+    restart, with nothing to indicate why.
+    """
+    from GradusIQ_career.features import market_data
+
+    _reset_onet_cache()
+    missing = tmp_path / "not-there.json"
+    monkeypatch.setattr(market_data, "_DATA_PATH", missing)
+
+    assert market_data._load_onet() == {}
+    assert market_data._onet_cache is None, "a failed load must not populate the cache"
+
+    monkeypatch.undo()
+    _reset_onet_cache()
+    assert market_data._load_onet(), "the real catalog still loads afterwards"
+    _reset_onet_cache()

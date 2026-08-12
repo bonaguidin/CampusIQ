@@ -954,6 +954,16 @@ a {
   border-bottom: 1px solid var(--line);
 }
 
+/* Separates the profile record from the analysis runners stacked above it.
+   Spacing follows .overview-demo, the page's other trailing block. No rule of
+   its own: the .career-section-heading this block now opens with already draws
+   one below itself, and stacking a border-top here put two lines a heading
+   apart. This margin collapses against the last .analysis-panel's --sp-6
+   rather than adding to it, so --sp-10 is the whole measured gap (40px). */
+.career-profile-block {
+  margin-top: var(--sp-10);
+}
+
 /* ─── CARDS ───────────────────────────────────────────────────────────────── */
 .card {
   background: var(--surface);
