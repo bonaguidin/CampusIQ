@@ -141,19 +141,27 @@ def test_all_skipped_returns_skipped():
 
 
 def test_mixed_success_and_skip_returns_partial_success():
+    """One feature short of its preconditions, the rest still answered.
+
+    Gates on expected_graduation, which only GAP requires. This used to pop
+    ai_anxiety_level to skip SHIFT, but SHIFT no longer blocks on it -- and
+    since SHIFT's remaining preconditions (target_roles, skills_self_reported)
+    are both shared with FIT and GAP, there is no longer any single field that
+    skips SHIFT alone. GAP is now the feature that can be isolated.
+    """
     student = sample_student()
-    student["career"].pop("ai_anxiety_level")
+    student["student"].pop("expected_graduation")
     client = QueueClient([
         feature_response("FIT"),
-        feature_response("GAP"),
+        feature_response("SHIFT"),
     ])
 
     result = run_career_analysis(student, client)
 
     assert result["status"] == "partial_success"
     assert result["results"]["FIT"]["status"] == "success"
-    assert result["results"]["GAP"]["status"] == "success"
-    assert result["results"]["SHIFT"]["status"] == "skipped"
+    assert result["results"]["SHIFT"]["status"] == "success"
+    assert result["results"]["GAP"]["status"] == "skipped"
     assert len(client.calls) == 2
 
 

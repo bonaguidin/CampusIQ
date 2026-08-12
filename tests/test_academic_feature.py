@@ -183,7 +183,15 @@ def test_academic_skips_when_submissions_exist_but_carry_no_comments():
     assert result["status"] == "skipped"
     assert result["summary"] == "Missing required fields for this feature."
     assert result["errors"] == [
-        "Missing required field: submissions[].submission_comments"
+        "Missing required field: Professor feedback on your submissions"
+    ]
+    # The dotted path survives alongside the label -- the deep link and any log
+    # line still need to know which precondition this was.
+    assert result["missing_fields"] == [
+        {
+            "path": "submissions[].submission_comments",
+            "label": "Professor feedback on your submissions",
+        }
     ]
     assert client.calls == []
 

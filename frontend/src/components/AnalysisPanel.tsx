@@ -1,13 +1,31 @@
 import type { ReactNode } from 'react';
+import { Link } from 'react-router-dom';
+import type { MissingField } from '../types/analysis';
 
 export type AnalysisPhase = 'idle' | 'loading' | 'skipped' | 'failed' | 'success';
+
+/**
+ * Where a student goes to fill in what an analysis is missing.
+ *
+ * A placeholder: the route does not exist yet, and App.tsx's catch-all
+ * currently redirects it to /login. Named here as one constant so the surface
+ * that claims it later changes this line and nothing else. The missing field's
+ * path rides along as a query parameter for that page to focus on if it wants
+ * to -- a hint it is free to ignore, deliberately not a route segment, so
+ * nothing here constrains the shape that page ends up taking.
+ */
+export const PROFILE_COMPLETION_PATH = '/profile/complete';
+
+export function profileCompletionHref(path: string): string {
+  return `${PROFILE_COMPLETION_PATH}?field=${encodeURIComponent(path)}`;
+}
 
 interface AnalysisPanelProps {
   title: string;
   invitation: string;
   phase: AnalysisPhase;
   onRun(): void;
-  missingFields?: string[];
+  missingFields?: MissingField[];
   children?: ReactNode;
 }
 
@@ -63,9 +81,12 @@ export function AnalysisPanel({
         <div className="analysis-skipped">
           <p>Your profile is missing information this analysis needs:</p>
           <ul className="section-errors">
-            {missingFields.map((field, idx) => (
-              <li key={idx} className="section-error-item">
-                {field}
+            {missingFields.map((field) => (
+              <li key={field.path} className="section-error-item">
+                <span className="missing-field-label">{field.label}</span>
+                <Link className="missing-field-link" to={profileCompletionHref(field.path)}>
+                  Add this
+                </Link>
               </li>
             ))}
           </ul>

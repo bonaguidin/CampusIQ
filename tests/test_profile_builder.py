@@ -305,7 +305,10 @@ def test_gap_with_all_unconfirmed_work_experience_is_skipped():
 
     assert outcome["status"] == "skipped"
     assert outcome["summary"] == "Missing required fields for this feature."
-    assert any("career.work_experience" in e for e in outcome["errors"])
+    # The dotted path is asserted on missing_fields, which is where it now
+    # lives; `errors` carries the student-facing label instead.
+    assert any(item["path"] == "career.work_experience" for item in outcome["missing_fields"])
+    assert any("Work experience" in e for e in outcome["errors"])
 
 
 # ═══════════════════════════════════════════════════════════════════════════

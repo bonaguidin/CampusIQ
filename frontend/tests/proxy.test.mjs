@@ -240,7 +240,7 @@ test('me-target request DOES forward a browser-supplied Authorization header', a
   assert.equal(calls[0].options.headers['X-GradusIQ-Proxy-Secret'], 'server-only-secret')
 })
 
-test('me-chat and me-profile map to their backend paths with the right methods', async () => {
+test('me-chat and me-profile reads/edits map to their backend paths with the right methods', async () => {
   const calls = []
   const handler = createProxyHandler({
     env: ME_ENV,
@@ -263,10 +263,18 @@ test('me-chat and me-profile map to their backend paths with the right methods',
       headers: { Authorization: 'Bearer t' },
     }),
   )
+  await handler.fetch(
+    new Request('https://gradusiq.example/api/proxy?target=me-profile', {
+      method: 'PATCH',
+      headers: { Authorization: 'Bearer t', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ major_intended: 'N/A' }),
+    }),
+  )
 
   assert.deepEqual(calls, [
     { url: 'https://backend.example/api/v2/student/me/chat', method: 'POST' },
     { url: 'https://backend.example/api/v2/student/me/profile', method: 'GET' },
+    { url: 'https://backend.example/api/v2/student/me/profile', method: 'PATCH' },
   ])
 })
 

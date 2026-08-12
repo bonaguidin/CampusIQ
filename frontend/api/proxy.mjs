@@ -48,7 +48,7 @@ const PROXY_SECRET_HEADER = 'X-GradusIQ-Proxy-Secret'
 const ME_TARGETS = Object.assign(Object.create(null), {
   'me-analyze': { method: 'POST', needsFeature: true },
   'me-chat': { method: 'POST', needsFeature: false },
-  'me-profile': { method: 'GET', needsFeature: false },
+  'me-profile': { methods: ['GET', 'PATCH'], needsFeature: false },
   'me-resume-upload': { method: 'POST', needsFeature: false, binary: true },
   'me-transcript-upload': { method: 'POST', needsFeature: false, binary: true },
   'me-transcript-review': { method: 'GET', needsFeature: false },

@@ -4,6 +4,7 @@ import { SignUpPage } from './pages/SignUpPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { ResumePage } from './pages/ResumePage';
 import { TranscriptPage } from './pages/TranscriptPage';
+import { ProfileCompletionPage } from './pages/ProfileCompletionPage';
 import { RequireAuth } from './auth/RequireAuth';
 import { RequireStudentAccount } from './auth/RequireStudentAccount';
 
@@ -38,6 +39,10 @@ export default function App() {
       <Route
         path="/transcript"
         element={<RequireStudentAccount><TranscriptPage /></RequireStudentAccount>}
+      />
+      <Route
+        path="/profile/complete"
+        element={<RequireStudentAccount><ProfileCompletionPage /></RequireStudentAccount>}
       />
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>

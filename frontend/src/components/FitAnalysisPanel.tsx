@@ -26,7 +26,7 @@ export function FitAnalysisPanel() {
               ? 'failed'
               : 'success';
 
-  const missingFields = state.phase === 'done' ? state.result.errors : [];
+  const missingFields = state.phase === 'done' ? state.result.missing_fields ?? [] : [];
 
   return (
     <AnalysisPanel

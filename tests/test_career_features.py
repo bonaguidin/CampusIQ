@@ -320,6 +320,52 @@ def test_shift_success_with_mocked_ai_json():
     assert "SHIFT Prompt" in client.calls[0]["messages"][1]["content"]
 
 
+def test_shift_runs_without_ai_anxiety_level():
+    """The field calibrates SHIFT's tone; it is not one of its inputs.
+
+    It was a required_path, so a student who had never answered that question
+    got no trend guidance at all -- the analysis withheld to punish an
+    incomplete profile. It is now optional, and its absence must reach the
+    model as an absent key rather than as an empty string the model would feel
+    obliged to characterize.
+    """
+    student = sample_student()
+    student["career"].pop("ai_anxiety_level")
+    client = FakeClient('{"summary": "ok", "data": {"role_evolution_summary": "ok"}}')
+
+    result = ShiftRunner(client=client).run(student)
+
+    assert result["status"] == "success"
+    assert result["missing_fields"] == []
+    assert len(client.calls) == 1
+
+    context = ShiftRunner(client=FakeClient("{}")).build_student_context(student)
+    assert "ai_anxiety_level" not in context
+    # Everything SHIFT actually reasons over is still there.
+    assert context["target_roles"] == student["career"]["target_roles"]
+    assert context["skills_self_reported"]
+
+
+@pytest.mark.parametrize("blank", ["", "   ", None])
+def test_shift_omits_a_blank_ai_anxiety_level(blank):
+    """Present-but-empty is the same as absent, not a level of its own."""
+    student = sample_student()
+    student["career"]["ai_anxiety_level"] = blank
+
+    context = ShiftRunner(client=FakeClient("{}")).build_student_context(student)
+
+    assert "ai_anxiety_level" not in context
+
+
+def test_shift_sends_a_reported_ai_anxiety_level():
+    student = sample_student()
+    student["career"]["ai_anxiety_level"] = "moderate"
+
+    context = ShiftRunner(client=FakeClient("{}")).build_student_context(student)
+
+    assert context["ai_anxiety_level"] == "moderate"
+
+
 @pytest.mark.parametrize(
     ("runner_class", "feature", "remove_path"),
     [
@@ -341,6 +387,53 @@ def test_runner_skips_when_required_fields_are_missing(runner_class, feature, re
     assert result["summary"] == "Missing required fields for this feature."
     assert result["errors"]
     assert client.calls == []
+
+
+# ------------------------------------------------------------- field labels
+# What a student reads when an analysis will not run. These assertions are the
+# reason FIELD_LABELS exists in one place: GAP, FIT, SHIFT and
+# PROFESSOR_COMMENTS all skip through the same gate, so a label is either right
+# for all of them or wrong for all of them.
+
+
+def test_every_gated_path_has_a_human_label():
+    """No runner can gate on a path the student would see raw.
+
+    Collected from the runners rather than listed by hand, so adding a
+    required_path without a label fails here instead of surfacing as
+    "career.ai_anxiety_level" in the UI.
+    """
+    from GradusIQ_career.features.academic import AcademicRunner
+    from GradusIQ_career.features.base import FIELD_LABELS
+
+    gated = {
+        path
+        for runner in (GapRunner, FitRunner, ShiftRunner, AcademicRunner)
+        for path in runner.required_paths
+    }
+
+    assert gated <= set(FIELD_LABELS), f"unlabelled gated paths: {gated - set(FIELD_LABELS)}"
+
+
+def test_skipped_result_reports_label_and_path_together():
+    student = sample_student()
+    student["career"].pop("target_roles")
+
+    result = FitRunner(client=FakeClient('{"data": {}}')).run(student)
+
+    assert {"path": "career.target_roles", "label": "Target roles"} in result["missing_fields"]
+    assert "Missing required field: Target roles" in result["errors"]
+    # The dotted path never reaches the message the student reads.
+    assert not any("career.target_roles" in message for message in result["errors"])
+
+
+def test_field_label_falls_back_to_a_readable_form():
+    """An unlabelled path degrades to generic, never to a dotted path."""
+    from GradusIQ_career.features.base import field_label
+
+    assert field_label("career.ai_anxiety_level") == "AI comfort level"
+    assert field_label("career.some_new_field") == "Some new field"
+    assert field_label("submissions[].future_thing") == "Future thing"
 
 
 def test_malformed_ai_json_returns_failed_result():

@@ -215,6 +215,110 @@ def test_me_profile_returns_the_profile(client, monkeypatch):
     assert body["intelligence_profile"]["contract_version"] == "1.0"
 
 
+class _ProfileEditQuery:
+    def __init__(self, owner, table):
+        self.owner = owner
+        self.table = table
+        self.operation = "select"
+        self.payload = None
+        self.filters = []
+
+    def select(self, *args, **kwargs):
+        self.operation = "select"
+        return self
+
+    def update(self, payload):
+        self.operation = "update"
+        self.payload = payload
+        return self
+
+    def insert(self, payload):
+        self.operation = "insert"
+        self.payload = payload
+        return self
+
+    def eq(self, field, value):
+        self.filters.append((field, value))
+        return self
+
+    def execute(self):
+        self.owner.calls.append((self.table, self.operation, self.payload, self.filters))
+        if self.table == "students" and self.operation == "select":
+            data = [{"id": STUDENT_UUID}]
+        elif self.table == "career_profiles" and self.operation == "select":
+            data = [{"id": "career-id"}]
+        else:
+            data = []
+        return type("Response", (), {"data": data})()
+
+
+class _ProfileEditClient:
+    def __init__(self):
+        self.calls = []
+
+    def table(self, table):
+        return _ProfileEditQuery(self, table)
+
+
+def _patch_profile_edit(monkeypatch):
+    database = _ProfileEditClient()
+    monkeypatch.setattr(api, "build_client_for_token", lambda token: database)
+    canonical = type(
+        "Canonical", (), {"model_dump": lambda self, mode=None: {"contract_version": "1.0"}}
+    )()
+    monkeypatch.setattr(api, "build_student_intelligence_profile", lambda client, sid: canonical)
+    monkeypatch.setattr(api, "canonical_to_legacy_profile", lambda value: _full_profile())
+    return database
+
+
+def test_profile_edit_is_partial_owned_and_refreshes_confirmation(client, monkeypatch):
+    database = _patch_profile_edit(monkeypatch)
+
+    response = _call(
+        client,
+        "patch",
+        "/api/v2/student/me/profile",
+        {
+            "major_intended": "N/A",
+            "expected_graduation": "Fall 2029",
+            "target_roles": [" Software Engineer ", "Software Engineer", "Product Manager"],
+        },
+    )
+
+    assert response.status_code == 200
+    student_update = next(call for call in database.calls if call[:2] == ("students", "update"))
+    assert student_update[2]["major_intended"] == "N/A"
+    assert student_update[2]["expected_graduation"] == "Fall 2029"
+    assert "major_current" not in student_update[2]
+    assert ("id", STUDENT_UUID) in student_update[3]
+    career_update = next(
+        call for call in database.calls if call[:2] == ("career_profiles", "update")
+    )
+    assert career_update[2]["confirmed_at"]
+    assert career_update[2]["target_roles"] == ["Software Engineer", "Product Manager"]
+    assert "ai_anxiety_level" not in career_update[2]
+    assert ("student_id", STUDENT_UUID) in career_update[3]
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        {},
+        {"expected_graduation": "2029-05"},
+        {"expected_graduation": "Winter 2029"},
+        {"ai_anxiety_level": "extreme"},
+        {"major_intended": "   "},
+    ],
+)
+def test_profile_edit_rejects_invalid_values_before_writing(client, monkeypatch, payload):
+    database = _patch_profile_edit(monkeypatch)
+
+    response = _call(client, "patch", "/api/v2/student/me/profile", payload)
+
+    assert response.status_code == 422
+    assert not any(call[1] in {"update", "insert"} for call in database.calls)
+
+
 @pytest.mark.parametrize("feature", ["gap", "fit", "shift", "professor-comments"])
 def test_me_analyze_returns_a_feature_result(feature, client, monkeypatch):
     _patch_session(monkeypatch, profile=_full_profile())
@@ -231,7 +335,7 @@ def test_me_analyze_returns_a_feature_result(feature, client, monkeypatch):
         "professor-comments": "PROFESSOR_COMMENTS",
     }[feature]
     assert body["feature"] == expected
-    assert set(body) == {"feature", "status", "summary", "data", "errors"}
+    assert set(body) == {"feature", "status", "summary", "data", "errors", "missing_fields"}
     # Asserted per feature rather than as a blanket 200: professor comments
     # are NOT reachable for a real student. _full_profile() mirrors what
     # build_profile_from_supabase actually returns (student/career/courses),
@@ -272,7 +376,7 @@ def test_authenticated_career_analysis_is_canonical_first(feature, client, monke
 
     assert response.status_code == 200
     assert calls == [("canonical", STUDENT_UUID), ("adapter", canonical)]
-    assert set(response.json()) == {"feature", "status", "summary", "data", "errors"}
+    assert set(response.json()) == {"feature", "status", "summary", "data", "errors", "missing_fields"}
 
 
 def test_professor_comments_keeps_legacy_profile_path(client, monkeypatch):
@@ -317,7 +421,13 @@ def test_professor_comments_is_unreachable_for_a_real_student(client, monkeypatc
     body = response.json()
     assert body["status"] == "skipped"
     assert body["summary"] == "Missing required fields for this feature."
-    assert body["errors"] == ["Missing required field: submissions"]
+    # Human label over the wire, dotted path beside it. The route is a
+    # passthrough, so this is also the assertion that missing_fields survives
+    # FeatureResult.to_dict() and FastAPI's serialization.
+    assert body["errors"] == ["Missing required field: Course submissions"]
+    assert body["missing_fields"] == [
+        {"path": "submissions", "label": "Course submissions"}
+    ]
     assert body["data"] == {}
     assert ai.calls == []
 
@@ -356,7 +466,7 @@ def test_demo_career_analysis_does_not_build_a_canonical_profile(
     response = client.post(f"/api/students/jordanReyes/analyze/{feature}")
 
     assert response.status_code == 200
-    assert set(response.json()) == {"feature", "status", "summary", "data", "errors"}
+    assert set(response.json()) == {"feature", "status", "summary", "data", "errors", "missing_fields"}
 
 
 def test_me_chat_returns_a_reply(client, monkeypatch):
