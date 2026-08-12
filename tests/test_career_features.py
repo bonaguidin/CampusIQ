@@ -679,3 +679,75 @@ def test_fit_runner_does_not_invoke_the_research_agent(monkeypatch):
     FitRunner(client=FakeClient("{}")).build_student_context(student)
 
     assert called == []
+
+
+# ------------------------------------------------------- O*NET catalog cache
+# data/reference/onet_soc_requirements.json is 5.5MB, and every provider entry
+# point reads it. These pin that it is parsed once per process rather than once
+# per call, and that a failed read is not cached as an empty catalog.
+
+
+def _reset_onet_cache():
+    from GradusIQ_career.features import market_data
+
+    market_data._onet_cache = None
+
+
+def test_onet_catalog_is_parsed_once_across_many_provider_calls(monkeypatch):
+    from GradusIQ_career.features import market_data
+
+    _reset_onet_cache()
+    parses = {"n": 0}
+    real_path = market_data._DATA_PATH
+
+    class _CountingPath:
+        """Proxies the real Path, counting opens. Path forbids setattr."""
+
+        def open(self, *args, **kwargs):
+            parses["n"] += 1
+            return real_path.open(*args, **kwargs)
+
+    monkeypatch.setattr(market_data, "_DATA_PATH", _CountingPath())
+
+    for _ in range(3):
+        market_data.get_market_requirements(["Business Analyst Intern", "Finance Intern"])
+        market_data.get_shift_signals(["Business Analyst Intern"])
+
+    # Six provider calls, one parse. Before memoization this was six.
+    assert parses["n"] == 1, f"expected a single parse, got {parses['n']}"
+    _reset_onet_cache()
+
+
+def test_onet_cache_returns_the_same_data_it_did_uncached():
+    """Memoization must be a pure no-op on the returned value."""
+    from GradusIQ_career.features import market_data
+
+    _reset_onet_cache()
+    first = market_data.get_market_requirements(["Business Analyst Intern", "Finance Intern"])
+    second = market_data.get_market_requirements(["Business Analyst Intern", "Finance Intern"])
+
+    assert first == second
+    assert first["by_role"]["Business Analyst Intern"]["provenance"] == "onet"
+    assert first["by_role"]["Finance Intern"]["provenance"] == "onet_neighbor"
+    _reset_onet_cache()
+
+
+def test_a_failed_onet_read_is_not_cached(monkeypatch, tmp_path):
+    """A transient read failure must not pin an empty catalog for the process.
+
+    Caching {} would silently degrade every role to provenance "none" until
+    restart, with nothing to indicate why.
+    """
+    from GradusIQ_career.features import market_data
+
+    _reset_onet_cache()
+    missing = tmp_path / "not-there.json"
+    monkeypatch.setattr(market_data, "_DATA_PATH", missing)
+
+    assert market_data._load_onet() == {}
+    assert market_data._onet_cache is None, "a failed load must not populate the cache"
+
+    monkeypatch.undo()
+    _reset_onet_cache()
+    assert market_data._load_onet(), "the real catalog still loads afterwards"
+    _reset_onet_cache()

@@ -47,6 +47,8 @@ _DEFAULT_MUST_HAVE_THRESHOLD = 70
 _ROLE_REQUIREMENTS_PATH = _REPO_ROOT / "data" / "role_requirements.json"
 
 _role_soc_cache: Mapping[str, str] | None = None
+# Parsed O*NET catalog, populated on first successful load. See _load_onet.
+_onet_cache: Mapping[str, Any] | None = None
 
 
 def _load_role_soc_map() -> Mapping[str, str]:
@@ -80,13 +82,38 @@ def _load_role_soc_map() -> Mapping[str, str]:
 
 
 def _load_onet() -> Mapping[str, Any]:
-    """Load the static O*NET requirements file; return {} on any problem."""
+    """Load the static O*NET requirements file; return {} on any problem.
+
+    Cached at module scope, the same way and for the same reasons as
+    _load_role_soc_map above -- a plain global swap rather than
+    functools.lru_cache, so a test can repoint _DATA_PATH and clear
+    _onet_cache without cache-clearing gymnastics.
+
+    THE CACHE IS NOT AN OPTIMIZATION DETAIL HERE. This file grew from 31KB to
+    5.5MB when the O*NET reference expanded to all 1,016 occupations, and every
+    provider entry point calls this: get_market_requirements, get_shift_signals,
+    and resolve_soc's callers. Uncached, a single GAP or FIT run reparsed ~5.5MB
+    several times over -- measured at ~20ms and a full transient allocation per
+    parse, on a per-request path.
+
+    A FAILED load is deliberately NOT cached. The empty dict is returned but
+    _onet_cache stays None, so a transient read error (a partially written file
+    during a deploy, say) does not pin an empty catalog into the process for its
+    entire lifetime -- which would silently degrade every downstream role to
+    provenance "none" with no way back short of a restart.
+    """
+    global _onet_cache
+    if _onet_cache is not None:
+        return _onet_cache
     try:
         with _DATA_PATH.open("r", encoding="utf-8") as handle:
             data = json.load(handle)
     except (OSError, ValueError):
         return {}
-    return data if isinstance(data, Mapping) else {}
+    if not isinstance(data, Mapping):
+        return {}
+    _onet_cache = data
+    return _onet_cache
 
 
 def resolve_soc(target_role: str) -> str | None:
