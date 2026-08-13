@@ -216,11 +216,14 @@ test('authenticated dashboard covers canonical states, routing, themes, errors, 
 
   // No AI radio is selected while ai_anxiety_level is null.
   assert.equal(await aiRow.locator('input:checked').count(), 0)
-  // Saving on selection: the first PATCH is refused by the harness, and the
-  // failure is reported in place rather than closing anything.
-  await aiRow.getByLabel('Moderate').click()
+  // Selection remains a local draft. The first explicit save is refused by
+  // the harness, and the failure is reported without closing or losing it.
+  await aiRow.getByLabel('Moderate').check()
+  assert.equal(profilePatches.length, 0, 'selecting AI comfort autosaved')
+  await aiRow.getByRole('button', { name: 'Save' }).click()
   await aiRow.getByRole('alert').waitFor()
-  await aiRow.getByLabel('Moderate').click()
+  assert.equal(await aiRow.getByLabel('Moderate').isChecked(), true)
+  await aiRow.getByRole('button', { name: 'Save' }).click()
   await page.waitForFunction(() => document.body.dataset.profileReloaded === 'yes')
   assert.deepEqual(profilePatches.at(-1), { ai_anxiety_level: 'moderate' })
   await page.getByRole('status').filter({ hasText: 'Profile saved' }).waitFor()

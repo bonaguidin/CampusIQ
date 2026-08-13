@@ -43,6 +43,18 @@ test('nothing opens a profile dialog, and the deep-link fallback survives', asyn
   assert.doesNotMatch(requiredPaths, /ai_anxiety_level/)
 })
 
+test('analysis failures render one coherent recovery instruction', async () => {
+  const [panel, api] = await Promise.all([
+    readFile(new URL('../src/components/AnalysisPanel.tsx', import.meta.url), 'utf8'),
+    readFile(new URL('../src/api/analysis.ts', import.meta.url), 'utf8'),
+  ])
+
+  assert.doesNotMatch(panel, /analysis-failed-retry/)
+  assert.match(api, /The analysis service is busy right now\. Try again in a moment\./)
+  assert.match(api, /Too many requests\. Wait a minute and try again\./)
+  assert.match(api, /Analysis request failed \(\$\{response\.status\}\)\./)
+})
+
 /**
  * The checklist counts what the runners actually require.
  *

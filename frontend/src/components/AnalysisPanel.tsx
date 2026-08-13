@@ -121,12 +121,9 @@ export function AnalysisPanel({
 
       {phase === 'failed' && (
         <div className="analysis-failed">
-          {/* The reason first, in the server's own words, then the generic
-              retry line. A rate limit, a busy gate and a genuine AI failure
-              used to render the identical sentence, so the screen said nothing
-              the browser console had not already said better. */}
+          {/* analysisFailure owns complete recovery guidance so each failure
+              renders one coherent instruction rather than competing retries. */}
           <p>{failureMessage ?? 'Something went wrong generating this analysis.'}</p>
-          {failureMessage && <p className="analysis-failed-retry">Try again in a moment.</p>}
         </div>
       )}
 

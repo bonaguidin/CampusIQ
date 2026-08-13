@@ -27,21 +27,6 @@ async function startServer(t, plugins = []) {
   return `http://127.0.0.1:${String(address.port)}`
 }
 
-/**
- * Waits for the server to have recorded `count` PATCHes.
- *
- * The immediate-save field has no button to go quiet and no visible committed
- * state to wait on -- the preview's reload returns the same profile -- so the
- * request itself is the only honest signal that the save happened.
- */
-async function waitForPatch(patches, count, timeout = 5000) {
-  const deadline = Date.now() + timeout
-  while (patches.length < count) {
-    if (Date.now() > deadline) throw new Error(`expected ${String(count)} patches, saw ${String(patches.length)}`)
-    await new Promise((resolve) => setTimeout(resolve, 25))
-  }
-}
-
 /** Opens the dashboard on the Career tab for a given fixture. */
 async function openCareer(page, origin, query) {
   await page.goto(`${origin}/authenticated-dashboard-preview.html?${query}`)
@@ -211,12 +196,15 @@ test('career profile: absences collapse and never become empty rectangles', { ti
   // Counts of zero are not printed as a "0" badge beside the heading.
   assert.equal(await page.locator('.cp-section-count').count(), 0)
 
-  // The only offered action is a route that genuinely exists -- no dead button.
-  // The route is offered ONCE, not beside every gap: confirming a resume
-  // rewrites all five sections at the same time, so repeating it would offer
-  // the same single action five times.
-  assert.equal(await page.locator('.cp-absent-link').count(), 1, 'the resume route must appear once per page')
-  assert.equal(await page.locator('.cp-absent-link').getAttribute('href'), '/resume')
+  // Target roles are declared profile data, so their empty action opens the
+  // existing editor in place and never leaves Career for /resume.
+  assert.equal(await page.locator('.cp-absent-link').count(), 0)
+  const beforeUrl = page.url()
+  await page.getByRole('button', { name: 'Add target roles' }).click()
+  const emptyRoles = page.locator('[data-profile-field="career.target_roles"]')
+  await emptyRoles.getByRole('button', { name: 'Save' }).waitFor()
+  assert.equal(page.url(), beforeUrl, 'adding target roles navigated away from Career')
+  await emptyRoles.getByRole('button', { name: 'Cancel' }).click()
   // Every button on this page must do something. The expanders always did;
   // the inline Edit controls are the new ones, and they are the ONLY other
   // kind allowed -- a button belonging to neither group is the "no dead
@@ -252,9 +240,7 @@ test('career profile: absences collapse and never become empty rectangles', { ti
   await page.getByText('No target roles added yet.').waitFor()
   assert.equal(await page.locator('.cp-direction .cp-absent').count(), 1,
     'exactly the empty field may render an absence')
-  // The one action on the page still appears once, and still beside the gap
-  // that has a consequence worth stating.
-  assert.equal(await page.locator('.cp-absent-link').count(), 1)
+  assert.equal(await page.locator('.cp-absent-link').count(), 0)
   // 'not_sure' is a real answer -- asked, does not know -- and must read as
   // one rather than borrowing the never-asked absence's label. Scoped to the
   // value: the radio group repeats every option name beneath it.
@@ -311,9 +297,10 @@ test('career profile: details rows report graduation, majors and AI comfort', { 
   // selectable 'Not sure', and must not borrow its label.
   await bare.locator('.cp-detail-value--absent').getByText('Not answered').waitFor()
   assert.equal(await bare.locator('.cp-detail-value').filter({ hasText: 'Not sure' }).count(), 0)
-  // Nothing is preselected while the column is null: an unselected group is
-  // how "never asked" looks, and any checked radio would answer for them.
+  // Nothing is preselected when the student opens a never-answered field.
+  await bare.getByRole('button', { name: 'Add' }).click()
   assert.equal(await bare.locator('input[name="cp-ai-comfort"]:checked').count(), 0)
+  await bare.getByRole('button', { name: 'Cancel' }).click()
   // A value never carries a subordinate caption. The switching state used to
   // hang off the current major that way, which said the two were one fact;
   // they are two, and each now has its own labelled unit.
@@ -333,15 +320,17 @@ test('career profile: details rows report graduation, majors and AI comfort', { 
  */
 test('career profile: six units save independently, inline', { timeout: 45_000 }, async (t) => {
   const patches = []
+  let failAiSave = false
   const apiPlugin = { name: 'profile-api', configureServer(server) { server.middlewares.use((request, response, next) => {
     if (request.url?.split('?')[0] === '/api/v2/student/me/profile' && request.method === 'PATCH') {
       let body = ''
       request.on('data', (chunk) => { body += chunk })
       request.on('end', () => {
-        patches.push(JSON.parse(body))
-        response.statusCode = 200
+        const patch = JSON.parse(body)
+        patches.push(patch)
+        response.statusCode = failAiSave && patch.ai_anxiety_level ? 500 : 200
         response.setHeader('content-type', 'application/json')
-        response.end(JSON.stringify({ ok: true }))
+        response.end(JSON.stringify(response.statusCode === 200 ? { ok: true } : { detail: 'Profile save failed.' }))
       })
       return
     }
@@ -361,11 +350,9 @@ test('career profile: six units save independently, inline', { timeout: 45_000 }
     .locator('.cp-detail-unit, .cp-field, .cp-detail:not(.cp-detail--stack)')
     .filter({ has: page.getByRole('heading', { name: label, exact: true }) })
 
-  // ── Five independently editable units, each with its own Edit control. AI
-  // comfort is the sixth unit and deliberately has none: every value it can
-  // hold is already valid, so there is no intermediate state to protect.
-  assert.equal(await page.locator('.cp .editable-section').count(), 5)
-  for (const label of ['Expected graduation', 'Current major', 'Intended major', 'Target roles', 'Interests']) {
+  // ── Six independently editable units, each with the same explicit shell.
+  assert.equal(await page.locator('.cp .editable-section').count(), 6)
+  for (const label of ['Expected graduation', 'Current major', 'Intended major', 'Target roles', 'Interests', 'AI comfort']) {
     assert.equal(await row(label).getByRole('button', { name: 'Edit' }).count(), 1, `${label} is not editable`)
   }
 
@@ -449,6 +436,13 @@ test('career profile: six units save independently, inline', { timeout: 45_000 }
   await roles.getByRole('button', { name: 'Edit' }).waitFor()
   assert.deepEqual(patches.at(-1), { target_roles: ['AI Engineer', 'Robotics Engineer'] })
 
+  const afterRolesSave = patches.length
+  await roles.getByRole('button', { name: 'Edit' }).click()
+  await roles.getByRole('button', { name: 'Remove AI Engineer' }).click()
+  await roles.getByRole('button', { name: 'Cancel' }).click()
+  assert.equal(patches.length, afterRolesSave, 'cancelling target roles sent a request')
+  await roles.getByText('ML Engineer').waitFor()
+
   // Cancel restores rather than saves: an abandoned edit costs no request.
   const before = patches.length
   const interests = row('Interests')
@@ -458,25 +452,35 @@ test('career profile: six units save independently, inline', { timeout: 45_000 }
   assert.equal(patches.length, before, 'cancel sent a request')
   await interests.getByText('Physical AI · Robotics · LLM Systems').waitFor()
 
-  // ── AI comfort saves on selection, with no Save button to press.
-  assert.equal(await row('AI comfort').getByRole('button', { name: 'Edit' }).count(), 0)
-  const comfort = page.locator('.cp-details')
-
-  // click(), not check(): check() asserts the radio ends up selected, and the
-  // preview's reload hands back the same profile, so the group re-renders on
-  // the stored answer. Firing the event is what is under test here; what the
-  // control settles on afterwards is the fixture's business.
-  //
-  // Re-picking the stored answer spends no request. `rich` stores 'moderate',
-  // so this is the selection that is already true.
+  // ── AI comfort drafts locally, cancels cleanly, and saves explicitly.
+  const comfort = row('AI comfort')
+  await comfort.getByRole('button', { name: 'Edit' }).click()
+  assert.equal(await comfort.getByLabel('Moderate').isChecked(), true)
   const settled = patches.length
-  await comfort.getByLabel('Moderate').click()
-  await page.waitForTimeout(250)
-  assert.equal(patches.length, settled, 'a no-op selection was sent to the server')
+  await comfort.getByLabel('High').check()
+  await page.waitForTimeout(100)
+  assert.equal(patches.length, settled, 'selecting a draft autosaved')
+  await comfort.getByRole('button', { name: 'Cancel' }).click()
+  assert.equal(patches.length, settled, 'cancel sent a request')
+  await comfort.locator('.cp-detail-value').getByText('Moderate').waitFor()
 
-  await comfort.getByLabel('High').click()
-  await waitForPatch(patches, settled + 1)
+  // A failed save stays open and keeps the selected draft.
+  failAiSave = true
+  await comfort.getByRole('button', { name: 'Edit' }).click()
+  await comfort.getByLabel('High').check()
+  await comfort.getByRole('button', { name: 'Save' }).click()
+  await comfort.getByRole('alert').waitFor()
+  assert.equal(await comfort.getByLabel('High').isChecked(), true)
+  assert.equal(await comfort.getByRole('button', { name: 'Save' }).count(), 1)
+  await comfort.getByRole('button', { name: 'Cancel' }).click()
+
+  failAiSave = false
+  await comfort.getByRole('button', { name: 'Edit' }).click()
+  await comfort.getByLabel('High').check()
+  await comfort.getByRole('button', { name: 'Save' }).click()
+  await comfort.getByRole('button', { name: 'Edit' }).waitFor()
   assert.deepEqual(patches.at(-1), { ai_anxiety_level: 'high' })
+  assert.equal(await page.evaluate(() => document.body.dataset.profileReloaded), 'yes')
 
   // Every save wrote exactly one key: the units are genuinely independent.
   assert.deepEqual(patches.map((patch) => Object.keys(patch).length), patches.map(() => 1))

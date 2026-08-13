@@ -32,6 +32,7 @@ export function InlineEditableField<T>({
   accessToken,
   onSaved,
   openNonce = null,
+  editLabel = 'Edit',
   children,
 }: {
   title: string;
@@ -48,6 +49,7 @@ export function InlineEditableField<T>({
    * make the student ask for the same thing twice.
    */
   openNonce?: number | null;
+  editLabel?: string;
   children(draft: T, setDraft: (next: T) => void, editing: boolean): ReactNode;
 }) {
   const [editing, setEditing] = useState(false);
@@ -118,6 +120,7 @@ export function InlineEditableField<T>({
       onCancel={cancel}
       saving={saving}
       errors={errors}
+      editLabel={editLabel}
     >
       {children(editing ? draft : value, setDraft, editing)}
     </EditableSection>

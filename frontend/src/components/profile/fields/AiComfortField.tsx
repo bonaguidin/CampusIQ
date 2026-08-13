@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import { updateProfile, type ProfileChanges } from '../../../api/profile';
+import type { ProfileChanges } from '../../../api/profile';
 
 /**
  * The four answers, and the only place they are enumerated.
@@ -85,57 +84,26 @@ export function AiComfortOptions({
 }
 
 /**
- * The self-saving inline form of the field.
- *
- * NO EDIT/SAVE/CANCEL SHELL, DELIBERATELY. The other four units have an
- * invalid intermediate state to protect -- a season without a year, a
- * switching student with no major named -- so they need a moment between
- * "changed" and "committed". Picking one of four radios has no such state:
- * every value the control can hold is a complete, valid answer, so a Save
- * button beside it would be a step that can only ever succeed.
- *
- * Re-picking the value already stored writes nothing rather than spending a
- * request to say what the server said.
+ * The inline input for this field. Saving belongs to InlineEditableField so a
+ * radio choice remains a draft until the student explicitly commits it, just
+ * like every other Career Profile field.
  */
 export function AiComfortField({
   value,
-  accessToken,
-  onSaved,
+  onChange,
   name,
 }: {
-  value: string | null;
-  accessToken: string;
-  onSaved(): Promise<void>;
+  value: string;
+  onChange(next: AiComfort): void;
   name?: string;
 }) {
-  const [saving, setSaving] = useState(false);
-  const [failure, setFailure] = useState<string | null>(null);
-
-  async function pick(next: AiComfort) {
-    const changes = aiComfortChanges(next, value);
-    if (Object.keys(changes).length === 0) return;
-    setSaving(true);
-    setFailure(null);
-    try {
-      await updateProfile(accessToken, changes);
-      await onSaved();
-    } catch (error) {
-      setFailure(error instanceof Error ? error.message : 'Your profile could not be saved.');
-    } finally {
-      setSaving(false);
-    }
-  }
-
   return (
     <div className="cp-field-edit">
       <AiComfortOptions
-        value={value ?? ''}
-        onChange={(next) => { void pick(next); }}
-        disabled={saving}
+        value={value}
+        onChange={onChange}
         name={name}
       />
-      {saving && <p className="cp-field-status" role="status">Saving…</p>}
-      {failure && <p className="profile-form-error" role="alert">{failure}</p>}
     </div>
   );
 }

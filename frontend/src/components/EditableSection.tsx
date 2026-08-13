@@ -8,6 +8,7 @@ interface EditableSectionProps {
   onCancel(): void;
   saving?: boolean;
   errors?: string[];
+  editLabel?: string;
   children: ReactNode;
 }
 
@@ -19,6 +20,7 @@ export function EditableSection({
   onCancel,
   saving = false,
   errors = [],
+  editLabel = 'Edit',
   children,
 }: EditableSectionProps) {
   return (
@@ -52,7 +54,7 @@ export function EditableSection({
               className="btn btn-ghost btn-sm"
               onClick={onEdit}
             >
-              Edit
+              {editLabel}
             </button>
           )}
         </div>

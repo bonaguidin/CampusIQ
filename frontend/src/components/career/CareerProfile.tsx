@@ -1,5 +1,4 @@
 import { useEffect, useRef, type ReactNode } from 'react';
-import { Link } from 'react-router-dom';
 import type { ProfileChanges } from '../../api/profile';
 import { revealField } from '../../lib/revealField';
 import { buildCareerViewModel } from '../../data/careerViewModel.mjs';
@@ -7,7 +6,7 @@ import type { CanonicalCareer } from '../../types/studentIntelligenceProfile';
 import type { CertificationEntry, ExperienceEntry } from '../../data/careerViewModel.mjs';
 import { InterestsEditor } from '../InterestsEditor';
 import { TargetRolesEditor } from '../TargetRolesEditor';
-import { AiComfortField, aiComfortLabel } from '../profile/fields/AiComfortField';
+import { AiComfortField, aiComfortChanges, aiComfortLabel } from '../profile/fields/AiComfortField';
 import {
   GraduationInputs,
   graduationChanges,
@@ -92,10 +91,8 @@ export interface CareerDetails {
  * then projects across the full measure because they hold the most text.
  *
  * EMPTY SECTIONS COLLAPSE TO A LINE. An absence is worth one sentence, not a
- * rectangle -- and where there is a real way to fix the absence, it links to
- * /resume, which is the only career-editing path an authenticated student
- * actually has. The demo profile's inline editors (CareerPanel) are not
- * reachable from here, so no button pretends otherwise.
+ * rectangle. Student-declared direction fields edit here in place; evidence
+ * sections simply report what the canonical profile currently contains.
  */
 export function CareerProfile({
   career,
@@ -122,11 +119,7 @@ export function CareerProfile({
   ) : (
     <Absence
       line="No target roles added yet."
-      // Stated because it is true of this product, not as encouragement: FIT,
-      // GAP and SHIFT read target roles directly. This is where the page's
-      // single /resume route now lives -- see Absence.
-      help="FIT, GAP and SHIFT all read your target roles. Adding them to your resume and confirming it fills this in."
-      action
+      help="Add the roles you're interested in so FIT, GAP and SHIFT can personalize guidance."
     />
   );
   const interestsDisplay = direction.hasInterests ? (
@@ -165,6 +158,7 @@ export function CareerProfile({
               wrapperClass="cp-field"
               labelClass="cp-subhead"
               editing={editing}
+              editLabel={direction.hasTargetRoles ? 'Edit' : 'Add target roles'}
               value={direction.targetRoles}
               toChanges={(roles) => (sameList(roles, direction.targetRoles) ? {} : { target_roles: roles })}
               display={rolesDisplay}
@@ -333,20 +327,6 @@ function DetailsSection({
   // typed, so it must not be printed back as though it were one.
   const major = majorValueFrom(majorIntended);
 
-  // AI comfort is a jump TARGET but not a checklist ITEM. No runner requires
-  // it, so it is never counted as missing -- but base.py can still name it in
-  // a skipped result, and a student sent to a field the page silently cannot
-  // find would be worse than not offering the link. It has no editor to open:
-  // the radios are always live, so revealing it is scroll, flag and focus.
-  const aiNode = useRef<HTMLDivElement>(null);
-  const aiNonce = focus?.path === 'career.ai_anxiety_level' ? focus.nonce : null;
-  useEffect(() => {
-    if (aiNonce === null) return;
-    const element = aiNode.current;
-    if (!element) return;
-    revealField(element, () => element.querySelector<HTMLElement>('input'));
-  }, [aiNonce]);
-
   return (
     <Section title="Details" count={null}>
       <div className="cp-details">
@@ -403,26 +383,21 @@ function DetailsSection({
             )}
           />
         </div>
-        <div className="cp-detail" ref={aiNode} data-profile-field="career.ai_anxiety_level">
-          <span className="cp-detail-label">AI comfort</span>
-          {/* Null means never asked, which is a different state from
-              'not_sure' (asked, does not know) -- see the 20260812143000
-              migration. The value line names that state; the group below it
-              shows nothing selected, which is the same fact twice because
-              only one of the two survives when the row is read-only. */}
-          <DetailValue value={aiComfortLabel(aiComfort)} absentLabel="Not answered" />
-          {/* No Edit/Save/Cancel: every value this control can hold is a
-              complete answer, so there is no intermediate state to protect
-              and a Save button could only ever succeed. */}
-          {editing && (
-            <AiComfortField
-              value={aiComfort}
-              accessToken={editing.accessToken}
-              onSaved={editing.onSaved}
-              name="cp-ai-comfort"
-            />
+        <FieldSlot
+          label="AI comfort"
+          path="career.ai_anxiety_level"
+          focus={focus}
+          wrapperClass="cp-detail"
+          labelClass="cp-detail-label"
+          editing={editing}
+          value={aiComfort ?? ''}
+          toChanges={(draft) => aiComfortChanges(draft, aiComfort)}
+          editLabel={aiComfort ? 'Edit' : 'Add'}
+          display={<DetailValue value={aiComfortLabel(aiComfort)} absentLabel="Not answered" />}
+          edit={(draft, setDraft) => (
+            <AiComfortField value={draft} onChange={setDraft} name="cp-ai-comfort" />
           )}
-        </div>
+        />
       </div>
     </Section>
   );
@@ -474,6 +449,7 @@ function FieldSlot<T>({
   validate,
   display,
   edit,
+  editLabel = 'Edit',
 }: {
   label: string;
   /** The dotted path, when this field is something an analysis can require. */
@@ -487,6 +463,7 @@ function FieldSlot<T>({
   validate?(draft: T): string | null;
   display: ReactNode;
   edit(draft: T, setDraft: (next: T) => void): ReactNode;
+  editLabel?: string;
 }) {
   const node = useRef<HTMLDivElement>(null);
   // Only this field's own requests, and only as a changing number -- see
@@ -523,6 +500,7 @@ function FieldSlot<T>({
         accessToken={editing.accessToken}
         onSaved={editing.onSaved}
         openNonce={nonce}
+        editLabel={editLabel}
       >
         {(draft, setDraft, isEditing) =>
           isEditing ? <div className="cp-field-edit">{edit(draft, setDraft)}</div> : display
@@ -559,25 +537,15 @@ function Section({
  * The old page spent a full card on three negative sentences. This is the whole
  * treatment: state the absence, and optionally say what filling it would do.
  *
- * THE LINK APPEARS ONCE PER PAGE, not once per gap. Confirming a resume rewrites
- * every career section at the same time, so a route repeated beside all five
- * absences would offer the same single action five times -- which reads as
- * nagging and makes an empty profile look busier than a full one. It sits on
- * target roles because that is the gap with a consequence worth stating (FIT,
- * GAP and SHIFT all require it), and because it is the first field on the page
- * that can be absent. Splitting Career direction into per-field absences moved
- * it one level down from the section to that field; it did not add a second.
+ * Actions belong to the surrounding editable field shell. Keeping this
+ * component presentational prevents an empty student-declared field from
+ * quietly acquiring a route to an unrelated source of résumé evidence.
  */
-function Absence({ line, help, action = false }: { line: string; help?: string; action?: boolean }) {
+function Absence({ line, help }: { line: string; help?: string }) {
   return (
     <div className="cp-absent">
       <p className="cp-absent-line">{line}</p>
       {help && <p className="cp-absent-help">{help}</p>}
-      {action && (
-        <Link to="/resume" className="cp-absent-link">
-          Update from your resume
-        </Link>
-      )}
     </div>
   );
 }
