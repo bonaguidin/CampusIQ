@@ -65,6 +65,10 @@ Full audit complete (2026-08-11) and Phase 1 implementation built and staged (20
 - [x] B2 live-baseline readiness blockers: transient outputs are narrowly ignored, live scenarios carry distinct typed synthetic inputs, and SHIFT has three meaningful live cases.
 - [x] B2 reviewability blockers: ignored eval artifacts retain validated output, safe grounding/research accounting, stage timing, and interruption-safe incremental results.
 - [x] B2R harness blocker: align the live adapter's `research_summary.research_ms` with the strict typed review-artifact contract and cover live-shaped serialization end to end.
+- [x] Phase C1 deterministic course foundation: institution-scoped local catalog search/lookup, trusted completed/planned status, conservative prerequisite and eligibility checks, provenance, and read-only future-agent tools.
+- [ ] Phase C2 LLM Course Discovery Agent and course-recommendation evaluation; it must rank/explain only C1 candidates and cannot bypass the final deterministic verifier.
+- [ ] Course degree applicability and term offering/section/seat availability remain unresolved; no authoritative degree-planning or schedule model exists.
+- [ ] Advisor orchestration remains proposed; do not grant course-write or registration authority.
 - [ ] Run and review the controlled B2 live baseline (12 synthetic evaluations; explicit paid/network opt-in required).
 - [ ] Phase B2: choose and review durable trace storage/retention before enabling production persistence. Cost estimation remains deferred until reliable repository-controlled model pricing exists.
 
