@@ -62,6 +62,8 @@ Full audit complete (2026-08-11) and Phase 1 implementation built and staged (20
 - [x] Strict typed FIT/GAP/SHIFT output contracts with one bounded structured repair.
 - [x] Canonical authenticated stateless Chat with validated text output and AI concurrency enforcement.
 - [x] Versioned, safe in-memory invocation traces plus deterministic evaluation scenarios and comparison support (Phase B1).
+- [x] B2 live-baseline readiness blockers: transient outputs are narrowly ignored, live scenarios carry distinct typed synthetic inputs, and SHIFT has three meaningful live cases.
+- [ ] Run and review the controlled B2 live baseline (12 synthetic evaluations; explicit paid/network opt-in required).
 - [ ] Phase B2: choose and review durable trace storage/retention before enabling production persistence. Cost estimation remains deferred until reliable repository-controlled model pricing exists.
 
 - `role_research_agent.py` is the one real agent in the codebase (bounded tool loop, Tavily, timeout/injection bounds, cache-first). Copy this pattern, don't reinvent it.

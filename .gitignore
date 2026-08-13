@@ -32,6 +32,9 @@ frontend/dist/
 # Role-research agent cache (generated, per-environment)
 data/.cache/
 
+# Transient local/live AI evaluation results (reviewed baselines live elsewhere)
+eval-results/
+
 # Supabase
 supabase/.temp/
 supabase/.branches/

@@ -1,3 +1,5 @@
+import hashlib
+import json
 from enum import Enum
 from typing import Any
 
@@ -27,10 +29,57 @@ class EvalExpectation(StrictModel):
     description: str
 
 
+class SyntheticExperience(StrictModel):
+    role: str
+    employer: str | None = None
+
+
+class SyntheticProject(StrictModel):
+    name: str
+    description: str | None = None
+
+
+class SyntheticCourse(StrictModel):
+    course_code: str
+    title: str
+    credit_hours: float = Field(default=3.0, gt=0, le=12)
+    letter_grade: str | None = None
+    status: str = "completed"
+
+
+class SyntheticChatTurn(StrictModel):
+    role: str = Field(pattern=r"^(user|assistant)$")
+    content: str = Field(min_length=1, max_length=2000)
+
+
+class SyntheticStudentInput(StrictModel):
+    current_major: str | None = None
+    intended_major: str | None = None
+    classification: str | None = "Junior"
+    expected_graduation: str | None = "Spring 2028"
+    target_roles: list[str] = Field(default_factory=list)
+    interests: list[str] = Field(default_factory=list)
+    technical_skills: list[str] = Field(default_factory=list)
+    soft_skills: list[str] = Field(default_factory=list)
+    experience: list[SyntheticExperience] = Field(default_factory=list)
+    projects: list[SyntheticProject] = Field(default_factory=list)
+    certifications: list[str] = Field(default_factory=list)
+    completed_courses: list[SyntheticCourse] = Field(default_factory=list)
+    career_goals: str | None = None
+    chat_question: str | None = None
+    chat_history: list[SyntheticChatTurn] = Field(default_factory=list, max_length=12)
+
+    def safe_fingerprint(self) -> str:
+        normalized = json.dumps(self.model_dump(mode="json"), sort_keys=True, separators=(",", ":"))
+        return hashlib.sha256(normalized.encode("utf-8")).hexdigest()[:16]
+
+
 class EvalScenario(StrictModel):
     scenario_id: str = Field(pattern=r"^[a-z0-9][a-z0-9_-]+$")
     scenario_version: str = "1.0"
     purpose: str
+    live_eligible: bool = False
+    synthetic_input: SyntheticStudentInput
     features: set[EvalFeature]
     expectations: list[EvalExpectation]
     fixture_results: dict[EvalFeature, dict[str, Any]]
@@ -41,6 +90,10 @@ class EvalScenario(StrictModel):
     def fixtures_match_features(self):
         if not set(self.fixture_results).issubset(self.features):
             raise ValueError("fixture result feature is not applicable to the scenario")
+        if self.live_eligible and (not self.purpose.strip() or not self.expectations):
+            raise ValueError("live scenarios require a purpose and expected invariants")
+        if self.live_eligible and len(self.features) != 1:
+            raise ValueError("live scenarios must target exactly one feature")
         return self
 
 

@@ -43,12 +43,12 @@ def test_deterministic_pass_fail_unverifiable_and_error():
     passed = evaluate_fixture(grounded, EvalFeature.FIT, grounded.fixture_results[EvalFeature.FIT])
     assert aggregate(passed) == EvalStatus.PASS
 
-    trap = next(item for item in SCENARIOS if item.scenario_id == "unsupported_market_claim_trap")
+    trap = next(item for item in SCENARIOS if item.scenario_id == "shift_market_claim_trap")
     bad = dict(trap.fixture_results[EvalFeature.SHIFT])
     bad["data"] = dict(bad["data"], role_evolution_summary="There are 42 current local jobs.")
     assert aggregate(evaluate_fixture(trap, EvalFeature.SHIFT, bad)) == EvalStatus.FAIL
 
-    unverifiable = run_scenarios([next(item for item in SCENARIOS if item.scenario_id == "major_role_mismatch")])[0]
+    unverifiable = run_scenarios([next(item for item in SCENARIOS if item.scenario_id == "fit_market_claim_trap")])[0]
     assert unverifiable.status == EvalStatus.UNVERIFIABLE
     assert aggregate(evaluate_fixture(grounded, EvalFeature.FIT, "bad")) == EvalStatus.ERROR
 
@@ -81,16 +81,17 @@ def test_cli_fixture_mode_and_live_requires_double_opt_in(tmp_path, monkeypatch,
     assert "results" in capsys.readouterr().out
 
 
-def test_live_mode_is_explicit_and_bounded(monkeypatch, capsys):
+def test_live_mode_is_explicit_and_bounded(tmp_path, monkeypatch, capsys):
     calls = []
     monkeypatch.setenv("GRADUSIQ_EVAL_LIVE", "1")
     monkeypatch.setattr(
         "GradusIQ_career.evals.live.execute_live",
         lambda scenario, feature: calls.append((scenario.scenario_id, feature)) or scenario.fixture_results[feature],
     )
-    assert main(["--live", "--max-runs", "2"]) == 0
-    assert len(calls) == 2
+    monkeypatch.chdir(tmp_path)
+    assert main(["--live", "--output", "eval-results/live.json"]) == 0
+    assert len(calls) == 12
     assert "results" in capsys.readouterr().out
 
     with pytest.raises(SystemExit):
-        main(["--live", "--max-runs", "13"])
+        main(["--live", "--max-runs", "13", "--output", "eval-results/live.json"])
