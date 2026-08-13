@@ -126,6 +126,9 @@ class ResearchSummary(StrictModel):
     tool_call_count: int = 0
     successful_search_count: int = 0
     source_count: int = 0
+    # Also appears in StageTiming as the unified end-to-end stage view; here it
+    # travels with the counters/status that explain the research operation.
+    research_ms: int = Field(default=0, ge=0)
     research_status: str = "not_used"
 
 

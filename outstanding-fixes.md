@@ -64,6 +64,7 @@ Full audit complete (2026-08-11) and Phase 1 implementation built and staged (20
 - [x] Versioned, safe in-memory invocation traces plus deterministic evaluation scenarios and comparison support (Phase B1).
 - [x] B2 live-baseline readiness blockers: transient outputs are narrowly ignored, live scenarios carry distinct typed synthetic inputs, and SHIFT has three meaningful live cases.
 - [x] B2 reviewability blockers: ignored eval artifacts retain validated output, safe grounding/research accounting, stage timing, and interruption-safe incremental results.
+- [x] B2R harness blocker: align the live adapter's `research_summary.research_ms` with the strict typed review-artifact contract and cover live-shaped serialization end to end.
 - [ ] Run and review the controlled B2 live baseline (12 synthetic evaluations; explicit paid/network opt-in required).
 - [ ] Phase B2: choose and review durable trace storage/retention before enabling production persistence. Cost estimation remains deferred until reliable repository-controlled model pricing exists.
 
