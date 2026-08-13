@@ -1240,6 +1240,14 @@ a {
   color: var(--error);
 }
 
+/* The retry line sits under the reason, subordinate to it: the cause is what
+   the student needs to read, "try again" is the footnote. Only rendered when
+   there is a reason above it to be subordinate to. */
+.analysis-failed-retry {
+  margin-top: var(--sp-2);
+  opacity: 0.8;
+}
+
 /* GAP score */
 .gap-score-row {
   display: flex;

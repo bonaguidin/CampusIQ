@@ -37,6 +37,12 @@ interface AnalysisPanelProps {
   phase: AnalysisPhase;
   onRun(): void;
   missingFields?: MissingField[];
+  /**
+   * Why the run failed, when it did. Optional and additive: AnalysisPhase and
+   * the FeatureStatus contract behind it are untouched, so nothing that keys
+   * off 'failed' changes. Absent it, the generic sentence still renders.
+   */
+  failureMessage?: string;
   children?: ReactNode;
 }
 
@@ -51,6 +57,7 @@ export function AnalysisPanel({
   phase,
   onRun,
   missingFields = [],
+  failureMessage,
   children,
 }: AnalysisPanelProps) {
   const openProfileCompletion = useProfileCompletionModal();
@@ -109,7 +116,12 @@ export function AnalysisPanel({
 
       {phase === 'failed' && (
         <div className="analysis-failed">
-          <p>Something went wrong generating this analysis. Try again in a moment.</p>
+          {/* The reason first, in the server's own words, then the generic
+              retry line. A rate limit, a busy gate and a genuine AI failure
+              used to render the identical sentence, so the screen said nothing
+              the browser console had not already said better. */}
+          <p>{failureMessage ?? 'Something went wrong generating this analysis.'}</p>
+          {failureMessage && <p className="analysis-failed-retry">Try again in a moment.</p>}
         </div>
       )}
 

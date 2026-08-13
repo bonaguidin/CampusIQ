@@ -1,6 +1,6 @@
 import { useAuth } from '../auth/useAuth';
 import { analyzeShift } from '../api/analysis';
-import { useAnalysisRun } from '../hooks/useAnalysisRun';
+import { analysisFailureMessage, useAnalysisRun } from '../hooks/useAnalysisRun';
 import type {
   ShiftAnalysisData,
   ShiftTaskShift,
@@ -41,6 +41,7 @@ export function ShiftAnalysisPanel() {
       phase={phase}
       onRun={trigger}
       missingFields={missingFields}
+      failureMessage={analysisFailureMessage(state)}
     >
       {state.phase === 'done' && state.result.status === 'success' && (
         <ShiftResult data={state.result.data} summary={state.result.summary} />
