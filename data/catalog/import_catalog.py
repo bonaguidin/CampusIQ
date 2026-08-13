@@ -73,12 +73,14 @@ INSTITUTION_NAMES = {
 # single name.
 INSTITUTION_SUBTREES: dict[str, tuple[str, ...]] = {
     "tamu": (
+        "agriculture_life_sciences",
         "arts_and_sciences",
         "business",
         "education_human_development",
         "engineering",
         "government_public_service",
         "public_health",
+        "veterinary_biomedical_sciences",
     ),
     "smu": ("smu",),
 }

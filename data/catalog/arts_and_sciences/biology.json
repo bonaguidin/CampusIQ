@@ -1679,5 +1679,185 @@
     "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/biol/",
     "catalog_year": "2026-2027",
     "source_last_checked": "2026-06-20"
+  },
+  {
+    "code": "BIOL 406",
+    "title": "Bacterial Genetics",
+    "credit_hours": 3,
+    "description": "A problem oriented course surveying the manipulation and mechanisms of genetic systems in bacteria; recombination, gene structure and regulation of bacterial genes, plasmids and phages.",
+    "prerequisites": "Prerequisites: GENE 302 ; BIOL 351 . Cross Listing: GENE 406/BIOL 406 .",
+    "department": "Biology",
+    "prefix": "BIOL",
+    "number": "406",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "GENE 406",
+      "BIOL 406"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "GENE 302",
+      "BIOL 351",
+      "GENE 406",
+      "BIOL 406"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/biol/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "BIOL 434",
+    "title": "Regulatory and Behavioral Neuroscience",
+    "credit_hours": 3,
+    "description": "Cell biology and biophysics of neurons; functional organization of the vertebrate nervous system; physiological basis of behavior.",
+    "prerequisites": "Prerequisites: BIOL 213 ; BIOL 319 , BIOL 320 , BIOL 388 , BIOL 413 , or PBSI 235 , or approval of instructor. Cross Listing: NRSC 434/BIOL 434 .",
+    "department": "Biology",
+    "prefix": "BIOL",
+    "number": "434",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "NRSC 434",
+      "BIOL 434"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "BIOL 213",
+      "BIOL 319",
+      "BIOL 320",
+      "BIOL 388",
+      "BIOL 413",
+      "PBSI 235",
+      "NRSC 434",
+      "BIOL 434"
+    ],
+    "restrictions": [
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/biol/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "BIOL 444",
+    "title": "Neural Development",
+    "credit_hours": 3,
+    "description": "Cellular and molecular mechanisms of nervous system development including neural induction and the basis of complex behaviors; use of a wide range of model organisms with a specific emphasis on vertebrate nervous system development.",
+    "prerequisites": "Prerequisites: BIOL 213 , BIOL 319 , BIOL 320 , BIOL 413 , BIOL 388 , or PBSI 235 . Cross Listing: NRSC 444/BIOL 444 .",
+    "department": "Biology",
+    "prefix": "BIOL",
+    "number": "444",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "NRSC 444",
+      "BIOL 444"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "BIOL 213",
+      "BIOL 319",
+      "BIOL 320",
+      "BIOL 413",
+      "BIOL 388",
+      "PBSI 235",
+      "NRSC 444",
+      "BIOL 444"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/biol/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "BIOL 450",
+    "title": "Genomics",
+    "credit_hours": 4,
+    "description": "The study of genomic data includes consideration of the logic behind the most important genomic approaches, as well as their capabilities and limitations in investigating biological processes; the science of accessing and manipulating genomic data; and practical applications, including development of an hypotheses-driven datamining experiment.",
+    "prerequisites": "Prerequisites: BIOL 213 , GENE 301 or GENE 302 , BICH 431/GENE 431 or GENE 431/BICH 431 , or BIOL 351 ; junior or senior classification or approval of instructor. Cross Listing: BICH 450/BIOL 450 .",
+    "department": "Biology",
+    "prefix": "BIOL",
+    "number": "450",
+    "course_level": 400,
+    "credit_min": 4,
+    "credit_max": 4,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "BICH 450",
+      "BIOL 450"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "BIOL 213",
+      "GENE 301",
+      "GENE 302",
+      "BICH 431",
+      "GENE 431",
+      "BIOL 351",
+      "BICH 450",
+      "BIOL 450"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/biol/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "BIOL 460",
+    "title": "Creating Annotations through Critical Analysis of Original Research",
+    "credit_hours": 1,
+    "description": "Critical reading and annotation of the biological literature; annotation using ontologies as structured controlled vocabularies for the organization of biological data; area of focus may vary at instructors discretion. May be taken two times for credit.",
+    "prerequisites": "Prerequisites: BIOL 111 and BIOL 112 , or equivalent; junior or senior classification or approval of instructor. Cross Listing: BICH 460/BIOL 460 .",
+    "department": "Biology",
+    "prefix": "BIOL",
+    "number": "460",
+    "course_level": 400,
+    "credit_min": 1,
+    "credit_max": 1,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "BICH 460",
+      "BIOL 460"
+    ],
+    "repeatability": "May be taken two times for credit.",
+    "campuses": [],
+    "prerequisite_courses": [
+      "BIOL 111",
+      "BIOL 112",
+      "BICH 460",
+      "BIOL 460"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/biol/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
   }
 ]
