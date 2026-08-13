@@ -468,7 +468,10 @@ def test_missing_prompt_file_is_handled_clearly(tmp_path):
     ],
 )
 def test_run_career_feature_helper(feature_name, expected_runner):
-    client = FakeClient('{"summary": "done", "data": {}}')
+    payload = '{"summary": "done", "data": {}}'
+    if expected_runner == "FIT":
+        payload = '''{"summary":"done","data":{"role_matches":[{"role":"Business Analyst Intern","fit_level":"medium","rationale":"Relevant foundation.","supporting_signals":[],"missing_signals":[]}],"overall_fit_summary":"A developing fit."}}'''
+    client = FakeClient(payload)
 
     result = run_career_feature(feature_name, sample_student(), client)
 

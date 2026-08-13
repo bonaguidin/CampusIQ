@@ -128,7 +128,13 @@ class OpenRouterClient:
             )
             response.raise_for_status()
         except requests.RequestException as exc:
-            raise AIRequestError(f"OpenRouter request failed: {exc}") from exc
+            status = exc.response.status_code if exc.response is not None else None
+            transient = isinstance(exc, (requests.ConnectionError, requests.Timeout)) or (
+                status == 429 or (status is not None and 500 <= status < 600)
+            )
+            raise AIRequestError(
+                f"OpenRouter request failed: {exc}", transient=transient
+            ) from exc
 
         raw = self._response_json(response)
         return raw, selected_model

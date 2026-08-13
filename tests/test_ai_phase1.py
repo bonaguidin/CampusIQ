@@ -93,8 +93,23 @@ def test_network_failure_becomes_ai_request_error(monkeypatch):
     session = FakeSession(error=requests.Timeout("too slow"))
     client = OpenRouterClient(session=session)
 
-    with pytest.raises(AIRequestError, match="OpenRouter request failed"):
+    with pytest.raises(AIRequestError, match="OpenRouter request failed") as captured:
         client.complete(messages=[{"role": "user", "content": "hello"}], role="chat")
+    assert captured.value.transient is True
+
+
+@pytest.mark.parametrize(("status", "transient"), [(429, True), (503, True), (400, False), (401, False)])
+def test_http_failure_transience_is_classified(status, transient, monkeypatch):
+    monkeypatch.setenv("OPENROUTER_API_KEY", "test-key")
+    response = requests.Response()
+    response.status_code = status
+    error = requests.HTTPError(f"status {status}", response=response)
+    client = OpenRouterClient(session=FakeSession(error=error))
+
+    with pytest.raises(AIRequestError) as captured:
+        client.complete(messages=[{"role": "user", "content": "hello"}], role="chat")
+
+    assert captured.value.transient is transient
 
 
 def test_malformed_provider_response_becomes_parse_error(monkeypatch):

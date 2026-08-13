@@ -39,6 +39,8 @@ from GradusIQ_career.ai.openrouter_client import (
     OpenRouterClient,
 )
 from GradusIQ_career.features.base import FeatureResult
+from GradusIQ_career.ai.contracts import fit_output_is_valid
+from GradusIQ_career.features.fit import FitRunner
 from GradusIQ_career.features.orchestrator import RUNNERS, run_feature
 from GradusIQ_career.profile_builder import (
     build_profile_from_supabase,
@@ -403,13 +405,16 @@ def _valid_cached_feature_result(feature_name: str, result: object) -> bool:
     runner = RUNNERS.get(feature_name)
     if runner is None or not isinstance(result, dict):
         return False
-    return (
+    valid = (
         result.get("feature") == feature_name
         and result.get("status") == "success"
         and isinstance(result.get("summary"), str)
         and result.get("errors") == []
         and _matches_contract(result.get("data"), runner.output_contract)
     )
+    if valid and feature_name == "FIT":
+        return fit_output_is_valid(result.get("data"))
+    return valid
 
 
 def load_cached_feature_result(
@@ -834,7 +839,7 @@ def _me_profile(request: Request) -> tuple[dict, str]:
     return build_profile_from_supabase(client, student_id).profile, str(student_id)
 
 
-def _me_canonical_feature_profile(request: Request) -> tuple[dict, str]:
+def _me_canonical_feature_profile(request: Request):
     """Build one canonical profile, then adapt it for the existing runners.
 
     FIT/GAP/SHIFT still intentionally consume their established dictionary
@@ -844,7 +849,23 @@ def _me_canonical_feature_profile(request: Request) -> tuple[dict, str]:
     client = _session_client(request)
     student_id = _resolve_session_student_id(client)
     canonical = build_student_intelligence_profile(client, student_id)
-    return canonical_to_legacy_profile(canonical), str(student_id)
+    return canonical, canonical_to_legacy_profile(canonical), str(student_id)
+
+
+def _run_authenticated_fit(request: Request, canonical, profile: dict, slug: str) -> dict:
+    """Run canonical FIT inside the existing cache and concurrency boundary."""
+    student_id = profile.get("student", {}).get("id")
+    cached = load_cached_feature_result(slug, "FIT", student_id)
+    if cached is not None:
+        return cached
+    try:
+        with request.app.state.ai_concurrency.slot():
+            runner = FitRunner(client=build_client())
+            return runner.run_canonical(canonical, profile)
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail="Analysis service is unavailable.") from exc
 
 
 class ProfileUpdateRequest(BaseModel):
@@ -900,9 +921,11 @@ def analyze_me(request: Request, feature: str) -> dict:
     # which StudentIntelligenceProfile deliberately does not fabricate. Keep
     # that route on its existing legacy path; Phase 3 is career features only.
     if internal_name in {"FIT", "GAP", "SHIFT"}:
-        profile, slug = _me_canonical_feature_profile(request)
+        canonical, profile, slug = _me_canonical_feature_profile(request)
     else:
         profile, slug = _me_profile(request)
+    if internal_name == "FIT":
+        return _run_authenticated_fit(request, canonical, profile, slug)
     return _run_protected_feature(request, internal_name, slug, profile=profile)
 
 

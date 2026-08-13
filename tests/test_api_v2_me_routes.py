@@ -61,7 +61,15 @@ FEATURE_JSON = json.dumps(
             "must_have_gaps": [],
             "nice_to_have_gaps": [],
             "recommended_next_steps": [],
-            "role_matches": [],
+            "role_matches": [
+                {
+                    "role": "SWE Intern",
+                    "fit_level": "medium",
+                    "rationale": "Python experience supports the role.",
+                    "supporting_signals": ["Python"],
+                    "missing_signals": ["Production experience"],
+                }
+            ],
             "overall_fit_summary": "ok",
             "role_evolution_summary": "ok",
             "task_shifts": [],
@@ -322,7 +330,28 @@ def test_profile_edit_rejects_invalid_values_before_writing(client, monkeypatch,
 @pytest.mark.parametrize("feature", ["gap", "fit", "shift", "professor-comments"])
 def test_me_analyze_returns_a_feature_result(feature, client, monkeypatch):
     _patch_session(monkeypatch, profile=_full_profile())
-    monkeypatch.setattr(api, "build_client", lambda: FakeAI())
+    fit_json = json.dumps(
+        {
+            "summary": "LIVE-RESULT",
+            "data": {
+                "role_matches": [
+                    {
+                        "role": "SWE Intern",
+                        "fit_level": "medium",
+                        "rationale": "Python experience supports the role.",
+                        "supporting_signals": ["Python"],
+                        "missing_signals": ["Production experience"],
+                    }
+                ],
+                "overall_fit_summary": "ok",
+            },
+        }
+    )
+    monkeypatch.setattr(
+        api,
+        "build_client",
+        lambda: FakeAI(fit_json if feature == "fit" else FEATURE_JSON),
+    )
 
     response = _call(client, "post", f"/api/v2/student/me/analyze/{feature}", None)
 
@@ -348,6 +377,14 @@ def test_me_analyze_returns_a_feature_result(feature, client, monkeypatch):
         "shift": "success",
         "professor-comments": "skipped",
     }[feature]
+
+
+def test_authenticated_fit_remains_inside_ai_concurrency_gate(monkeypatch):
+    _patch_session(monkeypatch, profile=_full_profile())
+    app = api.create_app(make_test_config(max_concurrent_ai_requests=0))
+    response = _call(TestClient(app), "post", "/api/v2/student/me/analyze/fit", None)
+    assert response.status_code == 429
+    assert response.json()["detail"] == "AI service is busy; retry later."
 
 
 @pytest.mark.parametrize("feature", ["fit", "gap", "shift"])
