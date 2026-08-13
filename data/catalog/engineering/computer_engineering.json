@@ -2315,5 +2315,217 @@
     "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/ecen/",
     "catalog_year": "2026-2027",
     "source_last_checked": "2026-06-20"
+  },
+  {
+    "code": "ECEN 222",
+    "title": "Discrete Structures for Computing",
+    "credit_hours": 3,
+    "description": "Mathematical foundations from discrete mathematics for analyzing computer algorithms, for both correctness and performance; introduction to models of computation, including finite state machines and Turing machines.",
+    "prerequisites": "Prerequisite: Grade of C or better in MATH 142 , MATH 147 , MATH 151 , or MATH 171 . Cross Listing: CSCE 222/ECEN 222 .",
+    "department": "Electrical and Computer Engineering",
+    "prefix": "ECEN",
+    "number": "222",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "CSCE 222",
+      "ECEN 222"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "MATH 142",
+      "MATH 147",
+      "MATH 151",
+      "MATH 171",
+      "CSCE 222",
+      "ECEN 222"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/ecen/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "ECEN 350",
+    "title": "Computer Architecture and Design",
+    "credit_hours": 4,
+    "description": "Computer architecture and design; use of register transfer languages and simulation tools to describe and simulate computer operation; central processing unit organization, input/output and memory system architectures.",
+    "prerequisites": "Prerequisites: Grade of C or better in ECEN 248 and CSCE 120 ; junior or senior classification. Cross Listing: CSCE 350/ECEN 350 .",
+    "department": "Electrical and Computer Engineering",
+    "prefix": "ECEN",
+    "number": "350",
+    "course_level": 300,
+    "credit_min": 4,
+    "credit_max": 4,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "CSCE 350",
+      "ECEN 350"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ECEN 248",
+      "CSCE 120",
+      "CSCE 350",
+      "ECEN 350"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/ecen/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "ECEN 416",
+    "title": "Hardware Design Verification",
+    "credit_hours": 3,
+    "description": "Hardware functional verification; case studies on verification in integrated circuit design; introduction to industry best practices; introduction to logic functional verification.",
+    "prerequisites": "Prerequisites: CSCE 312 , CSCE 350/ECEN 350 , or ECEN 350/CSCE 350 , or equivalent in computer architecture; familiarity with C/C++/Verilog/VHDL programming. Cross Listing: CSCE 416/ECEN 416 .",
+    "department": "Electrical and Computer Engineering",
+    "prefix": "ECEN",
+    "number": "416",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "CSCE 416",
+      "ECEN 416"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "CSCE 312",
+      "CSCE 350",
+      "ECEN 350",
+      "CSCE 416",
+      "ECEN 416"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/ecen/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "ECEN 426",
+    "title": "Security of Embedded Systems",
+    "credit_hours": 3,
+    "description": "Security principles; common security features and flaws in day-to-day embedded systems; security analysis, vulnerability exploits and security fixes for embedded systems.",
+    "prerequisites": "Prerequisite: Grade of C or better in ECEN 350/CSCE 350 , CSCE 350/ECEN 350 , or CSCE 312 ; junior or senior classification. Cross Listing: CSCE 426/ECEN 426 .",
+    "department": "Electrical and Computer Engineering",
+    "prefix": "ECEN",
+    "number": "426",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "CSCE 426",
+      "ECEN 426"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ECEN 350",
+      "CSCE 350",
+      "CSCE 312",
+      "CSCE 426",
+      "ECEN 426"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/ecen/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "ECEN 466",
+    "title": "Unconditionally Secure Electronics",
+    "credit_hours": 3,
+    "description": "Data security; cryptography; key exchange; conditional security; unconditional (information-theoretic) security; quantum key distribution; the Kirchhoff-law-Johnson-noise (KLJN) key exchange, electronic noise; advanced issues of KLJN; schemes, protocols, attacks, defense, privacy amplification, credit cards, PUF, autonomous vehicles and smart grids.",
+    "prerequisites": "Prerequisites: Grade of C or better in ECEN 214 ; grade of C or better in ECEN 303 or STAT 211 ; junior or senior classification. Cross Listing: CYBR 466/ECEN 466 .",
+    "department": "Electrical and Computer Engineering",
+    "prefix": "ECEN",
+    "number": "466",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "CYBR 466",
+      "ECEN 466"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ECEN 214",
+      "ECEN 303",
+      "STAT 211",
+      "CYBR 466",
+      "ECEN 466"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "Grade of C or better",
+      "grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/ecen/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "ECEN 469",
+    "title": "Advanced Computer Architecture",
+    "credit_hours": 3,
+    "description": "Advanced computer architectures including memory designs, pipeline techniques and parallel structures such as out-of-order cores and multiprocessors.",
+    "prerequisites": "Prerequisite: Grade of C or better in ECEN 350/CSCE 350 or CSCE 350/ECEN 350 ; junior or senior classification. Cross Listing: CSCE 469/ECEN 469 .",
+    "department": "Electrical and Computer Engineering",
+    "prefix": "ECEN",
+    "number": "469",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "CSCE 469",
+      "ECEN 469"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ECEN 350",
+      "CSCE 350",
+      "CSCE 469",
+      "ECEN 469"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/ecen/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
   }
 ]

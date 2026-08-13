@@ -1484,5 +1484,69 @@
     "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/aero/",
     "catalog_year": "2026-2027",
     "source_last_checked": "2026-06-20"
+  },
+  {
+    "code": "AERO 436",
+    "title": "Human Factors Engineering for Aerospace Designs",
+    "credit_hours": 3,
+    "description": "Physiological and psychophysiological issues encountered in aviation and space environments and their effect on human cognitive and physical performance; survey methods for human workload and performance evaluations; apply human-systems design principles to an aerospace design project.",
+    "prerequisites": "Prerequisites: Junior or senior classification. Cross Listing: ISEN 432/AERO 436 .",
+    "department": "Aerospace Engineering",
+    "prefix": "AERO",
+    "number": "436",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "ISEN 432",
+      "AERO 436"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ISEN 432",
+      "AERO 436"
+    ],
+    "restrictions": [
+      "Junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/aero/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "AERO 438",
+    "title": "Intuitive and Counter-Intuitive Mechanisms",
+    "credit_hours": 3,
+    "description": "Spatial descriptions and transformations; forward and inverse kinematics of mechanical manipulators; manipulation; dexterity and manipulability; principles of manipulator-mechanism design; mobility; motion planning; control, reachability and complexity measures; workspace analysis.",
+    "prerequisites": "Prerequisites: Senior classification. Cross Listing: MEEN 407/AERO 438 .",
+    "department": "Aerospace Engineering",
+    "prefix": "AERO",
+    "number": "438",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "MEEN 407",
+      "AERO 438"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "MEEN 407",
+      "AERO 438"
+    ],
+    "restrictions": [
+      "Senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/aero/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
   }
 ]
