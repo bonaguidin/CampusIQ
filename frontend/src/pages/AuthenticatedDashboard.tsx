@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/useAuth';
 import { ChatPanel } from '../components/ChatPanel';
@@ -7,10 +7,11 @@ import { FitAnalysisPanel } from '../components/FitAnalysisPanel';
 import { GapAnalysisPanel } from '../components/GapAnalysisPanel';
 import { ShiftAnalysisPanel } from '../components/ShiftAnalysisPanel';
 import { TermPlanner } from '../components/TermPlanner';
-import { CareerProfile } from '../components/career/CareerProfile';
-import { ProfileCompletionContext, type ProfileCompletionRequest } from '../components/profile/ProfileCompletionContext';
-import { ProfileCompletionModal } from '../components/profile/ProfileCompletionModal';
+import { CareerProfile, type CareerFieldFocus } from '../components/career/CareerProfile';
+import { ProfileChecklist } from '../components/career/ProfileChecklist';
+import { ProfileCompletionContext, type ProfileFieldRequest } from '../components/profile/ProfileCompletionContext';
 import { buildDashboardViewModel } from '../data/dashboardViewModel';
+import { missingChecklistFields } from '../lib/profileChecklist';
 
 type NavSection = 'overview' | 'academic' | 'career';
 
@@ -29,13 +30,36 @@ export function AuthenticatedDashboard() {
   const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState<NavSection>('overview');
   const [railOpen, setRailOpen] = useState(false);
-  const [profileRequest, setProfileRequest] = useState<ProfileCompletionRequest | null>(null);
+  const [fieldFocus, setFieldFocus] = useState<CareerFieldFocus | null>(null);
   const [profileSaved, setProfileSaved] = useState(false);
   const canonical = studentAccount.profile?.intelligence_profile;
   const dashboard = useMemo(
     () => (canonical ? buildDashboardViewModel(canonical) : null),
     [canonical],
   );
+  // Computed from the profile in hand, not from a skipped analysis: the
+  // checklist has to be right before anything has been run, which is the whole
+  // reason it is not built out of the panels' own missing_fields.
+  const missingDetails = useMemo(
+    () => (canonical ? missingChecklistFields(canonical) : []),
+    [canonical],
+  );
+
+  /**
+   * Send the student to the field, wherever they asked from.
+   *
+   * The one handler behind both entry points -- the checklist and a skipped
+   * analysis's per-gap link -- so the two cannot answer the same request
+   * differently. Switching to the Career tab first is what makes it work from
+   * anywhere: the field only exists on that tab, and the request is worthless
+   * if it lands on a section that does not render it.
+   */
+  const requestField = useCallback((request: ProfileFieldRequest) => {
+    setActiveSection('career');
+    setRailOpen(false);
+    // A new object every time, so asking twice for the same field works.
+    setFieldFocus({ path: request.path, nonce: Date.now() });
+  }, []);
 
   if (!dashboard) return null;
 
@@ -54,7 +78,7 @@ export function AuthenticatedDashboard() {
   }
 
   return (
-    <ProfileCompletionContext.Provider value={setProfileRequest}><div className="shell" data-dashboard-source="authenticated" data-profile-modal-open={profileRequest ? 'true' : undefined}>
+    <ProfileCompletionContext.Provider value={requestField}><div className="shell" data-dashboard-source="authenticated">
       {railOpen && <div className="rail-overlay" onClick={() => setRailOpen(false)} aria-hidden="true" />}
       <aside className={`rail${railOpen ? ' rail--open' : ''}`} aria-label="Dashboard navigation">
         <div className="rail-identity">
@@ -211,6 +235,15 @@ export function AuthenticatedDashboard() {
                         existing border-bottom also supplies the division
                         between the two halves, which is why
                         .career-profile-block draws no rule of its own. */}
+                    {/* Above the analyses, because it is the answer to the
+                        question they ask. Sticky rather than fixed: it settles
+                        at the top of the scroll container and covers nothing,
+                        which is the whole difference between it and the modal
+                        it replaces. */}
+                    <ProfileChecklist
+                      missing={missingDetails}
+                      onJump={(field, trigger) => { requestField({ path: field.path, trigger }); }}
+                    />
                     <GapAnalysisPanel />
                     <FitAnalysisPanel />
                     <ShiftAnalysisPanel />
@@ -245,6 +278,7 @@ export function AuthenticatedDashboard() {
                               }
                             : null
                         }
+                        focus={fieldFocus}
                       />
                     </div>
                   </>
@@ -255,7 +289,6 @@ export function AuthenticatedDashboard() {
         </main>
       </div>
       {profileSaved && <div className="profile-save-notice" role="status">Profile saved. Your guidance now uses the latest details.<button type="button" aria-label="Dismiss profile saved message" onClick={() => setProfileSaved(false)}>×</button></div>}
-      {profileRequest && <ProfileCompletionModal request={profileRequest} onClose={() => setProfileRequest(null)} onComplete={() => { setProfileRequest(null); setProfileSaved(true); }} />}
     </div></ProfileCompletionContext.Provider>
   );
 }

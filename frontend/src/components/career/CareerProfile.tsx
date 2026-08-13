@@ -1,6 +1,7 @@
-import type { ReactNode } from 'react';
+import { useEffect, useRef, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import type { ProfileChanges } from '../../api/profile';
+import { revealField } from '../../lib/revealField';
 import { buildCareerViewModel } from '../../data/careerViewModel.mjs';
 import type { CanonicalCareer } from '../../types/studentIntelligenceProfile';
 import type { CertificationEntry, ExperienceEntry } from '../../data/careerViewModel.mjs';
@@ -35,6 +36,18 @@ import { SkillCloud } from './SkillCloud';
 export interface CareerEditing {
   accessToken: string;
   onSaved(): Promise<void>;
+}
+
+/**
+ * A standing request to go and answer one field.
+ *
+ * The nonce, not the path, is what makes the field react: asking twice for the
+ * same field has to work, and a path compared against its previous value would
+ * treat the second click as no change at all.
+ */
+export interface CareerFieldFocus {
+  path: string;
+  nonce: number;
 }
 
 /**
@@ -88,10 +101,12 @@ export function CareerProfile({
   career,
   details,
   editing = null,
+  focus = null,
 }: {
   career: CanonicalCareer;
   details: CareerDetails;
   editing?: CareerEditing | null;
+  focus?: CareerFieldFocus | null;
 }) {
   const model = buildCareerViewModel(career);
   const { direction, counts } = model;
@@ -124,7 +139,12 @@ export function CareerProfile({
     <div className="cp">
       <CareerSummary model={model} />
 
-      <DetailsSection details={details} aiComfort={career.ai_anxiety_level} editing={editing} />
+      <DetailsSection
+        details={details}
+        aiComfort={career.ai_anxiety_level}
+        editing={editing}
+        focus={focus}
+      />
 
       <div className="cp-grid cp-grid--split">
         {/* Each field below answers for itself. The section used to be gated on
@@ -140,6 +160,8 @@ export function CareerProfile({
                 surface they were written for. */}
             <FieldSlot
               label="Target roles"
+              path="career.target_roles"
+              focus={focus}
               wrapperClass="cp-field"
               labelClass="cp-subhead"
               editing={editing}
@@ -152,6 +174,8 @@ export function CareerProfile({
             />
             <FieldSlot
               label="Interests"
+              path="career.interests"
+              focus={focus}
               wrapperClass="cp-field"
               labelClass="cp-subhead"
               editing={editing}
@@ -297,21 +321,39 @@ function DetailsSection({
   details,
   aiComfort,
   editing,
+  focus,
 }: {
   details: CareerDetails;
   aiComfort: string | null;
   editing: CareerEditing | null;
+  focus: CareerFieldFocus | null;
 }) {
   const { expectedGraduation, majorCurrent, majorIntended } = details;
   // The sentinel is a stored answer ("not switching"), never a major anyone
   // typed, so it must not be printed back as though it were one.
   const major = majorValueFrom(majorIntended);
 
+  // AI comfort is a jump TARGET but not a checklist ITEM. No runner requires
+  // it, so it is never counted as missing -- but base.py can still name it in
+  // a skipped result, and a student sent to a field the page silently cannot
+  // find would be worse than not offering the link. It has no editor to open:
+  // the radios are always live, so revealing it is scroll, flag and focus.
+  const aiNode = useRef<HTMLDivElement>(null);
+  const aiNonce = focus?.path === 'career.ai_anxiety_level' ? focus.nonce : null;
+  useEffect(() => {
+    if (aiNonce === null) return;
+    const element = aiNode.current;
+    if (!element) return;
+    revealField(element, () => element.querySelector<HTMLElement>('input'));
+  }, [aiNonce]);
+
   return (
     <Section title="Details" count={null}>
       <div className="cp-details">
         <FieldSlot
           label="Expected graduation"
+          path="student.expected_graduation"
+          focus={focus}
           wrapperClass="cp-detail"
           labelClass="cp-detail-label"
           editing={editing}
@@ -338,6 +380,8 @@ function DetailsSection({
           />
           <FieldSlot
             label="Intended major"
+            path="student.major_intended"
+            focus={focus}
             wrapperClass="cp-detail-unit"
             labelClass="cp-detail-label"
             editing={editing}
@@ -359,7 +403,7 @@ function DetailsSection({
             )}
           />
         </div>
-        <div className="cp-detail">
+        <div className="cp-detail" ref={aiNode} data-profile-field="career.ai_anxiety_level">
           <span className="cp-detail-label">AI comfort</span>
           {/* Null means never asked, which is a different state from
               'not_sure' (asked, does not know) -- see the 20260812143000
@@ -420,6 +464,8 @@ function DetailValue({
  */
 function FieldSlot<T>({
   label,
+  path,
+  focus = null,
   wrapperClass,
   labelClass,
   editing,
@@ -430,6 +476,9 @@ function FieldSlot<T>({
   edit,
 }: {
   label: string;
+  /** The dotted path, when this field is something an analysis can require. */
+  path?: string;
+  focus?: CareerFieldFocus | null;
   wrapperClass: string;
   labelClass: string;
   editing: CareerEditing | null;
@@ -439,16 +488,31 @@ function FieldSlot<T>({
   display: ReactNode;
   edit(draft: T, setDraft: (next: T) => void): ReactNode;
 }) {
+  const node = useRef<HTMLDivElement>(null);
+  // Only this field's own requests, and only as a changing number -- see
+  // CareerFieldFocus on why the nonce rather than the path drives it.
+  const nonce = path && focus?.path === path ? focus.nonce : null;
+
+  // The slot moves the page and flags itself; the editor below opens itself.
+  // Split that way because they are two different jobs on two different nodes,
+  // and only this one owns an element to scroll to.
+  useEffect(() => {
+    if (nonce === null) return;
+    const element = node.current;
+    if (!element) return;
+    revealField(element, () => element.querySelector<HTMLElement>('input, select, textarea'));
+  }, [nonce]);
+
   if (!editing) {
     return (
-      <div className={wrapperClass}>
+      <div className={wrapperClass} ref={node} data-profile-field={path}>
         <span className={labelClass}>{label}</span>
         {display}
       </div>
     );
   }
   return (
-    <div className={wrapperClass}>
+    <div className={wrapperClass} ref={node} data-profile-field={path}>
       {/* EditableSection supplies the label here, so the static one above is
           not also rendered -- two headings for one field. */}
       <InlineEditableField
@@ -458,6 +522,7 @@ function FieldSlot<T>({
         validate={validate}
         accessToken={editing.accessToken}
         onSaved={editing.onSaved}
+        openNonce={nonce}
       >
         {(draft, setDraft, isEditing) =>
           isEditing ? <div className="cp-field-edit">{edit(draft, setDraft)}</div> : display

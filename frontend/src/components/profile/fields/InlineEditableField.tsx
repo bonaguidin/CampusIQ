@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { updateProfile, type ProfileChanges } from '../../../api/profile';
 import { EditableSection } from '../../EditableSection';
 
@@ -31,6 +31,7 @@ export function InlineEditableField<T>({
   validate,
   accessToken,
   onSaved,
+  openNonce = null,
   children,
 }: {
   title: string;
@@ -40,12 +41,31 @@ export function InlineEditableField<T>({
   validate?(draft: T): string | null;
   accessToken: string;
   onSaved(): Promise<void>;
+  /**
+   * Bumped when something off-page -- the checklist, or a skipped analysis --
+   * sends the student here to answer this. Opening the editor is the whole
+   * point of arriving: landing on a read-only row with an Edit button would
+   * make the student ask for the same thing twice.
+   */
+  openNonce?: number | null;
   children(draft: T, setDraft: (next: T) => void, editing: boolean): ReactNode;
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<T>(value);
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
+
+  // Deliberately not folded into startEdit's callers: arriving by request is
+  // not a click, and the two must not diverge if one ever grows a side effect.
+  useEffect(() => {
+    if (openNonce === null) return;
+    setDraft(value);
+    setErrors([]);
+    setEditing(true);
+    // `value` is read, not depended on: re-running when the profile reloads
+    // after a save would reopen an editor the student had just closed.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openNonce]);
 
   function startEdit() {
     // Seeded here rather than held in sync: the canonical value changes under

@@ -4,22 +4,101 @@ import { readFile } from 'node:fs/promises'
 import { chromium } from 'playwright'
 import { createServer } from 'vite'
 
-test('profile completion modal and fallback route share one form without changing SHIFT gating', async () => {
-  const [app, page, modal, analysis, shift] = await Promise.all([
+// The modal is retired. What replaced it is not another dialog but the absence
+// of one: a gap is now answered on the page that states it. This pins that the
+// dialog is gone AND that the two things it used to be reachable from still
+// work -- a deleted component is only an improvement if nothing was relying on
+// it to reach the fields.
+test('nothing opens a profile dialog, and the deep-link fallback survives', async () => {
+  const [app, page, analysis, dashboard, shift] = await Promise.all([
     readFile(new URL('../src/App.tsx', import.meta.url), 'utf8'),
     readFile(new URL('../src/pages/ProfileCompletionPage.tsx', import.meta.url), 'utf8'),
-    readFile(new URL('../src/components/profile/ProfileCompletionModal.tsx', import.meta.url), 'utf8'),
     readFile(new URL('../src/components/AnalysisPanel.tsx', import.meta.url), 'utf8'),
+    readFile(new URL('../src/pages/AuthenticatedDashboard.tsx', import.meta.url), 'utf8'),
     readFile(new URL('../../GradusIQ_career/features/shift.py', import.meta.url), 'utf8'),
   ])
+
+  // The batch host is NOT retired: /profile/complete is still where a deep
+  // link lands, and it still renders the same form the fields compose.
   assert.match(app, /path="\/profile\/complete"/)
   assert.match(page, /<ProfileCompletionForm/)
-  assert.match(modal, /<ProfileCompletionForm/)
-  assert.match(modal, /role="dialog"/)
-  assert.match(modal, /aria-modal="true"/)
-  assert.match(analysis, /useProfileCompletionModal/)
+
+  // No dialog anywhere in the authenticated dashboard, and no component left
+  // behind that could grow one back.
+  assert.doesNotMatch(dashboard, /ProfileCompletionModal/)
+  assert.doesNotMatch(dashboard, /role="dialog"|aria-modal/)
+  await assert.rejects(
+    readFile(new URL('../src/components/profile/ProfileCompletionModal.tsx', import.meta.url), 'utf8'),
+    'ProfileCompletionModal.tsx is still present -- it has no importers',
+  )
+
+  // AnalysisPanel asks for ONE field, by path, rather than opening a form over
+  // every field the surface owns.
+  assert.match(analysis, /useProfileFieldRequest/)
+  assert.match(analysis, /requestProfileField\(\{ path: field\.path/)
+  // Outside a provider there is nothing to scroll to, so the deep link stays.
+  assert.match(analysis, /profileCompletionHref\(field\.path\)/)
+
   const requiredPaths = shift.match(/required_paths\s*=\s*\(([\s\S]*?)\)/)?.[1] ?? ''
   assert.doesNotMatch(requiredPaths, /ai_anxiety_level/)
+})
+
+/**
+ * The checklist counts what the runners actually require.
+ *
+ * Same arrangement as the N/A sentinel test above: required_paths is Python
+ * that never crosses the wire, so the client mirrors it and this fails if the
+ * two drift. Derived from the three runners rather than hardcoded -- a test
+ * that restated the four paths by hand would agree with a stale mirror.
+ */
+test('the checklist mirrors GAP/FIT/SHIFT required_paths, less the resume-owned ones', async () => {
+  const [mirror, analysis, gap, fit, shift, base] = await Promise.all([
+    readFile(new URL('../src/lib/profileChecklist.ts', import.meta.url), 'utf8'),
+    readFile(new URL('../src/components/AnalysisPanel.tsx', import.meta.url), 'utf8'),
+    readFile(new URL('../../GradusIQ_career/features/gap.py', import.meta.url), 'utf8'),
+    readFile(new URL('../../GradusIQ_career/features/fit.py', import.meta.url), 'utf8'),
+    readFile(new URL('../../GradusIQ_career/features/shift.py', import.meta.url), 'utf8'),
+    readFile(new URL('../../GradusIQ_career/features/base.py', import.meta.url), 'utf8'),
+  ])
+
+  const pathsOf = (source) =>
+    [...(source.match(/required_paths\s*=\s*\(([\s\S]*?)\)/)?.[1] ?? '').matchAll(/"([^"]+)"/g)].map((m) => m[1])
+  const required = new Set([...pathsOf(gap), ...pathsOf(fit), ...pathsOf(shift)])
+  assert.ok(required.size > 0, 'no required_paths could be read from the runners')
+
+  // Résumé-owned paths are excluded by the SAME set AnalysisPanel routes on,
+  // read from its source, so the two cannot disagree about what /resume owns.
+  const resumeOwned = [...(analysis.match(/RESUME_OWNED_PATHS = new Set\(\[([\s\S]*?)\]\)/)?.[1] ?? '').matchAll(/'([^']+)'/g)].map((m) => m[1])
+  assert.deepEqual(resumeOwned.slice().sort(), ['career.skills_self_reported', 'career.work_experience'])
+  for (const path of resumeOwned) required.delete(path)
+
+  const mirrored = [...mirror.matchAll(/\{ path: '([^']+)', label: '([^']+)' \}/g)]
+  assert.deepEqual(
+    mirrored.map(([, path]) => path).slice().sort(),
+    [...required].sort(),
+    'CHECKLIST_FIELDS no longer matches the runners union',
+  )
+
+  // ai_anxiety_level is editable on the Career tab and gates nothing, so it
+  // must never be counted. This is the assertion that catches someone
+  // "helpfully" adding it because the field is right there.
+  assert.equal(required.has('career.ai_anxiety_level'), false)
+  // Comments stripped first: the module argues at length about why these two
+  // are absent, and naming them in that argument is the opposite of the
+  // mistake being guarded against.
+  const mirrorCode = mirror.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '')
+  assert.doesNotMatch(mirrorCode, /ai_anxiety_level|major_current/)
+
+  // The words a student reads come from base.py, so a gap named by the
+  // checklist and the same gap named by a skipped analysis read identically.
+  const labels = Object.fromEntries(
+    [...(base.match(/FIELD_LABELS: Mapping\[str, str\] = \{([\s\S]*?)\n\}/)?.[1] ?? '')
+      .matchAll(/"([^"]+)":\s*"([^"]+)"/g)].map((m) => [m[1], m[2]]),
+  )
+  assert.ok(Object.keys(labels).length > 0, 'FIELD_LABELS could not be read from base.py')
+  for (const [, path, label] of mirrored) {
+    assert.equal(label, labels[path], `checklist label for ${path} disagrees with base.py`)
+  }
 })
 
 // The N/A the form writes is FIT's sentinel, and nothing at runtime would

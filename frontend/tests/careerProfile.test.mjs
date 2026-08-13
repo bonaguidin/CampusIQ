@@ -554,3 +554,88 @@ test('career profile: reduced motion carries no information loss', { timeout: 45
   await expander.click()
   assert.equal(await page.locator('.cp-skills .cp-chip').count(), 24)
 })
+
+/**
+ * The dock, and what clicking it does.
+ *
+ * The count is the claim worth pinning: four gating details, never the six the
+ * tab can edit. AI comfort and current major are editable inches away and are
+ * deliberately absent, because no runner requires either -- counting them
+ * would tell a student they are incomplete over something that blocks nothing.
+ */
+test('career profile: the docked checklist counts gating details and jumps to them', { timeout: 45_000 }, async (t) => {
+  const origin = await startServer(t)
+  const browser = await chromium.launch()
+  t.after(async () => browser.close())
+  const page = await browser.newPage({ viewport: { width: 1280, height: 900 } })
+
+  // ── Nothing answered: all four gating details, and only those four.
+  await openCareer(page, origin, 'mode=complete&career=bare')
+  const dock = page.locator('[data-profile-checklist]')
+  await dock.waitFor()
+  assert.equal(await dock.locator('.pc-dock-count').innerText(), '4')
+  assert.deepEqual(await dock.locator('.pc-dock-item').allInnerTexts(),
+    ['Expected graduation', 'Intended major', 'Target roles', 'Career interests'])
+  // Editable, but gating nothing, so never counted.
+  for (const uncounted of ['AI comfort', 'Current major']) {
+    assert.equal(await dock.locator('.pc-dock-item').filter({ hasText: uncounted }).count(), 0,
+      `${uncounted} was counted as a gating detail`)
+  }
+  // Résumé-owned gaps belong to /resume and are not this surface's to offer.
+  for (const owned of ['Skills', 'Work experience']) {
+    assert.equal(await dock.locator('.pc-dock-item').filter({ hasText: owned }).count(), 0)
+  }
+  // The dotted paths address the fields; they are never what a student reads.
+  assert.equal((await dock.innerText()).includes('career.'), false)
+
+  // ── Clicking an item moves to that field, flags it, and opens its editor.
+  await dock.locator('.pc-dock-item').filter({ hasText: 'Target roles' }).click()
+  const roles = page.locator('[data-profile-field="career.target_roles"]')
+  await roles.waitFor()
+  // The flag answers "which one?" and is removed again, so it cannot be
+  // mistaken for a permanent state.
+  await page.waitForFunction(() =>
+    document.querySelector('[data-profile-field="career.target_roles"]')?.classList.contains('cp-field-flag') === true)
+  await page.waitForFunction(() =>
+    document.querySelector('[data-profile-field="career.target_roles"]')?.classList.contains('cp-field-flag') === false,
+    undefined, { timeout: 3000 })
+  // Arriving opens the editor: landing on a read-only row with an Edit button
+  // would make the student ask for the same thing twice.
+  await roles.getByRole('button', { name: 'Save' }).waitFor()
+  await page.waitForFunction(() =>
+    document.activeElement?.closest('[data-profile-field="career.target_roles"]') !== null)
+  // Scrolled to, not merely rendered.
+  assert.equal(await roles.evaluate((node) => {
+    const box = node.getBoundingClientRect()
+    return box.top >= 0 && box.bottom <= innerHeight
+  }), true, 'the field was never brought into view')
+
+  // ── Answering a gating detail removes it from the dock, and nothing else.
+  await openCareer(page, origin, 'mode=complete&career=lopsided')
+  // Interests are set here; target roles are not.
+  assert.deepEqual(await page.locator('.pc-dock-item').allInnerTexts(), ['Target roles'])
+  assert.equal(await page.locator('.pc-dock-count').innerText(), '1')
+
+  // ── Everything answered: the dock stays, and stops asking.
+  await openCareer(page, origin, 'mode=complete&career=rich')
+  await page.locator('[data-profile-checklist]').getByText('All details provided').waitFor()
+  assert.equal(await page.locator('.pc-dock-item').count(), 0)
+})
+
+// The N/A sentinel is an ANSWER to the intended-major question, not the
+// absence of one -- base.py's is_missing treats any non-blank string as
+// present, and FIT resolves around this exact value. A checklist that counted
+// it would nag a student to re-answer something already settled, and the
+// analysis would disagree with the nag.
+test('career profile: the not-switching sentinel is not a missing detail', { timeout: 45_000 }, async (t) => {
+  const origin = await startServer(t)
+  const browser = await chromium.launch()
+  t.after(async () => browser.close())
+  const page = await browser.newPage({ viewport: { width: 1280, height: 900 } })
+
+  // `partial` stores 'N/A' for major_intended and has no roles or interests.
+  await openCareer(page, origin, 'mode=complete&career=partial')
+  const items = await page.locator('.pc-dock-item').allInnerTexts()
+  assert.equal(items.includes('Intended major'), false, 'the sentinel was counted as missing')
+  assert.deepEqual(items, ['Target roles', 'Career interests'])
+})

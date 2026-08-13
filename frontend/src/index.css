@@ -964,6 +964,82 @@ a {
   margin-top: var(--sp-10);
 }
 
+/* ─── PROFILE CHECKLIST (docked) ──────────────────────────────────────────── */
+/* Sticky inside .stage-main, which is the scroll container. The topbar is a
+   flex sibling of that container rather than an overlay, so top:0 lands just
+   below it and no scroll-margin correction is needed anywhere. The negative
+   top padding pulls the bar flush with the container edge so nothing shows
+   through above it as the page scrolls under. */
+.pc-dock {
+  position: sticky;
+  top: calc(-1 * var(--stage-pad));
+  z-index: 4;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-3) var(--sp-5);
+  margin-bottom: var(--sp-6);
+  padding: var(--sp-4) 0;
+  border-bottom: 1px solid var(--line);
+  background: var(--paper);
+}
+
+.pc-dock-lead { display: flex; align-items: baseline; gap: var(--sp-2); }
+
+.pc-dock-count {
+  font-family: var(--font-data);
+  font-size: var(--text-lg);
+  line-height: 1;
+  color: var(--ink);
+}
+
+.pc-dock-label {
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.pc-dock-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pc-dock-item {
+  padding: var(--sp-1) var(--sp-3);
+  border: 1px solid var(--accent-ghost-border);
+  border-radius: 999px;
+  background: none;
+  color: var(--accent-text);
+  font: inherit;
+  font-size: var(--text-sm);
+  cursor: pointer;
+}
+
+.pc-dock-item:hover { border-color: var(--accent-text); }
+
+/* Nothing outstanding is a quieter state, not a louder one: the bar stays so
+   the surface does not move around, but it stops asking for anything. */
+.pc-dock--complete .pc-dock-count { color: var(--ready); }
+
+/* The brief highlight on a field the page has just jumped to. Removed after
+   500ms in revealField -- it answers "which one?", so it must not linger and
+   become a permanent-looking state. */
+.cp-field-flag {
+  border-radius: var(--radius-sm);
+  box-shadow: 0 0 0 3px rgb(var(--accent-rgb) / 0.16);
+  transition: box-shadow 180ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cp-field-flag { transition: none; }
+}
+
 /* ─── CARDS ───────────────────────────────────────────────────────────────── */
 .card {
   background: var(--surface);
