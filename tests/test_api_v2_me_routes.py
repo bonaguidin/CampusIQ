@@ -6,13 +6,16 @@ space the slug-addressed routes structurally cannot reach.
 """
 
 import json
+from contextlib import contextmanager
 from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
 
 from GradusIQ_career import api
+from GradusIQ_career.ai.errors import AIRequestError
 from GradusIQ_career.ai.types import AIResponse
+from GradusIQ_career.student_intelligence_profile import StudentIntelligenceProfile
 from GradusIQ_career.supabase_client import SupabaseConfigError
 
 
@@ -159,6 +162,55 @@ def _full_profile():
     }
 
 
+def _canonical_profile():
+    return StudentIntelligenceProfile.model_validate(
+        {
+            "identity": {
+                "student_id": STUDENT_UUID,
+                "name": "Real Student",
+                "classification": "Junior",
+                "expected_graduation": "2028-05",
+            },
+            "institution": {"name": "Texas A&M University"},
+            "academics": {
+                "summary": {
+                    "major_current": "Computer Science",
+                    "major_intended": "Computer Science",
+                    "confirmed_course_count": 1,
+                },
+                "terms": [],
+                "courses": [{
+                    "id": "course-1", "course_code": "CSCE 120", "title": "Program Design",
+                    "credit_hours": 4, "letter_grade": "A", "credit_type": "resident",
+                    "status": "completed", "source": "transcript_parse",
+                }],
+                "gpa": {"official": 4.0, "projected": 4.0, "computable": True},
+            },
+            "career": {
+                "confirmed": True,
+                "target_roles": ["SWE Intern"], "interests": ["backend"],
+                "career_goals": "Ship things.", "geographic_preference": "DFW",
+                "ai_anxiety_level": "low",
+                "skills": {"technical": ["Python"], "soft": ["communication"], "ai_exposure": "some"},
+                "work_experience": [{"employer": "Acme", "role": "Intern"}],
+            },
+            "completeness": {
+                "career": {
+                    "confirmed_profile": True, "target_role_present": True, "skills_present": True,
+                    "certifications_present": False, "work_experience_present": True,
+                    "projects_present": False, "ready_for_career_features": True,
+                },
+                "academics": {
+                    "transcript_data_present": True, "terms_present": False,
+                    "gpa_computable": True, "ready_for_academic_features": False,
+                },
+                "overall": "partial",
+            },
+            "provenance": {},
+        }
+    )
+
+
 def _patch_session(monkeypatch, profile=None, student_rows=None):
     """Stub the session client + builder, leaving route logic real."""
     rows = [{"id": STUDENT_UUID}] if student_rows is None else student_rows
@@ -186,15 +238,7 @@ def _patch_session(monkeypatch, profile=None, student_rows=None):
             "build_profile_from_supabase",
             lambda client, sid: type("R", (), {"profile": profile})(),
         )
-        monkeypatch.setattr(
-            api,
-            "build_student_intelligence_profile",
-            lambda client, sid: type(
-                "Canonical",
-                (),
-                {"model_dump": lambda self, mode=None: {"contract_version": "1.0"}},
-            )(),
-        )
+        monkeypatch.setattr(api, "build_student_intelligence_profile", lambda client, sid: _canonical_profile())
         monkeypatch.setattr(api, "canonical_to_legacy_profile", lambda canonical: profile)
     return rows
 
@@ -504,21 +548,21 @@ def test_professor_comments_is_unreachable_for_a_real_student(client, monkeypatc
     assert ai.calls == []
 
 
-def test_chat_keeps_legacy_profile_path(client, monkeypatch):
+def test_chat_uses_canonical_profile_path(client, monkeypatch):
     _patch_session(monkeypatch, profile=_full_profile())
     monkeypatch.setattr(
         api,
-        "build_student_intelligence_profile",
-        lambda client, sid: pytest.fail("chat is outside Phase 3"),
+        "build_profile_from_supabase",
+        lambda client, sid: pytest.fail("legacy builder must not be authoritative for chat"),
     )
-    monkeypatch.setattr(api, "build_client", lambda: FakeAI("legacy chat"))
+    monkeypatch.setattr(api, "build_client", lambda: FakeAI("canonical chat"))
 
     response = _call(
         client, "post", "/api/v2/student/me/chat", {"message": "hi", "history": []}
     )
 
     assert response.status_code == 200
-    assert response.json()["reply"] == "legacy chat"
+    assert response.json()["reply"] == "canonical chat"
 
 
 @pytest.mark.parametrize("feature", ["fit", "gap", "shift"])
@@ -639,6 +683,80 @@ def test_me_chat_never_calls_load_analysis_bundle(client, monkeypatch):
     # The prompt carries an empty prior-analysis section, not another
     # student's bundle.
     assert response.json()["reply"] == "ok"
+
+
+def test_me_chat_retries_inside_concurrency_slot_and_releases(client, monkeypatch):
+    _patch_session(monkeypatch, profile=_full_profile())
+
+    class TrackingGate:
+        active = False
+        entries = 0
+        exits = 0
+
+        @contextmanager
+        def slot(self):
+            self.entries += 1
+            self.active = True
+            try:
+                yield
+            finally:
+                self.active = False
+                self.exits += 1
+
+    gate = TrackingGate()
+    client.app.state.ai_concurrency = gate
+    attempts = 0
+
+    class RetryingAI:
+        def complete(self, **kwargs):
+            nonlocal attempts
+            attempts += 1
+            assert gate.active is True
+            if attempts < 3:
+                raise AIRequestError("temporary", transient=True)
+            return AIResponse(text="recovered", raw={"choices": []}, model="fake-model")
+
+    monkeypatch.setattr(api, "build_client", RetryingAI)
+    monkeypatch.setattr("GradusIQ_career.ai.runtime.time.sleep", lambda _: None)
+
+    response = _call(client, "post", "/api/v2/student/me/chat", {"message": "hi", "history": []})
+
+    assert response.status_code == 200
+    assert attempts == 3
+    assert (gate.entries, gate.exits, gate.active) == (1, 1, False)
+
+
+def test_me_chat_releases_concurrency_slot_after_retry_exhaustion(client, monkeypatch):
+    _patch_session(monkeypatch, profile=_full_profile())
+
+    class TrackingGate:
+        active = False
+        exits = 0
+
+        @contextmanager
+        def slot(self):
+            self.active = True
+            try:
+                yield
+            finally:
+                self.active = False
+                self.exits += 1
+
+    gate = TrackingGate()
+    client.app.state.ai_concurrency = gate
+
+    class FailingAI:
+        def complete(self, **kwargs):
+            assert gate.active is True
+            raise AIRequestError("temporary", transient=True)
+
+    monkeypatch.setattr(api, "build_client", FailingAI)
+    monkeypatch.setattr("GradusIQ_career.ai.runtime.time.sleep", lambda _: None)
+
+    response = _call(client, "post", "/api/v2/student/me/chat", {"message": "hi", "history": []})
+
+    assert response.status_code == 502
+    assert (gate.exits, gate.active) == (1, False)
 
 
 # 8. SupabaseConfigError -> 503 on all three.

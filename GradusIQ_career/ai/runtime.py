@@ -166,3 +166,62 @@ class AIRuntime:
             trace.latency_ms = max(0, round((self.monotonic() - started) * 1000))
 
         return AIRuntimeResult(output=None, summary=None, trace=trace, errors=[last_error])
+
+    def invoke_text(
+        self,
+        *,
+        context: AgentContext,
+        messages: Sequence[Mapping[str, Any]],
+        output_model: type[OutputT],
+    ) -> AIRuntimeResult[OutputT]:
+        """Invoke and validate natural-language output without JSON repair."""
+        trace = AIExecutionTrace(
+            request_id=context.request_id,
+            feature=context.feature,
+            prompt_name=context.prompt_name,
+            prompt_version=context.prompt_version,
+            model_role=context.model_role,
+            grounding_metadata={
+                "source_types": list(context.grounding.source_types),
+                "trust_level": context.grounding.trust_level,
+                "attributes": dict(context.grounding.attributes),
+            },
+        )
+        started = self.monotonic()
+        retry_state = [0]
+        last_error = "AI response did not contain valid text."
+
+        try:
+            response = self._complete(messages, context, trace, retry_state)
+            trace.resolved_model = response.model
+            usage = response.raw.get("usage") if isinstance(response.raw, Mapping) else None
+            trace.provider_usage = dict(usage) if isinstance(usage, Mapping) else None
+            validated = output_model.model_validate({"content": response.text})
+            if not validated.content.strip():
+                raise ValueError("Chat response must not be blank.")
+            trace.parse_status = "not_applicable"
+            trace.validation_status = "success"
+            trace.final_status = "success"
+            return AIRuntimeResult(output=validated, summary=None, trace=trace, errors=[])
+        except ValidationError:
+            trace.parse_status = "not_applicable"
+            trace.validation_status = "failed"
+            trace.error_class = "validation_error"
+        except ValueError:
+            trace.parse_status = "not_applicable"
+            trace.validation_status = "failed"
+            trace.error_class = "validation_error"
+        except AIResponseParseError:
+            trace.parse_status = "failed"
+            trace.validation_status = "not_started"
+            trace.error_class = "parse_error"
+        except AIConfigError:
+            trace.error_class = "configuration_error"
+            last_error = "AI service configuration is unavailable."
+        except AIRequestError as exc:
+            trace.error_class = "transient_provider_error" if getattr(exc, "transient", False) else "provider_error"
+            last_error = "AI provider request failed."
+        finally:
+            trace.latency_ms = max(0, round((self.monotonic() - started) * 1000))
+
+        return AIRuntimeResult(output=None, summary=None, trace=trace, errors=[last_error])

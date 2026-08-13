@@ -88,6 +88,12 @@ class ShiftOutput(StrictOutputModel):
     ai_fluency_guidance: list[NonEmptyString | ShiftGuidance | ShiftGuidanceSection]
 
 
+class ChatOutput(StrictOutputModel):
+    """Validated natural-language chat completion."""
+
+    content: NonEmptyString
+
+
 def fit_output_is_valid(value: object) -> bool:
     """One semantic validation entry point shared by live and cached FIT."""
     try:

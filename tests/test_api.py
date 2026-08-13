@@ -950,6 +950,39 @@ def test_chat_demo_slug_returns_a_reply(client, monkeypatch):
     assert "Jordan Reyes" in system_prompt
 
 
+def test_demo_live_chat_uses_and_releases_ai_concurrency(client, monkeypatch):
+    class TrackingGate:
+        active = False
+        entries = 0
+        exits = 0
+
+        @contextmanager
+        def slot(self):
+            self.entries += 1
+            self.active = True
+            try:
+                yield
+            finally:
+                self.active = False
+                self.exits += 1
+
+    gate = TrackingGate()
+    client.app.state.ai_concurrency = gate
+
+    class AssertInsideClient(FakeClient):
+        def complete(self, **kwargs):
+            assert gate.active is True
+            return super().complete(**kwargs)
+
+    monkeypatch.setattr(api, "build_client", lambda: AssertInsideClient("inside"))
+    response = client.post(
+        "/api/students/jordanReyes/chat", json={"message": "Hello", "history": []}
+    )
+
+    assert response.status_code == 200
+    assert (gate.entries, gate.exits, gate.active) == (1, 1, False)
+
+
 def test_chat_client_failure_returns_502(client, monkeypatch):
     def exploding_client():
         class _Boom:
