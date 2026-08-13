@@ -216,7 +216,19 @@ export function AuthenticatedDashboard() {
                     <ShiftAnalysisPanel />
                     <div className="career-profile-block">
                       <h2 className="career-section-heading">Career Profile</h2>
-                      <CareerProfile career={dashboard.career} />
+                      {/* Graduation and the majors are academic record, not
+                          career record, so they arrive as props rather than
+                          being dug out of the profile by the career component.
+                          All three were already on the view model and simply
+                          unread -- nothing new is fetched to render them. */}
+                      <CareerProfile
+                        career={dashboard.career}
+                        details={{
+                          expectedGraduation: dashboard.expectedGraduation,
+                          majorCurrent: dashboard.majorCurrent,
+                          majorIntended: dashboard.majorIntended,
+                        }}
+                      />
                     </div>
                   </>
                 )}

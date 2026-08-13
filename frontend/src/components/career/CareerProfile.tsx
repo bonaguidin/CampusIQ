@@ -1,9 +1,25 @@
 import { Link } from 'react-router-dom';
 import { buildCareerViewModel } from '../../data/careerViewModel.mjs';
+import { isNoIntendedMajor } from '../../lib/majorSentinel';
 import type { CanonicalCareer } from '../../types/studentIntelligenceProfile';
 import type { CertificationEntry, ExperienceEntry } from '../../data/careerViewModel.mjs';
 import { ProjectCard } from './ProjectCard';
 import { SkillCloud } from './SkillCloud';
+
+/**
+ * The identity facts the Career tab reports but does not own.
+ *
+ * Expected graduation and the majors live on `identity` and
+ * `academics.summary`, not on `career` -- they are academic record, and this
+ * component is not going to reach across the profile to find them. The
+ * dashboard already holds all three (see dashboardViewModel) and hands them
+ * down, so this stays a props-in component and no new fetch exists anywhere.
+ */
+export interface CareerDetails {
+  expectedGraduation: string | null;
+  majorCurrent: string | null;
+  majorIntended: string | null;
+}
 
 /**
  * The authenticated Career profile.
@@ -27,7 +43,13 @@ import { SkillCloud } from './SkillCloud';
  * actually has. The demo profile's inline editors (CareerPanel) are not
  * reachable from here, so no button pretends otherwise.
  */
-export function CareerProfile({ career }: { career: CanonicalCareer }) {
+export function CareerProfile({
+  career,
+  details,
+}: {
+  career: CanonicalCareer;
+  details: CareerDetails;
+}) {
   const model = buildCareerViewModel(career);
   const { direction, counts } = model;
 
@@ -35,48 +57,59 @@ export function CareerProfile({ career }: { career: CanonicalCareer }) {
     <div className="cp">
       <CareerSummary model={model} />
 
+      <DetailsSection details={details} aiComfort={career.ai_anxiety_level} />
+
       <div className="cp-grid cp-grid--split">
+        {/* Each field below answers for itself. The section used to be gated on
+            one boolean covering all four, which meant a student with interests
+            and no target roles saw the interests and heard nothing at all about
+            the roles -- the field every analysis requires. */}
         <Section title="Career direction" count={null}>
-          {direction.present ? (
-            <div className="cp-direction">
-              {direction.targetRoles.length > 0 && (
-                <div className="cp-field">
-                  <h4 className="cp-subhead">Target roles</h4>
-                  <ul className="cp-roles">
-                    {direction.targetRoles.map((role) => (
-                      <li key={role}>{role}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              {direction.interests.length > 0 && (
-                <div className="cp-field">
-                  <h4 className="cp-subhead">Interests</h4>
-                  <p className="cp-inline-list">{direction.interests.join(' · ')}</p>
-                </div>
-              )}
-              {direction.goals && (
-                <div className="cp-field">
-                  <h4 className="cp-subhead">Goal</h4>
-                  <p className="cp-prose">{direction.goals}</p>
-                </div>
-              )}
-              {direction.location && (
-                <div className="cp-field">
-                  <h4 className="cp-subhead">Location preference</h4>
-                  <p className="cp-prose">{direction.location}</p>
-                </div>
+          <div className="cp-direction">
+            <div className="cp-field">
+              <h4 className="cp-subhead">Target roles</h4>
+              {direction.hasTargetRoles ? (
+                <ul className="cp-roles">
+                  {direction.targetRoles.map((role) => (
+                    <li key={role}>{role}</li>
+                  ))}
+                </ul>
+              ) : (
+                <Absence
+                  line="No target roles added yet."
+                  // Stated because it is true of this product, not as
+                  // encouragement: FIT, GAP and SHIFT read target roles
+                  // directly. This is where the page's single /resume route
+                  // now lives -- see Absence.
+                  help="FIT, GAP and SHIFT all read your target roles. Adding them to your resume and confirming it fills this in."
+                  action
+                />
               )}
             </div>
-          ) : (
-            <Absence
-              line="No career direction yet."
-              // Stated because it is true of this product, not as encouragement:
-              // FIT, GAP and SHIFT read target roles directly.
-              help="Target roles and interests are what FIT, GAP and SHIFT analyse. Adding them to your resume and confirming it fills this in."
-              action
-            />
-          )}
+            <div className="cp-field">
+              <h4 className="cp-subhead">Interests</h4>
+              {direction.hasInterests ? (
+                <p className="cp-inline-list">{direction.interests.join(' · ')}</p>
+              ) : (
+                <Absence line="No interests added yet." />
+              )}
+            </div>
+            {/* Goals and location keep the treatment they had: present or
+                silent. Neither is required by any analysis, so neither earns
+                an absence line arguing for itself. */}
+            {direction.goals && (
+              <div className="cp-field">
+                <h4 className="cp-subhead">Goal</h4>
+                <p className="cp-prose">{direction.goals}</p>
+              </div>
+            )}
+            {direction.location && (
+              <div className="cp-field">
+                <h4 className="cp-subhead">Location preference</h4>
+                <p className="cp-prose">{direction.location}</p>
+              </div>
+            )}
+          </div>
         </Section>
 
         <Section title="Skills" count={counts.skills}>
@@ -178,6 +211,101 @@ function CareerSummary({ model }: { model: ReturnType<typeof buildCareerViewMode
   );
 }
 
+/**
+ * How the four stored AI-comfort values read on screen.
+ *
+ * Mirrors AI_OPTIONS in ProfileCompletionForm, which is where a student picks
+ * one. The raw column values are machine tokens -- 'not_sure' rendered
+ * verbatim is not English -- so they are labelled here, and an unrecognised
+ * value passes through untouched rather than being swallowed, the same way
+ * certificationEntries handles an unexpected status.
+ */
+const AI_COMFORT_LABELS: Record<string, string> = {
+  low: 'Low',
+  moderate: 'Moderate',
+  high: 'High',
+  not_sure: 'Not sure',
+};
+
+/**
+ * The facts guidance is calibrated against, stated plainly.
+ *
+ * READ-ONLY, DELIBERATELY. These three rows exist because nothing in the
+ * authenticated app rendered them at all: a student could be told an analysis
+ * needed their expected graduation while the page never showed what it had.
+ * Editing arrives in a later step; nothing here is clickable, so no control
+ * implies an ability the page does not yet have.
+ *
+ * A missing value is "Not set" rather than an em dash. The dash is what the
+ * demo's CareerSummaryRow uses, and it reads as a layout filler -- these rows
+ * are about to become the checklist's targets, so an absence has to say it is
+ * an absence.
+ */
+function DetailsSection({
+  details,
+  aiComfort,
+}: {
+  details: CareerDetails;
+  aiComfort: string | null;
+}) {
+  const { expectedGraduation, majorCurrent, majorIntended } = details;
+  // The sentinel is a stored answer ("not switching"), never a major anyone
+  // typed, so it must not be printed back as though it were one.
+  const switching = !isNoIntendedMajor(majorIntended);
+  const comfort = aiComfort ? AI_COMFORT_LABELS[aiComfort] ?? aiComfort : null;
+
+  return (
+    <Section title="Details" count={null}>
+      <dl className="cp-details">
+        <Detail label="Expected graduation" value={expectedGraduation} />
+        <Detail
+          label="Major"
+          value={majorCurrent}
+          // Only a switching student has a second major to report. "Not
+          // switching" is a real answer and says so; it is not an absence.
+          note={switching ? `Switching to ${majorIntended ?? ''}`.trim() : 'Not switching majors'}
+        />
+        <Detail
+          label="AI comfort"
+          value={comfort}
+          // Null means never asked, which is a different state from 'not_sure'
+          // (asked, does not know) -- see the 20260812143000 migration.
+          absentLabel="Not answered"
+        />
+      </dl>
+    </Section>
+  );
+}
+
+/** One labelled fact, or an explicit absence in its place. */
+function Detail({
+  label,
+  value,
+  note,
+  absentLabel = 'Not set',
+}: {
+  label: string;
+  value: string | null;
+  note?: string;
+  absentLabel?: string;
+}) {
+  return (
+    <div className="cp-detail">
+      <dt className="cp-detail-label">{label}</dt>
+      <dd className="cp-detail-value-group">
+        {value ? (
+          <span className="cp-detail-value">{value}</span>
+        ) : (
+          <span className="cp-detail-value cp-detail-value--absent">{absentLabel}</span>
+        )}
+        {/* The note qualifies a value that exists; with nothing to qualify it
+            would be a sentence floating beside "Not set". */}
+        {value && note && <span className="cp-detail-note">{note}</span>}
+      </dd>
+    </div>
+  );
+}
+
 /** A section shell: eyebrow, optional count, and a rule. */
 function Section({
   title,
@@ -209,9 +337,10 @@ function Section({
  * every career section at the same time, so a route repeated beside all five
  * absences would offer the same single action five times -- which reads as
  * nagging and makes an empty profile look busier than a full one. It sits on
- * career direction because that is the gap with a consequence worth stating
- * (FIT, GAP and SHIFT read target roles), and because it is the first section
- * on the page.
+ * target roles because that is the gap with a consequence worth stating (FIT,
+ * GAP and SHIFT all require it), and because it is the first field on the page
+ * that can be absent. Splitting Career direction into per-field absences moved
+ * it one level down from the section to that field; it did not add a second.
  */
 function Absence({ line, help, action = false }: { line: string; help?: string; action?: boolean }) {
   return (

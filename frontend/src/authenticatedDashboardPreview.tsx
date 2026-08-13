@@ -70,6 +70,11 @@ const LONG_PROJECT_DESCRIPTION =
 
 if (careerMode === 'rich' || careerMode === 'partial') {
   const rich = careerMode === 'rich';
+  // The Details rows, populated. `rich` is also the switching-majors case, so
+  // the sentinel's two readings are both reachable from a fixture: `rich`
+  // renders a real intended major, `partial` keeps the base 'N/A' and must
+  // render "Not switching majors" rather than echoing the sentinel back.
+  if (rich) profile.academics.summary.major_intended = 'Data Science';
   profile.career = {
     confirmed: true,
     target_roles: rich ? ['AI Engineer', 'ML Engineer', 'Robotics Engineer'] : [],
@@ -78,7 +83,7 @@ if (careerMode === 'rich' || careerMode === 'partial') {
       ? 'Build intelligent systems at the intersection of AI and hardware, and eventually lead a small team doing the same.'
       : null,
     geographic_preference: rich ? 'Austin, TX' : null,
-    ai_anxiety_level: null,
+    ai_anxiety_level: rich ? 'moderate' : null,
     skills: {
       technical: [
         'Large Language Models', 'Generative AI', 'Prompt Engineering', 'Retrieval-Augmented Generation',
@@ -116,9 +121,35 @@ if (careerMode === 'rich' || careerMode === 'partial') {
   };
 }
 
+// THE CASE THE PER-FIELD SPLIT EXISTS FOR: interests, but no target roles.
+// The old section-level gate counted this profile as having a career
+// direction, so the page printed the interests and said nothing whatsoever
+// about the missing target roles -- the one field FIT, GAP and SHIFT all
+// require. Neither `rich` (both present) nor `bare` (neither present) can
+// catch that, because the bug only appears when the two disagree.
+if (careerMode === 'lopsided') {
+  profile.career = {
+    confirmed: true,
+    target_roles: [],
+    interests: ['Physical AI', 'Robotics'],
+    career_goals: null, geographic_preference: null, ai_anxiety_level: 'not_sure',
+    skills: { technical: ['Python'], soft: [], ai_exposure: null },
+    certifications: [], work_experience: [], projects: [],
+  };
+  profile.completeness.career = {
+    confirmed_profile: true, target_role_present: false, skills_present: true,
+    certifications_present: false, work_experience_present: false, projects_present: false,
+    ready_for_career_features: false,
+  };
+}
+
 // A confirmed career profile with nothing in it -- the state that used to
-// render five empty rectangles.
+// render five empty rectangles. The identity facts are cleared here too, so
+// this is the fixture where every Details row is absent at once.
 if (careerMode === 'bare') {
+  profile.identity.expected_graduation = null;
+  profile.academics.summary.major_current = null;
+  profile.academics.summary.major_intended = null;
   profile.career = {
     confirmed: true,
     target_roles: [], interests: [], career_goals: null, geographic_preference: null, ai_anxiety_level: null,

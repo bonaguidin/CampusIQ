@@ -2478,6 +2478,51 @@ a {
   color: var(--muted);
 }
 
+/* ── details: the facts guidance is calibrated against ── */
+/* Auto-fit rather than a fixed track count: the three rows sit in a line on
+   the desktop measure and reflow to one column on a phone without a query. */
+.cp-details {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(14rem, 100%), 1fr));
+  gap: var(--sp-5) var(--sp-8);
+  margin: 0;
+}
+
+.cp-detail { display: flex; flex-direction: column; gap: var(--sp-1); min-width: 0; }
+
+.cp-detail-label {
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.cp-detail-value-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  margin: 0;
+  min-width: 0;
+}
+
+.cp-detail-value {
+  font-size: var(--text-base);
+  line-height: 1.4;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+/* An absence is quieter than a value, and never mistakable for one. */
+.cp-detail-value--absent { color: var(--muted); }
+
+.cp-detail-note {
+  font-size: var(--text-sm);
+  line-height: 1.4;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
 /* ── career direction ── */
 .cp-direction { display: flex; flex-direction: column; gap: var(--sp-5); }
 .cp-field { min-width: 0; }

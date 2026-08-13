@@ -49,6 +49,13 @@ export interface CareerDirection {
   interests: string[];
   goals: string | null;
   location: string | null;
+  /** Per-field presence: each field states its own absence on the page. */
+  hasTargetRoles: boolean;
+  hasInterests: boolean;
+  /**
+   * Whether ANY of the four was provided. Answers "is this profile empty",
+   * not "should this field render" -- see careerDirection's note.
+   */
   present: boolean;
 }
 

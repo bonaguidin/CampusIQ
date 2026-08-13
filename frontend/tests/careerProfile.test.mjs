@@ -169,7 +169,12 @@ test('career profile: absences collapse and never become empty rectangles', { ti
 
   // ── A confirmed profile with nothing in it.
   await openCareer(page, origin, 'mode=complete&career=bare')
-  await page.getByText('No career direction yet.').waitFor()
+  // Career direction speaks field by field. The old single "No career
+  // direction yet." covered all four at once, which is exactly why a student
+  // with interests and no target roles was told nothing about the roles.
+  await page.getByText('No target roles added yet.').waitFor()
+  await page.getByText('No interests added yet.').waitFor()
+  assert.equal(await page.getByText('No career direction yet.').count(), 0)
   await page.getByText('No skills confirmed yet.').waitFor()
   await page.getByText('No experience confirmed yet.').waitFor()
   await page.getByText('No certifications yet.').waitFor()
@@ -184,7 +189,7 @@ test('career profile: absences collapse and never become empty rectangles', { ti
   // two/three lines these render and far below the old card heights.
   const heights = await page.locator('.cp-absent').evaluateAll((nodes) =>
     nodes.map((n) => Math.round(n.getBoundingClientRect().height)))
-  assert.ok(heights.length >= 5, `expected five absences, saw ${String(heights.length)}`)
+  assert.ok(heights.length >= 5, `expected an absence per empty section, saw ${String(heights.length)}`)
   assert.ok(Math.max(...heights) < 120, `an absence reserved ${String(Math.max(...heights))}px`)
 
   // Counts of zero are not printed as a "0" badge beside the heading.
@@ -200,15 +205,83 @@ test('career profile: absences collapse and never become empty rectangles', { ti
 
   // ── The awkward middle: entries but no direction, and no certifications.
   await openCareer(page, origin, 'mode=complete&career=partial')
-  await page.getByText('No career direction yet.').waitFor()
+  await page.getByText('No target roles added yet.').waitFor()
+  await page.getByText('No interests added yet.').waitFor()
   await page.getByText('No certifications yet.').waitFor()
+  // The summary headline is a SEPARATE element from the direction field's
+  // absence, and deliberately worded differently -- one orients, the other
+  // states a gap. Both must survive, and neither may stand in for the other.
   await page.locator('.cp-summary-roles--absent').getByText('No target roles yet').waitFor()
+  assert.equal(await page.locator('.cp-summary-roles--absent').count(), 1)
+  assert.equal(await page.locator('.cp-direction .cp-absent').count(), 2)
   // What IS there still renders in full.
   assert.equal(await page.locator('.cp-timeline .cp-tl-item').count(), 3)
   assert.equal(await page.locator('.cp-project').count(), 2)
   // And the summary still counts only what exists.
   const values = await page.locator('.cp-metric-value').allInnerTexts()
   assert.deepEqual(values, ['22', '3', '2', '0'])
+
+  // ── THE REGRESSION: interests present, target roles absent. Under the old
+  // section-level gate this profile "had a career direction", so the page
+  // rendered the interests and stayed silent about the roles -- the field
+  // every analysis requires. Each field must now answer for itself.
+  await openCareer(page, origin, 'mode=complete&career=lopsided')
+  await page.locator('.cp-direction').getByText('Physical AI · Robotics').waitFor()
+  await page.getByText('No target roles added yet.').waitFor()
+  assert.equal(await page.locator('.cp-direction .cp-absent').count(), 1,
+    'exactly the empty field may render an absence')
+  // The one action on the page still appears once, and still beside the gap
+  // that has a consequence worth stating.
+  assert.equal(await page.locator('.cp-absent-link').count(), 1)
+  // 'not_sure' is a real answer -- asked, does not know -- and must read as
+  // one rather than borrowing the never-asked absence's label.
+  await page.locator('.cp-details').getByText('Not sure').waitFor()
+  assert.equal(await page.locator('.cp-details .cp-detail-value--absent').count(), 0,
+    'this fixture sets every detail, so none may render as absent')
+})
+
+// The three facts guidance is calibrated against had no representation at all
+// in the authenticated app: a student could be told an analysis needed their
+// expected graduation on a page that never showed what it held. These rows are
+// read-only in this step -- editing arrives later, and until it does nothing
+// here may imply an ability the page does not have.
+test('career profile: details rows report graduation, majors and AI comfort', { timeout: 45_000 }, async (t) => {
+  const origin = await startServer(t)
+  const browser = await chromium.launch()
+  t.after(async () => browser.close())
+  const page = await browser.newPage({ viewport: { width: 1280, height: 1000 } })
+
+  // ── Every value present, and the student is switching majors.
+  await openCareer(page, origin, 'mode=complete&career=rich')
+  const details = page.locator('.cp-details')
+  await details.getByText('Spring 2028').waitFor()
+  await details.getByText('Computer Science', { exact: true }).waitFor()
+  await details.getByText('Switching to Data Science').waitFor()
+  // The stored column is 'moderate'; a machine token is not English.
+  await details.getByText('Moderate').waitFor()
+  assert.equal((await details.innerText()).includes('moderate'), false, 'a raw enum token reached the page')
+  assert.equal(await details.locator('.cp-detail-value--absent').count(), 0)
+
+  // Read-only in this step: no control of any kind inside the block.
+  assert.equal(await details.locator('button, a, input, select').count(), 0, 'a details row became interactive')
+
+  // ── Not switching. The sentinel is a stored answer, never a typed major,
+  // so it is reported as the answer it is and never echoed back verbatim.
+  await openCareer(page, origin, 'mode=complete&career=partial')
+  await page.locator('.cp-details').getByText('Not switching majors').waitFor()
+  assert.equal((await page.locator('.cp').innerText()).includes('N/A'), false, 'the sentinel was printed as a major')
+
+  // ── Nothing set. An absence says so rather than filling with a dash.
+  await openCareer(page, origin, 'mode=complete&career=bare')
+  const bare = page.locator('.cp-details')
+  assert.equal(await bare.locator('.cp-detail-value--absent').count(), 3, 'every unset row must state its absence')
+  assert.equal(await bare.getByText('Not set').count(), 2)
+  // Null AI comfort means never asked -- which is not the same answer as the
+  // selectable 'Not sure', and must not borrow its label.
+  await bare.getByText('Not answered').waitFor()
+  assert.equal(await bare.getByText('Not sure').count(), 0)
+  // No note floats beside a value that does not exist.
+  assert.equal(await bare.locator('.cp-detail-note').count(), 0)
 })
 
 test('career profile: responsive at 1280, 834 and 390 with no overflow', { timeout: 45_000 }, async (t) => {
