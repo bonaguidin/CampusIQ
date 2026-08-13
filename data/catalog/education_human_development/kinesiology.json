@@ -1092,5 +1092,466 @@
     "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/kine/",
     "catalog_year": "2026-2027",
     "source_last_checked": "2026-06-20"
+  },
+  {
+    "code": "KINE 214",
+    "title": "Health and Physical Activity for Children",
+    "credit_hours": 3,
+    "description": "(PHED 1331) Health and Physical Activity for Children. Coordinated school health and physical activity programs appropriate for elementary aged children; focus on the content of the curriculum and the philosophical underpinnings of programming related to health and physical activity.",
+    "prerequisites": "Cross Listing: HLTH 214/KINE 214 .",
+    "department": "Kinesiology",
+    "prefix": "KINE",
+    "number": "214",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "HLTH 214",
+      "KINE 214"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "HLTH 214",
+      "KINE 214"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/kine/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "KINE 215",
+    "title": "Fundamentals of Coaching",
+    "credit_hours": 3,
+    "description": "(PHED 1321) Fundamentals of Coaching. Preparation of prospective coaches by gaining competence in coaching in today's environment; emphasis on developing the athlete, creating an effective practice environment, utilizing game management strategies, and skill analysis; research of successful coaches to develop coaching philosophy.",
+    "prerequisites": "Prerequisite: CTSE and KINE majors; COAC minors only. Cross Listing: CTSE 215/KINE 215 .",
+    "department": "Kinesiology",
+    "prefix": "KINE",
+    "number": "215",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "CTSE 215",
+      "KINE 215"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "CTSE 215",
+      "KINE 215"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/kine/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "KINE 216",
+    "title": "First Aid",
+    "credit_hours": 2,
+    "description": "(PHED 1306) First Aid. Basic first aid instruction leading to University Level, first aid course completion recognition.",
+    "prerequisites": "Cross Listing: HLTH 216/KINE 216 .",
+    "department": "Kinesiology",
+    "prefix": "KINE",
+    "number": "216",
+    "course_level": 200,
+    "credit_min": 2,
+    "credit_max": 2,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "HLTH 216",
+      "KINE 216"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "HLTH 216",
+      "KINE 216"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/kine/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "KINE 245",
+    "title": "Coaching of Weight Training",
+    "credit_hours": 2,
+    "description": "Overview of the knowledge, skills and expectations associated with being a competent resistance training coach; fundamentals in addressing training facility etiquette and safety, along with gaining proper knowledge for exercise technique and improvement of athletic performance; specific, real-world information about the knowledge, skills and expectations associated with a competent coach and specific skills gained during weight training sessions.",
+    "prerequisites": "Prerequisites: Grade of C or better in CTSE 215/KINE 215 or KINE 215/CTSE 215 . Cross Listing: CTSE 245/KINE 245 .",
+    "department": "Kinesiology",
+    "prefix": "KINE",
+    "number": "245",
+    "course_level": 200,
+    "credit_min": 2,
+    "credit_max": 2,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "CTSE 245",
+      "KINE 245"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "CTSE 215",
+      "KINE 215",
+      "CTSE 245",
+      "KINE 245"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/kine/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "KINE 312",
+    "title": "Coaching of Baseball",
+    "credit_hours": 2,
+    "description": "Theory and practice of coaching fundamentals in baseball.",
+    "prerequisites": "Prerequisite: Grade of C or better in CTSE 215/KINE 215 or KINE 215/CTSE 215 . Cross Listing: CTSE 312/KINE 312 .",
+    "department": "Kinesiology",
+    "prefix": "KINE",
+    "number": "312",
+    "course_level": 300,
+    "credit_min": 2,
+    "credit_max": 2,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "CTSE 312",
+      "KINE 312"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "CTSE 215",
+      "KINE 215",
+      "CTSE 312",
+      "KINE 312"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/kine/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "KINE 314",
+    "title": "Coaching of Soccer",
+    "credit_hours": 2,
+    "description": "Study of modern theories and applications related to coaching soccer; methods for coaching individual athletes and the whole team; application of skills by gaining practical coaching experience through a local recreational soccer league.",
+    "prerequisites": "Prerequisites: Grade of C or better in CTSE 215/KINE 215 or KINE 215/CTSE 215 . Cross Listing: CTSE 314/KINE 314 .",
+    "department": "Kinesiology",
+    "prefix": "KINE",
+    "number": "314",
+    "course_level": 300,
+    "credit_min": 2,
+    "credit_max": 2,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "CTSE 314",
+      "KINE 314"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "CTSE 215",
+      "KINE 215",
+      "CTSE 314",
+      "KINE 314"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/kine/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "KINE 317",
+    "title": "Coaching of Football",
+    "credit_hours": 2,
+    "description": "Theory and practice of coaching fundamentals in football; UIL and NCAA rules.",
+    "prerequisites": "Prerequisite: Grade of C or better in CTSE 215/KINE 215 or KINE 215/CTSE 215 . Cross Listing: CTSE 317/KINE 317 .",
+    "department": "Kinesiology",
+    "prefix": "KINE",
+    "number": "317",
+    "course_level": 300,
+    "credit_min": 2,
+    "credit_max": 2,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "CTSE 317",
+      "KINE 317"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "CTSE 215",
+      "KINE 215",
+      "CTSE 317",
+      "KINE 317"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/kine/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "KINE 321",
+    "title": "Coaching of Volleyball",
+    "credit_hours": 2,
+    "description": "Theory and practice of coaching fundamentals in volleyball.",
+    "prerequisites": "Prerequisites: Grade of C or better in CTSE 215/KINE 215 or KINE 215/CTSE 215 . Cross Listing: CTSE 321/KINE 321 .",
+    "department": "Kinesiology",
+    "prefix": "KINE",
+    "number": "321",
+    "course_level": 300,
+    "credit_min": 2,
+    "credit_max": 2,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "CTSE 321",
+      "KINE 321"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "CTSE 215",
+      "KINE 215",
+      "CTSE 321",
+      "KINE 321"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/kine/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "KINE 324",
+    "title": "Career Development in Coaching and Youth Development",
+    "credit_hours": 3,
+    "description": "Topic relevant to and career options in the coaching profession; preparation of future coaches and youth development professionals for successful careers; exploration and development of skills and knowledge to lead and manage individuals and teams.",
+    "prerequisites": "Prerequisites: Junior or senior classification; KINE and CTSE majors. Cross Listing: CTSE 324/KINE 324 .",
+    "department": "Kinesiology",
+    "prefix": "KINE",
+    "number": "324",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "CTSE 324",
+      "KINE 324"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "CTSE 324",
+      "KINE 324"
+    ],
+    "restrictions": [
+      "Junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/kine/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "KINE 325",
+    "title": "Administrative and Athletic Operations for Coaches",
+    "credit_hours": 3,
+    "description": "Development of knowledge and skills related to event and tournament organization, sport governing bodies, school officials; comprehension of risk management, financial management; includes classroom experiences, observations and field-based experiences to link theory into practice.",
+    "prerequisites": "Prerequisites: Junior or senior classification. Cross Listing: CTSE 325/KINE 325 .",
+    "department": "Kinesiology",
+    "prefix": "KINE",
+    "number": "325",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "CTSE 325",
+      "KINE 325"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "CTSE 325",
+      "KINE 325"
+    ],
+    "restrictions": [
+      "Junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/kine/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "KINE 351",
+    "title": "Coaching of Basketball",
+    "credit_hours": 2,
+    "description": "Theory of fundamental skills needed to coach basketball with emphasis on knowledge of rules, strategies and skill analysis.",
+    "prerequisites": "Prerequisites: Grade of C or better in CTSE 215/KINE 215 or KINE 215/CTSE 215 . Cross Listing: CTSE 351/KINE 351 .",
+    "department": "Kinesiology",
+    "prefix": "KINE",
+    "number": "351",
+    "course_level": 300,
+    "credit_min": 2,
+    "credit_max": 2,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "CTSE 351",
+      "KINE 351"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "CTSE 215",
+      "KINE 215",
+      "CTSE 351",
+      "KINE 351"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/kine/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "KINE 353",
+    "title": "Coaching of Softball",
+    "credit_hours": 2,
+    "description": "Theory of fundamental skills needed to coach softball with emphasis on knowledge of rules, strategies and skill analysis.",
+    "prerequisites": "Prerequisites: Grade of C or better in CTSE 215/KINE 215 or KINE 215/CTSE 215 . Cross Listing: CTSE 353/KINE 353 .",
+    "department": "Kinesiology",
+    "prefix": "KINE",
+    "number": "353",
+    "course_level": 300,
+    "credit_min": 2,
+    "credit_max": 2,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "CTSE 353",
+      "KINE 353"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "CTSE 215",
+      "KINE 215",
+      "CTSE 353",
+      "KINE 353"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/kine/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "KINE 355",
+    "title": "Coaching of Track",
+    "credit_hours": 2,
+    "description": "Theory and practice of coaching fundamentals in track and field events.",
+    "prerequisites": "Prerequisite: Grade of C or better in CTSE 215/KINE 215 or KINE 215/CTSE 215 . Cross Listing: CTSE 355/KINE 355 .",
+    "department": "Kinesiology",
+    "prefix": "KINE",
+    "number": "355",
+    "course_level": 300,
+    "credit_min": 2,
+    "credit_max": 2,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "CTSE 355",
+      "KINE 355"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "CTSE 215",
+      "KINE 215",
+      "CTSE 355",
+      "KINE 355"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/kine/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "KINE 370",
+    "title": "Basic Biology of Performance for Coaches",
+    "credit_hours": 3,
+    "description": "Fundamental knowledge in motor neuroscience, biomechanics, cardiovascular and skeletomuscular physiology, strength and conditioning and sport nutrition from an applied perspective for coaches.",
+    "prerequisites": "Prerequisites: Grade of C or better in BIOL 107 or BIOL 111 ; junior or senior classification. Cross Listing: CTSE 370/KINE 370 .",
+    "department": "Kinesiology",
+    "prefix": "KINE",
+    "number": "370",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "CTSE 370",
+      "KINE 370"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "BIOL 107",
+      "BIOL 111",
+      "CTSE 370",
+      "KINE 370"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/kine/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
   }
 ]

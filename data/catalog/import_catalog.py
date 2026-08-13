@@ -78,6 +78,7 @@ INSTITUTION_SUBTREES: dict[str, tuple[str, ...]] = {
         "education_human_development",
         "engineering",
         "government_public_service",
+        "public_health",
     ),
     "smu": ("smu",),
 }

@@ -3032,5 +3032,1103 @@
     "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
     "catalog_year": "2026-2027",
     "source_last_checked": "2026-06-20"
+  },
+  {
+    "code": "HIST 212",
+    "title": "Holy War",
+    "credit_hours": 3,
+    "description": "Concepts of holy war in Jewish, Christian and Muslim history; language and literature of holy war; motivations for waging holy war; the relationship between war, martyrdom, pilgrimage and sainthood; religious orders engaging in holy war; political aims of holy war; practices of holy war; perspectives of those attacked in holy wars.",
+    "prerequisites": "Cross Listing: RELS 212/HIST 212 .",
+    "department": "History",
+    "prefix": "HIST",
+    "number": "212",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "RELS 212",
+      "HIST 212"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "RELS 212",
+      "HIST 212"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "HIST 221",
+    "title": "History of Islam",
+    "credit_hours": 3,
+    "description": "CONTENT. Key themes in Islam and Islamic history; Orientalism; pre-Islamic Arabia; the Qur’an; Sunni-Shi’i sectarian divisions; Islamic law; theology; sciences; mystical traditions; rituals of the Muslim faith; cross-cultural and religious encounters; holy war; ritual practices; fundamentalism; women in Islam; Islam in the West. Course content is selected to align with the course description and the current state of scholarship in the field. The presentation of course content fosters critical thinking in the context of scholarly consensus and debate, rather than instructors’ views, values or beliefs. Instructors may assign different readings and/or topics that fit within the course description and meet the learning objectives. BENEFITS. History teaches evaluation and synthesis of evidence, development of persuasive arguments in written and oral form, expansion of understandings of historical contexts that have contributed to human complexity past and present, including but not limited to the formation of group and individual identities, social and political dynamics, and debates about values and rights. Applying this knowledge produces more informed citizens, who are proficient in the abilities required by today’s workforce.",
+    "prerequisites": "Cross Listing: RELS 221/HIST 221 .",
+    "department": "History",
+    "prefix": "HIST",
+    "number": "221",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "RELS 221",
+      "HIST 221"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "RELS 221",
+      "HIST 221"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "HIST 222",
+    "title": "History of Christianity II - Reformation to Present",
+    "credit_hours": 3,
+    "description": "CONTENT. History of Christian religion from the era of the Reformation (16th century) to the present, with emphasis on social, cultural, political and economic history in relation to Christian structures and theological movements. Course content is selected to align with the course description and the current state of scholarship in the field. The presentation of course content fosters critical thinking in the context of scholarly consensus and debate, rather than instructors’ views, values or beliefs. Instructors may assign different readings and/or topics that fit within the course description and meet the learning objectives. BENEFITS. History teaches evaluation and synthesis of evidence, development of persuasive arguments in written and oral form, expansion of understandings of historical contexts that have contributed to human complexity past and present, including but not limited to the formation of group and individual identities, social and political dynamics, and debates about values and rights. Applying this knowledge produces more informed citizens, who are proficient in the abilities required by today’s workforce.",
+    "prerequisites": "Cross Listing: RELS 222/HIST 222 .",
+    "department": "History",
+    "prefix": "HIST",
+    "number": "222",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "RELS 222",
+      "HIST 222"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "RELS 222",
+      "HIST 222"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "HIST 227",
+    "title": "Modern American History through Popular Culture",
+    "credit_hours": 3,
+    "description": "CONTENT. Exploration of American history through the perspectives of popular culture, broadly conceived, such as dance, music, fashion, print media and screen culture including but not limited to tv, film and social media; examination of how popular culture mirrors and shapes society and identity, from the personal to the national; focus on the late 19th through 21st centuries through historical sources. Instructors may assign different readings and/or topics that fit within the course description and meet the learning objectives. BENEFITS. History teaches evaluation and synthesis of evidence, development of persuasive arguments in written and oral form, expansion of understandings of historical contexts that have contributed to human complexity past and present, including but not limited to the formation of group and individual identities, social and political dynamics, and debates about values and rights. Applying this knowledge produces more informed citizens, who are proficient in the abilities required by today’s workforce.",
+    "prerequisites": "Cross Listing: PVFA 227/HIST 227 .",
+    "department": "History",
+    "prefix": "HIST",
+    "number": "227",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "PVFA 227",
+      "HIST 227"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "PVFA 227",
+      "HIST 227"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "HIST 236",
+    "title": "War and Violence in the Ancient World",
+    "credit_hours": 3,
+    "description": "Equipment, organization, tactics and strategy on land and sea in the wars of the Ancient World, including the Near East, Greece and Rome; use of force and violence in the furtherance of political objectives and social control; winners, losers and survivors.",
+    "prerequisites": "Cross Listing: CLAS 236/HIST 236 .",
+    "department": "History",
+    "prefix": "HIST",
+    "number": "236",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "CLAS 236",
+      "HIST 236"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "CLAS 236",
+      "HIST 236"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "HIST 300",
+    "title": "Blacks in the United States, 1607-1877",
+    "credit_hours": 3,
+    "description": "CONTENT. Blacks in the United States from the colonial period to 1877. Themes include but are not limited to the slave trade and slavery, resistance to slavery, the significance of slavery in the sectional crisis, the recruitment of Black soldiers and sailors in the Civil War, free blacks and the impact of the Civil War, the destruction of slavery, the Reconstruction Amendments and the impact of Reconstruction on Black Americans. Course content is selected to align with the course description and the current state of scholarship in the field. The presentation of course content fosters critical thinking in the context of scholarly consensus and debate, rather than instructors’ views, values or beliefs. Instructors may assign different readings and/or topics that fit within the course description and meet the learning objectives. BENEFITS. History teaches evaluation and synthesis of evidence, development of persuasive arguments in written and oral form, expansion of understandings of historical contexts that have contributed to human complexity past and present, including but not limited to the formation of group and individual identities, social and political dynamics and debates about values and rights. Applying this knowledge produces more informed citizens, who are proficient in the abilities required by today’s workforce.",
+    "prerequisites": "Prerequisite: Junior or senior classification or approval of instructor. Cross Listing: AFST 300/HIST 300 .",
+    "department": "History",
+    "prefix": "HIST",
+    "number": "300",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "AFST 300",
+      "HIST 300"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "AFST 300",
+      "HIST 300"
+    ],
+    "restrictions": [
+      "Junior or senior classification",
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "HIST 301",
+    "title": "Blacks in the United States Since 1877",
+    "credit_hours": 3,
+    "description": "CONTENT. Blacks in the United States from the end of Reconstruction to the present; the meaning of freedom and the quest to find a place in American society; Black political leaders, the Age of Booker T. Washington; disfranchisement, lynching; the impact of World War I and World War II on Black Americans; the Great Depression and the New Deal; the fight for Civil Rights and full equality; the emergence of Martin Luther King Jr.; the urban riots of the 1960s; the role of Black soldiers in the Vietnam War; black suburbanization; the fight for equality in the 21st century. Course content is selected to align with the course description and the current state of scholarship in the field. The presentation of course content fosters critical thinking in the context of scholarly consensus and debate, rather than instructors’ views, values or beliefs. Instructors may assign different readings and/or topics that fit within the course description and meet the learning objectives. BENEFITS. History teaches evaluation and synthesis of evidence, development of persuasive arguments in written and oral form, expansion of understandings of historical contexts that have contributed to human complexity past and present, including but not limited to the formation of group and individual identities, social and political dynamics, and debates about values and rights. Applying this knowledge produces more informed citizens, who are proficient in the abilities required by today’s workforce.",
+    "prerequisites": "Prerequisite: Junior or senior classification or approval of instructor; HIST-301 also taught at Qatar campus. Cross Listing: AFST 301/HIST 301 .",
+    "department": "History",
+    "prefix": "HIST",
+    "number": "301",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "AFST 301",
+      "HIST 301"
+    ],
+    "repeatability": null,
+    "campuses": [
+      "Qatar"
+    ],
+    "prerequisite_courses": [
+      "AFST 301",
+      "HIST 301"
+    ],
+    "restrictions": [
+      "Junior or senior classification",
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "HIST 302",
+    "title": "Women and War in the African Diaspora",
+    "credit_hours": 3,
+    "description": "Case studies of women and war in the African diaspora in a wide historical and comparative context; social, economic, and cultural influence of war on women’s lives; women as victims, combatants, and refugees; historical construction of race, ethnic and gender identity during times of conflict.",
+    "prerequisites": "Prerequisite: Junior or senior classification. Cross Listing: AFST 362/HIST 302 .",
+    "department": "History",
+    "prefix": "HIST",
+    "number": "302",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "AFST 362",
+      "HIST 302"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "AFST 362",
+      "HIST 302"
+    ],
+    "restrictions": [
+      "Junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "HIST 344",
+    "title": "History of Africa to 1800",
+    "credit_hours": 3,
+    "description": "Origins of humankind in Africa; development and spread of pastoralism, agriculture and iron-working; formation of states and empires; impact of Christianity and Islam; rise of international trade in gold, ivory and slaves; African diaspora.",
+    "prerequisites": "Prerequisite: Junior or senior classification. Cross Listing: AFST 344/HIST 344 .",
+    "department": "History",
+    "prefix": "HIST",
+    "number": "344",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "AFST 344",
+      "HIST 344"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "AFST 344",
+      "HIST 344"
+    ],
+    "restrictions": [
+      "Junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "HIST 345",
+    "title": "Modern Africa",
+    "credit_hours": 3,
+    "description": "Survey of Africa since 1800; pre-colonial African states and societies; establishment and impact of European colonial rule; rise of nationalist movements; achievement of independence; problems of political stability and economic development in contemporary Africa; South Africa's apartheid regime and its opponents.",
+    "prerequisites": "Prerequisite: Junior or senior classification. Cross Listing: AFST 345/HIST 345 .",
+    "department": "History",
+    "prefix": "HIST",
+    "number": "345",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "AFST 345",
+      "HIST 345"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "AFST 345",
+      "HIST 345"
+    ],
+    "restrictions": [
+      "Junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "HIST 346",
+    "title": "History of South Africa",
+    "credit_hours": 3,
+    "description": "Selected themes in the history of South Africa from the African Iron Age to the Apartheid regime; history of race relations in the 19th and 20th centuries and the rise of modern industrial state.",
+    "prerequisites": "Prerequisite: Junior or senior classification or approval of instructor. Cross Listing: AFST 346/HIST 346 .",
+    "department": "History",
+    "prefix": "HIST",
+    "number": "346",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "AFST 346",
+      "HIST 346"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "AFST 346",
+      "HIST 346"
+    ],
+    "restrictions": [
+      "Junior or senior classification",
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "HIST 347",
+    "title": "Rise of Islam, 600-1258",
+    "credit_hours": 3,
+    "description": "CONTENT. Late-Antiquity; Pre-Islamic Arabia; the rise of Islam and a historical survey of the development of the Islamicate civilizations from c. 600 to the Mongol Conquests c. 1258. Course content is selected to align with the course description and the current state of scholarship in the field. The presentation of course content fosters critical thinking in the context of scholarly consensus and debate, rather than instructors’ views, values or beliefs. Instructors may assign different readings and/or topics that fit within the course description and meet the learning objectives. BENEFITS. History teaches evaluation and synthesis of evidence, development of persuasive arguments in written and oral form, expansion of understandings of historical contexts that have contributed to human complexity past and present, including but not limited to the formation of group and individual identities, social and political dynamics, and debates about values and rights. Applying this knowledge produces more informed citizens, who are proficient in the abilities required by today’s workforce.",
+    "prerequisites": "Prerequisite: Junior or senior classification or approval of instructor. Cross Listing: RELS 347/HIST 347 .",
+    "department": "History",
+    "prefix": "HIST",
+    "number": "347",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "RELS 347",
+      "HIST 347"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "RELS 347",
+      "HIST 347"
+    ],
+    "restrictions": [
+      "Junior or senior classification",
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "HIST 349",
+    "title": "The Vietnam War/The American War",
+    "credit_hours": 3,
+    "description": "Vietnam's relations with the West; French colonialism; origins and development of Vietnamese nationalism; Cold War and American involvement; wartime societies in North and South Vietnam; expansion of the war to Cambodia and Laos; anti-war movements in the United States; reasons for the American defeat; consequences and lessons of the war.",
+    "prerequisites": "Prerequisite: Junior or senior classification. Cross Listing: ASIA 349/HIST 349 .",
+    "department": "History",
+    "prefix": "HIST",
+    "number": "349",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "ASIA 349",
+      "HIST 349"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ASIA 349",
+      "HIST 349"
+    ],
+    "restrictions": [
+      "Junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "HIST 350",
+    "title": "World War II in Asia and the Pacific",
+    "credit_hours": 3,
+    "description": "Origins and development of Japanese imperialism; Japan's expansion into East and Southeast Asia and the Pacific; wartime societies; collaboration and resistance; effects of the war in the United States on Japanese-Americans; outcomes of the war; remembrance of the war.",
+    "prerequisites": "Prerequisite: Junior or senior classification. Cross Listing: ASIA 350/HIST 350 .",
+    "department": "History",
+    "prefix": "HIST",
+    "number": "350",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "ASIA 350",
+      "HIST 350"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ASIA 350",
+      "HIST 350"
+    ],
+    "restrictions": [
+      "Junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "HIST 352",
+    "title": "Modern East Asia",
+    "credit_hours": 3,
+    "description": "CONTENT. Examination of East Asia (broadly conceived) and its history in the modern era. Topics include, but are not limited to, the transformation from premodern societies to modernity; East Asian encounters with Western imperialism; nationalism and the formation of modern states; wars and conflicts; economic, social, cultural and political developments; and intra-Asian interactions as well as engagements with the wider world. Course content is selected to align with the course description and the current state of scholarship in the field. The presentation of course content fosters critical thinking in the context of scholarly consensus and debate, rather than instructors’ views, values or beliefs. Instructors may assign different readings and/or topics that fit within the course description and meet the learning objectives. BENEFITS. History teaches evaluation and synthesis of evidence, development of persuasive arguments in written and oral form, expansion of understandings of historical contexts that have contributed to human complexity past and present, including but not limited to the formation of group and individual identities, social and political dynamics and debates about values and rights. Applying this knowledge produces more informed citizens, who are proficient in the abilities required by today’s workforce.",
+    "prerequisites": "Prerequisite: Junior or senior classification or approval of instructor. Cross Listing: ASIA 352/HIST 352 .",
+    "department": "History",
+    "prefix": "HIST",
+    "number": "352",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "ASIA 352",
+      "HIST 352"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ASIA 352",
+      "HIST 352"
+    ],
+    "restrictions": [
+      "Junior or senior classification",
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "HIST 354",
+    "title": "Imperial China",
+    "credit_hours": 3,
+    "description": "History of imperial China from the earliest dynasties through the mid-19th century, including major political events, the structure of Chinese government, economic development, philosophies and religion, wars and military and culture and daily life.",
+    "prerequisites": "Prerequisite: Junior or senior classification. Cross Listing: ASIA 354/HIST 354 .",
+    "department": "History",
+    "prefix": "HIST",
+    "number": "354",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "ASIA 354",
+      "HIST 354"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ASIA 354",
+      "HIST 354"
+    ],
+    "restrictions": [
+      "Junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "HIST 355",
+    "title": "Modern China",
+    "credit_hours": 3,
+    "description": "History of China from the coming of the West to the present; social, economic and political changes which have taken place during that period.",
+    "prerequisites": "Prerequisite: Junior or senior classification. Cross Listing: ASIA 355/HIST 355 .",
+    "department": "History",
+    "prefix": "HIST",
+    "number": "355",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "ASIA 355",
+      "HIST 355"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ASIA 355",
+      "HIST 355"
+    ],
+    "restrictions": [
+      "Junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "HIST 356",
+    "title": "Japan Since 1600",
+    "credit_hours": 3,
+    "description": "CONTENT. Examination of modern Japan since the Edo period, with attention to the dynamic interactions among cultural, social, economic and political forces that shaped Japan’s transformation. Major themes include, but are not limited to, the “Old Regime” of Tokugawa Japan; the Edo Renaissance; the “opening” of Japan; the Meiji Restoration; Popular Rights and the Meiji Constitution; the rise of imperialism; the Japanese colonial empire; militarism and the Asia-Pacific War; defeat and surrender; the emergence of Japan as a major economic power; and contemporary challenges. Course content is selected to align with the course description and the current state of scholarship in the field. The presentation of course content fosters critical thinking in the context of scholarly consensus and debate, rather than instructors’ views, values or beliefs. Instructors may assign different readings and/or topics that fit within the course description and meet the learning objectives. BENEFITS. History teaches evaluation and synthesis of evidence, development of persuasive arguments in written and oral form, expansion of understandings of historical contexts that have contributed to human complexity past and present, including but not limited to the formation of group and individual identities, social and political dynamics, and debates about values and rights. Applying this knowledge produces more informed citizens, who are proficient in the abilities required by today’s workforce.",
+    "prerequisites": "Prerequisite: Junior or senior classification or approval of instructor. Cross Listing: ASIA 356/HIST 356 .",
+    "department": "History",
+    "prefix": "HIST",
+    "number": "356",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "ASIA 356",
+      "HIST 356"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ASIA 356",
+      "HIST 356"
+    ],
+    "restrictions": [
+      "Junior or senior classification",
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "HIST 357",
+    "title": "Out of Africa - The Black Diaspora and the Modern World",
+    "credit_hours": 3,
+    "description": "History and cultures of the peoples of the African diaspora since the medieval era. Topics include, but are not limited to, the social, political, economic and cultural impact of persons of African descent in Africa, the Americas, Europe and the Arab world; slavery, resistance and freedom; citizenship and anti-colonial struggles of the twentieth century; and the development of Afro-diasporic relationships. Course content is selected to align with the course description and the current state of scholarship in the field. The presentation of course content fosters critical thinking in the context of scholarly consensus and debate, rather than instructors’ views, values or beliefs. Instructors may assign different readings and/or topics that fit within the course description and meet the learning objectives. BENEFITS. History teaches evaluation and synthesis of evidence, development of persuasive arguments in written and oral form, expansion of understandings of historical contexts that have contributed to human complexity past and present, including but not limited to the formation of group and individual identities, social and political dynamics and debates about values and rights. Applying this knowledge produces more informed citizens, who are proficient in the abilities required by today’s workforce.",
+    "prerequisites": "Prerequisite: Junior or senior classification or approval of instructor. Cross Listing: AFST 357/HIST 357 .",
+    "department": "History",
+    "prefix": "HIST",
+    "number": "357",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "AFST 357",
+      "HIST 357"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "AFST 357",
+      "HIST 357"
+    ],
+    "restrictions": [
+      "Junior or senior classification",
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "HIST 358",
+    "title": "Chinese Cultural History",
+    "credit_hours": 3,
+    "description": "Examination of Chinese culture and its evolution over the last 4,000 years; customs, art, literature, festivals, folklore, religion, architecture, medicine, and everyday life.",
+    "prerequisites": "Prerequisite: Junior or senior classification. Cross Listing: ASIA 358/HIST 358 .",
+    "department": "History",
+    "prefix": "HIST",
+    "number": "358",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "ASIA 358",
+      "HIST 358"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ASIA 358",
+      "HIST 358"
+    ],
+    "restrictions": [
+      "Junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "HIST 365",
+    "title": "Religion in Early America",
+    "credit_hours": 3,
+    "description": "Religion in North America from colonial beginnings to eve of Civil War; relations between European Christianity, Native Americans and African Americans; religious pluralism, reform movements, social and political change.",
+    "prerequisites": "Prerequisite: Junior or senior classification. Cross Listing: RELS 365/HIST 365 .",
+    "department": "History",
+    "prefix": "HIST",
+    "number": "365",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "RELS 365",
+      "HIST 365"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "RELS 365",
+      "HIST 365"
+    ],
+    "restrictions": [
+      "Junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "HIST 366",
+    "title": "Religion in Modern America",
+    "credit_hours": 3,
+    "description": "Religion in America from the Civil War to contemporary period; relationship of religion and racial formation, capitalism, gender, sexuality, immigration; religious pluralism; evangelicalism; role of religious politics and social movements.",
+    "prerequisites": "Prerequisite: Junior or senior classification. Cross Listing: RELS 366/HIST 366 .",
+    "department": "History",
+    "prefix": "HIST",
+    "number": "366",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "RELS 366",
+      "HIST 366"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "RELS 366",
+      "HIST 366"
+    ],
+    "restrictions": [
+      "Junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "HIST 382",
+    "title": "Conflict Archaeology and Military History",
+    "credit_hours": 3,
+    "description": "Military history; conflict archaeology; human conflict; diplomacy, ethics, and leadership in conflicts; warfare; modern global issues; public service.",
+    "prerequisites": "Prerequisites: Junior or senior classification or approval of instructor. Cross Listing: ANTH 382/HIST 382 .",
+    "department": "History",
+    "prefix": "HIST",
+    "number": "382",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "ANTH 382",
+      "HIST 382"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ANTH 382",
+      "HIST 382"
+    ],
+    "restrictions": [
+      "Junior or senior classification",
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "HIST 419",
+    "title": "Intellectual History, 500 to 1600",
+    "credit_hours": 3,
+    "description": "Political, social, cultural and religious histories of significant figures, groups, schools of thought and movements in western Afro-Eurasia from the rise of Islam to the Renaissance; developments in political theory, literature, sociology, arts, architecture, music, philosophy, law, sciences and education.",
+    "prerequisites": "Prerequisite: Junior or senior classification. Cross Listing: RELS 419/HIST 419 .",
+    "department": "History",
+    "prefix": "HIST",
+    "number": "419",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "RELS 419",
+      "HIST 419"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "RELS 419",
+      "HIST 419"
+    ],
+    "restrictions": [
+      "Junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "HIST 425",
+    "title": "The Sacred and Profane in History",
+    "credit_hours": 3,
+    "description": "Case studies of the sacred in varied times and regions; holy persons; holy places; holy objects; language and literature of the sacred; competing concepts of the holy within society; gender and the holy; institutions promoting holy people and places; the impact of social, political, cultural and intellectual developments on the relationship between the sacred and the profane.",
+    "prerequisites": "Prerequisites: Junior or senior classification. Cross Listing: RELS 425/HIST 425 .",
+    "department": "History",
+    "prefix": "HIST",
+    "number": "425",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "RELS 425",
+      "HIST 425"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "RELS 425",
+      "HIST 425"
+    ],
+    "restrictions": [
+      "Junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "HIST 426",
+    "title": "The Ancient Greeks",
+    "credit_hours": 3,
+    "description": "Greek History and civilization from the Archaic Age to Alexander the Great (8th-late 4th century B.C.).",
+    "prerequisites": "Prerequisite: Junior or senior classification, or approval of instructor. Cross Listing: CLAS 426/HIST 426 .",
+    "department": "History",
+    "prefix": "HIST",
+    "number": "426",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "CLAS 426",
+      "HIST 426"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "CLAS 426",
+      "HIST 426"
+    ],
+    "restrictions": [
+      "Junior or senior classification",
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "HIST 427",
+    "title": "The Roman Republic",
+    "credit_hours": 3,
+    "description": "Major events and issues in Roman history from the beginnings of the Republic to its incipient disintegration.",
+    "prerequisites": "Prerequisite: Junior or senior classification, or approval of instructor. Cross Listing: CLAS 427/HIST 427 .",
+    "department": "History",
+    "prefix": "HIST",
+    "number": "427",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "CLAS 427",
+      "HIST 427"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "CLAS 427",
+      "HIST 427"
+    ],
+    "restrictions": [
+      "Junior or senior classification",
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "HIST 428",
+    "title": "The Roman Empire: Principate",
+    "credit_hours": 3,
+    "description": "Major events and issues in Roman history from the late Republic to the consolidation of the state of Late Antiquity.",
+    "prerequisites": "Prerequisite: Junior or senior classification, or approval of instructor. Cross Listing: CLAS 428/HIST 428 .",
+    "department": "History",
+    "prefix": "HIST",
+    "number": "428",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "CLAS 428",
+      "HIST 428"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "CLAS 428",
+      "HIST 428"
+    ],
+    "restrictions": [
+      "Junior or senior classification",
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "HIST 429",
+    "title": "The Roman Empire: Transformations",
+    "credit_hours": 3,
+    "description": "Major events and issues in Roman history from the rise of Christianity as an imperial religion to the end of Late Antiquity.",
+    "prerequisites": "Prerequisite: Junior or senior classification, or approval of instructor. Cross Listing: CLAS 429/HIST 429 .",
+    "department": "History",
+    "prefix": "HIST",
+    "number": "429",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "CLAS 429",
+      "HIST 429"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "CLAS 429",
+      "HIST 429"
+    ],
+    "restrictions": [
+      "Junior or senior classification",
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "HIST 434",
+    "title": "History and Film",
+    "credit_hours": 3,
+    "description": "Relationship between film, historical events, and public memory; cinematic representation of political, social, and economic change in various contexts; analysis of movies as historical texts; topics covered will vary according to an individual instructor’s discretion.",
+    "prerequisites": "Prerequisites: Junior or senior classification. Cross Listing: FILM 434/HIST 434 .",
+    "department": "History",
+    "prefix": "HIST",
+    "number": "434",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "FILM 434",
+      "HIST 434"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "FILM 434",
+      "HIST 434"
+    ],
+    "restrictions": [
+      "Junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "HIST 461",
+    "title": "Women in America to 1877",
+    "credit_hours": 3,
+    "description": "CONTENT. Examines women's historical role in the nation's development from pre-colonial times to 1877 by exploring religious, legal, political and cultural factors which helped shape the character and activities of women in American society. Themes include, but are not limited to, early native American women; women and the American Revolution; women in slavery; women and the Civil War; and women and Reconstruction. Course content is selected to align with the course description and the current state of scholarship in the field. The presentation of course content fosters critical thinking in the context of scholarly consensus and debate, rather than instructors’ views, values or beliefs. Instructors may assign different readings and/or topics that fit within the course description and meet the learning objectives. BENEFITS. History teaches evaluation and synthesis of evidence, development of persuasive arguments in written and oral form, expansion of understandings of historical contexts that have contributed to human complexity past and present, including but not limited to the formation of group and individual identities, social and political dynamics, and debates about values and rights. Applying this knowledge produces more informed citizens, who are proficient in the abilities required by today’s workforce.",
+    "prerequisites": "Prerequisite: Junior or senior classification or approval of instructor. Cross Listing: WGST 461/HIST 461 .",
+    "department": "History",
+    "prefix": "HIST",
+    "number": "461",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "WGST 461",
+      "HIST 461"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "WGST 461",
+      "HIST 461"
+    ],
+    "restrictions": [
+      "Junior or senior classification",
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "HIST 473",
+    "title": "Women in America Since 1877",
+    "credit_hours": 3,
+    "description": "CONTENT. History of women in the U.S. from the late 19th century to the present; role of intersectionality in defining the experience of modern womanhood; women as activists, workers, consumers, mothers and feminists; experiences, lives and influence of women of color; examination of contemporary social, political and economic histories. Course content is selected to align with the course description and the current state of scholarship in the field. The presentation of course content fosters critical thinking in the context of scholarly consensus and debate, rather than instructors’ views, values or beliefs. Instructors may assign different readings and/or topics that fit within the course description and meet the learning objectives. BENEFITS. History teaches evaluation and synthesis of evidence, development of persuasive arguments in written and oral form, expansion of understandings of historical contexts that have contributed to human complexity past and present, including but not limited to the formation of group and individual identities, social and political dynamics, and debates about values and rights. Applying this knowledge produces more informed citizens, who are proficient in the abilities required by today’s workforce.",
+    "prerequisites": "Prerequisite: Junior or senior classification or approval of instructor; HIST-473 also taught at Galveston campus. Cross Listing: WGST 473/HIST 473 .",
+    "department": "History",
+    "prefix": "HIST",
+    "number": "473",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "WGST 473",
+      "HIST 473"
+    ],
+    "repeatability": null,
+    "campuses": [
+      "Galveston"
+    ],
+    "prerequisite_courses": [
+      "WGST 473",
+      "HIST 473"
+    ],
+    "restrictions": [
+      "Junior or senior classification",
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "HIST 476",
+    "title": "Sex and Sexuality in History",
+    "credit_hours": 3,
+    "description": "CONTENT. Changing ideas about sex and sexuality over time; includes their interaction with ideas about gender, race, class, religion, science, technology, medicine, politics and popular culture; historical and cultural processes creating modern concerns about sex and sexuality. Course content is selected to align with the course description and the current state of scholarship in the field. The presentation of course content fosters critical thinking in the context of scholarly consensus and debate, rather than instructors’ views, values or beliefs. Instructors may assign different readings and/or topics that fit within the course description and meet the learning objectives. BENEFITS. History teaches evaluation and synthesis of evidence, development of persuasive arguments in written and oral form, expansion of understandings of historical contexts that have contributed to human complexity past and present, including but not limited to the formation of group and individual identities, social and political dynamics, and debates about values and rights. Applying this knowledge produces more informed citizens, who are proficient in the abilities required by today’s workforce.",
+    "prerequisites": "Prerequisite: Junior or senior classification or approval of instructor. Cross Listing: WGST 476/HIST 476 .",
+    "department": "History",
+    "prefix": "HIST",
+    "number": "476",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "WGST 476",
+      "HIST 476"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "WGST 476",
+      "HIST 476"
+    ],
+    "restrictions": [
+      "Junior or senior classification",
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "HIST 477",
+    "title": "Women and Gender in Modern European History",
+    "credit_hours": 3,
+    "description": "CONTENT. History of women in Europe from the 18th century to the present: women's contributions to their societies; realities of their daily lives and their responses; perceptions of women; role of institutions in defining women's roles; significance for women of industrialization, revolution, warfare, scientific discoveries. Course content is selected to align with the course description and the current state of scholarship in the field. The presentation of course content fosters critical thinking in the context of scholarly consensus and debate, rather than instructors’ views, values or beliefs. Instructors may assign different readings and/or topics that fit within the course description and meet the learning objectives. BENEFITS. History teaches evaluation and synthesis of evidence, development of persuasive arguments in written and oral form, expansion of understandings of historical contexts that have contributed to human complexity past and present, including but not limited to the formation of group and individual identities, social and political dynamics, and debates about values and rights. Applying this knowledge produces more informed citizens, who are proficient in the abilities required by today’s workforce.",
+    "prerequisites": "Prerequisite: Junior or senior classification or approval of instructor. Cross Listing: WGST 477/HIST 477 .",
+    "department": "History",
+    "prefix": "HIST",
+    "number": "477",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "WGST 477",
+      "HIST 477"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "WGST 477",
+      "HIST 477"
+    ],
+    "restrictions": [
+      "Junior or senior classification",
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/hist/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
   }
 ]
