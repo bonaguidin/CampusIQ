@@ -5,6 +5,7 @@ import type { Session } from '@supabase/supabase-js';
 import { AuthContext, type AuthContextValue } from './auth/AuthContext';
 import { StudentAccountProblem } from './auth/AccountStateScreens';
 import { AuthenticatedDashboard } from './pages/AuthenticatedDashboard';
+import { ProfileCompletionPage } from './pages/ProfileCompletionPage';
 import type { StudentIntelligenceProfile } from './types/studentIntelligenceProfile';
 import './index.css';
 
@@ -173,8 +174,20 @@ const context = {
   reloadStudentProfile: async () => { document.body.dataset.profileReloaded = 'yes'; },
 } as AuthContextValue;
 
+// mode=profile-complete reaches the /profile/complete page, so the batch host
+// is exercised as a page and not only as the modal's contents. Both render the
+// same ProfileCompletionForm, which is exactly what the field extraction has
+// to keep true -- if the two hosts ever diverge, one of them breaks silently.
 const app = mode === 'error'
   ? <StudentAccountProblem studentAccount={{ status: 'error', profile: null, message: 'Profile API failed.' }} onRetry={() => document.body.dataset.retried = 'yes'} onSignOut={() => {}} />
-  : <AuthContext.Provider value={context}><MemoryRouter><AuthenticatedDashboard /></MemoryRouter></AuthContext.Provider>;
+  : mode === 'profile-complete'
+    ? (
+      <AuthContext.Provider value={context}>
+        <MemoryRouter initialEntries={['/profile/complete?field=student.expected_graduation']}>
+          <ProfileCompletionPage />
+        </MemoryRouter>
+      </AuthContext.Provider>
+    )
+    : <AuthContext.Provider value={context}><MemoryRouter><AuthenticatedDashboard /></MemoryRouter></AuthContext.Provider>;
 
 ReactDOM.createRoot(document.getElementById('root')!).render(<React.StrictMode>{app}</React.StrictMode>);

@@ -2516,11 +2516,107 @@ a {
 /* An absence is quieter than a value, and never mistakable for one. */
 .cp-detail-value--absent { color: var(--muted); }
 
-.cp-detail-note {
+/* EditableSection is reused unmodified for the inline fields, which means it
+   arrives carrying .card. A bordered, padded panel per field would turn this
+   page back into the grid of rectangles the redesign removed, so the chrome is
+   dropped HERE rather than by changing a component four other screens use. */
+.cp-detail .editable-section,
+.cp-field .editable-section {
+  background: none;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+}
+
+.cp-detail .editable-section-header,
+.cp-field .editable-section-header {
+  margin-bottom: var(--sp-1);
+  gap: var(--sp-2);
+}
+
+/* The section title stands in for the row label when the row is editable, so
+   it has to match .cp-detail-label rather than sit beside it in a second
+   style. */
+.cp-detail .editable-section-title { letter-spacing: 0.08em; }
+
+/* The action only needs to be findable once the row is being read, so it stays
+   quiet until the row is hovered or the button itself is focused. */
+.cp-detail .editable-section-actions .btn-ghost,
+.cp-field .editable-section-actions .btn-ghost {
+  opacity: 0.55;
+  transition: opacity 120ms ease;
+}
+
+.cp-detail:hover .editable-section-actions .btn-ghost,
+.cp-field:hover .editable-section-actions .btn-ghost,
+.cp-detail .editable-section-actions .btn-ghost:focus-visible,
+.cp-field .editable-section-actions .btn-ghost:focus-visible,
+.cp-detail .editable-section-actions .btn-primary,
+.cp-field .editable-section-actions .btn-primary { opacity: 1; }
+
+@media (prefers-reduced-motion: reduce) {
+  .cp-detail .editable-section-actions .btn-ghost,
+  .cp-field .editable-section-actions .btn-ghost { transition: none; }
+}
+
+/* The editing surface inside a row: inputs stacked, never a second card. */
+.cp-field-edit { display: flex; flex-direction: column; gap: var(--sp-2); min-width: 0; }
+
+/* TagInput names itself, which is right in the completion form where nothing
+   else does. Inline, EditableSection's title already names the row, so the
+   editor's own label repeats it verbatim two lines apart. Hidden rather than
+   removed: the control's accessible name comes from its aria-label, not from
+   this element, so a screen reader loses nothing. */
+.cp-field-edit .tag-input-field > .form-label,
+.cp-field-edit .profile-form-field > .field-label-text { display: none; }
+
+/* The AI group is written for the completion form, where its legend is the
+   only thing naming the question. Inline it sits directly under the row's own
+   "AI comfort" label, so a second bold heading says the same thing twice and
+   crowds a column sized for one line of prose. The legend is kept -- it is the
+   fieldset's accessible name -- and demoted to a hint. */
+.cp-detail .profile-ai-group { min-width: 0; }
+
+.cp-detail .profile-ai-group legend {
+  margin-bottom: var(--sp-2);
   font-size: var(--text-sm);
+  font-weight: 400;
   line-height: 1.4;
   color: var(--muted);
-  overflow-wrap: anywhere;
+}
+
+/* Four pills at prose size overflow a third of the measure, so inline they
+   sit tighter than in the form's full width. */
+.cp-detail .profile-ai-options { gap: var(--sp-1); }
+
+.cp-detail .profile-ai-options label {
+  padding: var(--sp-1) var(--sp-3);
+  font-size: var(--text-sm);
+}
+
+.cp-detail .profile-ai-group small {
+  display: block;
+  margin-top: var(--sp-2);
+  color: var(--muted);
+}
+
+.cp-field-status {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--muted);
+}
+
+/* Two independently-saved units sharing one cell: current major and intended
+   major. They stack with a wider gap than a label/value pair so the row reads
+   as two facts rather than one fact with a caption -- which is what the old
+   value-plus-note rendering wrongly implied. */
+.cp-detail--stack { gap: var(--sp-5); }
+
+.cp-detail-unit {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-width: 0;
 }
 
 /* ── career direction ── */
@@ -4103,13 +4199,13 @@ a {
 /* Hairline between sections -- the same 1px/--line divider used app-wide. */
 .profile-form-section + .profile-form-section { padding-top: var(--sp-5); border-top: 1px solid var(--line); }
 .profile-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sp-4); }
-.profile-completion-form label, .profile-form-field { display: grid; gap: var(--sp-2); min-width: 0; font-weight: 600; }
-.profile-completion-form input:not([type='radio']), .profile-completion-form select { width: 100%; padding: var(--sp-3); border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); color: var(--ink); font: inherit; }
-.profile-completion-form small { display: block; margin-top: var(--sp-2); color: var(--muted); font-weight: 400; }
+.profile-completion-form label, .profile-form-field, .profile-graduation label { display: grid; gap: var(--sp-2); min-width: 0; font-weight: 600; }
+.profile-completion-form input:not([type='radio']), .profile-completion-form select, .cp-field-edit input:not([type='radio']), .cp-field-edit select { width: 100%; padding: var(--sp-3); border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); color: var(--ink); font: inherit; }
+.profile-completion-form small, .cp-field-edit small { display: block; margin-top: var(--sp-2); color: var(--muted); font-weight: 400; }
 .profile-form-field--needed { padding: var(--sp-3); border-left: 3px solid rgb(var(--accent-rgb)); border-radius: var(--radius-sm); background: rgb(var(--accent-rgb) / 0.06); }
 /* Checkbox rows read left-to-right, against the form's default label grid. */
-.profile-completion-form label.profile-form-check { display: flex; flex-direction: row; align-items: center; gap: var(--sp-2); font-weight: 500; cursor: pointer; }
-.profile-completion-form :is(input[type='checkbox'], input[type='radio']) { width: auto; accent-color: rgb(var(--accent-rgb)); cursor: pointer; }
+label.profile-form-check { display: flex; flex-direction: row; align-items: center; gap: var(--sp-2); font-weight: 500; cursor: pointer; }
+.profile-completion-form :is(input[type='checkbox'], input[type='radio']), .cp-field-edit :is(input[type='checkbox'], input[type='radio']) { width: auto; accent-color: rgb(var(--accent-rgb)); cursor: pointer; }
 /* The gated field's helper sits between two things it could belong to: the
    input it describes, and the muted eyebrow of the next field group. At the
    section's uniform --sp-4 it was equidistant from both (8px label gap + 8px
@@ -4120,7 +4216,7 @@ a {
    with no grid gap of its own to fall back on. */
 .profile-form-field--gated { margin-bottom: var(--sp-3); }
 /* A gated field still has to be readable, so it dims rather than greying out. */
-.profile-completion-form input:disabled { background: var(--neutral-surface); color: var(--muted); cursor: not-allowed; }
+.profile-completion-form input:disabled, .cp-field-edit input:disabled { background: var(--neutral-surface); color: var(--muted); cursor: not-allowed; }
 /* Where a field lives when it does not live here. Muted and un-boxed: it is a
    signpost, not another thing to fill in. */
 .profile-form-note { display: flex; align-items: flex-start; gap: var(--sp-2); margin: 0; color: var(--muted); font-size: var(--text-sm); }

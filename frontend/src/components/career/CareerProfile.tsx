@@ -1,10 +1,51 @@
+import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
+import type { ProfileChanges } from '../../api/profile';
 import { buildCareerViewModel } from '../../data/careerViewModel.mjs';
-import { isNoIntendedMajor } from '../../lib/majorSentinel';
 import type { CanonicalCareer } from '../../types/studentIntelligenceProfile';
 import type { CertificationEntry, ExperienceEntry } from '../../data/careerViewModel.mjs';
+import { InterestsEditor } from '../InterestsEditor';
+import { TargetRolesEditor } from '../TargetRolesEditor';
+import { AiComfortField, aiComfortLabel } from '../profile/fields/AiComfortField';
+import {
+  GraduationInputs,
+  graduationChanges,
+  graduationValueFrom,
+  validateGraduation,
+} from '../profile/fields/GraduationField';
+import { InlineEditableField } from '../profile/fields/InlineEditableField';
+import {
+  CurrentMajorInput,
+  MajorInputs,
+  majorChanges,
+  majorCurrentChanges,
+  majorValueFrom,
+  validateMajor,
+} from '../profile/fields/MajorField';
 import { ProjectCard } from './ProjectCard';
 import { SkillCloud } from './SkillCloud';
+
+/**
+ * What a field needs to save itself, or null when nothing here can be edited.
+ *
+ * Null is the honest state for a session with no bearer token: without one a
+ * PATCH cannot be sent, so no Edit button is rendered rather than one that
+ * would fail. The page falls back to exactly the read-only surface it had.
+ */
+export interface CareerEditing {
+  accessToken: string;
+  onSaved(): Promise<void>;
+}
+
+/**
+ * Whether a tag list is unchanged, so an untouched field spends no request.
+ *
+ * Order is significant: these are the student's own ordering, and reordering
+ * them is an edit like any other.
+ */
+function sameList(a: string[], b: string[]): boolean {
+  return a.length === b.length && a.every((entry, index) => entry === b[index]);
+}
 
 /**
  * The identity facts the Career tab reports but does not own.
@@ -46,18 +87,44 @@ export interface CareerDetails {
 export function CareerProfile({
   career,
   details,
+  editing = null,
 }: {
   career: CanonicalCareer;
   details: CareerDetails;
+  editing?: CareerEditing | null;
 }) {
   const model = buildCareerViewModel(career);
   const { direction, counts } = model;
+
+  // The read-only renderings, named once so the editable and read-only paths
+  // cannot drift into showing two different things for the same data.
+  const rolesDisplay = direction.hasTargetRoles ? (
+    <ul className="cp-roles">
+      {direction.targetRoles.map((role) => (
+        <li key={role}>{role}</li>
+      ))}
+    </ul>
+  ) : (
+    <Absence
+      line="No target roles added yet."
+      // Stated because it is true of this product, not as encouragement: FIT,
+      // GAP and SHIFT read target roles directly. This is where the page's
+      // single /resume route now lives -- see Absence.
+      help="FIT, GAP and SHIFT all read your target roles. Adding them to your resume and confirming it fills this in."
+      action
+    />
+  );
+  const interestsDisplay = direction.hasInterests ? (
+    <p className="cp-inline-list">{direction.interests.join(' · ')}</p>
+  ) : (
+    <Absence line="No interests added yet." />
+  );
 
   return (
     <div className="cp">
       <CareerSummary model={model} />
 
-      <DetailsSection details={details} aiComfort={career.ai_anxiety_level} />
+      <DetailsSection details={details} aiComfort={career.ai_anxiety_level} editing={editing} />
 
       <div className="cp-grid cp-grid--split">
         {/* Each field below answers for itself. The section used to be gated on
@@ -66,34 +133,35 @@ export function CareerProfile({
             the roles -- the field every analysis requires. */}
         <Section title="Career direction" count={null}>
           <div className="cp-direction">
-            <div className="cp-field">
-              <h4 className="cp-subhead">Target roles</h4>
-              {direction.hasTargetRoles ? (
-                <ul className="cp-roles">
-                  {direction.targetRoles.map((role) => (
-                    <li key={role}>{role}</li>
-                  ))}
-                </ul>
-              ) : (
-                <Absence
-                  line="No target roles added yet."
-                  // Stated because it is true of this product, not as
-                  // encouragement: FIT, GAP and SHIFT read target roles
-                  // directly. This is where the page's single /resume route
-                  // now lives -- see Absence.
-                  help="FIT, GAP and SHIFT all read your target roles. Adding them to your resume and confirming it fills this in."
-                  action
-                />
+            {/* TargetRolesEditor and InterestsEditor are reused unchanged, but
+                only for the editing half. Their read-only half renders chips,
+                and this page states roles as a list and interests as one line
+                -- so the display above stands and the editors supply the input
+                surface they were written for. */}
+            <FieldSlot
+              label="Target roles"
+              wrapperClass="cp-field"
+              labelClass="cp-subhead"
+              editing={editing}
+              value={direction.targetRoles}
+              toChanges={(roles) => (sameList(roles, direction.targetRoles) ? {} : { target_roles: roles })}
+              display={rolesDisplay}
+              edit={(draft, setDraft) => (
+                <TargetRolesEditor roles={draft} isEditing onChange={setDraft} />
               )}
-            </div>
-            <div className="cp-field">
-              <h4 className="cp-subhead">Interests</h4>
-              {direction.hasInterests ? (
-                <p className="cp-inline-list">{direction.interests.join(' · ')}</p>
-              ) : (
-                <Absence line="No interests added yet." />
+            />
+            <FieldSlot
+              label="Interests"
+              wrapperClass="cp-field"
+              labelClass="cp-subhead"
+              editing={editing}
+              value={direction.interests}
+              toChanges={(interests) => (sameList(interests, direction.interests) ? {} : { interests })}
+              display={interestsDisplay}
+              edit={(draft, setDraft) => (
+                <InterestsEditor interests={draft} isEditing onChange={setDraft} />
               )}
-            </div>
+            />
             {/* Goals and location keep the treatment they had: present or
                 silent. Neither is required by any analysis, so neither earns
                 an absence line arguing for itself. */}
@@ -212,96 +280,189 @@ function CareerSummary({ model }: { model: ReturnType<typeof buildCareerViewMode
 }
 
 /**
- * How the four stored AI-comfort values read on screen.
+ * The facts guidance is calibrated against, stated plainly -- and editable
+ * where the student is the one who knows them.
  *
- * Mirrors AI_OPTIONS in ProfileCompletionForm, which is where a student picks
- * one. The raw column values are machine tokens -- 'not_sure' rendered
- * verbatim is not English -- so they are labelled here, and an unrecognised
- * value passes through untouched rather than being swallowed, the same way
- * certificationEntries handles an unexpected status.
- */
-const AI_COMFORT_LABELS: Record<string, string> = {
-  low: 'Low',
-  moderate: 'Moderate',
-  high: 'High',
-  not_sure: 'Not sure',
-};
-
-/**
- * The facts guidance is calibrated against, stated plainly.
- *
- * READ-ONLY, DELIBERATELY. These three rows exist because nothing in the
- * authenticated app rendered them at all: a student could be told an analysis
- * needed their expected graduation while the page never showed what it had.
- * Editing arrives in a later step; nothing here is clickable, so no control
- * implies an ability the page does not yet have.
+ * These three rows exist because nothing in the authenticated app rendered
+ * them at all: a student could be told an analysis needed their expected
+ * graduation while the page never showed what it had. They are now also the
+ * place it gets fixed, so the answer is given where the gap is stated rather
+ * than in a dialog opened from somewhere else.
  *
  * A missing value is "Not set" rather than an em dash. The dash is what the
- * demo's CareerSummaryRow uses, and it reads as a layout filler -- these rows
- * are about to become the checklist's targets, so an absence has to say it is
- * an absence.
+ * demo's CareerSummaryRow uses, and it reads as a layout filler -- an absence
+ * has to say it is an absence.
  */
 function DetailsSection({
   details,
   aiComfort,
+  editing,
 }: {
   details: CareerDetails;
   aiComfort: string | null;
+  editing: CareerEditing | null;
 }) {
   const { expectedGraduation, majorCurrent, majorIntended } = details;
   // The sentinel is a stored answer ("not switching"), never a major anyone
   // typed, so it must not be printed back as though it were one.
-  const switching = !isNoIntendedMajor(majorIntended);
-  const comfort = aiComfort ? AI_COMFORT_LABELS[aiComfort] ?? aiComfort : null;
+  const major = majorValueFrom(majorIntended);
 
   return (
     <Section title="Details" count={null}>
-      <dl className="cp-details">
-        <Detail label="Expected graduation" value={expectedGraduation} />
-        <Detail
-          label="Major"
-          value={majorCurrent}
-          // Only a switching student has a second major to report. "Not
-          // switching" is a real answer and says so; it is not an absence.
-          note={switching ? `Switching to ${majorIntended ?? ''}`.trim() : 'Not switching majors'}
+      <div className="cp-details">
+        <FieldSlot
+          label="Expected graduation"
+          wrapperClass="cp-detail"
+          labelClass="cp-detail-label"
+          editing={editing}
+          value={graduationValueFrom(expectedGraduation)}
+          validate={validateGraduation}
+          toChanges={(draft) => graduationChanges(draft, expectedGraduation)}
+          display={<DetailValue value={expectedGraduation} />}
+          edit={(draft, setDraft) => <GraduationInputs value={draft} onChange={setDraft} />}
         />
-        <Detail
-          label="AI comfort"
-          value={comfort}
-          // Null means never asked, which is a different state from 'not_sure'
-          // (asked, does not know) -- see the 20260812143000 migration.
-          absentLabel="Not answered"
-        />
-      </dl>
+        {/* TWO UNITS, ONE ROW. Correcting a mis-parsed current major and
+            deciding to switch are unrelated events, so pairing them made the
+            first wait on the second -- and made a student answer a question
+            about their future to fix a typo about their present. */}
+        <div className="cp-detail cp-detail--stack">
+          <FieldSlot
+            label="Current major"
+            wrapperClass="cp-detail-unit"
+            labelClass="cp-detail-label"
+            editing={editing}
+            value={majorCurrent ?? ''}
+            toChanges={(draft) => majorCurrentChanges(draft, majorCurrent)}
+            display={<DetailValue value={majorCurrent} />}
+            edit={(draft, setDraft) => <CurrentMajorInput value={draft} onChange={setDraft} />}
+          />
+          <FieldSlot
+            label="Intended major"
+            wrapperClass="cp-detail-unit"
+            labelClass="cp-detail-label"
+            editing={editing}
+            value={major}
+            validate={validateMajor}
+            toChanges={(draft) => majorChanges(draft, majorIntended)}
+            // Only a switching student has an intended major to report. "Not
+            // switching majors" is a real answer, but it is the absence of a
+            // second major, so it reads in the quieter absent voice rather
+            // than sitting where a major name would.
+            display={
+              <DetailValue
+                value={major.switching ? major.majorIntended : null}
+                absentLabel="Not switching majors"
+              />
+            }
+            edit={(draft, setDraft) => (
+              <MajorInputs value={draft} onChange={setDraft} idPrefix="cp-major" />
+            )}
+          />
+        </div>
+        <div className="cp-detail">
+          <span className="cp-detail-label">AI comfort</span>
+          {/* Null means never asked, which is a different state from
+              'not_sure' (asked, does not know) -- see the 20260812143000
+              migration. The value line names that state; the group below it
+              shows nothing selected, which is the same fact twice because
+              only one of the two survives when the row is read-only. */}
+          <DetailValue value={aiComfortLabel(aiComfort)} absentLabel="Not answered" />
+          {/* No Edit/Save/Cancel: every value this control can hold is a
+              complete answer, so there is no intermediate state to protect
+              and a Save button could only ever succeed. */}
+          {editing && (
+            <AiComfortField
+              value={aiComfort}
+              accessToken={editing.accessToken}
+              onSaved={editing.onSaved}
+              name="cp-ai-comfort"
+            />
+          )}
+        </div>
+      </div>
     </Section>
   );
 }
 
-/** One labelled fact, or an explicit absence in its place. */
-function Detail({
-  label,
+/**
+ * One stored fact, or an explicit absence in its place.
+ *
+ * There is no longer a subordinate note here. It existed to hang the switching
+ * state off the current major, which said the two were one fact and its
+ * caption; they are two facts, and each is now its own editable unit with its
+ * own label and its own value.
+ */
+function DetailValue({
   value,
-  note,
   absentLabel = 'Not set',
 }: {
-  label: string;
   value: string | null;
-  note?: string;
   absentLabel?: string;
 }) {
   return (
-    <div className="cp-detail">
-      <dt className="cp-detail-label">{label}</dt>
-      <dd className="cp-detail-value-group">
-        {value ? (
-          <span className="cp-detail-value">{value}</span>
-        ) : (
-          <span className="cp-detail-value cp-detail-value--absent">{absentLabel}</span>
-        )}
-        {/* The note qualifies a value that exists; with nothing to qualify it
-            would be a sentence floating beside "Not set". */}
-        {value && note && <span className="cp-detail-note">{note}</span>}
-      </dd>
+    <div className="cp-detail-value-group">
+      {value ? (
+        <span className="cp-detail-value">{value}</span>
+      ) : (
+        <span className="cp-detail-value cp-detail-value--absent">{absentLabel}</span>
+      )}
+    </div>
+  );
+}
+
+/**
+ * A field that reads as prose and edits in place -- or just reads, when there
+ * is no token to save with.
+ *
+ * The read-only rendering is passed in rather than derived, so the same markup
+ * serves both paths and an editable page cannot quietly start displaying its
+ * data differently from a read-only one.
+ */
+function FieldSlot<T>({
+  label,
+  wrapperClass,
+  labelClass,
+  editing,
+  value,
+  toChanges,
+  validate,
+  display,
+  edit,
+}: {
+  label: string;
+  wrapperClass: string;
+  labelClass: string;
+  editing: CareerEditing | null;
+  value: T;
+  toChanges(draft: T): ProfileChanges;
+  validate?(draft: T): string | null;
+  display: ReactNode;
+  edit(draft: T, setDraft: (next: T) => void): ReactNode;
+}) {
+  if (!editing) {
+    return (
+      <div className={wrapperClass}>
+        <span className={labelClass}>{label}</span>
+        {display}
+      </div>
+    );
+  }
+  return (
+    <div className={wrapperClass}>
+      {/* EditableSection supplies the label here, so the static one above is
+          not also rendered -- two headings for one field. */}
+      <InlineEditableField
+        title={label}
+        value={value}
+        toChanges={toChanges}
+        validate={validate}
+        accessToken={editing.accessToken}
+        onSaved={editing.onSaved}
+      >
+        {(draft, setDraft, isEditing) =>
+          isEditing ? <div className="cp-field-edit">{edit(draft, setDraft)}</div> : display
+        }
+      </InlineEditableField>
     </div>
   );
 }

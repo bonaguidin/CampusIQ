@@ -12,11 +12,12 @@ import { createServer } from 'vite'
 const LONG_HEAD = 'Built a convolutional model for ECG arrhythmia classification on the MIT-BIH database'
 const LONG_TAIL = 'per-class error analysis across the five AAMI categories.'
 
-async function startServer(t) {
+async function startServer(t, plugins = []) {
   const server = await createServer({
     root: new URL('..', import.meta.url).pathname,
     cacheDir: new URL('../node_modules/.vite-career-profile', import.meta.url).pathname,
     logLevel: 'silent',
+    plugins,
     server: { host: '127.0.0.1' },
   })
   await server.listen()
@@ -24,6 +25,21 @@ async function startServer(t) {
   const address = server.httpServer?.address()
   assert.ok(address && typeof address === 'object')
   return `http://127.0.0.1:${String(address.port)}`
+}
+
+/**
+ * Waits for the server to have recorded `count` PATCHes.
+ *
+ * The immediate-save field has no button to go quiet and no visible committed
+ * state to wait on -- the preview's reload returns the same profile -- so the
+ * request itself is the only honest signal that the save happened.
+ */
+async function waitForPatch(patches, count, timeout = 5000) {
+  const deadline = Date.now() + timeout
+  while (patches.length < count) {
+    if (Date.now() > deadline) throw new Error(`expected ${String(count)} patches, saw ${String(patches.length)}`)
+    await new Promise((resolve) => setTimeout(resolve, 25))
+  }
 }
 
 /** Opens the dashboard on the Career tab for a given fixture. */
@@ -201,7 +217,13 @@ test('career profile: absences collapse and never become empty rectangles', { ti
   // the same single action five times.
   assert.equal(await page.locator('.cp-absent-link').count(), 1, 'the resume route must appear once per page')
   assert.equal(await page.locator('.cp-absent-link').getAttribute('href'), '/resume')
-  assert.equal(await page.locator('.cp button:not(.cp-more)').count(), 0, 'no non-functional buttons')
+  // Every button on this page must do something. The expanders always did;
+  // the inline Edit controls are the new ones, and they are the ONLY other
+  // kind allowed -- a button belonging to neither group is the "no dead
+  // affordance" rule being broken again.
+  const strayButtons = await page.locator('.cp button:not(.cp-more)').evaluateAll((nodes) =>
+    nodes.filter((node) => !node.closest('.editable-section-actions')).map((node) => node.textContent))
+  assert.deepEqual(strayButtons, [], 'a button in the career profile does nothing')
 
   // ── The awkward middle: entries but no direction, and no certifications.
   await openCareer(page, origin, 'mode=complete&career=partial')
@@ -234,17 +256,25 @@ test('career profile: absences collapse and never become empty rectangles', { ti
   // that has a consequence worth stating.
   assert.equal(await page.locator('.cp-absent-link').count(), 1)
   // 'not_sure' is a real answer -- asked, does not know -- and must read as
-  // one rather than borrowing the never-asked absence's label.
-  await page.locator('.cp-details').getByText('Not sure').waitFor()
-  assert.equal(await page.locator('.cp-details .cp-detail-value--absent').count(), 0,
-    'this fixture sets every detail, so none may render as absent')
+  // one rather than borrowing the never-asked absence's label. Scoped to the
+  // value: the radio group repeats every option name beneath it.
+  await page.locator('.cp-details .cp-detail-value').getByText('Not sure').waitFor()
+  // Graduation, current major and AI comfort are all set here. Intended major
+  // is the sentinel, which is an answer -- but the answer is that there is no
+  // second major, so it renders in the absent voice rather than as a name.
+  assert.equal(await page.locator('.cp-details .cp-detail-value--absent').count(), 1)
+  await page.locator('.cp-details .cp-detail-value--absent').getByText('Not switching majors').waitFor()
 })
 
 // The three facts guidance is calibrated against had no representation at all
 // in the authenticated app: a student could be told an analysis needed their
-// expected graduation on a page that never showed what it held. These rows are
-// read-only in this step -- editing arrives later, and until it does nothing
-// here may imply an ability the page does not have.
+// expected graduation on a page that never showed what it held. This pins what
+// the rows REPORT; the test below it pins what they save.
+//
+// Values are read from .cp-detail-value throughout rather than by page text.
+// The AI radio labels repeat every option name, so a bare getByText('Moderate')
+// matches both the stored answer and the control offering to change it -- two
+// different claims that happen to share a word.
 test('career profile: details rows report graduation, majors and AI comfort', { timeout: 45_000 }, async (t) => {
   const origin = await startServer(t)
   const browser = await chromium.launch()
@@ -254,16 +284,15 @@ test('career profile: details rows report graduation, majors and AI comfort', { 
   // ── Every value present, and the student is switching majors.
   await openCareer(page, origin, 'mode=complete&career=rich')
   const details = page.locator('.cp-details')
-  await details.getByText('Spring 2028').waitFor()
-  await details.getByText('Computer Science', { exact: true }).waitFor()
-  await details.getByText('Switching to Data Science').waitFor()
+  const values = () => details.locator('.cp-detail-value').allInnerTexts()
+  await details.locator('.cp-detail-value').first().waitFor()
+  // Current major and intended major are two facts, not one fact and its
+  // caption, so each states itself in its own row.
+  assert.deepEqual(await values(), ['Spring 2028', 'Computer Science', 'Data Science', 'Moderate'])
   // The stored column is 'moderate'; a machine token is not English.
-  await details.getByText('Moderate').waitFor()
-  assert.equal((await details.innerText()).includes('moderate'), false, 'a raw enum token reached the page')
+  assert.equal((await details.locator('.cp-detail-value').allInnerTexts()).includes('moderate'), false,
+    'a raw enum token reached the page')
   assert.equal(await details.locator('.cp-detail-value--absent').count(), 0)
-
-  // Read-only in this step: no control of any kind inside the block.
-  assert.equal(await details.locator('button, a, input, select').count(), 0, 'a details row became interactive')
 
   // ── Not switching. The sentinel is a stored answer, never a typed major,
   // so it is reported as the answer it is and never echoed back verbatim.
@@ -274,14 +303,183 @@ test('career profile: details rows report graduation, majors and AI comfort', { 
   // ── Nothing set. An absence says so rather than filling with a dash.
   await openCareer(page, origin, 'mode=complete&career=bare')
   const bare = page.locator('.cp-details')
-  assert.equal(await bare.locator('.cp-detail-value--absent').count(), 3, 'every unset row must state its absence')
-  assert.equal(await bare.getByText('Not set').count(), 2)
+  // Four units report a value: graduation, current major, intended major and
+  // AI comfort. Each states its own absence in its own words.
+  assert.equal(await bare.locator('.cp-detail-value--absent').count(), 4, 'every unset row must state its absence')
+  assert.equal(await bare.locator('.cp-detail-value--absent').filter({ hasText: 'Not set' }).count(), 2)
   // Null AI comfort means never asked -- which is not the same answer as the
   // selectable 'Not sure', and must not borrow its label.
-  await bare.getByText('Not answered').waitFor()
-  assert.equal(await bare.getByText('Not sure').count(), 0)
-  // No note floats beside a value that does not exist.
-  assert.equal(await bare.locator('.cp-detail-note').count(), 0)
+  await bare.locator('.cp-detail-value--absent').getByText('Not answered').waitFor()
+  assert.equal(await bare.locator('.cp-detail-value').filter({ hasText: 'Not sure' }).count(), 0)
+  // Nothing is preselected while the column is null: an unselected group is
+  // how "never asked" looks, and any checked radio would answer for them.
+  assert.equal(await bare.locator('input[name="cp-ai-comfort"]:checked').count(), 0)
+  // A value never carries a subordinate caption. The switching state used to
+  // hang off the current major that way, which said the two were one fact;
+  // they are two, and each now has its own labelled unit.
+  assert.equal(await bare.locator('.cp-detail-note').count(), 0, 'a value grew a caption again')
+  assert.equal(await bare.locator('.cp-detail-unit').count(), 2, 'the major row must hold two units')
+})
+
+/**
+ * The six units, saved where they are read.
+ *
+ * These assertions are the container-independent half of what the profile
+ * modal's test already pinned -- the sentinel round-trip, the season/year
+ * prefill, the tag chips, the unselected radio group, the single-key PATCH
+ * body and the reload -- re-aimed at the inline rows. They were never really
+ * about the dialog; they are about what the fields do with the data, which is
+ * why the same claims survive the move.
+ */
+test('career profile: six units save independently, inline', { timeout: 45_000 }, async (t) => {
+  const patches = []
+  const apiPlugin = { name: 'profile-api', configureServer(server) { server.middlewares.use((request, response, next) => {
+    if (request.url?.split('?')[0] === '/api/v2/student/me/profile' && request.method === 'PATCH') {
+      let body = ''
+      request.on('data', (chunk) => { body += chunk })
+      request.on('end', () => {
+        patches.push(JSON.parse(body))
+        response.statusCode = 200
+        response.setHeader('content-type', 'application/json')
+        response.end(JSON.stringify({ ok: true }))
+      })
+      return
+    }
+    next()
+  }) } }
+
+  const origin = await startServer(t, [apiPlugin])
+  const browser = await chromium.launch()
+  t.after(async () => browser.close())
+  const page = await browser.newPage({ viewport: { width: 1280, height: 1000 } })
+  await openCareer(page, origin, 'mode=complete&career=rich')
+
+  // The major row holds two units inside one cell, so the cell itself would
+  // also match a heading belonging to one of them. Excluding the wrapper keeps
+  // this resolving to the unit that actually owns the Edit button.
+  const row = (label) => page
+    .locator('.cp-detail-unit, .cp-field, .cp-detail:not(.cp-detail--stack)')
+    .filter({ has: page.getByRole('heading', { name: label, exact: true }) })
+
+  // ── Five independently editable units, each with its own Edit control. AI
+  // comfort is the sixth unit and deliberately has none: every value it can
+  // hold is already valid, so there is no intermediate state to protect.
+  assert.equal(await page.locator('.cp .editable-section').count(), 5)
+  for (const label of ['Expected graduation', 'Current major', 'Intended major', 'Target roles', 'Interests']) {
+    assert.equal(await row(label).getByRole('button', { name: 'Edit' }).count(), 1, `${label} is not editable`)
+  }
+
+  // ── The graduation pair prefills from the stored string, rather than making
+  // the student re-derive "Spring 2028" into two selects.
+  const graduation = row('Expected graduation')
+  await graduation.getByRole('button', { name: 'Edit' }).click()
+  assert.equal(await graduation.getByLabel('Season').inputValue(), 'Spring')
+  assert.equal(await graduation.getByLabel('Year').inputValue(), '2028')
+
+  // BOTH OR NEITHER: half an answer is refused, and refusing it neither saves
+  // nor closes the row.
+  await graduation.getByLabel('Season').selectOption('')
+  await graduation.getByRole('button', { name: 'Save' }).click()
+  await graduation.getByText('Choose both a graduation season and year, or leave both blank.').waitFor()
+  assert.equal(patches.length, 0, 'an invalid pair was sent to the server')
+  await graduation.getByLabel('Season').selectOption('Fall')
+  await graduation.getByRole('button', { name: 'Save' }).click()
+  await graduation.getByRole('button', { name: 'Edit' }).waitFor()
+  // ONE FIELD, ONE KEY. The row sends what it owns and nothing else.
+  assert.deepEqual(patches.at(-1), { expected_graduation: 'Fall 2028' })
+  assert.equal(await page.evaluate(() => document.body.dataset.profileReloaded), 'yes')
+  await page.getByRole('status').filter({ hasText: 'Profile saved' }).waitFor()
+
+  // ── Current major is its own unit. Fixing a mis-parsed major is a plain
+  // text edit that must not drag the switching question along with it.
+  const currentMajor = row('Current major')
+  await currentMajor.getByRole('button', { name: 'Edit' }).click()
+  assert.equal(await currentMajor.getByLabel('Current major').inputValue(), 'Computer Science')
+  await currentMajor.getByLabel('Current major').fill('Computer Engineering')
+  await currentMajor.getByRole('button', { name: 'Save' }).click()
+  await currentMajor.getByRole('button', { name: 'Edit' }).waitFor()
+  // No sentinel, no gate, and above all no major_intended riding along.
+  assert.deepEqual(patches.at(-1), { major_current: 'Computer Engineering' })
+
+  // An unchanged text field spends no request.
+  const afterCurrent = patches.length
+  await currentMajor.getByRole('button', { name: 'Edit' }).click()
+  await currentMajor.getByRole('button', { name: 'Save' }).click()
+  await currentMajor.getByRole('button', { name: 'Edit' }).waitFor()
+  assert.equal(patches.length, afterCurrent, 'an unchanged current major was sent to the server')
+
+  // ── The sentinel round-trip. `rich` stores a real intended major, so the
+  // box is ticked and the field carries it.
+  const major = row('Intended major')
+  await major.getByRole('button', { name: 'Edit' }).click()
+  const switching = major.getByLabel("I'm planning to switch majors")
+  assert.equal(await switching.isChecked(), true)
+  assert.equal(await major.getByLabel('Intended major').inputValue(), 'Data Science')
+  // Unticking gates the field and clears it -- "staying" is never expressed by
+  // leaving a half-typed major behind.
+  await switching.uncheck()
+  assert.equal(await major.getByLabel('Intended major').isDisabled(), true)
+  assert.equal(await major.getByLabel('Intended major').inputValue(), '')
+  await major.getByRole('button', { name: 'Save' }).click()
+  await major.getByRole('button', { name: 'Edit' }).waitFor()
+  // Not switching is a POSITIVE write of the sentinel, never an erasure: the
+  // API rejects '' and treats an omitted key as "leave untouched".
+  assert.deepEqual(patches.at(-1), { major_intended: 'N/A' })
+
+  // A switching student who names no major is refused, and the sentinel is
+  // not quietly written in their place. (The preview's reload returns the same
+  // profile, so the row re-opens on the stored 'Data Science' -- the empty
+  // field this rejects has to be made empty here.)
+  const afterMajor = patches.length
+  await major.getByRole('button', { name: 'Edit' }).click()
+  const switchBox = major.getByLabel("I'm planning to switch majors")
+  if (!(await switchBox.isChecked())) await switchBox.check()
+  await major.getByLabel('Intended major').fill('')
+  await major.getByRole('button', { name: 'Save' }).click()
+  await major.getByText('Name the major you are switching to, or untick the box.').waitFor()
+  assert.equal(patches.length, afterMajor, 'an incomplete switch was saved')
+  await major.getByRole('button', { name: 'Cancel' }).click()
+
+  // ── Tag chips: the editor opens holding what the profile already has.
+  const roles = row('Target roles')
+  await roles.getByRole('button', { name: 'Edit' }).click()
+  await roles.locator('.tag-chip').filter({ hasText: 'AI Engineer' }).waitFor()
+  await roles.getByRole('button', { name: 'Remove ML Engineer' }).click()
+  await roles.getByRole('button', { name: 'Save' }).click()
+  await roles.getByRole('button', { name: 'Edit' }).waitFor()
+  assert.deepEqual(patches.at(-1), { target_roles: ['AI Engineer', 'Robotics Engineer'] })
+
+  // Cancel restores rather than saves: an abandoned edit costs no request.
+  const before = patches.length
+  const interests = row('Interests')
+  await interests.getByRole('button', { name: 'Edit' }).click()
+  await interests.getByRole('button', { name: 'Remove Robotics' }).click()
+  await interests.getByRole('button', { name: 'Cancel' }).click()
+  assert.equal(patches.length, before, 'cancel sent a request')
+  await interests.getByText('Physical AI · Robotics · LLM Systems').waitFor()
+
+  // ── AI comfort saves on selection, with no Save button to press.
+  assert.equal(await row('AI comfort').getByRole('button', { name: 'Edit' }).count(), 0)
+  const comfort = page.locator('.cp-details')
+
+  // click(), not check(): check() asserts the radio ends up selected, and the
+  // preview's reload hands back the same profile, so the group re-renders on
+  // the stored answer. Firing the event is what is under test here; what the
+  // control settles on afterwards is the fixture's business.
+  //
+  // Re-picking the stored answer spends no request. `rich` stores 'moderate',
+  // so this is the selection that is already true.
+  const settled = patches.length
+  await comfort.getByLabel('Moderate').click()
+  await page.waitForTimeout(250)
+  assert.equal(patches.length, settled, 'a no-op selection was sent to the server')
+
+  await comfort.getByLabel('High').click()
+  await waitForPatch(patches, settled + 1)
+  assert.deepEqual(patches.at(-1), { ai_anxiety_level: 'high' })
+
+  // Every save wrote exactly one key: the units are genuinely independent.
+  assert.deepEqual(patches.map((patch) => Object.keys(patch).length), patches.map(() => 1))
 })
 
 test('career profile: responsive at 1280, 834 and 390 with no overflow', { timeout: 45_000 }, async (t) => {

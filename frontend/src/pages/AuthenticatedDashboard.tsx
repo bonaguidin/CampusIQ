@@ -21,7 +21,7 @@ const NAV_ITEMS: Array<{ key: NavSection; label: string }> = [
 ];
 
 export function AuthenticatedDashboard() {
-  const { studentAccount, signOutSession, session } = useAuth();
+  const { studentAccount, signOutSession, session, reloadStudentProfile } = useAuth();
   // The term view reads planned_courses and the catalog through the session
   // bearer token. Absent one, the section falls back to the flat course list
   // below rather than rendering an empty planner.
@@ -228,6 +228,23 @@ export function AuthenticatedDashboard() {
                           majorCurrent: dashboard.majorCurrent,
                           majorIntended: dashboard.majorIntended,
                         }}
+                        // Each field PATCHes only its own keys and then
+                        // reloads, so the page re-renders from the server's
+                        // answer rather than from what the editor hoped it
+                        // wrote. Without a token there is nothing to save
+                        // with, so the profile stays read-only rather than
+                        // growing buttons that cannot work.
+                        editing={
+                          accessToken
+                            ? {
+                                accessToken,
+                                onSaved: async () => {
+                                  await reloadStudentProfile();
+                                  setProfileSaved(true);
+                                },
+                              }
+                            : null
+                        }
                       />
                     </div>
                   </>
