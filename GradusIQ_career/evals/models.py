@@ -103,10 +103,65 @@ class EvalMetric(StrictModel):
     detail: str | None = None
 
 
+class SafeGroundingSummary(StrictModel):
+    source_categories: list[str] = Field(default_factory=list)
+    grounded_target_roles: list[str] = Field(default_factory=list)
+    onet_evidence_present: bool = False
+    employer_posting_evidence_supplied: bool = False
+    role_resolution_sources: dict[str, int] = Field(default_factory=dict)
+    supplied_course_count: int = 0
+    supplied_certification_count: int = 0
+    canonical_profile_used: bool = False
+    history_count: int = 0
+    tools_available: bool = False
+    persistent_memory_available: bool = False
+    source_status: str = "SOURCE_NOT_PRESENT"
+
+
+class ResearchSummary(StrictModel):
+    research_used: bool = False
+    cache_hit: bool = False
+    cache_miss: bool = False
+    research_model_turn_count: int = 0
+    tool_call_count: int = 0
+    successful_search_count: int = 0
+    source_count: int = 0
+    research_status: str = "not_used"
+
+
+class StageTiming(StrictModel):
+    context_ms: int = 0
+    grounding_ms: int = 0
+    research_ms: int = 0
+    provider_ms: int = 0
+    parse_ms: int = 0
+    validation_ms: int = 0
+    total_ms: int = 0
+
+
+class TraceSummary(StrictModel):
+    request_id: str | None = None
+    attempt_count: int = 0
+    repair_count: int = 0
+    provider_attempt_ms: list[int] = Field(default_factory=list)
+    input_tokens: int | None = None
+    output_tokens: int | None = None
+    total_tokens: int | None = None
+    final_status: str = "failed"
+    error_class: str | None = None
+
+
+class ReviewConvenience(StrictModel):
+    course_recommendations: list[str] = Field(default_factory=list)
+    certification_recommendations: list[str] = Field(default_factory=list)
+
+
 class EvalRunResult(StrictModel):
     scenario_id: str
     scenario_version: str
     feature: EvalFeature
+    purpose: str = ""
+    input_fingerprint: str = ""
     prompt_name: str
     prompt_version: str
     model: str | None = None
@@ -119,6 +174,12 @@ class EvalRunResult(StrictModel):
     output_tokens: int | None = None
     total_tokens: int | None = None
     grounding_status: EvalStatus = EvalStatus.UNVERIFIABLE
+    reviewable_output: dict[str, Any] | str | None = None
+    safe_grounding_summary: SafeGroundingSummary = Field(default_factory=SafeGroundingSummary)
+    research_summary: ResearchSummary = Field(default_factory=ResearchSummary)
+    stage_timing: StageTiming = Field(default_factory=StageTiming)
+    trace_summary: TraceSummary = Field(default_factory=TraceSummary)
+    review_convenience: ReviewConvenience = Field(default_factory=ReviewConvenience)
 
 
 def validate_unique_scenarios(scenarios: list[EvalScenario]) -> None:

@@ -83,9 +83,17 @@ class AIRuntime:
     ):
         while True:
             trace.attempt_count += 1
+            provider_started = self.monotonic()
             try:
-                return self.client.complete(messages=messages, role=context.model_role)
+                response = self.client.complete(messages=messages, role=context.model_role)
+                elapsed = max(0, round((self.monotonic() - provider_started) * 1000))
+                trace.provider_attempt_ms.append(elapsed)
+                trace.provider_ms_total += elapsed
+                return response
             except AIRequestError as exc:
+                elapsed = max(0, round((self.monotonic() - provider_started) * 1000))
+                trace.provider_attempt_ms.append(elapsed)
+                trace.provider_ms_total += elapsed
                 if not getattr(exc, "transient", False) or retry_state[0] >= len(self.backoff_seconds):
                     raise
                 self.sleep(self.backoff_seconds[retry_state[0]])
@@ -110,10 +118,16 @@ class AIRuntime:
                 trace.resolved_model = response.model
                 self._capture_usage(trace, response)
                 try:
+                    parse_started = self.monotonic()
                     parsed = parse_ai_json_response(response.text)
+                    trace.parse_ms += max(0, round((self.monotonic() - parse_started) * 1000))
                     trace.parse_status = "success"
                     data = parsed.get("data", parsed)
+                    validation_started = self.monotonic()
                     validated = output_model.model_validate(data)
+                    trace.validation_ms += max(
+                        0, round((self.monotonic() - validation_started) * 1000)
+                    )
                     trace.validation_status = "success"
                     trace.final_status = "success"
                     summary = parsed.get("summary")
@@ -127,12 +141,16 @@ class AIRuntime:
                     self._emit(trace)
                     return result
                 except AIResponseParseError as exc:
+                    trace.parse_ms += max(0, round((self.monotonic() - parse_started) * 1000))
                     trace.parse_status = "failed"
                     trace.validation_status = "not_started"
                     problems: Any = [{"type": "json_parse", "message": str(exc)}]
                     last_error = "AI response was not valid JSON."
                     trace.error_class = "parse_error"
                 except ValidationError as exc:
+                    trace.validation_ms += max(
+                        0, round((self.monotonic() - validation_started) * 1000)
+                    )
                     trace.validation_status = "failed"
                     problems = self._validation_problems(exc)
                     last_error = f"AI response did not match the {context.feature} output contract."
@@ -188,9 +206,13 @@ class AIRuntime:
             response = self._complete(messages, context, trace, retry_state)
             trace.resolved_model = response.model
             self._capture_usage(trace, response)
+            validation_started = self.monotonic()
             validated = output_model.model_validate({"content": response.text})
             if not validated.content.strip():
                 raise ValueError("Chat response must not be blank.")
+            trace.validation_ms += max(
+                0, round((self.monotonic() - validation_started) * 1000)
+            )
             trace.parse_status = "not_applicable"
             trace.validation_status = "success"
             trace.final_status = "success"
@@ -199,10 +221,16 @@ class AIRuntime:
             self._emit(trace)
             return result
         except ValidationError:
+            trace.validation_ms += max(
+                0, round((self.monotonic() - validation_started) * 1000)
+            )
             trace.parse_status = "not_applicable"
             trace.validation_status = "failed"
             trace.error_class = "validation_error"
         except ValueError:
+            trace.validation_ms += max(
+                0, round((self.monotonic() - validation_started) * 1000)
+            )
             trace.parse_status = "not_applicable"
             trace.validation_status = "failed"
             trace.error_class = "validation_error"

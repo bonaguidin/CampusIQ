@@ -78,7 +78,7 @@ def test_cli_fixture_mode_and_live_requires_double_opt_in(tmp_path, monkeypatch,
     monkeypatch.delenv("GRADUSIQ_EVAL_LIVE", raising=False)
     with pytest.raises(SystemExit):
         main(["--live"])
-    assert "results" in capsys.readouterr().out
+    assert '"run_status": "complete"' in capsys.readouterr().out
 
 
 def test_live_mode_is_explicit_and_bounded(tmp_path, monkeypatch, capsys):
@@ -91,7 +91,7 @@ def test_live_mode_is_explicit_and_bounded(tmp_path, monkeypatch, capsys):
     monkeypatch.chdir(tmp_path)
     assert main(["--live", "--output", "eval-results/live.json"]) == 0
     assert len(calls) == 12
-    assert "results" in capsys.readouterr().out
+    assert '"run_status": "complete"' in capsys.readouterr().out
 
     with pytest.raises(SystemExit):
         main(["--live", "--max-runs", "13", "--output", "eval-results/live.json"])

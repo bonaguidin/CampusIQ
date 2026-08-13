@@ -26,6 +26,10 @@ class AIExecutionTrace:
     attempt_count: int = 0
     repair_count: int = 0
     latency_ms: int = 0
+    provider_ms_total: int = 0
+    provider_attempt_ms: list[int] = field(default_factory=list)
+    parse_ms: int = 0
+    validation_ms: int = 0
     usage: AIUsage = field(default_factory=AIUsage)
     parse_status: str = "not_started"
     validation_status: str = "not_started"

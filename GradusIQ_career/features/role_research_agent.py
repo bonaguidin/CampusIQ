@@ -39,6 +39,9 @@ import logging
 import os
 import re
 import time
+from contextlib import contextmanager
+from contextvars import ContextVar
+from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Callable, Mapping
 
@@ -48,6 +51,58 @@ from GradusIQ_career.ai import AIConfigError, AIRequestError, AIResponseParseErr
 from GradusIQ_career.ai.parser import parse_ai_json_response
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass
+class ResearchAccounting:
+    research_used: bool = False
+    cache_hit: bool = False
+    cache_miss: bool = False
+    research_model_turn_count: int = 0
+    tool_call_count: int = 0
+    successful_search_count: int = 0
+    source_count: int = 0
+    research_ms: int = 0
+    research_status: str = "not_used"
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+_RESEARCH_ACCOUNTING: ContextVar[ResearchAccounting | None] = ContextVar(
+    "gradusiq_research_accounting", default=None
+)
+
+
+@contextmanager
+def capture_research_accounting():
+    """Eval-only safe counters; production calls pay only a ContextVar lookup."""
+    accounting = ResearchAccounting()
+    token = _RESEARCH_ACCOUNTING.set(accounting)
+    try:
+        yield accounting
+    finally:
+        _RESEARCH_ACCOUNTING.reset(token)
+
+
+def _account(**increments: int | bool | str) -> None:
+    accounting = _RESEARCH_ACCOUNTING.get()
+    if accounting is None:
+        return
+    for name, value in increments.items():
+        current = getattr(accounting, name)
+        if isinstance(value, bool) or isinstance(value, str):
+            setattr(accounting, name, value)
+        else:
+            setattr(accounting, name, current + value)
+
+
+def _accounting_started() -> float | None:
+    return time.monotonic() if _RESEARCH_ACCOUNTING.get() is not None else None
+
+
+def _accounting_elapsed(started: float | None) -> int:
+    return max(0, round((time.monotonic() - started) * 1000)) if started is not None else 0
 
 # Which AgentRole (model_config.py's MODEL_BY_ROLE / ENV_BY_ROLE) drives the
 # lookup loop's model selection -- resolves to OPENROUTER_DEEPSEEK_V4_FLASH by
@@ -447,6 +502,7 @@ def _run_tool_loop(
                 }
             )
 
+        _account(research_model_turn_count=1)
         message = client.complete_message(
             messages=messages,
             role=_LOOKUP_ROLE,
@@ -481,6 +537,7 @@ def _run_tool_loop(
                 "tool_calls": tool_calls,
             }
         )
+        _account(tool_call_count=len(tool_calls))
         for tool_call in tool_calls:
             function = tool_call.get("function", {}) if isinstance(tool_call, Mapping) else {}
             name = function.get("name", "")
@@ -491,6 +548,7 @@ def _run_tool_loop(
             tool_result = _execute_tool_call(name, arguments)
             if _search_returned_results(tool_result):
                 saw_evidence = True
+                _account(successful_search_count=1)
             messages.append(
                 {
                     "role": "tool",
@@ -544,25 +602,44 @@ def get_role_requirements(role: str, client: OpenRouterClient | None = None) -> 
     if not isinstance(role, str) or not role.strip():
         return None
 
+    started = _accounting_started()
     cached = _read_cache(_CACHE_PATH, role, _validate_schema)
     if cached is not None:
+        _account(
+            research_used=True, cache_hit=True, research_status="cache_hit",
+            research_ms=_accounting_elapsed(started),
+        )
         logger.info("role_research source=cache role=%s", role)
         return cached
 
+    _account(research_used=True, cache_miss=True, research_status="running")
     try:
         active_client = client if client is not None else OpenRouterClient(timeout=_LOOKUP_TIMEOUT_SECONDS)
         result = _run_tool_loop(
             f"Target role: {role}", active_client, _SYSTEM_PROMPT, _finalize_requirements
         )
     except (AIConfigError, AIRequestError, AIResponseParseError, ValueError, TimeoutError) as exc:
+        _account(
+            research_status="failed",
+            research_ms=_accounting_elapsed(started),
+        )
         logger.info("role_research source=static_fallback role=%s error=%s", role, exc)
         return None
 
     if result is None:
+        _account(
+            research_status="fallback",
+            research_ms=_accounting_elapsed(started),
+        )
         logger.info("role_research source=static_fallback role=%s", role)
         return None
 
     _write_cache(_CACHE_PATH, role, result)
+    _account(
+        research_status="success",
+        source_count=1,
+        research_ms=_accounting_elapsed(started),
+    )
     logger.info("role_research source=agent role=%s", role)
     return result
 
@@ -581,8 +658,14 @@ def get_role_trends(role: str, client: OpenRouterClient | None = None) -> dict[s
     if not isinstance(role, str) or not role.strip():
         return None
 
+    started = _accounting_started()
     cached = _read_cache(_TRENDS_CACHE_PATH, role, _validate_trends)
     if cached is not None:
+        _account(
+            research_used=True, cache_hit=True, research_status="cache_hit",
+            source_count=len(cached.get("sources", [])),
+            research_ms=_accounting_elapsed(started),
+        )
         logger.info("role_trends source=cache role=%s", role)
         return cached
 
@@ -593,9 +676,14 @@ def get_role_trends(role: str, client: OpenRouterClient | None = None) -> dict[s
     # they degrade to data/role_requirements.json, so an unsourced attempt
     # there costs nothing and may still help.
     if not _has_search_capability():
+        _account(
+            cache_miss=True, research_status="unavailable",
+            research_ms=_accounting_elapsed(started),
+        )
         logger.warning("role_trends source=none role=%s reason=no_search_capability", role)
         return None
 
+    _account(research_used=True, cache_miss=True, research_status="running")
     try:
         active_client = client if client is not None else OpenRouterClient(timeout=_LOOKUP_TIMEOUT_SECONDS)
         result = _run_tool_loop(
@@ -606,13 +694,26 @@ def get_role_trends(role: str, client: OpenRouterClient | None = None) -> dict[s
             require_evidence=True,
         )
     except (AIConfigError, AIRequestError, AIResponseParseError, ValueError, TimeoutError) as exc:
+        _account(
+            research_status="failed",
+            research_ms=_accounting_elapsed(started),
+        )
         logger.info("role_trends source=none role=%s error=%s", role, exc)
         return None
 
     if result is None:
+        _account(
+            research_status="no_evidence",
+            research_ms=_accounting_elapsed(started),
+        )
         logger.info("role_trends source=none role=%s", role)
         return None
 
     _write_cache(_TRENDS_CACHE_PATH, role, result)
+    _account(
+        research_status="success",
+        source_count=len(result.get("sources", [])),
+        research_ms=_accounting_elapsed(started),
+    )
     logger.info("role_trends source=agent role=%s", role)
     return result
