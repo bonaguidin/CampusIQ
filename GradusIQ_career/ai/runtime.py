@@ -31,6 +31,7 @@ class AIExecutionTrace:
     validation_status: str = "not_started"
     final_status: str = "failed"
     error_class: str | None = None
+    grounding_metadata: Mapping[str, Any] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -97,6 +98,11 @@ class AIRuntime:
             prompt_name=context.prompt_name,
             prompt_version=context.prompt_version,
             model_role=context.model_role,
+            grounding_metadata={
+                "source_types": list(context.grounding.source_types),
+                "trust_level": context.grounding.trust_level,
+                "attributes": dict(context.grounding.attributes),
+            },
         )
         started = self.monotonic()
         current_messages = list(messages)
@@ -132,7 +138,7 @@ class AIRuntime:
                 except ValidationError as exc:
                     trace.validation_status = "failed"
                     problems = self._validation_problems(exc)
-                    last_error = "AI response did not match the FIT output contract."
+                    last_error = f"AI response did not match the {context.feature} output contract."
                     trace.error_class = "validation_error"
 
                 if repair_index == 1:

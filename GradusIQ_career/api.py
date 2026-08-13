@@ -39,8 +39,7 @@ from GradusIQ_career.ai.openrouter_client import (
     OpenRouterClient,
 )
 from GradusIQ_career.features.base import FeatureResult
-from GradusIQ_career.ai.contracts import fit_output_is_valid
-from GradusIQ_career.features.fit import FitRunner
+from GradusIQ_career.ai.contracts import feature_output_is_valid
 from GradusIQ_career.features.orchestrator import RUNNERS, run_feature
 from GradusIQ_career.profile_builder import (
     build_profile_from_supabase,
@@ -412,8 +411,8 @@ def _valid_cached_feature_result(feature_name: str, result: object) -> bool:
         and result.get("errors") == []
         and _matches_contract(result.get("data"), runner.output_contract)
     )
-    if valid and feature_name == "FIT":
-        return fit_output_is_valid(result.get("data"))
+    if valid and feature_name in {"FIT", "GAP", "SHIFT"}:
+        return feature_output_is_valid(feature_name, result.get("data"))
     return valid
 
 
@@ -852,15 +851,17 @@ def _me_canonical_feature_profile(request: Request):
     return canonical, canonical_to_legacy_profile(canonical), str(student_id)
 
 
-def _run_authenticated_fit(request: Request, canonical, profile: dict, slug: str) -> dict:
-    """Run canonical FIT inside the existing cache and concurrency boundary."""
+def _run_authenticated_typed_feature(
+    request: Request, feature: str, canonical, profile: dict, slug: str
+) -> dict:
+    """Run a canonical typed feature inside the existing capacity boundary."""
     student_id = profile.get("student", {}).get("id")
-    cached = load_cached_feature_result(slug, "FIT", student_id)
+    cached = load_cached_feature_result(slug, feature, student_id)
     if cached is not None:
         return cached
     try:
         with request.app.state.ai_concurrency.slot():
-            runner = FitRunner(client=build_client())
+            runner = RUNNERS[feature](client=build_client())
             return runner.run_canonical(canonical, profile)
     except HTTPException:
         raise
@@ -924,8 +925,10 @@ def analyze_me(request: Request, feature: str) -> dict:
         canonical, profile, slug = _me_canonical_feature_profile(request)
     else:
         profile, slug = _me_profile(request)
-    if internal_name == "FIT":
-        return _run_authenticated_fit(request, canonical, profile, slug)
+    if internal_name in {"FIT", "GAP", "SHIFT"}:
+        return _run_authenticated_typed_feature(
+            request, internal_name, canonical, profile, slug
+        )
     return _run_protected_feature(request, internal_name, slug, profile=profile)
 
 

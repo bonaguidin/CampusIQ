@@ -1,7 +1,7 @@
 """Canonical AI integration utilities for Gradus IQ."""
 
 from .context import AgentContext, GroundingMetadata
-from .contracts import FitOutput
+from .contracts import FitOutput, GapOutput, ShiftOutput
 from .errors import AIConfigError, AIRequestError, AIResponseParseError
 from .openrouter_client import OpenRouterClient
 from .runtime import AIRuntime, AIExecutionTrace
@@ -12,6 +12,8 @@ __all__ = [
     "AgentContext",
     "GroundingMetadata",
     "FitOutput",
+    "GapOutput",
+    "ShiftOutput",
     "AIRuntime",
     "AIExecutionTrace",
     "AIMessage",

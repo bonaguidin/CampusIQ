@@ -290,8 +290,8 @@ def test_analyze_gap_success(client, monkeypatch):
           "data": {
             "readiness_score": 7,
             "strengths": ["Excel"],
-            "must_have_gaps": ["SQL"],
-            "nice_to_have_gaps": ["dashboarding"],
+            "must_have_gaps": [{"gap":"SQL","why_it_matters":"Required.","how_to_close":"Build a project."}],
+            "nice_to_have_gaps": [{"gap":"dashboarding","why_it_helps":"Useful.","how_to_close":"Build a dashboard."}],
             "recommended_next_steps": ["Build a small SQL project"]
           }
         }

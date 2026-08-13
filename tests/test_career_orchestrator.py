@@ -34,6 +34,14 @@ def feature_response(feature):
           }
         }
         """
+    if feature == "GAP":
+        return """
+        {"summary":"GAP completed","data":{"readiness_score":6,"strengths":[],"must_have_gaps":[],"nice_to_have_gaps":[],"recommended_next_steps":[]}}
+        """
+    if feature == "SHIFT":
+        return """
+        {"summary":"SHIFT completed","data":{"role_evolution_summary":"Roles are changing.","task_shifts":[],"durable_skills":[],"adjacent_paths":[],"ai_fluency_guidance":[]}}
+        """
     return f"""
     {{
       "summary": "{feature} completed",

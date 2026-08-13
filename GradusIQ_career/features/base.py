@@ -5,8 +5,13 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any, Literal, Mapping, Protocol, Sequence
 
+from pydantic import BaseModel, ValidationError
+
+from GradusIQ_career.ai.context import AgentContext, GroundingMetadata
 from GradusIQ_career.ai.errors import AIConfigError, AIRequestError, AIResponseParseError
 from GradusIQ_career.ai.parser import parse_ai_json_response
+from GradusIQ_career.ai.runtime import AIRuntime
+from GradusIQ_career.student_intelligence_profile import StudentIntelligenceProfile
 
 
 FeatureStatus = Literal["success", "skipped", "failed"]
@@ -227,6 +232,113 @@ class CareerFeatureRunner:
 
     def default_summary(self, data: Mapping[str, Any]) -> str:
         return f"{self.feature} analysis completed."
+
+
+class TypedRuntimeFeatureRunner(CareerFeatureRunner):
+    """Canonical authenticated execution shared by typed feature runners."""
+
+    prompt_name: str
+    prompt_version: str
+    output_model: type[BaseModel]
+
+    def __init__(self, *args, runtime_factory=AIRuntime, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.runtime_factory = runtime_factory
+        self.last_trace: dict[str, Any] | None = None
+
+    def validate_data(self, data, student_profile):
+        try:
+            self.output_model.model_validate(data)
+        except ValidationError as exc:
+            return [
+                f"{self.feature} output contract violation at "
+                + ".".join(str(part) for part in error["loc"])
+                for error in exc.errors(include_url=False)
+            ]
+        return []
+
+    def grounding_metadata(self, student_context: Mapping[str, Any]) -> GroundingMetadata:
+        return GroundingMetadata(source_types=("student_confirmed",))
+
+    def run_canonical(
+        self,
+        canonical_profile: StudentIntelligenceProfile,
+        legacy_profile: Mapping[str, Any],
+    ) -> dict[str, Any]:
+        missing = find_missing_fields(
+            legacy_profile, self.required_paths
+        ) or self.additional_missing_fields(legacy_profile)
+        if missing:
+            # The ordinary runner owns the established skip result shape and
+            # exits before building grounding or calling the provider.
+            return super().run(legacy_profile)
+
+        try:
+            prompt_template = load_prompt_template(self.prompt_path)
+            student_context = self.build_student_context(legacy_profile)
+        except (OSError, ValueError) as exc:
+            return FeatureResult(
+                feature=self.feature,
+                status="failed",
+                summary=f"{self.feature} analysis failed.",
+                data={},
+                errors=[str(exc)],
+            ).to_dict()
+
+        context = AgentContext(
+            feature=self.feature,
+            canonical_profile=canonical_profile,
+            model_role=self.role,
+            prompt_name=self.prompt_name,
+            prompt_version=self.prompt_version,
+            grounding=self.grounding_metadata(student_context),
+        )
+        messages = self._messages_for_prebuilt_context(prompt_template, student_context)
+        result = self.runtime_factory(self.client).invoke(
+            context=context,
+            messages=messages,
+            output_model=self.output_model,
+        )
+        self.last_trace = result.trace.to_dict()
+        if result.output is None:
+            return FeatureResult(
+                feature=self.feature,
+                status="failed",
+                summary=f"{self.feature} analysis failed.",
+                data={},
+                errors=result.errors,
+            ).to_dict()
+        data = result.output.model_dump(mode="json")
+        return FeatureResult(
+            feature=self.feature,
+            status="success",
+            summary=result.summary or self.default_summary(data),
+            data=data,
+            errors=[],
+        ).to_dict()
+
+    def _messages_for_prebuilt_context(
+        self, prompt_template: str, student_context: Mapping[str, Any]
+    ) -> list[dict[str, str]]:
+        return [
+            {
+                "role": "system",
+                "content": (
+                    "You are Gradus IQ. Return valid JSON only. Do not wrap the response "
+                    "in Markdown. Follow the requested output contract exactly."
+                ),
+            },
+            {
+                "role": "user",
+                "content": (
+                    f"{prompt_template}\n\n"
+                    "Return JSON only using this feature result contract:\n"
+                    f"{json.dumps(self.feature_contract(), indent=2)}\n\n"
+                    "Relevant student profile context:\n"
+                    f"{json.dumps(student_context, indent=2, sort_keys=True)}"
+                ),
+            },
+        ]
 
 
 def load_prompt_template(path: Path) -> str:

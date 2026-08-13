@@ -104,8 +104,8 @@ def test_gap_success_with_mocked_ai_json():
           "data": {
             "readiness_score": 6,
             "strengths": ["Excel", "presentation"],
-            "must_have_gaps": ["SQL"],
-            "nice_to_have_gaps": ["dashboarding"],
+            "must_have_gaps": [{"gap":"SQL","why_it_matters":"Required for analysis.","how_to_close":"Build a SQL project."}],
+            "nice_to_have_gaps": [{"gap":"dashboarding","why_it_helps":"Makes findings visible.","how_to_close":"Build a dashboard."}],
             "recommended_next_steps": ["Build a small SQL project"]
           }
         }
@@ -127,8 +127,8 @@ _GAP_SUCCESS_JSON = """
   "data": {
     "readiness_score": 6,
     "strengths": ["Excel", "presentation"],
-    "must_have_gaps": ["SQL"],
-    "nice_to_have_gaps": ["dashboarding"],
+    "must_have_gaps": [{"gap":"SQL","why_it_matters":"Required for analysis.","how_to_close":"Build a SQL project."}],
+    "nice_to_have_gaps": [{"gap":"dashboarding","why_it_helps":"Makes findings visible.","how_to_close":"Build a dashboard."}],
     "recommended_next_steps": ["Build a small SQL project"]
   }
 }
@@ -302,9 +302,9 @@ def test_shift_success_with_mocked_ai_json():
           "summary": "Your target roles are shifting toward AI-assisted analysis.",
           "data": {
             "role_evolution_summary": "Business roles increasingly expect AI-assisted analysis.",
-            "task_shifts": ["first-pass spreadsheet analysis"],
-            "durable_skills": ["judgment", "communication"],
-            "adjacent_paths": ["operations analytics"],
+            "task_shifts": [{"task":"first-pass spreadsheet analysis","changing":"AI drafts it.","meaning":"Review matters more."}],
+            "durable_skills": [{"task":"judgment","reason":"Context remains human."}],
+            "adjacent_paths": [{"path":"operations analytics","relevance":"Uses current skills.","driver":"More automation."}],
             "ai_fluency_guidance": ["Describe how you use AI to check assumptions"]
           }
         }
@@ -315,7 +315,7 @@ def test_shift_success_with_mocked_ai_json():
 
     assert result["feature"] == "SHIFT"
     assert result["status"] == "success"
-    assert result["data"]["durable_skills"] == ["judgment", "communication"]
+    assert result["data"]["durable_skills"][0]["task"] == "judgment"
     assert client.calls[0]["role"] == "career"
     assert "SHIFT Prompt" in client.calls[0]["messages"][1]["content"]
 
@@ -331,7 +331,7 @@ def test_shift_runs_without_ai_anxiety_level():
     """
     student = sample_student()
     student["career"].pop("ai_anxiety_level")
-    client = FakeClient('{"summary": "ok", "data": {"role_evolution_summary": "ok"}}')
+    client = FakeClient('{"summary":"ok","data":{"role_evolution_summary":"ok","task_shifts":[],"durable_skills":[],"adjacent_paths":[],"ai_fluency_guidance":[]}}')
 
     result = ShiftRunner(client=client).run(student)
 
@@ -471,6 +471,10 @@ def test_run_career_feature_helper(feature_name, expected_runner):
     payload = '{"summary": "done", "data": {}}'
     if expected_runner == "FIT":
         payload = '''{"summary":"done","data":{"role_matches":[{"role":"Business Analyst Intern","fit_level":"medium","rationale":"Relevant foundation.","supporting_signals":[],"missing_signals":[]}],"overall_fit_summary":"A developing fit."}}'''
+    elif expected_runner == "GAP":
+        payload = _GAP_SUCCESS_JSON
+    elif expected_runner == "SHIFT":
+        payload = '''{"summary":"done","data":{"role_evolution_summary":"Roles are changing.","task_shifts":[],"durable_skills":[],"adjacent_paths":[],"ai_fluency_guidance":[]}}'''
     client = FakeClient(payload)
 
     result = run_career_feature(feature_name, sample_student(), client)
@@ -661,9 +665,7 @@ def test_gap_rejects_out_of_scale_readiness_score(score):
     # A live run returned readiness_score 0.32 for a student whose roles mostly
     # lacked O*NET data. It passed every check that existed, because
     # api.py's _matches_contract only asks whether the value is a number.
-    client = FakeClient(
-        '{"summary": "s", "data": {"readiness_score": ' + score + ', "strengths": []}}'
-    )
+    client = FakeClient('{"summary":"s","data":{"readiness_score":' + score + ',"strengths":[],"must_have_gaps":[],"nice_to_have_gaps":[],"recommended_next_steps":[]}}')
 
     result = GapRunner(client=client).run(sample_student())
 
@@ -673,19 +675,16 @@ def test_gap_rejects_out_of_scale_readiness_score(score):
 
 @pytest.mark.parametrize("score", ["0", "7", "10"])
 def test_gap_accepts_whole_numbers_on_the_zero_to_ten_scale(score):
-    client = FakeClient(
-        '{"summary": "s", "data": {"readiness_score": ' + score + ', "strengths": []}}'
-    )
+    client = FakeClient('{"summary":"s","data":{"readiness_score":' + score + ',"strengths":[],"must_have_gaps":[],"nice_to_have_gaps":[],"recommended_next_steps":[]}}')
 
     assert GapRunner(client=client).run(sample_student())["status"] == "success"
 
 
-def test_gap_tolerates_a_missing_readiness_score():
-    # Absence renders as nothing; a wrong value renders as a confident
-    # falsehood. Only the second is what the guard exists to stop.
-    client = FakeClient('{"summary": "s", "data": {"strengths": []}}')
-
-    assert GapRunner(client=client).run(sample_student())["status"] == "success"
+def test_gap_rejects_a_missing_readiness_score_under_strict_contract():
+    client = FakeClient('{"summary":"s","data":{"strengths":[],"must_have_gaps":[],"nice_to_have_gaps":[],"recommended_next_steps":[]}}')
+    result = GapRunner(client=client).run(sample_student())
+    assert result["status"] == "failed"
+    assert "readiness_score" in result["errors"][0]
 
 
 # ----------------------------------------------------------- FIT grounding
