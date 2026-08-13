@@ -56,6 +56,14 @@ Full audit complete (2026-08-11) and Phase 1 implementation built and staged (20
 
 ## 🟢 Agentic architecture — proposed, not started
 
+### Runtime foundation
+
+- [x] Canonical `AgentContext` and shared bounded `AIRuntime` for authenticated FIT/GAP/SHIFT.
+- [x] Strict typed FIT/GAP/SHIFT output contracts with one bounded structured repair.
+- [x] Canonical authenticated stateless Chat with validated text output and AI concurrency enforcement.
+- [x] Versioned, safe in-memory invocation traces plus deterministic evaluation scenarios and comparison support (Phase B1).
+- [ ] Phase B2: choose and review durable trace storage/retention before enabling production persistence. Cost estimation remains deferred until reliable repository-controlled model pricing exists.
+
 - `role_research_agent.py` is the one real agent in the codebase (bounded tool loop, Tavily, timeout/injection bounds, cache-first). Copy this pattern, don't reinvent it.
 - FIT/GAP/SHIFT/PCA are single-shot LLM calls (`CareerFeatureRunner`) — no tool use, no loop. Chat is session-only today.
 

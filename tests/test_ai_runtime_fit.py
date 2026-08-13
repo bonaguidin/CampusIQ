@@ -158,7 +158,11 @@ def test_transient_failures_retry_and_later_success_has_trace():
     assert delays == [0.25, 0.75]
     assert result.trace.attempt_count == 3
     assert result.trace.resolved_model == "resolved/model"
-    assert result.trace.provider_usage == {"prompt_tokens": 10, "completion_tokens": 5}
+    assert result.trace.provider_usage == {
+        "input_tokens": 10,
+        "output_tokens": 5,
+        "total_tokens": 15,
+    }
     assert result.trace.latency_ms >= 0
     assert result.trace.validation_status == "success"
 

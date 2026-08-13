@@ -2,39 +2,18 @@
 
 import json
 import time
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from typing import Any, Callable, Generic, Mapping, Sequence, TypeVar
 
 from pydantic import BaseModel, ValidationError
 
 from .context import AgentContext
 from .errors import AIConfigError, AIRequestError, AIResponseParseError
+from .observability import AIExecutionTrace, NoopTraceSink, TraceSink, add_usage, normalize_usage
 from .parser import parse_ai_json_response
 
 
 OutputT = TypeVar("OutputT", bound=BaseModel)
-
-
-@dataclass
-class AIExecutionTrace:
-    request_id: str
-    feature: str
-    prompt_name: str
-    prompt_version: str
-    model_role: str
-    resolved_model: str | None = None
-    attempt_count: int = 0
-    repair_count: int = 0
-    latency_ms: int = 0
-    provider_usage: Mapping[str, Any] | None = None
-    parse_status: str = "not_started"
-    validation_status: str = "not_started"
-    final_status: str = "failed"
-    error_class: str | None = None
-    grounding_metadata: Mapping[str, Any] | None = None
-
-    def to_dict(self) -> dict[str, Any]:
-        return asdict(self)
 
 
 @dataclass
@@ -55,11 +34,38 @@ class AIRuntime:
         sleep: Callable[[float], None] = time.sleep,
         monotonic: Callable[[], float] = time.monotonic,
         backoff_seconds: Sequence[float] = (0.25, 0.75),
+        trace_sink: TraceSink | None = None,
     ) -> None:
         self.client = client
         self.sleep = sleep
         self.monotonic = monotonic
         self.backoff_seconds = tuple(backoff_seconds)
+        self.trace_sink = trace_sink or NoopTraceSink()
+
+    def _new_trace(self, context: AgentContext) -> AIExecutionTrace:
+        return AIExecutionTrace(
+            request_id=context.request_id,
+            feature=context.feature,
+            prompt_name=context.prompt_name,
+            prompt_version=context.prompt_version,
+            model_role=context.model_role,
+            started_at=context.created_at.isoformat(),
+            grounding_metadata={
+                "source_types": list(context.grounding.source_types),
+                "trust_level": context.grounding.trust_level,
+                "attributes": dict(context.grounding.attributes),
+            },
+        )
+
+    def _capture_usage(self, trace: AIExecutionTrace, response: Any) -> None:
+        raw = response.raw.get("usage") if isinstance(response.raw, Mapping) else None
+        trace.usage = add_usage(trace.usage, normalize_usage(raw))
+
+    def _emit(self, trace: AIExecutionTrace) -> None:
+        try:
+            self.trace_sink.record(trace)
+        except Exception:
+            pass
 
     @staticmethod
     def _validation_problems(exc: ValidationError) -> list[dict[str, Any]]:
@@ -92,18 +98,7 @@ class AIRuntime:
         messages: Sequence[Mapping[str, Any]],
         output_model: type[OutputT],
     ) -> AIRuntimeResult[OutputT]:
-        trace = AIExecutionTrace(
-            request_id=context.request_id,
-            feature=context.feature,
-            prompt_name=context.prompt_name,
-            prompt_version=context.prompt_version,
-            model_role=context.model_role,
-            grounding_metadata={
-                "source_types": list(context.grounding.source_types),
-                "trust_level": context.grounding.trust_level,
-                "attributes": dict(context.grounding.attributes),
-            },
-        )
+        trace = self._new_trace(context)
         started = self.monotonic()
         current_messages = list(messages)
         retry_state = [0]
@@ -113,8 +108,7 @@ class AIRuntime:
             for repair_index in range(2):
                 response = self._complete(current_messages, context, trace, retry_state)
                 trace.resolved_model = response.model
-                usage = response.raw.get("usage") if isinstance(response.raw, Mapping) else None
-                trace.provider_usage = dict(usage) if isinstance(usage, Mapping) else None
+                self._capture_usage(trace, response)
                 try:
                     parsed = parse_ai_json_response(response.text)
                     trace.parse_status = "success"
@@ -123,12 +117,15 @@ class AIRuntime:
                     trace.validation_status = "success"
                     trace.final_status = "success"
                     summary = parsed.get("summary")
-                    return AIRuntimeResult(
+                    result = AIRuntimeResult(
                         output=validated,
                         summary=summary if isinstance(summary, str) else None,
                         trace=trace,
                         errors=[],
                     )
+                    trace.latency_ms = max(0, round((self.monotonic() - started) * 1000))
+                    self._emit(trace)
+                    return result
                 except AIResponseParseError as exc:
                     trace.parse_status = "failed"
                     trace.validation_status = "not_started"
@@ -162,10 +159,17 @@ class AIRuntime:
         except AIRequestError as exc:
             trace.error_class = "transient_provider_error" if getattr(exc, "transient", False) else "provider_error"
             last_error = "AI provider request failed."
+        except AIResponseParseError:
+            trace.parse_status = "failed"
+            trace.validation_status = "not_started"
+            trace.error_class = "parse_error"
+            last_error = "AI provider response did not contain valid content."
         finally:
             trace.latency_ms = max(0, round((self.monotonic() - started) * 1000))
 
-        return AIRuntimeResult(output=None, summary=None, trace=trace, errors=[last_error])
+        result = AIRuntimeResult(output=None, summary=None, trace=trace, errors=[last_error])
+        self._emit(trace)
+        return result
 
     def invoke_text(
         self,
@@ -175,18 +179,7 @@ class AIRuntime:
         output_model: type[OutputT],
     ) -> AIRuntimeResult[OutputT]:
         """Invoke and validate natural-language output without JSON repair."""
-        trace = AIExecutionTrace(
-            request_id=context.request_id,
-            feature=context.feature,
-            prompt_name=context.prompt_name,
-            prompt_version=context.prompt_version,
-            model_role=context.model_role,
-            grounding_metadata={
-                "source_types": list(context.grounding.source_types),
-                "trust_level": context.grounding.trust_level,
-                "attributes": dict(context.grounding.attributes),
-            },
-        )
+        trace = self._new_trace(context)
         started = self.monotonic()
         retry_state = [0]
         last_error = "AI response did not contain valid text."
@@ -194,15 +187,17 @@ class AIRuntime:
         try:
             response = self._complete(messages, context, trace, retry_state)
             trace.resolved_model = response.model
-            usage = response.raw.get("usage") if isinstance(response.raw, Mapping) else None
-            trace.provider_usage = dict(usage) if isinstance(usage, Mapping) else None
+            self._capture_usage(trace, response)
             validated = output_model.model_validate({"content": response.text})
             if not validated.content.strip():
                 raise ValueError("Chat response must not be blank.")
             trace.parse_status = "not_applicable"
             trace.validation_status = "success"
             trace.final_status = "success"
-            return AIRuntimeResult(output=validated, summary=None, trace=trace, errors=[])
+            result = AIRuntimeResult(output=validated, summary=None, trace=trace, errors=[])
+            trace.latency_ms = max(0, round((self.monotonic() - started) * 1000))
+            self._emit(trace)
+            return result
         except ValidationError:
             trace.parse_status = "not_applicable"
             trace.validation_status = "failed"
@@ -224,4 +219,6 @@ class AIRuntime:
         finally:
             trace.latency_ms = max(0, round((self.monotonic() - started) * 1000))
 
-        return AIRuntimeResult(output=None, summary=None, trace=trace, errors=[last_error])
+        result = AIRuntimeResult(output=None, summary=None, trace=trace, errors=[last_error])
+        self._emit(trace)
+        return result
