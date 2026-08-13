@@ -1,6 +1,6 @@
 import { useAuth } from '../auth/useAuth';
 import { analyzeProfessorComments } from '../api/analysis';
-import { useAnalysisRun } from '../hooks/useAnalysisRun';
+import { analysisFailureMessage, useAnalysisRun } from '../hooks/useAnalysisRun';
 import type { Theme } from '../types/analysis';
 import { AnalysisPanel, type AnalysisPhase } from './AnalysisPanel';
 
@@ -37,6 +37,7 @@ export function ProfessorCommentAnalysisPanel() {
       phase={phase}
       onRun={trigger}
       missingFields={missingFields}
+      failureMessage={analysisFailureMessage(state)}
     >
       {state.phase === 'done' && state.result.status === 'success' && (
         <ThemeResult themes={state.result.data.themes} overallSummary={state.result.data.overall_summary} />

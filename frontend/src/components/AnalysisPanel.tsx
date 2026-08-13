@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import type { MissingField } from '../types/analysis';
-import { useProfileCompletionModal } from './profile/ProfileCompletionContext';
+import { useProfileFieldRequest } from './profile/ProfileCompletionContext';
 
 export type AnalysisPhase = 'idle' | 'loading' | 'skipped' | 'failed' | 'success';
 
@@ -37,6 +37,12 @@ interface AnalysisPanelProps {
   phase: AnalysisPhase;
   onRun(): void;
   missingFields?: MissingField[];
+  /**
+   * Why the run failed, when it did. Optional and additive: AnalysisPhase and
+   * the FeatureStatus contract behind it are untouched, so nothing that keys
+   * off 'failed' changes. Absent it, the generic sentence still renders.
+   */
+  failureMessage?: string;
   children?: ReactNode;
 }
 
@@ -51,9 +57,10 @@ export function AnalysisPanel({
   phase,
   onRun,
   missingFields = [],
+  failureMessage,
   children,
 }: AnalysisPanelProps) {
-  const openProfileCompletion = useProfileCompletionModal();
+  const requestProfileField = useProfileFieldRequest();
   return (
     <div className="card analysis-panel">
       <div className="editable-section-header">
@@ -96,10 +103,15 @@ export function AnalysisPanel({
             {missingFields.map((field) => (
               <li key={field.path} className="section-error-item">
                 <span className="missing-field-label">{field.label}</span>
+                {/* One gap, one action, aimed at THAT gap. This used to open a
+                    dialog listing every field the surface owned, so clicking
+                    the line that said "Target roles" produced a form whose
+                    first question was about graduation. The link now goes to
+                    the field named on the line it sits on. */}
                 {RESUME_OWNED_PATHS.has(field.path)
                   ? <Link className="missing-field-link" to="/resume">Review résumé</Link>
-                  : openProfileCompletion
-                    ? <button className="missing-field-link" type="button" onClick={(event) => openProfileCompletion({ feature: title.match(/\((FIT|GAP|SHIFT)\)/)?.[1] ?? title, missingFields: missingFields.filter((entry) => !RESUME_OWNED_PATHS.has(entry.path)), trigger: event.currentTarget })}>Complete profile</button>
+                  : requestProfileField
+                    ? <button className="missing-field-link" type="button" onClick={(event) => requestProfileField({ path: field.path, feature: title.match(/\((FIT|GAP|SHIFT)\)/)?.[1] ?? title, trigger: event.currentTarget })}>Add this</button>
                     : <Link className="missing-field-link" to={profileCompletionHref(field.path)}>Add this</Link>}
               </li>
             ))}
@@ -109,7 +121,9 @@ export function AnalysisPanel({
 
       {phase === 'failed' && (
         <div className="analysis-failed">
-          <p>Something went wrong generating this analysis. Try again in a moment.</p>
+          {/* analysisFailure owns complete recovery guidance so each failure
+              renders one coherent instruction rather than competing retries. */}
+          <p>{failureMessage ?? 'Something went wrong generating this analysis.'}</p>
         </div>
       )}
 

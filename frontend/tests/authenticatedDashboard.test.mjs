@@ -192,58 +192,64 @@ test('authenticated dashboard covers canonical states, routing, themes, errors, 
   }
   await page.getByText(/missing information/).first().waitFor()
 
-  // A skipped analysis names the field in the student's language and opens a
-  // modal without unmounting the dashboard or exposing the dotted path.
+  // A skipped analysis names the field in the student's language, and sends
+  // them to THAT field on the page they are already looking at. No dialog
+  // opens, nothing is covered, and the dotted path never reaches the screen.
   const skipped = page.locator('.analysis-skipped').first()
   await skipped.getByText('AI comfort level').waitFor()
   assert.equal(await page.getByText('career.ai_anxiety_level').count(), 0)
-  const trigger = skipped.getByRole('button', { name: 'Complete profile' }).first()
+  const trigger = skipped.getByRole('button', { name: 'Add this' }).first()
   await trigger.click()
-  const dialog = page.getByRole('dialog', { name: 'Complete your profile' })
-  await dialog.waitFor()
+  assert.equal(await page.getByRole('dialog').count(), 0, 'a dialog reappeared')
   assert.equal(await page.locator('[data-dashboard-source="authenticated"]').count(), 1)
-  // The stored 'N/A' is an answer, not a typed major: it unticks the switch
-  // and leaves the gated field empty rather than echoing the sentinel back.
-  const switching = dialog.getByLabel("I'm planning to switch majors")
-  assert.equal(await switching.isChecked(), false)
-  assert.equal(await dialog.getByLabel('Intended major').inputValue(), '')
-  assert.equal(await dialog.getByLabel('Intended major').isDisabled(), true)
-  await switching.check()
-  assert.equal(await dialog.getByLabel('Intended major').isDisabled(), false)
-  await switching.uncheck()
-  assert.equal(await dialog.getByLabel('Season').inputValue(), 'Spring')
-  assert.equal(await dialog.getByLabel('Year').inputValue(), '2028')
-  await dialog.locator('.tag-chip').filter({ hasText: 'Software Engineer' }).waitFor()
-  // Skills live on /resume now, so the modal offers no editor for them.
-  assert.equal(await dialog.locator('.tag-chip').filter({ hasText: 'TypeScript' }).count(), 0)
-  await dialog.getByRole('link', { name: 'resume review' }).waitFor()
-  // No AI radio is selected while ai_anxiety_level is null.
-  assert.equal(await dialog.locator('input[name="ai-comfort"]:checked').count(), 0)
-  await dialog.getByLabel('Moderate').check()
-  await dialog.getByRole('button', { name: 'Save changes' }).click()
-  await dialog.getByRole('alert').waitFor()
-  assert.equal(await dialog.count(), 1, 'failed save keeps the modal open')
-  await dialog.getByRole('button', { name: 'Save changes' }).click()
-  await dialog.waitFor({ state: 'detached' })
-  assert.deepEqual(profilePatches.at(-1), { ai_anxiety_level: 'moderate' })
-  assert.equal(await page.evaluate(() => document.body.dataset.profileReloaded), 'yes')
-  await page.getByRole('status').filter({ hasText: 'Profile saved' }).waitFor()
+
+  // The request landed on the field it named, and left the keyboard there.
+  const aiRow = page.locator('[data-profile-field="career.ai_anxiety_level"]')
+  await aiRow.waitFor()
+  await page.waitForFunction(() =>
+    document.activeElement?.closest('[data-profile-field="career.ai_anxiety_level"]') !== null)
+
+  // The rest of the profile stays exactly as readable as it was -- this is the
+  // half the modal used to cover.
   assert.equal(await page.getByRole('heading', { name: 'Career Profile' }).count(), 1)
+  await page.locator('.cp-roles li').getByText('Software Engineer').waitFor()
 
-  // FIT uses the same modal host; Escape closes it and restores trigger focus.
+  // No AI radio is selected while ai_anxiety_level is null.
+  assert.equal(await aiRow.locator('input:checked').count(), 0)
+  // Selection remains a local draft. The first explicit save is refused by
+  // the harness, and the failure is reported without closing or losing it.
+  await aiRow.getByLabel('Moderate').check()
+  assert.equal(profilePatches.length, 0, 'selecting AI comfort autosaved')
+  await aiRow.getByRole('button', { name: 'Save' }).click()
+  await aiRow.getByRole('alert').waitFor()
+  assert.equal(await aiRow.getByLabel('Moderate').isChecked(), true)
+  await aiRow.getByRole('button', { name: 'Save' }).click()
+  await page.waitForFunction(() => document.body.dataset.profileReloaded === 'yes')
+  assert.deepEqual(profilePatches.at(-1), { ai_anxiety_level: 'moderate' })
+  await page.getByRole('status').filter({ hasText: 'Profile saved' }).waitFor()
+
+  // FIT routes through the same handler, and asking a SECOND time for a field
+  // already visited still moves -- the request is keyed on a nonce, not on the
+  // path, or the second click would be indistinguishable from no click.
   const fitSkipped = page.locator('.analysis-panel').filter({ hasText: 'Role Fit (FIT)' }).locator('.analysis-skipped')
-  const fitTrigger = fitSkipped.getByRole('button', { name: 'Complete profile' }).first()
-  await fitTrigger.click(); await dialog.waitFor(); await page.keyboard.press('Escape')
-  await dialog.waitFor({ state: 'detached' })
-  assert.equal(await fitTrigger.evaluate((node) => node === document.activeElement), true)
-  await fitTrigger.click(); await dialog.waitFor(); await dialog.getByRole('button', { name: 'Cancel' }).click(); await dialog.waitFor({ state: 'detached' })
-  await fitTrigger.click(); await dialog.waitFor(); await dialog.getByRole('button', { name: 'Close profile completion' }).click(); await dialog.waitFor({ state: 'detached' })
+  await fitSkipped.getByRole('button', { name: 'Add this' }).first().click()
+  await page.waitForFunction(() =>
+    document.querySelector('[data-profile-field="career.ai_anxiety_level"]')?.classList.contains('cp-field-flag') === true)
+  assert.equal(await page.getByRole('dialog').count(), 0)
 
-  // The mobile sheet stays within the viewport and remains internally scrollable.
-  await page.setViewportSize({ width: 390, height: 844 }); await fitTrigger.click(); await dialog.waitFor()
-  assert.equal(await dialog.evaluate((node) => node.getBoundingClientRect().width <= innerWidth), true)
+  // Every gating detail is answered in this fixture, so the dock reports the
+  // settled state rather than inventing something to ask for.
+  const dock = page.locator('[data-profile-checklist]')
+  await dock.getByText('All details provided').waitFor()
+  assert.equal(await dock.locator('.pc-dock-item').count(), 0)
+
+  // The dock is sticky, not fixed: it participates in the page's own scroll
+  // container rather than floating above it.
+  assert.equal(await dock.evaluate((node) => getComputedStyle(node).position), 'sticky')
+
+  // No page-level horizontal overflow on a phone now that the dock is there.
+  await page.setViewportSize({ width: 390, height: 844 })
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true)
-  await page.keyboard.press('Escape'); await dialog.waitFor({ state: 'detached' })
 
   assert.deepEqual(requests.map(({ url }) => url), [
     '/api/v2/student/me/analyze/gap',

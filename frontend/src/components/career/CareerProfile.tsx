@@ -1,9 +1,78 @@
-import { Link } from 'react-router-dom';
+import { useEffect, useRef, type ReactNode } from 'react';
+import type { ProfileChanges } from '../../api/profile';
+import { revealField } from '../../lib/revealField';
 import { buildCareerViewModel } from '../../data/careerViewModel.mjs';
 import type { CanonicalCareer } from '../../types/studentIntelligenceProfile';
 import type { CertificationEntry, ExperienceEntry } from '../../data/careerViewModel.mjs';
+import { InterestsEditor } from '../InterestsEditor';
+import { TargetRolesEditor } from '../TargetRolesEditor';
+import { AiComfortField, aiComfortChanges, aiComfortLabel } from '../profile/fields/AiComfortField';
+import {
+  GraduationInputs,
+  graduationChanges,
+  graduationValueFrom,
+  validateGraduation,
+} from '../profile/fields/GraduationField';
+import { InlineEditableField } from '../profile/fields/InlineEditableField';
+import {
+  CurrentMajorInput,
+  MajorInputs,
+  majorChanges,
+  majorCurrentChanges,
+  majorValueFrom,
+  validateMajor,
+} from '../profile/fields/MajorField';
 import { ProjectCard } from './ProjectCard';
 import { SkillCloud } from './SkillCloud';
+
+/**
+ * What a field needs to save itself, or null when nothing here can be edited.
+ *
+ * Null is the honest state for a session with no bearer token: without one a
+ * PATCH cannot be sent, so no Edit button is rendered rather than one that
+ * would fail. The page falls back to exactly the read-only surface it had.
+ */
+export interface CareerEditing {
+  accessToken: string;
+  onSaved(): Promise<void>;
+}
+
+/**
+ * A standing request to go and answer one field.
+ *
+ * The nonce, not the path, is what makes the field react: asking twice for the
+ * same field has to work, and a path compared against its previous value would
+ * treat the second click as no change at all.
+ */
+export interface CareerFieldFocus {
+  path: string;
+  nonce: number;
+}
+
+/**
+ * Whether a tag list is unchanged, so an untouched field spends no request.
+ *
+ * Order is significant: these are the student's own ordering, and reordering
+ * them is an edit like any other.
+ */
+function sameList(a: string[], b: string[]): boolean {
+  return a.length === b.length && a.every((entry, index) => entry === b[index]);
+}
+
+/**
+ * The identity facts the Career tab reports but does not own.
+ *
+ * Expected graduation and the majors live on `identity` and
+ * `academics.summary`, not on `career` -- they are academic record, and this
+ * component is not going to reach across the profile to find them. The
+ * dashboard already holds all three (see dashboardViewModel) and hands them
+ * down, so this stays a props-in component and no new fetch exists anywhere.
+ */
+export interface CareerDetails {
+  expectedGraduation: string | null;
+  majorCurrent: string | null;
+  majorIntended: string | null;
+}
 
 /**
  * The authenticated Career profile.
@@ -22,61 +91,111 @@ import { SkillCloud } from './SkillCloud';
  * then projects across the full measure because they hold the most text.
  *
  * EMPTY SECTIONS COLLAPSE TO A LINE. An absence is worth one sentence, not a
- * rectangle -- and where there is a real way to fix the absence, it links to
- * /resume, which is the only career-editing path an authenticated student
- * actually has. The demo profile's inline editors (CareerPanel) are not
- * reachable from here, so no button pretends otherwise.
+ * rectangle. Student-declared direction fields edit here in place; evidence
+ * sections simply report what the canonical profile currently contains.
  */
-export function CareerProfile({ career }: { career: CanonicalCareer }) {
+export function CareerProfile({
+  career,
+  details,
+  editing = null,
+  focus = null,
+}: {
+  career: CanonicalCareer;
+  details: CareerDetails;
+  editing?: CareerEditing | null;
+  focus?: CareerFieldFocus | null;
+}) {
   const model = buildCareerViewModel(career);
   const { direction, counts } = model;
+
+  // The read-only renderings, named once so the editable and read-only paths
+  // cannot drift into showing two different things for the same data.
+  const rolesDisplay = direction.hasTargetRoles ? (
+    <ul className="cp-roles">
+      {direction.targetRoles.map((role) => (
+        <li key={role}>{role}</li>
+      ))}
+    </ul>
+  ) : (
+    <Absence
+      line="No target roles added yet."
+      help="Add the roles you're interested in so FIT, GAP and SHIFT can personalize guidance."
+    />
+  );
+  const interestsDisplay = direction.hasInterests ? (
+    <p className="cp-inline-list">{direction.interests.join(' · ')}</p>
+  ) : (
+    <Absence line="No interests added yet." />
+  );
 
   return (
     <div className="cp">
       <CareerSummary model={model} />
 
+      <DetailsSection
+        details={details}
+        aiComfort={career.ai_anxiety_level}
+        editing={editing}
+        focus={focus}
+      />
+
       <div className="cp-grid cp-grid--split">
+        {/* Each field below answers for itself. The section used to be gated on
+            one boolean covering all four, which meant a student with interests
+            and no target roles saw the interests and heard nothing at all about
+            the roles -- the field every analysis requires. */}
         <Section title="Career direction" count={null}>
-          {direction.present ? (
-            <div className="cp-direction">
-              {direction.targetRoles.length > 0 && (
-                <div className="cp-field">
-                  <h4 className="cp-subhead">Target roles</h4>
-                  <ul className="cp-roles">
-                    {direction.targetRoles.map((role) => (
-                      <li key={role}>{role}</li>
-                    ))}
-                  </ul>
-                </div>
+          <div className="cp-direction">
+            {/* TargetRolesEditor and InterestsEditor are reused unchanged, but
+                only for the editing half. Their read-only half renders chips,
+                and this page states roles as a list and interests as one line
+                -- so the display above stands and the editors supply the input
+                surface they were written for. */}
+            <FieldSlot
+              label="Target roles"
+              path="career.target_roles"
+              focus={focus}
+              wrapperClass="cp-field"
+              labelClass="cp-subhead"
+              editing={editing}
+              editLabel={direction.hasTargetRoles ? 'Edit' : 'Add target roles'}
+              value={direction.targetRoles}
+              toChanges={(roles) => (sameList(roles, direction.targetRoles) ? {} : { target_roles: roles })}
+              display={rolesDisplay}
+              edit={(draft, setDraft) => (
+                <TargetRolesEditor roles={draft} isEditing onChange={setDraft} />
               )}
-              {direction.interests.length > 0 && (
-                <div className="cp-field">
-                  <h4 className="cp-subhead">Interests</h4>
-                  <p className="cp-inline-list">{direction.interests.join(' · ')}</p>
-                </div>
-              )}
-              {direction.goals && (
-                <div className="cp-field">
-                  <h4 className="cp-subhead">Goal</h4>
-                  <p className="cp-prose">{direction.goals}</p>
-                </div>
-              )}
-              {direction.location && (
-                <div className="cp-field">
-                  <h4 className="cp-subhead">Location preference</h4>
-                  <p className="cp-prose">{direction.location}</p>
-                </div>
-              )}
-            </div>
-          ) : (
-            <Absence
-              line="No career direction yet."
-              // Stated because it is true of this product, not as encouragement:
-              // FIT, GAP and SHIFT read target roles directly.
-              help="Target roles and interests are what FIT, GAP and SHIFT analyse. Adding them to your resume and confirming it fills this in."
-              action
             />
-          )}
+            <FieldSlot
+              label="Interests"
+              path="career.interests"
+              focus={focus}
+              wrapperClass="cp-field"
+              labelClass="cp-subhead"
+              editing={editing}
+              value={direction.interests}
+              toChanges={(interests) => (sameList(interests, direction.interests) ? {} : { interests })}
+              display={interestsDisplay}
+              edit={(draft, setDraft) => (
+                <InterestsEditor interests={draft} isEditing onChange={setDraft} />
+              )}
+            />
+            {/* Goals and location keep the treatment they had: present or
+                silent. Neither is required by any analysis, so neither earns
+                an absence line arguing for itself. */}
+            {direction.goals && (
+              <div className="cp-field">
+                <h4 className="cp-subhead">Goal</h4>
+                <p className="cp-prose">{direction.goals}</p>
+              </div>
+            )}
+            {direction.location && (
+              <div className="cp-field">
+                <h4 className="cp-subhead">Location preference</h4>
+                <p className="cp-prose">{direction.location}</p>
+              </div>
+            )}
+          </div>
         </Section>
 
         <Section title="Skills" count={counts.skills}>
@@ -178,6 +297,219 @@ function CareerSummary({ model }: { model: ReturnType<typeof buildCareerViewMode
   );
 }
 
+/**
+ * The facts guidance is calibrated against, stated plainly -- and editable
+ * where the student is the one who knows them.
+ *
+ * These three rows exist because nothing in the authenticated app rendered
+ * them at all: a student could be told an analysis needed their expected
+ * graduation while the page never showed what it had. They are now also the
+ * place it gets fixed, so the answer is given where the gap is stated rather
+ * than in a dialog opened from somewhere else.
+ *
+ * A missing value is "Not set" rather than an em dash. The dash is what the
+ * demo's CareerSummaryRow uses, and it reads as a layout filler -- an absence
+ * has to say it is an absence.
+ */
+function DetailsSection({
+  details,
+  aiComfort,
+  editing,
+  focus,
+}: {
+  details: CareerDetails;
+  aiComfort: string | null;
+  editing: CareerEditing | null;
+  focus: CareerFieldFocus | null;
+}) {
+  const { expectedGraduation, majorCurrent, majorIntended } = details;
+  // The sentinel is a stored answer ("not switching"), never a major anyone
+  // typed, so it must not be printed back as though it were one.
+  const major = majorValueFrom(majorIntended);
+
+  return (
+    <Section title="Details" count={null}>
+      <div className="cp-details">
+        <FieldSlot
+          label="Expected graduation"
+          path="student.expected_graduation"
+          focus={focus}
+          wrapperClass="cp-detail"
+          labelClass="cp-detail-label"
+          editing={editing}
+          value={graduationValueFrom(expectedGraduation)}
+          validate={validateGraduation}
+          toChanges={(draft) => graduationChanges(draft, expectedGraduation)}
+          display={<DetailValue value={expectedGraduation} />}
+          edit={(draft, setDraft) => <GraduationInputs value={draft} onChange={setDraft} />}
+        />
+        {/* TWO UNITS, ONE ROW. Correcting a mis-parsed current major and
+            deciding to switch are unrelated events, so pairing them made the
+            first wait on the second -- and made a student answer a question
+            about their future to fix a typo about their present. */}
+        <div className="cp-detail cp-detail--stack">
+          <FieldSlot
+            label="Current major"
+            wrapperClass="cp-detail-unit"
+            labelClass="cp-detail-label"
+            editing={editing}
+            value={majorCurrent ?? ''}
+            toChanges={(draft) => majorCurrentChanges(draft, majorCurrent)}
+            display={<DetailValue value={majorCurrent} />}
+            edit={(draft, setDraft) => <CurrentMajorInput value={draft} onChange={setDraft} />}
+          />
+          <FieldSlot
+            label="Intended major"
+            path="student.major_intended"
+            focus={focus}
+            wrapperClass="cp-detail-unit"
+            labelClass="cp-detail-label"
+            editing={editing}
+            value={major}
+            validate={validateMajor}
+            toChanges={(draft) => majorChanges(draft, majorIntended)}
+            // Only a switching student has an intended major to report. "Not
+            // switching majors" is a real answer, but it is the absence of a
+            // second major, so it reads in the quieter absent voice rather
+            // than sitting where a major name would.
+            display={
+              <DetailValue
+                value={major.switching ? major.majorIntended : null}
+                absentLabel="Not switching majors"
+              />
+            }
+            edit={(draft, setDraft) => (
+              <MajorInputs value={draft} onChange={setDraft} idPrefix="cp-major" />
+            )}
+          />
+        </div>
+        <FieldSlot
+          label="AI comfort"
+          path="career.ai_anxiety_level"
+          focus={focus}
+          wrapperClass="cp-detail"
+          labelClass="cp-detail-label"
+          editing={editing}
+          value={aiComfort ?? ''}
+          toChanges={(draft) => aiComfortChanges(draft, aiComfort)}
+          editLabel={aiComfort ? 'Edit' : 'Add'}
+          display={<DetailValue value={aiComfortLabel(aiComfort)} absentLabel="Not answered" />}
+          edit={(draft, setDraft) => (
+            <AiComfortField value={draft} onChange={setDraft} name="cp-ai-comfort" />
+          )}
+        />
+      </div>
+    </Section>
+  );
+}
+
+/**
+ * One stored fact, or an explicit absence in its place.
+ *
+ * There is no longer a subordinate note here. It existed to hang the switching
+ * state off the current major, which said the two were one fact and its
+ * caption; they are two facts, and each is now its own editable unit with its
+ * own label and its own value.
+ */
+function DetailValue({
+  value,
+  absentLabel = 'Not set',
+}: {
+  value: string | null;
+  absentLabel?: string;
+}) {
+  return (
+    <div className="cp-detail-value-group">
+      {value ? (
+        <span className="cp-detail-value">{value}</span>
+      ) : (
+        <span className="cp-detail-value cp-detail-value--absent">{absentLabel}</span>
+      )}
+    </div>
+  );
+}
+
+/**
+ * A field that reads as prose and edits in place -- or just reads, when there
+ * is no token to save with.
+ *
+ * The read-only rendering is passed in rather than derived, so the same markup
+ * serves both paths and an editable page cannot quietly start displaying its
+ * data differently from a read-only one.
+ */
+function FieldSlot<T>({
+  label,
+  path,
+  focus = null,
+  wrapperClass,
+  labelClass,
+  editing,
+  value,
+  toChanges,
+  validate,
+  display,
+  edit,
+  editLabel = 'Edit',
+}: {
+  label: string;
+  /** The dotted path, when this field is something an analysis can require. */
+  path?: string;
+  focus?: CareerFieldFocus | null;
+  wrapperClass: string;
+  labelClass: string;
+  editing: CareerEditing | null;
+  value: T;
+  toChanges(draft: T): ProfileChanges;
+  validate?(draft: T): string | null;
+  display: ReactNode;
+  edit(draft: T, setDraft: (next: T) => void): ReactNode;
+  editLabel?: string;
+}) {
+  const node = useRef<HTMLDivElement>(null);
+  // Only this field's own requests, and only as a changing number -- see
+  // CareerFieldFocus on why the nonce rather than the path drives it.
+  const nonce = path && focus?.path === path ? focus.nonce : null;
+
+  // The slot moves the page and flags itself; the editor below opens itself.
+  // Split that way because they are two different jobs on two different nodes,
+  // and only this one owns an element to scroll to.
+  useEffect(() => {
+    if (nonce === null) return;
+    const element = node.current;
+    if (!element) return;
+    revealField(element, () => element.querySelector<HTMLElement>('input, select, textarea'));
+  }, [nonce]);
+
+  if (!editing) {
+    return (
+      <div className={wrapperClass} ref={node} data-profile-field={path}>
+        <span className={labelClass}>{label}</span>
+        {display}
+      </div>
+    );
+  }
+  return (
+    <div className={wrapperClass} ref={node} data-profile-field={path}>
+      {/* EditableSection supplies the label here, so the static one above is
+          not also rendered -- two headings for one field. */}
+      <InlineEditableField
+        title={label}
+        value={value}
+        toChanges={toChanges}
+        validate={validate}
+        accessToken={editing.accessToken}
+        onSaved={editing.onSaved}
+        openNonce={nonce}
+        editLabel={editLabel}
+      >
+        {(draft, setDraft, isEditing) =>
+          isEditing ? <div className="cp-field-edit">{edit(draft, setDraft)}</div> : display
+        }
+      </InlineEditableField>
+    </div>
+  );
+}
+
 /** A section shell: eyebrow, optional count, and a rule. */
 function Section({
   title,
@@ -205,24 +537,15 @@ function Section({
  * The old page spent a full card on three negative sentences. This is the whole
  * treatment: state the absence, and optionally say what filling it would do.
  *
- * THE LINK APPEARS ONCE PER PAGE, not once per gap. Confirming a resume rewrites
- * every career section at the same time, so a route repeated beside all five
- * absences would offer the same single action five times -- which reads as
- * nagging and makes an empty profile look busier than a full one. It sits on
- * career direction because that is the gap with a consequence worth stating
- * (FIT, GAP and SHIFT read target roles), and because it is the first section
- * on the page.
+ * Actions belong to the surrounding editable field shell. Keeping this
+ * component presentational prevents an empty student-declared field from
+ * quietly acquiring a route to an unrelated source of résumé evidence.
  */
-function Absence({ line, help, action = false }: { line: string; help?: string; action?: boolean }) {
+function Absence({ line, help }: { line: string; help?: string }) {
   return (
     <div className="cp-absent">
       <p className="cp-absent-line">{line}</p>
       {help && <p className="cp-absent-help">{help}</p>}
-      {action && (
-        <Link to="/resume" className="cp-absent-link">
-          Update from your resume
-        </Link>
-      )}
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import { useAuth } from '../auth/useAuth';
 import { analyzeFit } from '../api/analysis';
-import { useAnalysisRun } from '../hooks/useAnalysisRun';
+import { analysisFailureMessage, useAnalysisRun } from '../hooks/useAnalysisRun';
 import type { FitAnalysisData, FitLevel, FitRoleMatch } from '../types/analysis';
 import { AnalysisPanel, type AnalysisPhase } from './AnalysisPanel';
 
@@ -35,6 +35,7 @@ export function FitAnalysisPanel() {
       phase={phase}
       onRun={trigger}
       missingFields={missingFields}
+      failureMessage={analysisFailureMessage(state)}
     >
       {state.phase === 'done' && state.result.status === 'success' && (
         <FitResult data={state.result.data} summary={state.result.summary} />

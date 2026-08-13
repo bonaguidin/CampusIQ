@@ -159,7 +159,24 @@ export function certificationEntries(career) {
   });
 }
 
-/** Career direction, and whether any of it was actually provided. */
+/**
+ * Career direction, field by field.
+ *
+ * PRESENCE IS PER FIELD, NOT PER SECTION. `present` used to be the only answer
+ * this returned, and the page gated the whole of Career direction on it: a
+ * student with interests but no target roles satisfied the boolean, so the
+ * page rendered the interests and said nothing whatsoever about the roles --
+ * the one field FIT, GAP and SHIFT all require went missing silently, and the
+ * absence treatment only ever appeared for someone who had provided none of
+ * the four. `hasTargetRoles` and `hasInterests` let each field state its own
+ * absence.
+ *
+ * `present` is kept, unchanged, because `empty` below is a claim about the
+ * whole profile rather than about any one field, and that is still the
+ * question it answers. Goals and location are deliberately not given their own
+ * flags: they render when they exist and are silent when they do not, which is
+ * what they already did.
+ */
 export function careerDirection(career) {
   const targetRoles = Array.isArray(career?.target_roles)
     ? career.target_roles.filter((r) => typeof r === 'string' && r.trim()).map((r) => r.trim())
@@ -174,6 +191,8 @@ export function careerDirection(career) {
     interests,
     goals,
     location,
+    hasTargetRoles: targetRoles.length > 0,
+    hasInterests: interests.length > 0,
     present: targetRoles.length > 0 || interests.length > 0 || goals !== null || location !== null,
   };
 }

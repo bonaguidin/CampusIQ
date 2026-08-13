@@ -1,6 +1,6 @@
 import { useAuth } from '../auth/useAuth';
 import { analyzeGap } from '../api/analysis';
-import { useAnalysisRun } from '../hooks/useAnalysisRun';
+import { analysisFailureMessage, useAnalysisRun } from '../hooks/useAnalysisRun';
 import type { GapAnalysisData, GapMustHaveGap } from '../types/analysis';
 import { AnalysisPanel, type AnalysisPhase } from './AnalysisPanel';
 
@@ -36,6 +36,7 @@ export function GapAnalysisPanel() {
       phase={phase}
       onRun={trigger}
       missingFields={missingFields}
+      failureMessage={analysisFailureMessage(state)}
     >
       {state.phase === 'done' && state.result.status === 'success' && (
         <GapResult data={state.result.data} summary={state.result.summary} />
