@@ -8,6 +8,7 @@ space the slug-addressed routes structurally cannot reach.
 import json
 from contextlib import contextmanager
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 from fastapi.testclient import TestClient
@@ -755,6 +756,96 @@ def test_me_chat_releases_concurrency_slot_after_retry_exhaustion(client, monkey
 
     response = _call(client, "post", "/api/v2/student/me/chat", {"message": "hi", "history": []})
 
+    assert response.status_code == 502
+    assert (gate.exits, gate.active) == (1, False)
+
+
+def test_course_discovery_uses_trusted_scope_and_ai_gate(client, monkeypatch):
+    _patch_session(monkeypatch, profile=_full_profile())
+    monkeypatch.setattr(api, "list_planned", lambda client, sid: [])
+
+    class Gate:
+        active = False
+        entries = exits = 0
+
+        @contextmanager
+        def slot(self):
+            self.entries += 1
+            self.active = True
+            try:
+                yield
+            finally:
+                self.active = False
+                self.exits += 1
+
+    gate = Gate()
+    client.app.state.ai_concurrency = gate
+
+    class Result:
+        summary = "No verified course matched."
+
+        def model_dump(self, **kwargs):
+            return {"target_role": "SWE Intern", "verified_recommendations": []}
+
+    class Agent:
+        def __init__(self, service, provider):
+            assert service.context.student_id == STUDENT_UUID
+            assert service.context.institution.value == "tamu"
+
+        def run(self, *, needs, target_role):
+            assert gate.active is True
+            assert target_role == "SWE Intern"
+            return SimpleNamespace(errors=[], result=Result())
+
+    monkeypatch.setattr(api, "CourseDiscoveryAgent", Agent)
+    response = _call(
+        client, "post", "/api/v2/student/me/analyze/course-discovery",
+        {"target_role": "SWE Intern"},
+    )
+    assert response.status_code == 200
+    assert set(response.json()) == {"feature", "status", "summary", "data", "errors", "missing_fields"}
+    assert (gate.entries, gate.exits, gate.active) == (1, 1, False)
+
+
+def test_course_discovery_rejects_client_student_id_and_releases_gate_on_failure(client, monkeypatch):
+    _patch_session(monkeypatch, profile=_full_profile())
+    rejected = _call(
+        client, "post", "/api/v2/student/me/analyze/course-discovery",
+        {"target_role": "SWE Intern", "student_id": "other-student"},
+    )
+    assert rejected.status_code == 422
+
+    monkeypatch.setattr(api, "list_planned", lambda client, sid: [])
+
+    class Gate:
+        active = False
+        exits = 0
+
+        @contextmanager
+        def slot(self):
+            self.active = True
+            try:
+                yield
+            finally:
+                self.active = False
+                self.exits += 1
+
+    gate = Gate()
+    client.app.state.ai_concurrency = gate
+
+    class Agent:
+        def __init__(self, *args):
+            pass
+
+        def run(self, **kwargs):
+            assert gate.active is True
+            raise RuntimeError("provider unavailable")
+
+    monkeypatch.setattr(api, "CourseDiscoveryAgent", Agent)
+    response = _call(
+        client, "post", "/api/v2/student/me/analyze/course-discovery",
+        {"target_role": "SWE Intern"},
+    )
     assert response.status_code == 502
     assert (gate.exits, gate.active) == (1, False)
 

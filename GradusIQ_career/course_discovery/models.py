@@ -1,6 +1,7 @@
 """Strict contracts for deterministic course discovery."""
 
 from enum import Enum
+import hashlib
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -224,6 +225,7 @@ class EvidenceState(str, Enum):
 
 
 class CareerSkillNeed(StrictModel):
+    need_id: str = ""
     skill: str = Field(min_length=1, max_length=100)
     category: str | None = Field(default=None, max_length=100)
     target_role: str = Field(min_length=1, max_length=150)
@@ -231,6 +233,15 @@ class CareerSkillNeed(StrictModel):
     evidence_state: EvidenceState
     evidence_source: str = Field(min_length=1, max_length=200)
     confidence: float | None = Field(default=None, ge=0, le=1)
+
+    @model_validator(mode="after")
+    def assign_stable_id(self):
+        if not self.need_id:
+            digest = hashlib.sha256(
+                f"{self.target_role}|{self.category}|{self.skill}|{self.evidence_source}".lower().encode()
+            ).hexdigest()[:12]
+            object.__setattr__(self, "need_id", f"need_{digest}")
+        return self
 
 
 class CourseCandidate(StrictModel):

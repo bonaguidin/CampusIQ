@@ -149,6 +149,20 @@ def test_complete_message_returns_raw_message_with_tool_calls_and_null_content(m
     assert len(session.calls) == 1
 
 
+def test_complete_message_metadata_exposes_safe_model_and_usage(monkeypatch):
+    monkeypatch.setenv("OPENROUTER_API_KEY", "test-key")
+    session = FakeSession(payload={
+        "choices": [{"message": {"content": None, "tool_calls": []}}],
+        "usage": {"prompt_tokens": 7, "completion_tokens": 3, "total_tokens": 10},
+    })
+    response = OpenRouterClient(session=session).complete_message_with_metadata(
+        messages=[{"role": "user", "content": "hello"}], model="test-model"
+    )
+    assert response.model == "test-model"
+    assert response.usage == {"prompt_tokens": 7, "completion_tokens": 3, "total_tokens": 10}
+    assert response.message["tool_calls"] == []
+
+
 def test_complete_message_still_raises_ai_request_error_on_network_failure(monkeypatch):
     monkeypatch.setenv("OPENROUTER_API_KEY", "test-key")
     session = FakeSession(error=requests.Timeout("too slow"))
@@ -378,6 +392,7 @@ def test_roles_validated_at_startup_excludes_the_two_documented_roles():
         "role_research",
         "parsing",
         "chat",
+        "course_discovery",
     }
     # Deliberate exclusions -- see the comment above the frozenset. 'chat' was
     # a third exclusion until its "@preset/chat" hardcode was removed; it is

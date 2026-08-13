@@ -41,7 +41,7 @@ from GradusIQ_career.ai.openrouter_client import (
     DEEPSEEK_R1_REASONING_TIMEOUT_SECONDS,
     OpenRouterClient,
 )
-from GradusIQ_career.features.base import FeatureResult
+from GradusIQ_career.features.base import FeatureResult, MissingField
 from GradusIQ_career.features.orchestrator import RUNNERS, run_feature
 from GradusIQ_career.profile_builder import (
     build_profile_from_supabase,
@@ -57,6 +57,14 @@ from GradusIQ_career.planning.planned import (
 )
 from GradusIQ_career.planning.search import CatalogSearchError, search_catalog
 from GradusIQ_career.planning.term_view import fetch_terms_view
+from GradusIQ_career.course_discovery.agent import CourseDiscoveryAgent
+from GradusIQ_career.course_discovery.models import (
+    CourseDiscoveryContext,
+    PlannedCourseEvidence,
+    resolve_institution,
+)
+from GradusIQ_career.course_discovery.needs import derive_career_skill_needs
+from GradusIQ_career.course_discovery.service import CourseDiscoveryService
 from GradusIQ_career.resume.extraction import extract_resume_text
 from GradusIQ_career.resume.parser import parse_resume_text
 from GradusIQ_career.resume.review import (
@@ -903,6 +911,7 @@ _ME_FEATURE_NAMES = {
     "fit": "FIT",
     "shift": "SHIFT",
     "professor-comments": "PROFESSOR_COMMENTS",
+    "course-discovery": "COURSE_DISCOVERY",
 }
 
 
@@ -971,6 +980,64 @@ class ProfileUpdateRequest(BaseModel):
     skills_soft: list[str] | None = None
 
 
+class CourseDiscoveryRequest(BaseModel):
+    """Minimal student input; identity and institution are trusted server scope."""
+
+    model_config = ConfigDict(extra="forbid")
+    target_role: str | None = Field(default=None, min_length=1, max_length=150)
+
+
+def _run_authenticated_course_discovery(
+    request: Request, body: CourseDiscoveryRequest | None
+) -> dict:
+    client = _session_client(request)
+    student_id = _resolve_session_student_id(client)
+    canonical = build_student_intelligence_profile(client, student_id)
+    institution = resolve_institution(canonical.institution.name)
+    if institution is None:
+        return FeatureResult(
+            feature="COURSE_DISCOVERY", status="skipped",
+            summary="Course discovery is not available for this institution.",
+            missing_fields=[MissingField(path="institution.name", label="Supported institution")],
+        ).to_dict()
+    roles = canonical.career.target_roles if canonical.career.confirmed else []
+    requested = body.target_role.strip() if body and body.target_role else None
+    target_role = requested or (roles[0] if len(roles) == 1 else None)
+    if target_role is None or target_role not in roles:
+        return FeatureResult(
+            feature="COURSE_DISCOVERY", status="skipped",
+            summary="Select a confirmed target role before discovering courses.",
+            missing_fields=[MissingField(path="career.target_roles", label="Confirmed target role")],
+        ).to_dict()
+    planned = [
+        PlannedCourseEvidence(
+            id=item.id, institution=institution, course_code=item.course_code,
+            term_id=item.term_id, catalog_course_id=item.catalog_course_id,
+        )
+        for item in list_planned(client, str(student_id))
+    ]
+    context = CourseDiscoveryContext(
+        profile=canonical, institution=institution, planned_courses=planned
+    )
+    needs = derive_career_skill_needs(canonical, target_role)
+    try:
+        with request.app.state.ai_concurrency.slot():
+            outcome = CourseDiscoveryAgent(
+                CourseDiscoveryService(context), build_client()
+            ).run(needs=needs, target_role=target_role)
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail="Course discovery is unavailable.") from exc
+    if outcome.errors or outcome.result is None:
+        return FeatureResult(
+            feature="COURSE_DISCOVERY", status="failed",
+            summary="Course discovery failed.", errors=outcome.errors,
+        ).to_dict()
+    return FeatureResult(
+        feature="COURSE_DISCOVERY", status="success", summary=outcome.result.summary,
+        data=outcome.result.model_dump(mode="json"),
+    ).to_dict()
+
+
 _GRADUATION_PATTERN = re.compile(r"^(Spring|Fall) 20[0-9]{2}$")
 
 
@@ -998,7 +1065,9 @@ def _clean_profile_list(value: list[str] | None, field: str) -> list[str] | None
     "/api/v2/student/me/analyze/{feature}",
     dependencies=[Depends(authorize_proxy_request)],
 )
-def analyze_me(request: Request, feature: str) -> dict:
+def analyze_me(
+    request: Request, feature: str, body: CourseDiscoveryRequest | None = None
+) -> dict:
     internal_name = _ME_FEATURE_NAMES.get(feature)
     if internal_name is None:
         supported = ", ".join(sorted(_ME_FEATURE_NAMES))
@@ -1006,6 +1075,8 @@ def analyze_me(request: Request, feature: str) -> dict:
             status_code=404,
             detail=f"Unknown feature '{feature}'. Expected one of: {supported}.",
         )
+    if internal_name == "COURSE_DISCOVERY":
+        return _run_authenticated_course_discovery(request, body)
     # Professor comments still require the demo/Canvas-era submissions shape,
     # which StudentIntelligenceProfile deliberately does not fabricate. Keep
     # that route on its existing legacy path; Phase 3 is career features only.

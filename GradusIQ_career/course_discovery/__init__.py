@@ -11,15 +11,22 @@ from .models import (
 )
 from .service import CourseDiscoveryService
 from .tools import ReadOnlyCourseTools
+from .agent import CourseDiscoveryAgent
+from .agent_models import CourseDiscoveryProposal, CourseDiscoveryResult
+from .needs import derive_career_skill_needs
 
 __all__ = [
     "CareerSkillNeed",
     "CatalogInstitution",
     "CourseDiscoveryContext",
     "CourseDiscoveryService",
+    "CourseDiscoveryAgent",
+    "CourseDiscoveryProposal",
+    "CourseDiscoveryResult",
     "CourseEligibilityResult",
     "CourseEligibilityStatus",
     "LocalCatalogRepository",
     "ReadOnlyCourseTools",
     "classify_gap_output_fields",
+    "derive_career_skill_needs",
 ]
