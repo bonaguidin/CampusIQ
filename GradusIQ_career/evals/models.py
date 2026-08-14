@@ -4,6 +4,10 @@ from enum import Enum
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
+from GradusIQ_career.course_discovery.agent_models import (
+    CourseDiscoveryResult,
+    CourseDiscoveryTrace,
+)
 
 
 class StrictModel(BaseModel):
@@ -15,6 +19,7 @@ class EvalFeature(str, Enum):
     GAP = "gap"
     SHIFT = "shift"
     CHAT = "chat"
+    COURSE_DISCOVERY = "course_discovery"
 
 
 class EvalStatus(str, Enum):
@@ -27,6 +32,11 @@ class EvalStatus(str, Enum):
 class EvalExpectation(StrictModel):
     check: str
     description: str
+
+
+class CourseDiscoveryExpectation(StrictModel):
+    candidate_code: str
+    expected_state: str
 
 
 class SyntheticExperience(StrictModel):
@@ -53,6 +63,7 @@ class SyntheticChatTurn(StrictModel):
 
 
 class SyntheticStudentInput(StrictModel):
+    institution: str = "Synthetic University"
     current_major: str | None = None
     intended_major: str | None = None
     classification: str | None = "Junior"
@@ -65,9 +76,12 @@ class SyntheticStudentInput(StrictModel):
     projects: list[SyntheticProject] = Field(default_factory=list)
     certifications: list[str] = Field(default_factory=list)
     completed_courses: list[SyntheticCourse] = Field(default_factory=list)
+    in_progress_courses: list[SyntheticCourse] = Field(default_factory=list)
+    planned_courses: list[SyntheticCourse] = Field(default_factory=list)
     career_goals: str | None = None
     chat_question: str | None = None
     chat_history: list[SyntheticChatTurn] = Field(default_factory=list, max_length=12)
+    adversarial_instruction: str | None = Field(default=None, max_length=500)
 
     def safe_fingerprint(self) -> str:
         normalized = json.dumps(self.model_dump(mode="json"), sort_keys=True, separators=(",", ":"))
@@ -85,6 +99,7 @@ class EvalScenario(StrictModel):
     fixture_results: dict[EvalFeature, dict[str, Any]]
     student_evidence: list[str] = Field(default_factory=list)
     grounding_evidence: list[str] = Field(default_factory=list)
+    course_discovery_expectation: CourseDiscoveryExpectation | None = None
 
     @model_validator(mode="after")
     def fixtures_match_features(self):
@@ -159,6 +174,28 @@ class ReviewConvenience(StrictModel):
     certification_recommendations: list[str] = Field(default_factory=list)
 
 
+class CourseDiscoveryToolSummary(StrictModel):
+    tool_rounds: int = Field(default=0, ge=0)
+    tool_call_count: int = Field(default=0, ge=0)
+    search_courses_count: int = Field(default=0, ge=0)
+    get_course_count: int = Field(default=0, ge=0)
+    student_status_count: int = Field(default=0, ge=0)
+    eligibility_count: int = Field(default=0, ge=0)
+    candidate_count: int = Field(default=0, ge=0)
+    proposal_count: int = Field(default=0, ge=0)
+    verified_count: int = Field(default=0, ge=0)
+    unresolved_count: int = Field(default=0, ge=0)
+    rejected_count: int = Field(default=0, ge=0)
+
+
+class CourseDiscoveryReview(StrictModel):
+    institution: str
+    validated_result: CourseDiscoveryResult
+    safe_trace: CourseDiscoveryTrace
+    tool_summary: CourseDiscoveryToolSummary
+    rejection_reasons: dict[str, int] = Field(default_factory=dict)
+
+
 class EvalRunResult(StrictModel):
     scenario_id: str
     scenario_version: str
@@ -183,6 +220,7 @@ class EvalRunResult(StrictModel):
     stage_timing: StageTiming = Field(default_factory=StageTiming)
     trace_summary: TraceSummary = Field(default_factory=TraceSummary)
     review_convenience: ReviewConvenience = Field(default_factory=ReviewConvenience)
+    course_discovery_review: CourseDiscoveryReview | None = None
 
 
 def validate_unique_scenarios(scenarios: list[EvalScenario]) -> None:

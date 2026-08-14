@@ -5,6 +5,11 @@ from .evaluators import aggregate, evaluate_fixture
 from .models import EvalFeature, EvalRunResult, EvalScenario, EvalStatus, validate_unique_scenarios
 
 
+PHASE_B_FEATURES = (
+    EvalFeature.FIT, EvalFeature.GAP, EvalFeature.SHIFT, EvalFeature.CHAT
+)
+
+
 LiveExecutor = Callable[[EvalScenario, EvalFeature], dict]
 ResultCallback = Callable[[EvalRunResult, int, int], None]
 ProgressCallback = Callable[[str, EvalScenario, EvalFeature, int, int, EvalRunResult | None], None]
@@ -17,7 +22,7 @@ def select_controlled_live_scenarios(
     available = list(scenarios)
     validate_unique_scenarios(available)
     selected: list[EvalScenario] = []
-    for feature in EvalFeature:
+    for feature in PHASE_B_FEATURES:
         matches = [
             scenario
             for scenario in available
@@ -34,6 +39,38 @@ def select_controlled_live_scenarios(
         selected.extend(matches[:per_feature])
     if len(selected) > 12:
         raise ValueError("Controlled live selection exceeds the 12-evaluation hard cap.")
+    return selected
+
+
+def select_controlled_course_discovery_scenarios(
+    scenarios: Iterable[EvalScenario],
+) -> list[EvalScenario]:
+    """Validate all six C2 cases, including deterministic fixture state, up front."""
+    from GradusIQ_career.course_discovery.service import CourseDiscoveryService
+    from .live import build_course_discovery_context
+
+    selected = list(scenarios)
+    validate_unique_scenarios(selected)
+    if len(selected) != 6:
+        raise ValueError(f"Controlled Course Discovery requires exactly 6 scenarios; found {len(selected)}.")
+    fingerprints = set()
+    for scenario in selected:
+        if scenario.features != {EvalFeature.COURSE_DISCOVERY} or not scenario.live_eligible:
+            raise ValueError(f"Invalid controlled Course Discovery scenario: {scenario.scenario_id}.")
+        if scenario.course_discovery_expectation is None:
+            raise ValueError(f"Missing Course Discovery expectation: {scenario.scenario_id}.")
+        fingerprints.add(scenario.synthetic_input.safe_fingerprint())
+        context = build_course_discovery_context(scenario)
+        actual = CourseDiscoveryService(context).check_eligibility(
+            scenario.course_discovery_expectation.candidate_code
+        ).status.value
+        if actual != scenario.course_discovery_expectation.expected_state:
+            raise ValueError(
+                f"Invalid expected catalog state for {scenario.scenario_id}: "
+                f"expected {scenario.course_discovery_expectation.expected_state}, got {actual}."
+            )
+    if len(fingerprints) != 6:
+        raise ValueError("Controlled Course Discovery inputs must have 6 distinct fingerprints.")
     return selected
 
 
@@ -93,6 +130,7 @@ def run_scenarios(
                 stage_timing=observation.get("stage_timing", {}),
                 trace_summary=observation.get("trace_summary", {}),
                 review_convenience=observation.get("review_convenience", {}),
+                course_discovery_review=observation.get("course_discovery_review"),
             )
         results.append(result)
         if on_result:

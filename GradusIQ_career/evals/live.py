@@ -7,7 +7,20 @@ from typing import Any, Callable, Mapping
 from GradusIQ_career.ai.context import AgentContext, GroundingMetadata
 from GradusIQ_career.ai.contracts import ChatOutput
 from GradusIQ_career.ai.runtime import AIRuntime
-from GradusIQ_career.api import ChatRequest, build_canonical_chat_messages, build_client
+from GradusIQ_career.api import (
+    ChatRequest,
+    app as production_app,
+    build_canonical_chat_messages,
+    build_client,
+)
+from GradusIQ_career.course_discovery.agent import CourseDiscoveryAgent
+from GradusIQ_career.course_discovery.models import (
+    CourseDiscoveryContext,
+    PlannedCourseEvidence,
+    resolve_institution,
+)
+from GradusIQ_career.course_discovery.needs import derive_career_skill_needs
+from GradusIQ_career.course_discovery.service import CourseDiscoveryService
 from GradusIQ_career.features import role_research_agent
 from GradusIQ_career.features.orchestrator import RUNNERS
 from GradusIQ_career.profile_builder import canonical_to_legacy_profile
@@ -17,6 +30,23 @@ from .profiles import build_synthetic_canonical_profile
 
 
 _COURSE_CODE = re.compile(r"\b[A-Z]{2,5}\s?\d{3,4}\b")
+
+
+def build_course_discovery_context(scenario: EvalScenario) -> CourseDiscoveryContext:
+    canonical = build_synthetic_canonical_profile(scenario.synthetic_input)
+    institution = resolve_institution(canonical.institution.name)
+    if institution is None:
+        raise ValueError("Course Discovery evaluation requires a supported institution.")
+    planned = [
+        PlannedCourseEvidence(
+            id=f"synthetic-plan-{index}", institution=institution,
+            course_code=course.course_code,
+        )
+        for index, course in enumerate(scenario.synthetic_input.planned_courses, 1)
+    ]
+    return CourseDiscoveryContext(
+        profile=canonical, institution=institution, planned_courses=planned
+    )
 
 
 def _elapsed_ms(monotonic: Callable[[], float], started: float) -> int:
@@ -65,7 +95,7 @@ def _safe_grounding(
         "supplied_certification_count": len(scenario.synthetic_input.certifications),
         "canonical_profile_used": True,
         "history_count": len(scenario.synthetic_input.chat_history) if feature == EvalFeature.CHAT else 0,
-        "tools_available": False,
+        "tools_available": feature == EvalFeature.COURSE_DISCOVERY,
         "persistent_memory_available": False,
         "source_status": "SOURCE_PRESENT" if source_count else "SOURCE_NOT_PRESENT",
     }
@@ -102,8 +132,54 @@ def execute_live(
     legacy = canonical_to_legacy_profile(canonical)
     context_ms = _elapsed_ms(monotonic, context_started)
     grounding_ms = 0
+    course_review = None
 
-    if feature == EvalFeature.CHAT:
+    if feature == EvalFeature.COURSE_DISCOVERY:
+        context = build_course_discovery_context(scenario)
+        target_role = scenario.synthetic_input.target_roles[0]
+        grounding_started = monotonic()
+        needs = derive_career_skill_needs(context.profile, target_role)
+        grounding_ms = _elapsed_ms(monotonic, grounding_started)
+        with production_app.state.ai_concurrency.slot():
+            outcome = CourseDiscoveryAgent(
+                CourseDiscoveryService(context), client_factory(), monotonic=monotonic
+            ).run(target_role=target_role, needs=needs)
+        trace = outcome.trace.model_dump(mode="json")
+        output = outcome.result.model_dump(mode="json") if outcome.result else None
+        status = "success" if outcome.result and not outcome.errors else "failed"
+        research = role_research_agent.ResearchAccounting().to_dict()
+        tool_summary = {
+            "tool_rounds": trace["tool_rounds"],
+            "tool_call_count": trace["tool_call_count"],
+            "search_courses_count": trace["search_call_count"],
+            "get_course_count": trace["lookup_count"],
+            "student_status_count": trace["status_check_count"],
+            "eligibility_count": trace["eligibility_check_count"],
+            "candidate_count": trace["candidate_count"],
+            "proposal_count": trace["proposal_count"],
+            "verified_count": trace["verified_count"],
+            "unresolved_count": trace["unresolved_count"],
+            "rejected_count": trace["rejected_count"],
+        }
+        course_review = {
+            "institution": context.institution.value,
+            "validated_result": output or {},
+            "safe_trace": trace,
+            "tool_summary": tool_summary,
+            "rejection_reasons": {},
+        }
+        if trace["rejected_count"]:
+            expected = scenario.course_discovery_expectation.expected_state
+            reason = {
+                "ALREADY_COMPLETED": "COMPLETED",
+                "ALREADY_PLANNED": "PLANNED",
+                "IN_PROGRESS": "IN_PROGRESS",
+                "INELIGIBLE": "INELIGIBLE",
+                "WRONG_INSTITUTION": "WRONG_INSTITUTION",
+                "COURSE_NOT_FOUND": "UNOBSERVED",
+            }.get(expected, "OTHER")
+            course_review["rejection_reasons"] = {reason: trace["rejected_count"]}
+    elif feature == EvalFeature.CHAT:
         body = ChatRequest(
             message=scenario.synthetic_input.chat_question or scenario.purpose,
             history=[turn.model_dump() for turn in scenario.synthetic_input.chat_history],
@@ -149,8 +225,15 @@ def execute_live(
         output = product.get("data") if product.get("status") == "success" else None
         status = product.get("status", "failed")
         research = accounting.to_dict()
+        course_review = None
 
     usage = trace.get("usage") or {}
+    if feature == EvalFeature.COURSE_DISCOVERY:
+        usage = {
+            "input_tokens": trace.get("input_tokens"),
+            "output_tokens": trace.get("output_tokens"),
+            "total_tokens": trace.get("total_tokens"),
+        }
     total_ms = _elapsed_ms(monotonic, total_started)
     return {
         "status": status,
@@ -158,7 +241,7 @@ def execute_live(
         "text": output if feature == EvalFeature.CHAT else "",
         "reviewable_output": output,
         "model": trace.get("resolved_model"),
-        "latency_ms": trace.get("latency_ms", total_ms),
+        "latency_ms": trace.get("total_ms", trace.get("latency_ms", total_ms)),
         "attempt_count": trace.get("attempt_count", 0),
         "repair_count": trace.get("repair_count", 0),
         "input_tokens": usage.get("input_tokens"),
@@ -170,11 +253,12 @@ def execute_live(
             "context_ms": context_ms,
             "grounding_ms": grounding_ms,
             "research_ms": research.get("research_ms", 0),
-            "provider_ms": trace.get("provider_ms_total", 0),
+            "provider_ms": trace.get("provider_ms", trace.get("provider_ms_total", 0)),
             "parse_ms": trace.get("parse_ms", 0),
             "validation_ms": trace.get("validation_ms", 0),
             "total_ms": total_ms,
         },
         "trace_summary": _trace_summary(trace),
         "review_convenience": _review_convenience(feature, output),
+        "course_discovery_review": course_review,
     }

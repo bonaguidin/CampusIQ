@@ -5,7 +5,7 @@ from pydantic import ValidationError
 
 from GradusIQ_career.evals.models import EvalFeature, EvalScenario, SyntheticStudentInput
 from GradusIQ_career.evals.profiles import build_synthetic_canonical_profile
-from GradusIQ_career.evals.runner import run_scenarios, select_controlled_live_scenarios
+from GradusIQ_career.evals.runner import PHASE_B_FEATURES, run_scenarios, select_controlled_live_scenarios
 from GradusIQ_career.evals.scenarios import SCENARIOS
 from GradusIQ_career.features import gap as gap_module
 from GradusIQ_career.features.gap import GapRunner
@@ -20,8 +20,8 @@ def test_controlled_selection_is_three_per_feature_and_twelve_total():
     assert len(selected) == 12
     assert {
         feature: sum(feature in scenario.features for scenario in selected)
-        for feature in EvalFeature
-    } == {feature: 3 for feature in EvalFeature}
+        for feature in PHASE_B_FEATURES
+    } == {feature: 3 for feature in PHASE_B_FEATURES}
     assert all(scenario.live_eligible and scenario.purpose and scenario.expectations for scenario in selected)
 
 

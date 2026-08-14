@@ -66,7 +66,8 @@ Full audit complete (2026-08-11) and Phase 1 implementation built and staged (20
 - [x] B2 reviewability blockers: ignored eval artifacts retain validated output, safe grounding/research accounting, stage timing, and interruption-safe incremental results.
 - [x] B2R harness blocker: align the live adapter's `research_summary.research_ms` with the strict typed review-artifact contract and cover live-shaped serialization end to end.
 - [x] Phase C1 deterministic course foundation: institution-scoped local catalog search/lookup, trusted completed/planned status, conservative prerequisite and eligibility checks, provenance, and read-only future-agent tools.
-- [x] Phase C2 bounded Course Discovery Agent: deterministic O*NET career needs, four C1-only read tools, strict observed-course proposals, unavoidable final verifier, authenticated trusted scope, safe traces, and nine offline evaluation scenarios.
+- [x] Phase C2 bounded Course Discovery Agent: deterministic O*NET career needs, four C1-only read tools, strict observed-course proposals, unavoidable final verifier, authenticated trusted scope, safe traces, and offline evaluation coverage.
+- [x] C2R.1 live-evaluation harness blocker: Course Discovery is a first-class eval feature with a separate six-case controlled suite, dual live opt-in, synthetic trusted contexts, production-path mocked coverage, incremental ignored artifacts, and typed result/trace reload validation.
 - [ ] Run a controlled C2 live evaluation and tune course-recommendation quality from reviewed artifacts; implementation made zero live provider calls.
 - [ ] Course degree applicability and term offering/section/seat availability remain unresolved; no authoritative degree-planning or schedule model exists.
 - [ ] Advisor orchestration remains proposed; do not grant course-write or registration authority.

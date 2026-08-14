@@ -5,8 +5,14 @@ import tempfile
 from pathlib import Path
 
 from .models import EvalFeature, EvalRunResult
-from .runner import compare_runs, run_scenarios, select_controlled_live_scenarios
+from .runner import (
+    compare_runs,
+    run_scenarios,
+    select_controlled_course_discovery_scenarios,
+    select_controlled_live_scenarios,
+)
 from .scenarios import SCENARIOS
+from .course_discovery_scenarios import COURSE_DISCOVERY_SCENARIOS
 
 
 TRANSIENT_OUTPUT_DIR = Path("eval-results")
@@ -38,6 +44,7 @@ def _atomic_write(path: Path, payload: dict) -> None:
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description="Run deterministic Gradus IQ evaluations.")
     parser.add_argument("--feature", choices=[item.value for item in EvalFeature] + ["all"], default="all")
+    parser.add_argument("--suite", choices=["phase-b", "course-discovery"], default="phase-b")
     parser.add_argument("--all", action="store_true", help="Run every applicable feature.")
     parser.add_argument("--scenario")
     parser.add_argument("--output", type=Path)
@@ -49,7 +56,7 @@ def main(argv=None) -> int:
     parser.add_argument("--compare", type=Path)
     parser.add_argument("--live", action="store_true")
     parser.add_argument("--dry-run", action="store_true", help="Validate and print the 12 live selections without provider calls.")
-    parser.add_argument("--max-runs", type=int, default=12)
+    parser.add_argument("--max-runs", type=int)
     args = parser.parse_args(argv)
     if args.baseline_output and _inside(args.baseline_output, TRANSIENT_OUTPUT_DIR):
         parser.error("Reviewed baselines must not be written inside ignored eval-results/.")
@@ -58,16 +65,21 @@ def main(argv=None) -> int:
     if args.live:
         if os.getenv("GRADUSIQ_EVAL_LIVE") != "1":
             parser.error("--live also requires GRADUSIQ_EVAL_LIVE=1")
-        if args.max_runs < 1 or args.max_runs > 12:
-            parser.error("--max-runs must be between 1 and 12")
-        if args.max_runs != 12:
-            parser.error("The controlled baseline requires exactly 12 validated evaluations.")
+        required_runs = 6 if args.suite == "course-discovery" else 12
+        if args.max_runs is not None and args.max_runs != required_runs:
+            parser.error(f"The controlled {args.suite} suite requires exactly {required_runs} evaluations.")
         if args.output is None or not _inside(args.output, TRANSIENT_OUTPUT_DIR):
             parser.error("Live output must be written under the ignored eval-results/ directory.")
-    selected_scenarios = SCENARIOS
+    selected_scenarios = (
+        COURSE_DISCOVERY_SCENARIOS if args.suite == "course-discovery" else SCENARIOS
+    )
     if args.live or args.dry_run:
         try:
-            selected_scenarios = select_controlled_live_scenarios(SCENARIOS)
+            selected_scenarios = (
+                select_controlled_course_discovery_scenarios(COURSE_DISCOVERY_SCENARIOS)
+                if args.suite == "course-discovery"
+                else select_controlled_live_scenarios(SCENARIOS)
+            )
         except ValueError as exc:
             parser.error(str(exc))
     if args.dry_run:
@@ -75,6 +87,9 @@ def main(argv=None) -> int:
             "provider_calls": 0,
             "research_calls": 0,
             "total": len(selected_scenarios),
+            "planned": len(selected_scenarios),
+            "selected": len(selected_scenarios),
+            "valid": len(selected_scenarios),
             "selections": [
                 {
                     "scenario_id": scenario.scenario_id,
@@ -112,11 +127,20 @@ def main(argv=None) -> int:
         if not args.live:
             return
         if event == "started":
-            print(f"[{index}/{planned}] {applicable.value.upper()} {scenario.scenario_id} started", flush=True)
+            label = (
+                applicable.value if applicable == EvalFeature.COURSE_DISCOVERY
+                else applicable.value.upper()
+            )
+            print(f"[{index}/{planned}] {label} {scenario.scenario_id} started", flush=True)
         else:
+            review = result.course_discovery_review
+            counts = (
+                f" verified={review.tool_summary.verified_count}"
+                f" unresolved={review.tool_summary.unresolved_count}"
+                if review else ""
+            )
             print(
-                f"[{index}/{planned}] {applicable.value.upper()} completed "
-                f"status={result.status.value} latency={result.latency_ms}ms",
+                f"[{index}/{planned}] completed status={result.status.value}{counts}",
                 flush=True,
             )
 
@@ -126,7 +150,7 @@ def main(argv=None) -> int:
         scenario_id=args.scenario,
         live=args.live,
         live_executor=live_executor,
-        max_runs=args.max_runs if args.live else None,
+        max_runs=(6 if args.suite == "course-discovery" else 12) if args.live else None,
         on_result=record_result,
         on_progress=progress,
     )

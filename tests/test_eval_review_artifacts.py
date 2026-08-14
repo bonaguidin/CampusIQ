@@ -85,7 +85,9 @@ def test_fixture_review_records_retain_validated_outputs_without_provider_envelo
         assert forbidden not in rendered
 
 
-@pytest.mark.parametrize("feature", list(EvalFeature))
+@pytest.mark.parametrize("feature", [
+    EvalFeature.FIT, EvalFeature.GAP, EvalFeature.SHIFT, EvalFeature.CHAT
+])
 def test_every_feature_review_record_has_stage_timing_and_safe_summaries(feature):
     scenario = next(item for item in SCENARIOS if feature in item.features)
     observation = dict(scenario.fixture_results[feature])

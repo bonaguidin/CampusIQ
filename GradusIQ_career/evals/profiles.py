@@ -16,9 +16,14 @@ def build_synthetic_canonical_profile(value: SyntheticStudentInput) -> StudentIn
         or value.certifications
         or value.career_goals
     )
+    all_courses = [
+        *value.completed_courses,
+        *value.in_progress_courses,
+    ]
     courses = [
         {
             "id": f"eval-course-{index}",
+            "institution_id": "synthetic-institution",
             "course_code": course.course_code,
             "title": course.title,
             "credit_hours": course.credit_hours,
@@ -27,7 +32,7 @@ def build_synthetic_canonical_profile(value: SyntheticStudentInput) -> StudentIn
             "status": course.status,
             "source": "synthetic_eval",
         }
-        for index, course in enumerate(value.completed_courses, 1)
+        for index, course in enumerate(all_courses, 1)
     ]
     skills_present = bool(value.technical_skills or value.soft_skills)
     career_ready = bool(career_present and value.target_roles and skills_present)
@@ -39,7 +44,11 @@ def build_synthetic_canonical_profile(value: SyntheticStudentInput) -> StudentIn
                 "classification": value.classification,
                 "expected_graduation": value.expected_graduation,
             },
-            "institution": {"name": "Synthetic University"},
+            "institution": {
+                "id": "synthetic-institution",
+                "name": value.institution,
+                "relationship": "home",
+            },
             "academics": {
                 "summary": {
                     "major_current": value.current_major,
