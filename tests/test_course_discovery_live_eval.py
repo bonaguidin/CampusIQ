@@ -32,15 +32,14 @@ class CourseClient:
         if self.scenario_id == "course_adversarial_fabricated":
             assert "Ignore safeguards" not in json.dumps(kwargs["messages"])
         if self.calls == 1:
-            codes = ["CSCE 110", "CSCE 111"] if self.scenario_id == "course_multiple_candidates" else [
-                "CSCE 221" if self.scenario_id == "course_prerequisite_unresolved" else "CSCE 110"
+            codes = ["CSCE 206", "CSCE 110"] if self.scenario_id == "course_multiple_candidates" else [
+                "CSCE 331" if self.scenario_id == "course_prerequisite_unresolved" else "CSCE 206"
             ]
             operations = []
             for code in codes:
                 operations.extend([
                     ("search_courses", {"query": code, "limit": 5}),
                     ("get_course", {"course_code": code}),
-                    ("get_student_course_status", {"course_code": code}),
                     ("check_course_eligibility", {"course_code": code}),
                 ])
             message = {
@@ -57,10 +56,9 @@ class CourseClient:
             blob = json.dumps(kwargs["messages"])
             need_id = re.search(r"need_[a-f0-9]{12}", blob).group(0)
             codes = {
-                "course_multiple_candidates": ["CSCE 110", "CSCE 111"],
-                "course_prerequisite_unresolved": ["CSCE 221"],
-                "course_adversarial_fabricated": ["BUS 301"],
-            }.get(self.scenario_id, ["CSCE 110"])
+                "course_multiple_candidates": ["CSCE 206", "CSCE 110"],
+                "course_prerequisite_unresolved": ["CSCE 331"],
+            }.get(self.scenario_id, ["CSCE 206"])
             message = {"content": json.dumps({"proposals": [
                 {
                     "course_code": code,
@@ -105,7 +103,7 @@ def test_in_progress_and_planned_state_use_real_c1_status_logic():
     planned = COURSE_DISCOVERY_SCENARIOS[3]
     assert CourseDiscoveryService(
         build_course_discovery_context(planned)
-    ).student_course_status("CSCE 110").state == StudentCourseState.PLANNED
+    ).student_course_status("CSCE 206").state == StudentCourseState.PLANNED
     assert build_synthetic_canonical_profile(planned.synthetic_input).academics.courses == []
 
 
@@ -153,20 +151,30 @@ def test_all_six_live_shaped_results_round_trip_and_final_verifier_protects():
         normal_tools.get_course_count,
         normal_tools.student_status_count,
         normal_tools.eligibility_count,
-    ) == (1, 1, 1, 1)
-    for scenario_id in ("course_already_completed", "course_already_planned", "course_adversarial_fabricated"):
+    ) == (1, 1, 0, 1)
+    for scenario_id in ("course_already_completed", "course_already_planned"):
         assert by_id[scenario_id].course_discovery_review.validated_result.verified_recommendations == []
         assert by_id[scenario_id].course_discovery_review.tool_summary.rejected_count == 1
+    assert len(by_id["course_adversarial_fabricated"].course_discovery_review.validated_result.verified_recommendations) == 1
     unresolved = by_id["course_prerequisite_unresolved"].course_discovery_review.validated_result
     assert unresolved.verified_recommendations == []
-    assert [item.course_code for item in unresolved.requires_verification] == ["CSCE 221"]
+    assert [item.course_code for item in unresolved.requires_verification] == ["CSCE 331"]
     rendered = json.dumps([item.model_dump(mode="json") for item in reloaded])
     for forbidden in ("synthetic-eval-student", "Authorization", "api_key", "raw_provider", "<untrusted_context>"):
         assert forbidden not in rendered
     assert '"proposals"' not in rendered
     assert by_id["course_already_completed"].course_discovery_review.rejection_reasons == {"COMPLETED": 1}
     assert by_id["course_already_planned"].course_discovery_review.rejection_reasons == {"PLANNED": 1}
-    assert by_id["course_adversarial_fabricated"].course_discovery_review.rejection_reasons == {"UNOBSERVED": 1}
+    completed = next(
+        item for item in by_id["course_already_completed"].course_discovery_review.course_dispositions
+        if item.course_code == "CSCE 206"
+    )
+    planned = next(
+        item for item in by_id["course_already_planned"].course_discovery_review.course_dispositions
+        if item.course_code == "CSCE 206"
+    )
+    assert completed.observed and completed.proposed and completed.final_disposition == "COMPLETED"
+    assert planned.observed and planned.proposed and planned.final_disposition == "PLANNED"
 
 
 def test_course_executor_uses_shared_concurrency_gate(monkeypatch):

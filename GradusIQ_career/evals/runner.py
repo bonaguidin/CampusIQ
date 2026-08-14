@@ -69,6 +69,12 @@ def select_controlled_course_discovery_scenarios(
                 f"Invalid expected catalog state for {scenario.scenario_id}: "
                 f"expected {scenario.course_discovery_expectation.expected_state}, got {actual}."
             )
+        for code in scenario.course_discovery_expectation.additional_candidate_codes:
+            additional = CourseDiscoveryService(context).check_eligibility(code).status.value
+            if additional != "ELIGIBLE":
+                raise ValueError(
+                    f"Additional candidate {code} for {scenario.scenario_id} is {additional}, not ELIGIBLE."
+                )
     if len(fingerprints) != 6:
         raise ValueError("Controlled Course Discovery inputs must have 6 distinct fingerprints.")
     return selected

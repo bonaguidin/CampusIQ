@@ -1,7 +1,7 @@
 import hashlib
 import json
 from enum import Enum
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 from GradusIQ_career.course_discovery.agent_models import (
@@ -37,6 +37,7 @@ class EvalExpectation(StrictModel):
 class CourseDiscoveryExpectation(StrictModel):
     candidate_code: str
     expected_state: str
+    additional_candidate_codes: list[str] = Field(default_factory=list)
 
 
 class SyntheticExperience(StrictModel):
@@ -181,11 +182,24 @@ class CourseDiscoveryToolSummary(StrictModel):
     get_course_count: int = Field(default=0, ge=0)
     student_status_count: int = Field(default=0, ge=0)
     eligibility_count: int = Field(default=0, ge=0)
+    deduplicated_count: int = Field(default=0, ge=0)
+    policy_rejected_count: int = Field(default=0, ge=0)
     candidate_count: int = Field(default=0, ge=0)
     proposal_count: int = Field(default=0, ge=0)
     verified_count: int = Field(default=0, ge=0)
     unresolved_count: int = Field(default=0, ge=0)
     rejected_count: int = Field(default=0, ge=0)
+
+
+class CourseDispositionReview(StrictModel):
+    course_code: str
+    observed: bool
+    proposed: bool
+    final_disposition: Literal[
+        "VERIFIED", "REQUIRES_VERIFICATION", "NOT_FOUND", "WRONG_INSTITUTION",
+        "COMPLETED", "PLANNED", "IN_PROGRESS", "INELIGIBLE", "UNRESOLVED",
+        "UNOBSERVED", "DUPLICATE", "NOT_PROPOSED", "ELIGIBILITY_NOT_CHECKED", "OTHER",
+    ]
 
 
 class CourseDiscoveryReview(StrictModel):
@@ -194,6 +208,7 @@ class CourseDiscoveryReview(StrictModel):
     safe_trace: CourseDiscoveryTrace
     tool_summary: CourseDiscoveryToolSummary
     rejection_reasons: dict[str, int] = Field(default_factory=dict)
+    course_dispositions: list[CourseDispositionReview] = Field(default_factory=list)
 
 
 class EvalRunResult(StrictModel):

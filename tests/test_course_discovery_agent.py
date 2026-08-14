@@ -53,6 +53,13 @@ def proposal(course_code, need_id, **extra):
     return json.dumps(payload)
 
 
+def grounded_calls(code, *, query=None):
+    return [
+        tool_call("search_courses", {"query": query or code, "limit": 5}, "search"),
+        tool_call("check_course_eligibility", {"course_code": code}, "eligibility"),
+    ]
+
+
 class SequenceClient:
     def __init__(self, *outcomes):
         self.outcomes = list(outcomes)
@@ -83,7 +90,7 @@ def run_agent(client, *, ctx=None, needs=None, target_role="Software Engineering
 def test_search_then_propose_returns_only_deterministic_metadata():
     career_need = need()
     client = SequenceClient(
-        {"content": "", "tool_calls": [tool_call("search_courses", {"query": "CSCE 110", "limit": 5})]},
+        {"content": "", "tool_calls": grounded_calls("CSCE 110")},
         {"content": proposal("CSCE 110", career_need.need_id)},
     )
     outcome = run_agent(client, needs=[career_need])
@@ -93,7 +100,8 @@ def test_search_then_propose_returns_only_deterministic_metadata():
     assert recommendation.eligibility_status == CourseEligibilityStatus.ELIGIBLE
     assert recommendation.provenance.source_url.startswith("https://catalog.tamu.edu/")
     assert recommendation.degree_applicability == recommendation.offering_status == "UNKNOWN"
-    assert outcome.trace.tool_call_count == outcome.trace.search_call_count == 1
+    assert outcome.trace.tool_call_count == 2
+    assert outcome.trace.search_call_count == outcome.trace.eligibility_check_count == 1
     assert outcome.trace.candidate_count >= 1
     assert outcome.trace.input_tokens == 20 and outcome.trace.output_tokens == 10
 
@@ -111,7 +119,7 @@ def test_search_then_propose_returns_only_deterministic_metadata():
 def test_final_verifier_overrides_model_preference(ctx, code, expected):
     career_need = need(code)
     client = SequenceClient(
-        {"content": "", "tool_calls": [tool_call("search_courses", {"query": code})]},
+        {"content": "", "tool_calls": grounded_calls(code)},
         {"content": proposal(code, career_need.need_id)},
     )
     outcome = run_agent(client, ctx=ctx, needs=[career_need])
@@ -128,7 +136,7 @@ def test_final_verifier_overrides_model_preference(ctx, code, expected):
 def test_unseen_fabricated_or_wrong_institution_proposal_is_rejected(code):
     career_need = need()
     client = SequenceClient(
-        {"content": "", "tool_calls": [tool_call("search_courses", {"query": "CSCE 110"})]},
+        {"content": "", "tool_calls": grounded_calls("CSCE 110")},
         {"content": proposal(code, career_need.need_id)},
     )
     outcome = run_agent(client, needs=[career_need])
@@ -168,7 +176,7 @@ def test_proposal_is_strict_bounded_linked_and_unique():
 def test_malformed_final_proposal_gets_one_repair_without_repeating_tools():
     career_need = need()
     client = SequenceClient(
-        {"content": "", "tool_calls": [tool_call("search_courses", {"query": "CSCE 110"})]},
+        {"content": "", "tool_calls": grounded_calls("CSCE 110")},
         {"content": "not json"},
         {"content": proposal("CSCE 110", career_need.need_id)},
     )
@@ -210,7 +218,114 @@ def test_tool_budget_is_hard_bounded():
     )
     outcome = run_agent(client, needs=[career_need])
     assert outcome.trace.tool_call_count == MAX_TOOL_CALLS
-    assert outcome.trace.search_call_count == MAX_TOOL_CALLS
+    assert outcome.trace.search_call_count == 1
+    assert outcome.trace.deduplicated_call_count == MAX_TOOL_CALLS - 1
+
+
+def test_unique_search_policy_is_bounded_and_returns_safe_observation():
+    career_need = need()
+    calls = [
+        tool_call("search_courses", {"query": query}, f"search-{index}")
+        for index, query in enumerate(("C", "Docker", "CSS", "AWS", "Kafka"), 1)
+    ]
+    client = SequenceClient(
+        {"content": "", "tool_calls": calls},
+        {"content": json.dumps({"proposals": []})},
+    )
+    outcome = run_agent(client, needs=[career_need])
+    assert outcome.trace.search_call_count == 4
+    assert outcome.trace.policy_rejected_call_count == 1
+    tool_messages = [m for m in client.calls[1]["messages"] if m["role"] == "tool"]
+    assert "search_policy_exhausted" in tool_messages[-1]["content"]
+
+
+def test_proposal_without_eligibility_evidence_is_rejected():
+    career_need = need()
+    client = SequenceClient(
+        {"content": "", "tool_calls": [tool_call("search_courses", {"query": "CSCE 110"})]},
+        {"content": proposal("CSCE 110", career_need.need_id)},
+    )
+    outcome = run_agent(client, needs=[career_need])
+    assert outcome.result.verified_recommendations == []
+    assert outcome.trace.rejected_count == 1
+
+
+def test_early_stop_after_three_eligible_candidates_stays_below_hard_budget():
+    career_need = need()
+    codes = ["CSCE 110", "CSCE 181", "CSCE 206"]
+    calls = []
+    for index, code in enumerate(codes):
+        calls.extend([
+            tool_call("search_courses", {"query": code}, f"search-{index}"),
+            tool_call("check_course_eligibility", {"course_code": code}, f"eligible-{index}"),
+        ])
+    client = SequenceClient(
+        {"content": "", "tool_calls": calls},
+        {"content": proposal("CSCE 206", career_need.need_id)},
+    )
+    outcome = run_agent(client, needs=[career_need])
+    assert outcome.result.verified_recommendations
+    assert outcome.trace.tool_call_count == 6 < MAX_TOOL_CALLS
+    assert client.calls[-1]["extra_body"] is None
+
+
+def test_eligible_candidate_is_preferred_while_unresolved_stays_separate():
+    career_need = need()
+    calls = [
+        *grounded_calls("CSCE 206", query="C programming"),
+        *grounded_calls("CSCE 331", query="software engineering"),
+    ]
+    client = SequenceClient(
+        {"content": "", "tool_calls": calls},
+        {"content": proposal("CSCE 206", career_need.need_id)},
+    )
+    outcome = run_agent(client, needs=[career_need])
+    assert [item.course_code for item in outcome.result.verified_recommendations] == ["CSCE 206"]
+    assert outcome.result.requires_verification == []
+
+
+@pytest.mark.parametrize(
+    ("ctx", "proposed_code", "expected"),
+    (
+        (context(courses=(("done", "CSCE 206", "completed"),)), "CSCE 206", "COMPLETED"),
+        (context(planned=(("plan", "CSCE 206"),)), "CSCE 206", "PLANNED"),
+        (context(), "BUS 301", "UNOBSERVED"),
+        (context(), "CS 2341", "UNOBSERVED"),
+    ),
+)
+def test_safe_evaluation_disposition_records_final_verifier_outcome(ctx, proposed_code, expected):
+    career_need = need()
+    records = []
+    observed_code = proposed_code if proposed_code == "CSCE 206" else "CSCE 110"
+    client = SequenceClient(
+        {"content": "", "tool_calls": grounded_calls(observed_code)},
+        {"content": proposal(proposed_code, career_need.need_id)},
+    )
+    outcome = CourseDiscoveryAgent(
+        CourseDiscoveryService(ctx), client, sleep=lambda _: None,
+        evidence_observer=records.extend,
+    ).run("Software Engineering Intern", [career_need])
+    assert outcome.result.verified_recommendations == []
+    record = next(item for item in records if item["course_code"] == proposed_code)
+    assert record == {
+        "course_code": proposed_code,
+        "observed": proposed_code == "CSCE 206",
+        "proposed": True,
+        "final_disposition": expected,
+    }
+
+
+def test_failed_repair_is_not_repeated_and_does_not_rerun_tools():
+    client = SequenceClient(
+        {"content": "", "tool_calls": grounded_calls("CSCE 110")},
+        {"content": "not-json"},
+        {"content": '{"wrong":"shape"}'},
+    )
+    outcome = run_agent(client)
+    assert outcome.result is None
+    assert outcome.trace.repair_count == 1
+    assert outcome.trace.search_call_count == outcome.trace.eligibility_check_count == 1
+    assert len(client.calls) == 3
 
 
 def test_transient_provider_retries_are_bounded():

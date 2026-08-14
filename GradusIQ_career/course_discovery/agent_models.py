@@ -104,7 +104,7 @@ class CourseDiscoveryTrace(StrictModel):
     request_id: str
     feature: Literal["COURSE_DISCOVERY"] = "COURSE_DISCOVERY"
     prompt_name: Literal["course_discovery"] = "course_discovery"
-    prompt_version: Literal["1.0"] = "1.0"
+    prompt_version: Literal["1.0", "1.1"] = "1.1"
     model_role: Literal["course_discovery"] = "course_discovery"
     resolved_model: str | None = None
     tool_rounds: int = 0
@@ -113,6 +113,8 @@ class CourseDiscoveryTrace(StrictModel):
     lookup_count: int = 0
     status_check_count: int = 0
     eligibility_check_count: int = 0
+    deduplicated_call_count: int = 0
+    policy_rejected_call_count: int = 0
     candidate_count: int = 0
     proposal_count: int = 0
     verified_count: int = 0

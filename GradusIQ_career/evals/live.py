@@ -140,9 +140,11 @@ def execute_live(
         grounding_started = monotonic()
         needs = derive_career_skill_needs(context.profile, target_role)
         grounding_ms = _elapsed_ms(monotonic, grounding_started)
+        course_dispositions: list[dict[str, Any]] = []
         with production_app.state.ai_concurrency.slot():
             outcome = CourseDiscoveryAgent(
-                CourseDiscoveryService(context), client_factory(), monotonic=monotonic
+                CourseDiscoveryService(context), client_factory(), monotonic=monotonic,
+                evidence_observer=course_dispositions.extend,
             ).run(target_role=target_role, needs=needs)
         trace = outcome.trace.model_dump(mode="json")
         output = outcome.result.model_dump(mode="json") if outcome.result else None
@@ -155,6 +157,8 @@ def execute_live(
             "get_course_count": trace["lookup_count"],
             "student_status_count": trace["status_check_count"],
             "eligibility_count": trace["eligibility_check_count"],
+            "deduplicated_count": trace["deduplicated_call_count"],
+            "policy_rejected_count": trace["policy_rejected_call_count"],
             "candidate_count": trace["candidate_count"],
             "proposal_count": trace["proposal_count"],
             "verified_count": trace["verified_count"],
@@ -167,18 +171,13 @@ def execute_live(
             "safe_trace": trace,
             "tool_summary": tool_summary,
             "rejection_reasons": {},
+            "course_dispositions": course_dispositions,
         }
-        if trace["rejected_count"]:
-            expected = scenario.course_discovery_expectation.expected_state
-            reason = {
-                "ALREADY_COMPLETED": "COMPLETED",
-                "ALREADY_PLANNED": "PLANNED",
-                "IN_PROGRESS": "IN_PROGRESS",
-                "INELIGIBLE": "INELIGIBLE",
-                "WRONG_INSTITUTION": "WRONG_INSTITUTION",
-                "COURSE_NOT_FOUND": "UNOBSERVED",
-            }.get(expected, "OTHER")
-            course_review["rejection_reasons"] = {reason: trace["rejected_count"]}
+        for disposition in course_dispositions:
+            state = disposition["final_disposition"]
+            if disposition["proposed"] and state not in {"VERIFIED", "REQUIRES_VERIFICATION"}:
+                reasons = course_review["rejection_reasons"]
+                reasons[state] = reasons.get(state, 0) + 1
     elif feature == EvalFeature.CHAT:
         body = ChatRequest(
             message=scenario.synthetic_input.chat_question or scenario.purpose,

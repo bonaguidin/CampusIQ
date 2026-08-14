@@ -68,7 +68,10 @@ Full audit complete (2026-08-11) and Phase 1 implementation built and staged (20
 - [x] Phase C1 deterministic course foundation: institution-scoped local catalog search/lookup, trusted completed/planned status, conservative prerequisite and eligibility checks, provenance, and read-only future-agent tools.
 - [x] Phase C2 bounded Course Discovery Agent: deterministic O*NET career needs, four C1-only read tools, strict observed-course proposals, unavoidable final verifier, authenticated trusted scope, safe traces, and offline evaluation coverage.
 - [x] C2R.1 live-evaluation harness blocker: Course Discovery is a first-class eval feature with a separate six-case controlled suite, dual live opt-in, synthetic trusted contexts, production-path mocked coverage, incremental ignored artifacts, and typed result/trace reload validation.
-- [ ] Run a controlled C2 live evaluation and tune course-recommendation quality from reviewed artifacts; implementation made zero live provider calls.
+- [x] Reviewed C2R baseline completed: deterministic safety passed 6/6, while exposing universal 12-call exhaustion, zero explicit eligibility/status use, 50% repair rate, 210k tokens, and weak live rejection-scenario efficacy.
+- [x] C2.1 workflow hardening: focused-search policy, per-request tool deduplication, eligibility-backed proposals, early stop, stricter final-output instructions, realistic scenario targets, and synthetic-only observed/proposed/disposition evidence.
+- [ ] Run C2R.2 live validation; confirm materially lower tool/token use, lower repair rate, 2+ verified choices in the ranking case, and directly review completed/planned dispositions.
+- [ ] Improve prerequisite/restriction data coverage and course-ranking quality if C2R.2 remains unresolved-heavy; do not weaken conservative `UNRESOLVED` semantics.
 - [ ] Course degree applicability and term offering/section/seat availability remain unresolved; no authoritative degree-planning or schedule model exists.
 - [ ] Advisor orchestration remains proposed; do not grant course-write or registration authority.
 - [ ] Run and review the controlled B2 live baseline (12 synthetic evaluations; explicit paid/network opt-in required).
