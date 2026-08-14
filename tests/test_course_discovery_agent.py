@@ -102,7 +102,7 @@ def test_search_then_propose_returns_only_deterministic_metadata():
     assert outcome.trace.tool_call_count == 1
     assert outcome.trace.search_call_count == 1
     assert outcome.trace.qualification_batch_count == 1
-    assert outcome.trace.eligibility_check_count == outcome.trace.qualified_candidate_count >= 1
+    assert outcome.trace.eligibility_check_count >= outcome.trace.qualified_candidate_count >= 1
     assert outcome.trace.candidate_count >= 1
     assert outcome.trace.input_tokens == 20 and outcome.trace.output_tokens == 10
 
@@ -264,7 +264,7 @@ def test_qualification_transition_stops_discovery_below_hard_budget():
     assert outcome.result.verified_recommendations
     assert outcome.trace.tool_call_count == 1 < MAX_TOOL_CALLS
     assert outcome.trace.qualification_batch_count == 1
-    assert client.calls[-1]["extra_body"] is None
+    assert client.calls[-1]["extra_body"]["tool_choice"] == "auto"
 
 
 def test_eligible_candidate_is_preferred_while_unresolved_stays_separate():
@@ -322,6 +322,8 @@ def test_safe_evaluation_disposition_records_final_verifier_outcome(ctx, propose
     record = next(item for item in records if item["course_code"] == proposed_code)
     assert record == {
         "course_code": proposed_code,
+        "observation_source": "LLM_SEARCH" if proposed_code == "CSCE 206" else None,
+        "seed_need_ids": [],
         "observed": proposed_code == "CSCE 206",
         "qualified": proposed_code == "CSCE 206",
         "qualification_status": (
@@ -343,7 +345,7 @@ def test_failed_repair_is_not_repeated_and_does_not_rerun_tools():
     assert outcome.result is None
     assert outcome.trace.repair_count == 1
     assert outcome.trace.search_call_count == 1
-    assert outcome.trace.eligibility_check_count == outcome.trace.qualified_candidate_count >= 1
+    assert outcome.trace.eligibility_check_count >= outcome.trace.qualified_candidate_count >= 1
     assert len(client.calls) == 3
 
 
@@ -471,9 +473,9 @@ def test_later_exact_scenario_target_is_selected_across_all_observations(
     ).run("Software Engineering Intern", [career_need])
     target = next(item for item in records if item["course_code"] == course_code)
 
-    assert outcome.trace.candidate_count == 9
+    assert outcome.trace.candidate_count >= 9
     assert outcome.trace.qualified_candidate_count == 8
-    assert outcome.trace.candidates_dropped_by_pool_limit == 1
+    assert outcome.trace.candidates_dropped_by_pool_limit == outcome.trace.candidate_count - 8
     assert target["observed"] and target["qualified"]
     assert target["qualification_status"] == expected_status
     assert target["final_disposition"] == expected_final
@@ -500,7 +502,8 @@ def test_excluded_candidate_disposition_does_not_require_bad_model_proposal(
     ).run("Software Engineering Intern", [need()])
     target = next(item for item in records if item["course_code"] == "CSCE 206")
     assert target == {
-        "course_code": "CSCE 206", "observed": True, "qualified": True,
+        "course_code": "CSCE 206", "observation_source": "LLM_SEARCH",
+        "seed_need_ids": [], "observed": True, "qualified": True,
         "qualification_status": expected_status, "proposed": False,
         "final_disposition": expected_final,
     }

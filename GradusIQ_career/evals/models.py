@@ -181,6 +181,12 @@ class CourseDiscoveryToolSummary(StrictModel):
     tool_call_count: int = Field(default=0, ge=0)
     tool_execution_count: int = Field(default=0, ge=0)
     search_courses_count: int = Field(default=0, ge=0)
+    seed_search_count: int = Field(default=0, ge=0)
+    seed_candidate_count: int = Field(default=0, ge=0)
+    seed_unique_candidate_count: int = Field(default=0, ge=0)
+    seed_only_candidate_count: int = Field(default=0, ge=0)
+    llm_only_candidate_count: int = Field(default=0, ge=0)
+    both_candidate_count: int = Field(default=0, ge=0)
     get_course_count: int = Field(default=0, ge=0)
     student_status_count: int = Field(default=0, ge=0)
     eligibility_count: int = Field(default=0, ge=0)
@@ -204,6 +210,8 @@ class CourseDiscoveryToolSummary(StrictModel):
 
 class CourseDispositionReview(StrictModel):
     course_code: str
+    observation_source: Literal["DETERMINISTIC_SEED", "LLM_SEARCH", "BOTH"] | None = None
+    seed_need_ids: list[str] = Field(default_factory=list)
     observed: bool
     qualified: bool = False
     qualification_status: CourseEligibilityStatus | None = None

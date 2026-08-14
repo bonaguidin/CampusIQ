@@ -37,6 +37,7 @@ from .models import (
 )
 from .service import CourseDiscoveryService
 from .selection import observe_candidate, select_candidates_for_qualification
+from .seeding import seed_candidates
 from .tools import ReadOnlyCourseTools
 
 
@@ -215,30 +216,39 @@ class CourseDiscoveryAgent:
         self,
         observed: dict[str, CourseSearchResult],
         trace: CourseDiscoveryTrace,
+        checked: dict[str, ToolResult] | None = None,
     ) -> tuple[dict[str, QualifiedCourseCandidate], dict[str, ToolResult]]:
         """Qualify a bounded observed pool through C1 without provider coordination."""
         qualified: dict[str, QualifiedCourseCandidate] = {}
-        checked: dict[str, ToolResult] = {}
+        checked = checked or {}
         if not observed:
             return qualified, checked
         trace.candidate_count = len(observed)
         trace.qualification_batch_count = 1
+        trace.eligible_candidate_count = 0
+        trace.completed_candidate_count = 0
+        trace.planned_candidate_count = 0
+        trace.in_progress_candidate_count = 0
+        trace.ineligible_candidate_count = 0
+        trace.unresolved_candidate_count = 0
         selected = select_candidates_for_qualification(
             observed, limit=MAX_QUALIFIED_CANDIDATES
         )
         trace.candidates_dropped_by_pool_limit = len(observed) - len(selected)
         for evidence in selected:
             code = evidence.course.course_code
-            result = self.tools.check_course_eligibility(CourseCodeInput(course_code=code))
+            result = checked.get(code)
+            if result is None:
+                result = self.tools.check_course_eligibility(CourseCodeInput(course_code=code))
+                checked[code] = result
+                trace.eligibility_check_count += 1
+                trace.tool_execution_count += 1
+                trace.tool_ms += result.metadata.duration_ms
             if result.eligibility is None:
                 continue
-            checked[code] = result
             qualified[code] = QualifiedCourseCandidate(
                 search_result=evidence, eligibility=result.eligibility
             )
-            trace.eligibility_check_count += 1
-            trace.tool_execution_count += 1
-            trace.tool_ms += result.metadata.duration_ms
         trace.qualified_candidate_count = len(qualified)
         fields = {
             CourseEligibilityStatus.ELIGIBLE: "eligible_candidate_count",
@@ -304,6 +314,8 @@ class CourseDiscoveryAgent:
         qualified: dict[str, QualifiedCourseCandidate],
         eligibility_checked: dict[str, ToolResult],
         trace: CourseDiscoveryTrace,
+        observation_sources: dict[str, set[str]],
+        seed_need_ids: dict[str, set[str]],
     ) -> CourseDiscoveryResult:
         started = self.monotonic()
         needs_by_id = {need.need_id: need for need in needs}
@@ -321,6 +333,13 @@ class CourseDiscoveryAgent:
         dispositions: dict[str, dict[str, Any]] = {
             code: {
                 "course_code": code,
+                "observation_source": (
+                    "BOTH"
+                    if observation_sources.get(code)
+                    == {"DETERMINISTIC_SEED", "LLM_SEARCH"}
+                    else next(iter(observation_sources.get(code, {"LLM_SEARCH"})))
+                ),
+                "seed_need_ids": sorted(seed_need_ids.get(code, set())),
                 "observed": True,
                 "qualified": code in qualified,
                 "qualification_status": (
@@ -350,6 +369,7 @@ class CourseDiscoveryAgent:
             linked = [needs_by_id[item] for item in proposed.matched_need_ids if item in needs_by_id]
             disposition = dispositions.setdefault(proposed.course_code, {
                 "course_code": proposed.course_code, "observed": False,
+                "observation_source": None, "seed_need_ids": [],
                 "qualified": False, "qualification_status": None,
                 "proposed": True, "final_disposition": "UNOBSERVED",
             })
@@ -483,8 +503,23 @@ class CourseDiscoveryAgent:
             {"role": "user", "content": "<untrusted_context>\n" + json.dumps(context, sort_keys=True) + "\n</untrusted_context>"},
         ]
         observed: dict[str, CourseSearchResult] = {}
-        qualified: dict[str, QualifiedCourseCandidate] = {}
-        eligibility_checked: dict[str, ToolResult] = {}
+        observation_sources: dict[str, set[str]] = {}
+        seeded = seed_candidates(self.tools, needs)
+        trace.seed_search_count = seeded.search_count
+        trace.seed_candidate_count = seeded.candidate_count
+        trace.seed_unique_candidate_count = len(seeded.candidates)
+        for code, candidate in seeded.candidates.items():
+            observe_candidate(observed, candidate)
+            observation_sources.setdefault(code, set()).add("DETERMINISTIC_SEED")
+        qualified, eligibility_checked = self._qualify_candidates(observed, trace)
+        messages.append({"role": "user", "content": (
+            "Software has deterministically seeded and qualified a bounded baseline from trusted "
+            "career needs. You may make at most two supplemental catalog searches, or return the "
+            "final proposal immediately. Rank and explain only the qualified pool below. Eligible "
+            "candidates must come before unresolved candidates.\n<qualified_candidates>\n"
+            + json.dumps(self._qualified_pool(qualified), sort_keys=True)
+            + "\n</qualified_candidates>"
+        )})
         observation_cache: dict[str, dict[str, Any]] = {}
         unique_searches: set[str] = set()
         proposal: CourseDiscoveryProposal | None = None
@@ -492,7 +527,7 @@ class CourseDiscoveryAgent:
             for round_index in range(MAX_TOOL_ROUNDS):
                 trace.tool_rounds = round_index + 1
                 final_round = round_index == MAX_TOOL_ROUNDS - 1
-                must_finalize = final_round or bool(qualified) or trace.tool_call_count >= MAX_TOOL_CALLS
+                must_finalize = final_round or trace.tool_call_count >= MAX_TOOL_CALLS
                 if final_round:
                     messages.append({"role": "user", "content": "Tool exploration is complete. Return the final proposal JSON now."})
                 message = self._complete(
@@ -543,6 +578,9 @@ class CourseDiscoveryAgent:
                                 trace.search_call_count += 1
                                 for item in result.results:
                                     observe_candidate(observed, item)
+                                    observation_sources.setdefault(
+                                        item.course.course_code, set()
+                                    ).add("LLM_SEARCH")
                             trace.tool_ms += result.metadata.duration_ms
                             trace.tool_trace.append(SafeToolTrace(**result.metadata.model_dump()))
                             content = _safe_tool_observation(result)
@@ -556,7 +594,9 @@ class CourseDiscoveryAgent:
                             "name": str(name or "unknown"), "content": json.dumps(content, sort_keys=True),
                         })
                     if observed:
-                        qualified, eligibility_checked = self._qualify_candidates(observed, trace)
+                        qualified, eligibility_checked = self._qualify_candidates(
+                            observed, trace, eligibility_checked
+                        )
                         messages.append({"role": "user", "content": (
                             "Discovery is complete. Rank and explain only the qualified pool below. "
                             "Eligible candidates must come before unresolved candidates. Return exactly "
@@ -585,8 +625,19 @@ class CourseDiscoveryAgent:
             if proposal is None:
                 raise AIResponseParseError("Course Discovery did not return a final proposal.")
             trace.candidate_count = len(observed)
+            trace.seed_only_candidate_count = sum(
+                sources == {"DETERMINISTIC_SEED"} for sources in observation_sources.values()
+            )
+            trace.llm_only_candidate_count = sum(
+                sources == {"LLM_SEARCH"} for sources in observation_sources.values()
+            )
+            trace.both_candidate_count = sum(
+                sources == {"DETERMINISTIC_SEED", "LLM_SEARCH"}
+                for sources in observation_sources.values()
+            )
             result = self._finalize(
-                target_role, needs, proposal, observed, qualified, eligibility_checked, trace
+                target_role, needs, proposal, observed, qualified, eligibility_checked, trace,
+                observation_sources, seeded.need_ids_by_course,
             )
             trace.final_status = "success"
             trace.total_ms = max(0, round((self.monotonic() - total_started) * 1000))
