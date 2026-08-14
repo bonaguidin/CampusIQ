@@ -435,6 +435,51 @@ def test_auto_qualification_pool_is_strictly_bounded():
 
 
 @pytest.mark.parametrize(
+    ("ctx", "course_code", "expected_status", "final_payload", "expected_final"),
+    (
+        (context(), "CSCE 206", "ELIGIBLE", "proposal", "VERIFIED"),
+        (
+            context(courses=(("done", "CSCE 206", "completed"),)),
+            "CSCE 206", "ALREADY_COMPLETED", "empty", "COMPLETED",
+        ),
+        (
+            context(planned=(("plan", "CSCE 206"),)),
+            "CSCE 206", "ALREADY_PLANNED", "empty", "PLANNED",
+        ),
+        (context(), "CSCE 331", "UNRESOLVED", "proposal", "UNRESOLVED"),
+    ),
+)
+def test_later_exact_scenario_target_is_selected_across_all_observations(
+    ctx, course_code, expected_status, final_payload, expected_final
+):
+    career_need = need()
+    records = []
+    final = (
+        proposal(course_code, career_need.need_id)
+        if final_payload == "proposal" else json.dumps({"proposals": []})
+    )
+    client = SequenceClient(
+        {"content": "", "tool_calls": [
+            tool_call("search_courses", {"query": "C", "limit": 8}, "broad"),
+            tool_call("search_courses", {"query": course_code, "limit": 1}, "exact"),
+        ]},
+        {"content": final},
+    )
+    outcome = CourseDiscoveryAgent(
+        CourseDiscoveryService(ctx), client, sleep=lambda _: None,
+        evidence_observer=records.extend,
+    ).run("Software Engineering Intern", [career_need])
+    target = next(item for item in records if item["course_code"] == course_code)
+
+    assert outcome.trace.candidate_count == 9
+    assert outcome.trace.qualified_candidate_count == 8
+    assert outcome.trace.candidates_dropped_by_pool_limit == 1
+    assert target["observed"] and target["qualified"]
+    assert target["qualification_status"] == expected_status
+    assert target["final_disposition"] == expected_final
+
+
+@pytest.mark.parametrize(
     ("ctx", "expected_status", "expected_final"),
     (
         (context(courses=(("done", "CSCE 206", "completed"),)), "ALREADY_COMPLETED", "COMPLETED"),

@@ -127,6 +127,7 @@ class CourseDiscoveryTrace(StrictModel):
     policy_rejected_call_count: int = 0
     candidate_count: int = 0
     qualified_candidate_count: int = 0
+    candidates_dropped_by_pool_limit: int = 0
     qualification_batch_count: int = 0
     eligible_candidate_count: int = 0
     completed_candidate_count: int = 0

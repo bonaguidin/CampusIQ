@@ -36,6 +36,7 @@ from .models import (
     VerificationDisposition,
 )
 from .service import CourseDiscoveryService
+from .selection import observe_candidate, select_candidates_for_qualification
 from .tools import ReadOnlyCourseTools
 
 
@@ -222,7 +223,12 @@ class CourseDiscoveryAgent:
             return qualified, checked
         trace.candidate_count = len(observed)
         trace.qualification_batch_count = 1
-        for code, evidence in list(observed.items())[:MAX_QUALIFIED_CANDIDATES]:
+        selected = select_candidates_for_qualification(
+            observed, limit=MAX_QUALIFIED_CANDIDATES
+        )
+        trace.candidates_dropped_by_pool_limit = len(observed) - len(selected)
+        for evidence in selected:
+            code = evidence.course.course_code
             result = self.tools.check_course_eligibility(CourseCodeInput(course_code=code))
             if result.eligibility is None:
                 continue
@@ -536,7 +542,7 @@ class CourseDiscoveryAgent:
                             if name == "search_courses":
                                 trace.search_call_count += 1
                                 for item in result.results:
-                                    observed[item.course.course_code] = item
+                                    observe_candidate(observed, item)
                             trace.tool_ms += result.metadata.duration_ms
                             trace.tool_trace.append(SafeToolTrace(**result.metadata.model_dump()))
                             content = _safe_tool_observation(result)

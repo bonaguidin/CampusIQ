@@ -188,6 +188,7 @@ class CourseDiscoveryToolSummary(StrictModel):
     policy_rejected_count: int = Field(default=0, ge=0)
     candidate_count: int = Field(default=0, ge=0)
     qualified_candidate_count: int = Field(default=0, ge=0)
+    candidates_dropped_by_pool_limit: int = Field(default=0, ge=0)
     qualification_batch_count: int = Field(default=0, ge=0)
     eligible_candidate_count: int = Field(default=0, ge=0)
     completed_candidate_count: int = Field(default=0, ge=0)

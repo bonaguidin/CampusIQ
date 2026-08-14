@@ -162,6 +162,7 @@ def execute_live(
             "policy_rejected_count": trace["policy_rejected_call_count"],
             "candidate_count": trace["candidate_count"],
             "qualified_candidate_count": trace["qualified_candidate_count"],
+            "candidates_dropped_by_pool_limit": trace["candidates_dropped_by_pool_limit"],
             "qualification_batch_count": trace["qualification_batch_count"],
             "eligible_candidate_count": trace["eligible_candidate_count"],
             "completed_candidate_count": trace["completed_candidate_count"],
