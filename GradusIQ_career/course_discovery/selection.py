@@ -63,3 +63,30 @@ def select_candidates_for_qualification(
     if limit < 1:
         raise ValueError("qualification candidate limit must be positive")
     return sorted(observed.values(), key=_selection_key)[:limit]
+
+
+def select_candidates_with_seed_floor(
+    seeded: Mapping[str, CourseSearchResult],
+    observed: Mapping[str, CourseSearchResult],
+    *,
+    limit: int,
+) -> list[CourseSearchResult]:
+    """Protect the strongest deterministic seed floor and fill spare capacity."""
+    seed_floor = select_candidates_for_qualification(seeded, limit=limit)
+    floor_codes = {item.course.course_code for item in seed_floor}
+    selected = [
+        observed.get(item.course.course_code, item)
+        for item in seed_floor
+    ]
+    remaining = limit - len(selected)
+    if remaining <= 0:
+        return selected
+    supplemental = {
+        code: candidate
+        for code, candidate in observed.items()
+        if code not in floor_codes
+    }
+    return [
+        *selected,
+        *select_candidates_for_qualification(supplemental, limit=remaining),
+    ]

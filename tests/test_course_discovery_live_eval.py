@@ -32,7 +32,7 @@ class CourseClient:
         self.calls += 1
         if self.scenario_id == "course_adversarial_fabricated":
             assert "Ignore safeguards" not in json.dumps(kwargs["messages"])
-        if self.calls == 1:
+        if kwargs["extra_body"] is not None:
             codes = ["CSCE 206", "CSCE 110"] if self.scenario_id == "course_multiple_candidates" else [
                 "CSCE 331" if self.scenario_id == "course_prerequisite_unresolved" else "CSCE 206"
             ]
@@ -146,21 +146,24 @@ def test_all_six_live_shaped_results_round_trip_and_final_verifier_protects():
     )
     assert len(results) == 6 and all(item.status == EvalStatus.PASS for item in results)
     reloaded = [EvalRunResult.model_validate_json(item.model_dump_json()) for item in results]
-    assert all(item.prompt_version == "1.3" for item in reloaded)
+    assert all(item.prompt_version == "1.4" for item in reloaded)
     by_id = {item.scenario_id: item for item in reloaded}
     assert len(by_id["course_normal_eligible"].course_discovery_review.validated_result.verified_recommendations) == 1
     assert len(by_id["course_multiple_candidates"].course_discovery_review.validated_result.verified_recommendations) == 2
     normal_tools = by_id["course_normal_eligible"].course_discovery_review.tool_summary
-    assert normal_tools.search_courses_count == 1
+    assert normal_tools.search_courses_count == 0
     assert normal_tools.get_course_count == normal_tools.student_status_count == 0
     assert normal_tools.qualification_batch_count == 1
     assert normal_tools.eligibility_count == normal_tools.qualified_candidate_count >= 1
-    assert normal_tools.tool_call_count == 1
-    assert normal_tools.tool_execution_count == 1 + normal_tools.qualified_candidate_count
+    assert normal_tools.tool_call_count == 0
+    assert normal_tools.tool_execution_count == normal_tools.qualified_candidate_count
     assert normal_tools.deduplicated_count == normal_tools.policy_rejected_count == 0
     assert normal_tools.seed_search_count > 0
     assert normal_tools.seed_unique_candidate_count <= 12
-    assert normal_tools.both_candidate_count >= 1
+    assert normal_tools.protected_seed_floor_count == 8
+    assert normal_tools.supplemental_search_required is False
+    assert normal_tools.supplemental_candidate_count == 0
+    assert normal_tools.seed_only_candidate_count >= 8
     required = {
         "course_normal_eligible": {"CSCE 206": "ELIGIBLE"},
         "course_multiple_candidates": {
@@ -179,7 +182,7 @@ def test_all_six_live_shaped_results_round_trip_and_final_verifier_protects():
             item = dispositions[code]
             assert item.observed and item.qualified
             assert item.qualification_status.value == status
-            assert item.observation_source == "BOTH"
+            assert item.observation_source == "DETERMINISTIC_SEED"
             assert item.seed_need_ids
     for scenario_id in ("course_already_completed", "course_already_planned"):
         assert by_id[scenario_id].course_discovery_review.validated_result.verified_recommendations == []

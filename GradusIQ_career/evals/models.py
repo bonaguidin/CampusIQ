@@ -184,6 +184,9 @@ class CourseDiscoveryToolSummary(StrictModel):
     seed_search_count: int = Field(default=0, ge=0)
     seed_candidate_count: int = Field(default=0, ge=0)
     seed_unique_candidate_count: int = Field(default=0, ge=0)
+    protected_seed_floor_count: int = Field(default=0, ge=0)
+    supplemental_search_required: bool = False
+    supplemental_candidate_count: int = Field(default=0, ge=0)
     seed_only_candidate_count: int = Field(default=0, ge=0)
     llm_only_candidate_count: int = Field(default=0, ge=0)
     both_candidate_count: int = Field(default=0, ge=0)

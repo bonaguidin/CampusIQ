@@ -109,6 +109,25 @@ def test_search_then_propose_returns_only_deterministic_metadata():
     assert outcome.trace.input_tokens == 20 and outcome.trace.output_tokens == 10
 
 
+def test_no_seed_floor_keeps_bounded_supplemental_search_available():
+    career_need = need("CSCE 206").model_copy(update={
+        "evidence_state": EvidenceState.EXTERNAL_EVIDENCE_PRESENT,
+    })
+    client = SequenceClient(
+        {"content": "", "tool_calls": grounded_calls("CSCE 206")},
+        {"content": proposal("CSCE 206", career_need.need_id)},
+    )
+
+    outcome = run_agent(client, needs=[career_need])
+
+    assert outcome.trace.protected_seed_floor_count == 0
+    assert outcome.trace.supplemental_search_required is True
+    assert outcome.trace.search_call_count == 1
+    assert [item.course_code for item in outcome.result.verified_recommendations] == [
+        "CSCE 206"
+    ]
+
+
 @pytest.mark.parametrize(
     ("ctx", "code", "expected"),
     (
@@ -270,7 +289,7 @@ def test_qualification_transition_stops_discovery_below_hard_budget():
 
 
 def test_eligible_candidate_is_preferred_while_unresolved_stays_separate():
-    career_need = need()
+    career_need = need("CSCE 206")
     calls = [
         *grounded_calls("CSCE 206", query="C programming"),
         *grounded_calls("CSCE 331", query="software engineering"),
@@ -441,13 +460,9 @@ def test_auto_qualification_pool_is_strictly_bounded():
 
 
 def test_observed_but_unselected_proposal_cannot_survive_as_requires_verification():
-    scenario = next(
-        item for item in COURSE_DISCOVERY_SCENARIOS
-        if item.scenario_id == "course_already_completed"
-    )
-    ctx = build_course_discovery_context(scenario)
-    target_role = scenario.synthetic_input.target_roles[0]
-    needs = derive_career_skill_needs(ctx.profile, target_role)
+    ctx = context()
+    target_role = "Software Engineering Intern"
+    needs = [need()]
     records = []
     client = SequenceClient(
         {
@@ -456,7 +471,7 @@ def test_observed_but_unselected_proposal_cannot_survive_as_requires_verificatio
                 tool_call("search_courses", {"query": "cloud computing", "limit": 8})
             ],
         },
-        {"content": proposal("CSCE 331", needs[0].need_id)},
+        {"content": proposal("CSCE 181", needs[0].need_id)},
     )
 
     outcome = CourseDiscoveryAgent(
@@ -466,7 +481,7 @@ def test_observed_but_unselected_proposal_cannot_survive_as_requires_verificatio
         evidence_observer=records.extend,
     ).run(target_role, needs)
 
-    target = next(item for item in records if item["course_code"] == "CSCE 331")
+    target = next(item for item in records if item["course_code"] == "CSCE 181")
     assert target["observed"] is True
     assert target["qualified"] is False
     assert target["proposed"] is True

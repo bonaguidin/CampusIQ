@@ -113,7 +113,7 @@ class CourseDiscoveryTrace(StrictModel):
     request_id: str
     feature: Literal["COURSE_DISCOVERY"] = "COURSE_DISCOVERY"
     prompt_name: Literal["course_discovery"] = "course_discovery"
-    prompt_version: Literal["1.0", "1.1", "1.2", "1.3"] = "1.3"
+    prompt_version: Literal["1.0", "1.1", "1.2", "1.3", "1.4"] = "1.4"
     model_role: Literal["course_discovery"] = "course_discovery"
     resolved_model: str | None = None
     tool_rounds: int = 0
@@ -123,6 +123,9 @@ class CourseDiscoveryTrace(StrictModel):
     seed_search_count: int = 0
     seed_candidate_count: int = 0
     seed_unique_candidate_count: int = 0
+    protected_seed_floor_count: int = 0
+    supplemental_search_required: bool = False
+    supplemental_candidate_count: int = 0
     seed_only_candidate_count: int = 0
     llm_only_candidate_count: int = 0
     both_candidate_count: int = 0
