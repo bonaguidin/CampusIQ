@@ -78,6 +78,15 @@ class FailingCourseClient:
         raise AIRequestError("synthetic controlled failure", transient=False)
 
 
+class MalformedCourseClient:
+    def complete_message_with_metadata(self, **kwargs):
+        return AIMessageResponse(
+            message={"content": "not json"},
+            model="controlled/course-model",
+            usage={"prompt_tokens": 10, "completion_tokens": 2, "total_tokens": 12},
+        )
+
+
 def execute(scenario, feature):
     return REAL_EXECUTE_LIVE(
         scenario, feature, client_factory=lambda: CourseClient(scenario.scenario_id)
@@ -146,7 +155,12 @@ def test_all_six_live_shaped_results_round_trip_and_final_verifier_protects():
     )
     assert len(results) == 6 and all(item.status == EvalStatus.PASS for item in results)
     reloaded = [EvalRunResult.model_validate_json(item.model_dump_json()) for item in results]
-    assert all(item.prompt_version == "1.4" for item in reloaded)
+    assert all(item.prompt_version == "1.5" for item in reloaded)
+    assert all(
+        item.course_discovery_review.safe_trace.first_attempt_parse_category == "VALID"
+        and item.course_discovery_review.safe_trace.repair_count == 0
+        for item in reloaded
+    )
     by_id = {item.scenario_id: item for item in reloaded}
     assert len(by_id["course_normal_eligible"].course_discovery_review.validated_result.verified_recommendations) == 1
     assert len(by_id["course_multiple_candidates"].course_discovery_review.validated_result.verified_recommendations) == 2
@@ -292,6 +306,31 @@ def test_course_discovery_safe_failure_is_a_strict_typed_review():
     assert reloaded.course_discovery_review.execution_status == "ERROR"
     assert reloaded.course_discovery_review.validated_result is None
     assert reloaded.course_discovery_review.safe_trace.attempt_count == 1
+
+
+def test_course_discovery_parse_failure_after_repair_is_strict_and_reviewable():
+    scenario = COURSE_DISCOVERY_SCENARIOS[0]
+    observation = REAL_EXECUTE_LIVE(
+        scenario,
+        EvalFeature.COURSE_DISCOVERY,
+        client_factory=MalformedCourseClient,
+    )
+
+    assert observation["status"] == "failed"
+    result = run_scenarios(
+        [scenario],
+        live=True,
+        live_executor=lambda *_: observation,
+        max_runs=1,
+    )[0]
+    reloaded = EvalRunResult.model_validate_json(result.model_dump_json())
+    review = reloaded.course_discovery_review
+    assert review.execution_status == "ERROR"
+    assert review.validated_result is None
+    assert review.failure.error_class == "AIResponseParseError"
+    assert review.safe_trace.first_attempt_parse_category == "INVALID_JSON"
+    assert review.safe_trace.repair_parse_category == "INVALID_JSON"
+    assert review.safe_trace.repair_count == 1
 
 
 def test_typed_failure_is_retained_without_corrupting_incremental_suite(

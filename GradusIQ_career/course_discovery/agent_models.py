@@ -21,6 +21,21 @@ from .models import (
 
 MAX_PROPOSALS = 10
 MAX_VERIFIED_RECOMMENDATIONS = 5
+ProposalParseCategory = Literal[
+    "VALID",
+    "INVALID_JSON",
+    "TRUNCATED_OUTPUT",
+    "EMPTY_OUTPUT",
+    "MISSING_REQUIRED_FIELD",
+    "EXTRA_FIELD",
+    "WRONG_ENUM",
+    "WRONG_TYPE",
+    "NULLABILITY",
+    "COURSE_CODE_SHAPE",
+    "NEED_LINK_SHAPE",
+    "TOO_MANY_ITEMS",
+    "OTHER",
+]
 
 
 class QualifiedCourseCandidate(StrictModel):
@@ -113,7 +128,7 @@ class CourseDiscoveryTrace(StrictModel):
     request_id: str
     feature: Literal["COURSE_DISCOVERY"] = "COURSE_DISCOVERY"
     prompt_name: Literal["course_discovery"] = "course_discovery"
-    prompt_version: Literal["1.0", "1.1", "1.2", "1.3", "1.4"] = "1.4"
+    prompt_version: Literal["1.0", "1.1", "1.2", "1.3", "1.4", "1.5"] = "1.5"
     model_role: Literal["course_discovery"] = "course_discovery"
     resolved_model: str | None = None
     tool_rounds: int = 0
@@ -154,6 +169,8 @@ class CourseDiscoveryTrace(StrictModel):
     total_ms: int = 0
     attempt_count: int = 0
     repair_count: int = 0
+    first_attempt_parse_category: ProposalParseCategory | None = None
+    repair_parse_category: ProposalParseCategory | None = None
     input_tokens: int | None = None
     output_tokens: int | None = None
     total_tokens: int | None = None

@@ -1,3 +1,4 @@
+import copy
 import json
 
 import pytest
@@ -67,7 +68,7 @@ class SequenceClient:
         self.calls = []
 
     def complete_message_with_metadata(self, **kwargs):
-        self.calls.append(kwargs)
+        self.calls.append(copy.deepcopy(kwargs))
         outcome = self.outcomes.pop(0)
         if isinstance(outcome, Exception):
             raise outcome
@@ -204,9 +205,103 @@ def test_malformed_final_proposal_gets_one_repair_without_repeating_tools():
     )
     outcome = run_agent(client, needs=[career_need])
     assert outcome.trace.repair_count == 1
+    assert outcome.trace.first_attempt_parse_category == "INVALID_JSON"
+    assert outcome.trace.repair_parse_category == "VALID"
     assert outcome.trace.search_call_count == 1
     assert client.calls[-1]["extra_body"] is None
+    assert "Safe validation problems:" in client.calls[-1]["messages"][-1]["content"]
     assert outcome.result.verified_recommendations
+
+
+def test_full_seed_floor_first_turn_contains_exact_current_proposal_contract():
+    scenario = COURSE_DISCOVERY_SCENARIOS[0]
+    ctx = build_course_discovery_context(scenario)
+    target_role = scenario.synthetic_input.target_roles[0]
+    needs = derive_career_skill_needs(ctx.profile, target_role)
+    client = SequenceClient({"content": proposal("CSCE 206", needs[0].need_id)})
+
+    outcome = CourseDiscoveryAgent(
+        CourseDiscoveryService(ctx), client, sleep=lambda _: None,
+    ).run(target_role, needs)
+
+    prompt = "\n".join(
+        str(item.get("content") or "") for item in client.calls[0]["messages"]
+    )
+    assert client.calls[0]["extra_body"] is None
+    assert '"proposals"' in prompt
+    assert all(
+        field in prompt
+        for field in (
+            "course_code", "matched_need_ids", "ranking_reason",
+            "skill_alignment_explanation",
+        )
+    )
+    assert "The proposals list may be empty" in prompt
+    assert outcome.trace.first_attempt_parse_category == "VALID"
+    assert outcome.trace.repair_count == 0
+
+
+def test_strict_schema_error_is_categorized_and_repair_gets_safe_details():
+    career_need = need("CSCE 206")
+    malformed = json.loads(proposal("CSCE 206", career_need.need_id))
+    malformed["proposals"][0]["title"] = "Model-authored metadata"
+    client = SequenceClient(
+        {"content": json.dumps(malformed)},
+        {"content": proposal("CSCE 206", career_need.need_id)},
+    )
+
+    outcome = run_agent(client, needs=[career_need])
+
+    assert outcome.trace.first_attempt_parse_category == "EXTRA_FIELD"
+    assert outcome.trace.repair_parse_category == "VALID"
+    repair_instruction = client.calls[-1]["messages"][-1]["content"]
+    assert "extra_forbidden" in repair_instruction
+    assert "Model-authored metadata" not in repair_instruction
+
+
+def test_failed_bounded_repair_retains_safe_categories_and_typed_failure():
+    career_need = need("CSCE 206")
+    client = SequenceClient(
+        {"content": "```json\n{\"proposals\":[\n```"},
+        {"content": "still not json"},
+    )
+
+    outcome = run_agent(client, needs=[career_need])
+
+    assert outcome.result is None
+    assert outcome.trace.final_status == "failed"
+    assert outcome.trace.repair_count == 1
+    assert outcome.trace.first_attempt_parse_category == "TRUNCATED_OUTPUT"
+    assert outcome.trace.repair_parse_category == "INVALID_JSON"
+    assert outcome.trace.error_class == "AIResponseParseError"
+    assert len(client.calls) == 2
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        {"proposals": []},
+        {"proposals": [{
+            "course_code": "CSCE 206",
+            "matched_need_ids": ["need_one"],
+            "ranking_reason": "Relevant.",
+            "skill_alignment_explanation": "Aligned.",
+        }]},
+        {"proposals": [
+            {
+                "course_code": code,
+                "matched_need_ids": ["need_one"],
+                "ranking_reason": "Relevant.",
+                "skill_alignment_explanation": "Aligned.",
+            }
+            for code in ("CSCE 110", "CSCE 206")
+        ]},
+    ],
+)
+def test_proposal_contract_accepts_empty_single_and_multiple_outputs(payload):
+    assert len(CourseDiscoveryProposal.model_validate(payload).proposals) == len(
+        payload["proposals"]
+    )
 
 
 @pytest.mark.parametrize(

@@ -53,6 +53,17 @@ MAX_QUALIFIED_CANDIDATES = 8
 EARLY_STOP_ELIGIBLE_COUNT = 3
 BACKOFF_SECONDS = (0.25, 0.75)
 MODEL_ROLE = "course_discovery"
+PROPOSAL_JSON_CONTRACT = (
+    "Return only one JSON object with exactly this shape: "
+    "{\"proposals\":[{\"course_code\":\"SUBJ 123\","
+    "\"matched_need_ids\":[\"need_id\"],\"ranking_reason\":\"one short sentence\","
+    "\"skill_alignment_explanation\":\"one short sentence\"}]}. "
+    "The proposals list may be empty and may contain at most 10 unique courses. Use only exact "
+    "course codes from the qualified pool and only need_id values supplied in career_needs. "
+    "Each proposed course needs at least one unique matched_need_id. Eligible candidates must "
+    "come before unresolved candidates. Do not include course metadata, eligibility fields, "
+    "markdown, commentary, nulls, placeholders, duplicate courses, extra keys, or tool calls."
+)
 
 _TOOLS = [
     {
@@ -215,6 +226,75 @@ class CourseDiscoveryAgent:
         if not isinstance(content, str) or not content.strip():
             raise AIResponseParseError("Course Discovery proposal is empty.")
         return CourseDiscoveryProposal.model_validate(parse_ai_json_response(content))
+
+    @staticmethod
+    def _proposal_error_category(
+        exc: AIResponseParseError | ValidationError,
+    ) -> str:
+        if isinstance(exc, AIResponseParseError):
+            message = str(exc).lower()
+            if "empty" in message:
+                return "EMPTY_OUTPUT"
+            if "incomplete" in message:
+                return "TRUNCATED_OUTPUT"
+            if "malformed" in message or "does not contain" in message:
+                return "INVALID_JSON"
+            if "must be an object" in message:
+                return "WRONG_TYPE"
+            return "OTHER"
+        errors = exc.errors(
+            include_url=False,
+            include_context=False,
+            include_input=False,
+        )
+        types = {item["type"] for item in errors}
+        paths = {".".join(str(part) for part in item["loc"]) for item in errors}
+        messages = {item["msg"].lower() for item in errors}
+        if "extra_forbidden" in types:
+            return "EXTRA_FIELD"
+        if "missing" in types:
+            return "MISSING_REQUIRED_FIELD"
+        if any("course_code" in path for path in paths):
+            return "COURSE_CODE_SHAPE"
+        if any("matched_need_ids" in path for path in paths) or any(
+            "need" in message and "unique" in message for message in messages
+        ):
+            return "NEED_LINK_SHAPE"
+        if any(item in types for item in {"too_long", "list_too_long"}):
+            return "TOO_MANY_ITEMS"
+        if "literal_error" in types:
+            return "WRONG_ENUM"
+        if any("none" in item for item in types):
+            return "NULLABILITY"
+        if any(
+            item.endswith("_type") or item in {"model_type", "dict_type"}
+            for item in types
+        ):
+            return "WRONG_TYPE"
+        return "OTHER"
+
+    @staticmethod
+    def _safe_proposal_problems(
+        exc: AIResponseParseError | ValidationError,
+    ) -> list[dict[str, str]]:
+        if isinstance(exc, AIResponseParseError):
+            return [{
+                "path": "$",
+                "type": CourseDiscoveryAgent._proposal_error_category(exc),
+                "message": "Response must contain one complete JSON object.",
+            }]
+        return [
+            {
+                "path": ".".join(str(part) for part in item["loc"]),
+                "type": item["type"],
+                "message": item["msg"],
+            }
+            for item in exc.errors(
+                include_url=False,
+                include_context=False,
+                include_input=False,
+            )
+        ]
 
     def _qualify_candidates(
         self,
@@ -550,7 +630,8 @@ class CourseDiscoveryAgent:
             "below. Eligible "
             "candidates must come before unresolved candidates.\n<qualified_candidates>\n"
             + json.dumps(self._qualified_pool(qualified), sort_keys=True)
-            + "\n</qualified_candidates>"
+            + "\n</qualified_candidates>\n"
+            + PROPOSAL_JSON_CONTRACT
         )})
         observation_cache: dict[str, dict[str, Any]] = {}
         unique_searches: set[str] = set()
@@ -650,28 +731,39 @@ class CourseDiscoveryAgent:
                         )
                         messages.append({"role": "user", "content": (
                             "Discovery is complete. Rank and explain only the qualified pool below. "
-                            "Eligible candidates must come before unresolved candidates. Return exactly "
-                            "{\"proposals\":[{\"course_code\":\"SUBJ 123\","
-                            "\"matched_need_ids\":[\"need_id\"],\"ranking_reason\":\"...\","
-                            "\"skill_alignment_explanation\":\"...\"}]}. No markdown, extra keys, "
-                            "course metadata, eligibility claims, or tool calls.\n<qualified_candidates>\n"
+                            "Eligible candidates must come before unresolved candidates.\n"
+                            "<qualified_candidates>\n"
                             + json.dumps(self._qualified_pool(qualified), sort_keys=True)
-                            + "\n</qualified_candidates>"
+                            + "\n</qualified_candidates>\n"
+                            + PROPOSAL_JSON_CONTRACT
                         )})
                     continue
                 try:
                     proposal = self._proposal(message.get("content") if isinstance(message, Mapping) else None)
-                except (AIResponseParseError, ValidationError):
+                    trace.first_attempt_parse_category = "VALID"
+                except (AIResponseParseError, ValidationError) as exc:
+                    trace.first_attempt_parse_category = self._proposal_error_category(exc)
                     trace.repair_count = 1
                     messages.append({"role": "assistant", "content": str(message.get("content") or "")[:4000]})
                     messages.append({"role": "user", "content": (
-                        "Repair only the final JSON. Return exactly {\"proposals\":[{\"course_code\":\"SUBJ 123\","
-                        "\"matched_need_ids\":[\"need_id\"],\"ranking_reason\":\"...\","
-                        "\"skill_alignment_explanation\":\"...\"}]}. Use only codes in the qualified pool; "
-                        "no markdown, commentary, extra keys, duplicate courses, or tool calls."
+                        "Repair only the final proposal; do not repeat discovery. "
+                        + PROPOSAL_JSON_CONTRACT
+                        + " Safe validation problems: "
+                        + json.dumps(
+                            self._safe_proposal_problems(exc),
+                            sort_keys=True,
+                            separators=(",", ":"),
+                        )
                     )})
                     repaired = self._complete(messages, None, trace)
-                    proposal = self._proposal(repaired.get("content"))
+                    try:
+                        proposal = self._proposal(repaired.get("content"))
+                        trace.repair_parse_category = "VALID"
+                    except (AIResponseParseError, ValidationError) as repair_exc:
+                        trace.repair_parse_category = self._proposal_error_category(
+                            repair_exc
+                        )
+                        raise
                 break
             if proposal is None:
                 raise AIResponseParseError("Course Discovery did not return a final proposal.")
