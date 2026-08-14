@@ -6,8 +6,6 @@ from typing import Any
 
 from GradusIQ_career.ai.contracts import feature_output_is_valid
 from GradusIQ_career.course_discovery.agent_models import (
-    CourseDiscoveryResult,
-    CourseDiscoveryTrace,
     MAX_VERIFIED_RECOMMENDATIONS,
 )
 from GradusIQ_career.course_discovery.models import (
@@ -15,7 +13,7 @@ from GradusIQ_career.course_discovery.models import (
     StudentCourseState,
 )
 
-from .models import EvalFeature, EvalMetric, EvalScenario, EvalStatus
+from .models import CourseDiscoveryReview, EvalFeature, EvalMetric, EvalScenario, EvalStatus
 
 
 FORBIDDEN_CLAIMS = (
@@ -72,10 +70,20 @@ def evaluate_fixture(
 def evaluate_course_discovery(observation: dict[str, Any]) -> list[EvalMetric]:
     review = observation.get("course_discovery_review") or {}
     try:
-        result = CourseDiscoveryResult.model_validate(review.get("validated_result"))
-        trace = CourseDiscoveryTrace.model_validate(review.get("safe_trace"))
+        typed_review = CourseDiscoveryReview.model_validate(review)
     except Exception as exc:
         return [_metric("response_contract_valid", EvalStatus.FAIL, type(exc).__name__)]
+    if typed_review.execution_status == "ERROR":
+        return [
+            _metric("response_contract_valid", EvalStatus.PASS),
+            _metric(
+                "course_discovery_execution",
+                EvalStatus.ERROR,
+                typed_review.failure.error_class or typed_review.failure.category,
+            ),
+        ]
+    result = typed_review.validated_result
+    trace = typed_review.safe_trace
     metrics = [_metric("response_contract_valid", EvalStatus.PASS)]
     checks = {
         "bounded_tool_rounds": trace.tool_rounds <= 6,

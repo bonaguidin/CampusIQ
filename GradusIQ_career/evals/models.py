@@ -220,16 +220,34 @@ class CourseDispositionReview(StrictModel):
         "VERIFIED", "REQUIRES_VERIFICATION", "NOT_FOUND", "WRONG_INSTITUTION",
         "COMPLETED", "PLANNED", "IN_PROGRESS", "INELIGIBLE", "UNRESOLVED",
         "UNOBSERVED", "DUPLICATE", "NOT_PROPOSED", "ELIGIBILITY_NOT_CHECKED", "OTHER",
+        "UNQUALIFIED",
     ]
+
+
+class CourseDiscoveryFailure(StrictModel):
+    category: Literal["AGENT_FAILURE"] = "AGENT_FAILURE"
+    error_class: str | None = None
+    safe_message: str = "Course Discovery could not complete safely."
 
 
 class CourseDiscoveryReview(StrictModel):
     institution: str
-    validated_result: CourseDiscoveryResult
+    execution_status: Literal["SUCCESS", "ERROR"] = "SUCCESS"
+    validated_result: CourseDiscoveryResult | None = None
+    failure: CourseDiscoveryFailure | None = None
     safe_trace: CourseDiscoveryTrace
     tool_summary: CourseDiscoveryToolSummary
     rejection_reasons: dict[str, int] = Field(default_factory=dict)
     course_dispositions: list[CourseDispositionReview] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def execution_contract(self):
+        if self.execution_status == "SUCCESS":
+            if self.validated_result is None or self.failure is not None:
+                raise ValueError("successful Course Discovery review requires only validated_result")
+        elif self.validated_result is not None or self.failure is None:
+            raise ValueError("failed Course Discovery review requires only safe failure metadata")
+        return self
 
 
 class EvalRunResult(StrictModel):

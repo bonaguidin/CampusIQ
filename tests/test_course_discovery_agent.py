@@ -19,6 +19,8 @@ from GradusIQ_career.course_discovery.models import (
 )
 from GradusIQ_career.course_discovery.needs import derive_career_skill_needs
 from GradusIQ_career.course_discovery.service import CourseDiscoveryService
+from GradusIQ_career.evals.course_discovery_scenarios import COURSE_DISCOVERY_SCENARIOS
+from GradusIQ_career.evals.live import build_course_discovery_context
 from tests.test_course_discovery import context
 
 
@@ -278,7 +280,9 @@ def test_eligible_candidate_is_preferred_while_unresolved_stays_separate():
         {"content": proposal("CSCE 206", career_need.need_id)},
     )
     outcome = run_agent(client, needs=[career_need])
-    assert [item.course_code for item in outcome.result.verified_recommendations] == ["CSCE 206"]
+    assert [item.course_code for item in outcome.result.verified_recommendations] == [
+        "CSCE 206"
+    ]
     assert outcome.result.requires_verification == []
 
 
@@ -434,6 +438,79 @@ def test_auto_qualification_pool_is_strictly_bounded():
     assert outcome.trace.candidate_count >= outcome.trace.qualified_candidate_count
     assert outcome.trace.qualified_candidate_count <= 8
     assert outcome.trace.qualification_batch_count == 1
+
+
+def test_observed_but_unselected_proposal_cannot_survive_as_requires_verification():
+    scenario = next(
+        item for item in COURSE_DISCOVERY_SCENARIOS
+        if item.scenario_id == "course_already_completed"
+    )
+    ctx = build_course_discovery_context(scenario)
+    target_role = scenario.synthetic_input.target_roles[0]
+    needs = derive_career_skill_needs(ctx.profile, target_role)
+    records = []
+    client = SequenceClient(
+        {
+            "content": "",
+            "tool_calls": [
+                tool_call("search_courses", {"query": "cloud computing", "limit": 8})
+            ],
+        },
+        {"content": proposal("CSCE 331", needs[0].need_id)},
+    )
+
+    outcome = CourseDiscoveryAgent(
+        CourseDiscoveryService(ctx),
+        client,
+        sleep=lambda _: None,
+        evidence_observer=records.extend,
+    ).run(target_role, needs)
+
+    target = next(item for item in records if item["course_code"] == "CSCE 331")
+    assert target["observed"] is True
+    assert target["qualified"] is False
+    assert target["proposed"] is True
+    assert target["final_disposition"] == "UNQUALIFIED"
+    assert outcome.result.verified_recommendations == []
+    assert outcome.result.requires_verification == []
+    assert outcome.trace.rejected_count == 1
+
+
+def test_selected_qualified_unresolved_proposal_still_requires_verification():
+    scenario = next(
+        item for item in COURSE_DISCOVERY_SCENARIOS
+        if item.scenario_id == "course_prerequisite_unresolved"
+    )
+    ctx = build_course_discovery_context(scenario)
+    target_role = scenario.synthetic_input.target_roles[0]
+    needs = derive_career_skill_needs(ctx.profile, target_role)
+    records = []
+    eligible = json.loads(proposal("CSCE 206", needs[0].need_id))["proposals"][0]
+    unresolved = json.loads(proposal("CSCE 331", needs[0].need_id))["proposals"][0]
+    client = SequenceClient(
+        {"content": json.dumps({"proposals": [eligible, unresolved]})}
+    )
+
+    outcome = CourseDiscoveryAgent(
+        CourseDiscoveryService(ctx),
+        client,
+        sleep=lambda _: None,
+        evidence_observer=records.extend,
+    ).run(target_role, needs)
+
+    target = next(item for item in records if item["course_code"] == "CSCE 331")
+    assert target["qualified"] is True
+    assert target["qualification_status"] == "UNRESOLVED"
+    assert target["final_disposition"] == "REQUIRES_VERIFICATION"
+    assert [item.course_code for item in outcome.result.verified_recommendations] == ["CSCE 206"]
+    assert all(
+        item.course_code != "CSCE 331"
+        for item in outcome.result.verified_recommendations
+    )
+    assert [item.course_code for item in outcome.result.requires_verification] == [
+        "CSCE 331"
+    ]
+    assert outcome.result.requires_verification[0].reasons
 
 
 @pytest.mark.parametrize(

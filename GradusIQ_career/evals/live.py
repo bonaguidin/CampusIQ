@@ -183,7 +183,17 @@ def execute_live(
         }
         course_review = {
             "institution": context.institution.value,
-            "validated_result": output or {},
+            "execution_status": "SUCCESS" if status == "success" else "ERROR",
+            "validated_result": output if status == "success" else None,
+            "failure": (
+                None
+                if status == "success"
+                else {
+                    "category": "AGENT_FAILURE",
+                    "error_class": trace.get("error_class"),
+                    "safe_message": "Course Discovery could not complete safely.",
+                }
+            ),
             "safe_trace": trace,
             "tool_summary": tool_summary,
             "rejection_reasons": {},

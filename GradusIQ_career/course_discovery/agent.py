@@ -377,6 +377,11 @@ class CourseDiscoveryAgent:
             if evidence is None:
                 rejected += 1
                 continue
+            candidate = qualified.get(proposed.course_code)
+            if candidate is None:
+                disposition["final_disposition"] = "UNQUALIFIED"
+                rejected += 1
+                continue
             if len(linked) != len(proposed.matched_need_ids):
                 disposition["final_disposition"] = "OTHER"
                 rejected += 1

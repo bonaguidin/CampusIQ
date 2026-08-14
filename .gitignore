@@ -26,6 +26,7 @@ frontend/dist/
 # Local agent/tool state
 .claude/
 .serena/
+graphify-out/
 
 # Scraper intermediate files
 /tmp/*.pkl

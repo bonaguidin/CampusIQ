@@ -4,6 +4,7 @@ import re
 import pytest
 
 from GradusIQ_career.ai.types import AIMessageResponse
+from GradusIQ_career.ai.errors import AIRequestError
 from GradusIQ_career.evals import live
 from GradusIQ_career.evals.course_discovery_scenarios import COURSE_DISCOVERY_SCENARIOS
 from GradusIQ_career.evals.models import EvalFeature, EvalRunResult, EvalStatus
@@ -70,6 +71,11 @@ class CourseClient:
             message=message, model="controlled/course-model",
             usage={"prompt_tokens": 10, "completion_tokens": 5, "total_tokens": 15},
         )
+
+
+class FailingCourseClient:
+    def complete_message_with_metadata(self, **kwargs):
+        raise AIRequestError("synthetic controlled failure", transient=False)
 
 
 def execute(scenario, feature):
@@ -252,6 +258,83 @@ def test_c2_cli_writes_six_typed_results_incrementally(tmp_path, monkeypatch):
     assert (artifact["planned"], artifact["completed"], artifact["run_status"]) == (6, 6, "complete")
     assert len(artifact["results"]) == 6
     assert all(EvalRunResult.model_validate(item).course_discovery_review for item in artifact["results"])
+
+
+def test_course_discovery_safe_failure_is_a_strict_typed_review():
+    scenario = COURSE_DISCOVERY_SCENARIOS[0]
+    observation = REAL_EXECUTE_LIVE(
+        scenario,
+        EvalFeature.COURSE_DISCOVERY,
+        client_factory=FailingCourseClient,
+    )
+
+    assert observation["status"] == "failed"
+    review = observation["course_discovery_review"]
+    assert review["execution_status"] == "ERROR"
+    assert review["validated_result"] is None
+    assert review["failure"] == {
+        "category": "AGENT_FAILURE",
+        "error_class": "AIRequestError",
+        "safe_message": "Course Discovery could not complete safely.",
+    }
+
+    result = run_scenarios(
+        [scenario],
+        feature=EvalFeature.COURSE_DISCOVERY,
+        live=True,
+        live_executor=lambda scenario, feature: observation,
+    )[0]
+    assert result.status == EvalStatus.ERROR
+    reloaded = EvalRunResult.model_validate_json(result.model_dump_json())
+    assert reloaded.course_discovery_review.execution_status == "ERROR"
+    assert reloaded.course_discovery_review.validated_result is None
+    assert reloaded.course_discovery_review.safe_trace.attempt_count == 1
+
+
+def test_typed_failure_is_retained_without_corrupting_incremental_suite(
+    tmp_path, monkeypatch
+):
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("GRADUSIQ_EVAL_LIVE", "1")
+    calls = 0
+
+    def execute_with_one_safe_failure(scenario, feature):
+        nonlocal calls
+        calls += 1
+        client_factory = (
+            FailingCourseClient
+            if calls == 3
+            else lambda: CourseClient(scenario.scenario_id)
+        )
+        return REAL_EXECUTE_LIVE(scenario, feature, client_factory=client_factory)
+
+    monkeypatch.setattr(live, "execute_live", execute_with_one_safe_failure)
+    output = tmp_path / "eval-results" / "c2-typed-failure.json"
+
+    assert main([
+        "--live", "--suite", "course-discovery", "--output", str(output)
+    ]) == 0
+
+    artifact = json.loads(output.read_text())
+    assert (
+        artifact["planned"], artifact["completed"], artifact["run_status"]
+    ) == (6, 6, "complete")
+    typed = [EvalRunResult.model_validate(item) for item in artifact["results"]]
+    assert [item.status for item in typed].count(EvalStatus.ERROR) == 1
+    assert typed[0].course_discovery_review.execution_status == "SUCCESS"
+    assert typed[1].course_discovery_review.execution_status == "SUCCESS"
+    failed = typed[2].course_discovery_review
+    assert failed.execution_status == "ERROR"
+    assert failed.validated_result is None
+    assert failed.failure.error_class == "AIRequestError"
+    assert not list(output.parent.glob(f".{output.name}.*"))
+
+    rendered = output.read_text()
+    for forbidden in (
+        "Authorization", "raw_provider_response", '"canonical_profile":',
+        "synthetic-eval-student", "<untrusted_context>",
+    ):
+        assert forbidden not in rendered
 
 
 def test_c2_interruption_preserves_completed_typed_results(tmp_path, monkeypatch):
