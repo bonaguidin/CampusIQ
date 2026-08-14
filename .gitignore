@@ -25,6 +25,7 @@ frontend/dist/
 
 # Local agent/tool state
 .claude/
+.serena/
 
 # Scraper intermediate files
 /tmp/*.pkl
