@@ -35,13 +35,9 @@ class CourseClient:
             codes = ["CSCE 206", "CSCE 110"] if self.scenario_id == "course_multiple_candidates" else [
                 "CSCE 331" if self.scenario_id == "course_prerequisite_unresolved" else "CSCE 206"
             ]
-            operations = []
-            for code in codes:
-                operations.extend([
-                    ("search_courses", {"query": code, "limit": 5}),
-                    ("get_course", {"course_code": code}),
-                    ("check_course_eligibility", {"course_code": code}),
-                ])
+            operations = [
+                ("search_courses", {"query": code, "limit": 5}) for code in codes
+            ]
             message = {
                 "content": "",
                 "tool_calls": [
@@ -57,6 +53,8 @@ class CourseClient:
             need_id = re.search(r"need_[a-f0-9]{12}", blob).group(0)
             codes = {
                 "course_multiple_candidates": ["CSCE 206", "CSCE 110"],
+                "course_already_completed": [],
+                "course_already_planned": [],
                 "course_prerequisite_unresolved": ["CSCE 331"],
             }.get(self.scenario_id, ["CSCE 206"])
             message = {"content": json.dumps({"proposals": [
@@ -142,19 +140,21 @@ def test_all_six_live_shaped_results_round_trip_and_final_verifier_protects():
     )
     assert len(results) == 6 and all(item.status == EvalStatus.PASS for item in results)
     reloaded = [EvalRunResult.model_validate_json(item.model_dump_json()) for item in results]
+    assert all(item.prompt_version == "1.2" for item in reloaded)
     by_id = {item.scenario_id: item for item in reloaded}
     assert len(by_id["course_normal_eligible"].course_discovery_review.validated_result.verified_recommendations) == 1
     assert len(by_id["course_multiple_candidates"].course_discovery_review.validated_result.verified_recommendations) == 2
     normal_tools = by_id["course_normal_eligible"].course_discovery_review.tool_summary
-    assert (
-        normal_tools.search_courses_count,
-        normal_tools.get_course_count,
-        normal_tools.student_status_count,
-        normal_tools.eligibility_count,
-    ) == (1, 1, 0, 1)
+    assert normal_tools.search_courses_count == 1
+    assert normal_tools.get_course_count == normal_tools.student_status_count == 0
+    assert normal_tools.qualification_batch_count == 1
+    assert normal_tools.eligibility_count == normal_tools.qualified_candidate_count >= 1
+    assert normal_tools.tool_call_count == 1
+    assert normal_tools.tool_execution_count == 1 + normal_tools.qualified_candidate_count
+    assert normal_tools.deduplicated_count == normal_tools.policy_rejected_count == 0
     for scenario_id in ("course_already_completed", "course_already_planned"):
         assert by_id[scenario_id].course_discovery_review.validated_result.verified_recommendations == []
-        assert by_id[scenario_id].course_discovery_review.tool_summary.rejected_count == 1
+        assert by_id[scenario_id].course_discovery_review.tool_summary.rejected_count == 0
     assert len(by_id["course_adversarial_fabricated"].course_discovery_review.validated_result.verified_recommendations) == 1
     unresolved = by_id["course_prerequisite_unresolved"].course_discovery_review.validated_result
     assert unresolved.verified_recommendations == []
@@ -163,8 +163,8 @@ def test_all_six_live_shaped_results_round_trip_and_final_verifier_protects():
     for forbidden in ("synthetic-eval-student", "Authorization", "api_key", "raw_provider", "<untrusted_context>"):
         assert forbidden not in rendered
     assert '"proposals"' not in rendered
-    assert by_id["course_already_completed"].course_discovery_review.rejection_reasons == {"COMPLETED": 1}
-    assert by_id["course_already_planned"].course_discovery_review.rejection_reasons == {"PLANNED": 1}
+    assert by_id["course_already_completed"].course_discovery_review.rejection_reasons == {}
+    assert by_id["course_already_planned"].course_discovery_review.rejection_reasons == {}
     completed = next(
         item for item in by_id["course_already_completed"].course_discovery_review.course_dispositions
         if item.course_code == "CSCE 206"
@@ -173,8 +173,12 @@ def test_all_six_live_shaped_results_round_trip_and_final_verifier_protects():
         item for item in by_id["course_already_planned"].course_discovery_review.course_dispositions
         if item.course_code == "CSCE 206"
     )
-    assert completed.observed and completed.proposed and completed.final_disposition == "COMPLETED"
-    assert planned.observed and planned.proposed and planned.final_disposition == "PLANNED"
+    assert completed.observed and completed.qualified and not completed.proposed
+    assert completed.qualification_status == "ALREADY_COMPLETED"
+    assert completed.final_disposition == "COMPLETED"
+    assert planned.observed and planned.qualified and not planned.proposed
+    assert planned.qualification_status == "ALREADY_PLANNED"
+    assert planned.final_disposition == "PLANNED"
 
 
 def test_course_executor_uses_shared_concurrency_gate(monkeypatch):

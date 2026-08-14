@@ -8,7 +8,9 @@ from .models import (
     CareerSkillNeed,
     CatalogInstitution,
     CatalogProvenance,
+    CourseEligibilityResult,
     CourseEligibilityStatus,
+    CourseSearchResult,
     MatchKind,
     PrerequisiteStatus,
     StrictModel,
@@ -19,6 +21,13 @@ from .models import (
 
 MAX_PROPOSALS = 10
 MAX_VERIFIED_RECOMMENDATIONS = 5
+
+
+class QualifiedCourseCandidate(StrictModel):
+    """One observed catalog result qualified by the trusted C1 service."""
+
+    search_result: CourseSearchResult
+    eligibility: CourseEligibilityResult
 
 
 class ProposedCourse(StrictModel):
@@ -104,11 +113,12 @@ class CourseDiscoveryTrace(StrictModel):
     request_id: str
     feature: Literal["COURSE_DISCOVERY"] = "COURSE_DISCOVERY"
     prompt_name: Literal["course_discovery"] = "course_discovery"
-    prompt_version: Literal["1.0", "1.1"] = "1.1"
+    prompt_version: Literal["1.0", "1.1", "1.2"] = "1.2"
     model_role: Literal["course_discovery"] = "course_discovery"
     resolved_model: str | None = None
     tool_rounds: int = 0
     tool_call_count: int = 0
+    tool_execution_count: int = 0
     search_call_count: int = 0
     lookup_count: int = 0
     status_check_count: int = 0
@@ -116,6 +126,14 @@ class CourseDiscoveryTrace(StrictModel):
     deduplicated_call_count: int = 0
     policy_rejected_call_count: int = 0
     candidate_count: int = 0
+    qualified_candidate_count: int = 0
+    qualification_batch_count: int = 0
+    eligible_candidate_count: int = 0
+    completed_candidate_count: int = 0
+    planned_candidate_count: int = 0
+    in_progress_candidate_count: int = 0
+    ineligible_candidate_count: int = 0
+    unresolved_candidate_count: int = 0
     proposal_count: int = 0
     verified_count: int = 0
     unresolved_count: int = 0

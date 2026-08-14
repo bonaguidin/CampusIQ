@@ -8,6 +8,7 @@ from GradusIQ_career.course_discovery.agent_models import (
     CourseDiscoveryResult,
     CourseDiscoveryTrace,
 )
+from GradusIQ_career.course_discovery.models import CourseEligibilityStatus
 
 
 class StrictModel(BaseModel):
@@ -178,6 +179,7 @@ class ReviewConvenience(StrictModel):
 class CourseDiscoveryToolSummary(StrictModel):
     tool_rounds: int = Field(default=0, ge=0)
     tool_call_count: int = Field(default=0, ge=0)
+    tool_execution_count: int = Field(default=0, ge=0)
     search_courses_count: int = Field(default=0, ge=0)
     get_course_count: int = Field(default=0, ge=0)
     student_status_count: int = Field(default=0, ge=0)
@@ -185,6 +187,14 @@ class CourseDiscoveryToolSummary(StrictModel):
     deduplicated_count: int = Field(default=0, ge=0)
     policy_rejected_count: int = Field(default=0, ge=0)
     candidate_count: int = Field(default=0, ge=0)
+    qualified_candidate_count: int = Field(default=0, ge=0)
+    qualification_batch_count: int = Field(default=0, ge=0)
+    eligible_candidate_count: int = Field(default=0, ge=0)
+    completed_candidate_count: int = Field(default=0, ge=0)
+    planned_candidate_count: int = Field(default=0, ge=0)
+    in_progress_candidate_count: int = Field(default=0, ge=0)
+    ineligible_candidate_count: int = Field(default=0, ge=0)
+    unresolved_candidate_count: int = Field(default=0, ge=0)
     proposal_count: int = Field(default=0, ge=0)
     verified_count: int = Field(default=0, ge=0)
     unresolved_count: int = Field(default=0, ge=0)
@@ -194,6 +204,8 @@ class CourseDiscoveryToolSummary(StrictModel):
 class CourseDispositionReview(StrictModel):
     course_code: str
     observed: bool
+    qualified: bool = False
+    qualification_status: CourseEligibilityStatus | None = None
     proposed: bool
     final_disposition: Literal[
         "VERIFIED", "REQUIRES_VERIFICATION", "NOT_FOUND", "WRONG_INSTITUTION",

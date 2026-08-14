@@ -120,7 +120,13 @@ def run_scenarios(
                 scenario_id=scenario.scenario_id, scenario_version=scenario.scenario_version,
                 feature=applicable, purpose=scenario.purpose,
                 input_fingerprint=scenario.synthetic_input.safe_fingerprint(),
-                prompt_name=applicable.value, prompt_version="1.0",
+                prompt_name=applicable.value,
+                prompt_version=(
+                    observation.get("course_discovery_review", {})
+                    .get("safe_trace", {})
+                    .get("prompt_version", "1.0")
+                    if applicable == EvalFeature.COURSE_DISCOVERY else "1.0"
+                ),
                 model=observation.get("model"),
                 status=status, metrics=metrics,
                 latency_ms=observation.get("latency_ms", 0),

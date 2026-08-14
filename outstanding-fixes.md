@@ -70,7 +70,11 @@ Full audit complete (2026-08-11) and Phase 1 implementation built and staged (20
 - [x] C2R.1 live-evaluation harness blocker: Course Discovery is a first-class eval feature with a separate six-case controlled suite, dual live opt-in, synthetic trusted contexts, production-path mocked coverage, incremental ignored artifacts, and typed result/trace reload validation.
 - [x] Reviewed C2R baseline completed: deterministic safety passed 6/6, while exposing universal 12-call exhaustion, zero explicit eligibility/status use, 50% repair rate, 210k tokens, and weak live rejection-scenario efficacy.
 - [x] C2.1 workflow hardening: focused-search policy, per-request tool deduplication, eligibility-backed proposals, early stop, stricter final-output instructions, realistic scenario targets, and synthetic-only observed/proposed/disposition evidence.
-- [ ] Run C2R.2 live validation; confirm materially lower tool/token use, lower repair rate, 2+ verified choices in the ranking case, and directly review completed/planned dispositions.
+- [x] C2R.2 live safety validation: 6/6 passed with zero unsafe survivors, but workflow quality failed—every case exhausted 12 attempted calls, only 5 eligibility checks occurred, 13/18 proposals lacked eligibility evidence, zero recommendations verified, and repair stayed at 50%.
+- [x] C2.2 deterministic candidate qualification: software now transitions from a maximum two-search discovery phase into one bounded C1 qualification batch, supplies a typed eligible/unresolved/excluded pool for model ranking, retains direct qualification dispositions, and reports attempted/executed/rejected/reused operations separately.
+- [ ] C2R.3: validate live qualification and attempted-call efficiency materially below the C2R.2 ceiling.
+- [ ] C2R.3: review live verified recommendation quality, including two useful eligible choices in the multiple-candidate case.
+- [ ] C2R.3: confirm live first-attempt structured reliability improves materially from the 50% repair baseline.
 - [ ] Improve prerequisite/restriction data coverage and course-ranking quality if C2R.2 remains unresolved-heavy; do not weaken conservative `UNRESOLVED` semantics.
 - [ ] Course degree applicability and term offering/section/seat availability remain unresolved; no authoritative degree-planning or schedule model exists.
 - [ ] Advisor orchestration remains proposed; do not grant course-write or registration authority.

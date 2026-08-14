@@ -56,7 +56,6 @@ def proposal(course_code, need_id, **extra):
 def grounded_calls(code, *, query=None):
     return [
         tool_call("search_courses", {"query": query or code, "limit": 5}, "search"),
-        tool_call("check_course_eligibility", {"course_code": code}, "eligibility"),
     ]
 
 
@@ -100,8 +99,10 @@ def test_search_then_propose_returns_only_deterministic_metadata():
     assert recommendation.eligibility_status == CourseEligibilityStatus.ELIGIBLE
     assert recommendation.provenance.source_url.startswith("https://catalog.tamu.edu/")
     assert recommendation.degree_applicability == recommendation.offering_status == "UNKNOWN"
-    assert outcome.trace.tool_call_count == 2
-    assert outcome.trace.search_call_count == outcome.trace.eligibility_check_count == 1
+    assert outcome.trace.tool_call_count == 1
+    assert outcome.trace.search_call_count == 1
+    assert outcome.trace.qualification_batch_count == 1
+    assert outcome.trace.eligibility_check_count == outcome.trace.qualified_candidate_count >= 1
     assert outcome.trace.candidate_count >= 1
     assert outcome.trace.input_tokens == 20 and outcome.trace.output_tokens == 10
 
@@ -206,7 +207,9 @@ def test_invalid_tool_calls_are_safe_and_cannot_change_scope(call):
     assert outcome.result.verified_recommendations == []
     assert outcome.trace.tool_call_count == 1
     tool_message = next(message for message in client.calls[1]["messages"] if message["role"] == "tool")
-    assert "invalid_tool_call" in tool_message["content"]
+    assert any(marker in tool_message["content"] for marker in (
+        "invalid_tool_call", "discovery_tool_not_allowed"
+    ))
 
 
 def test_tool_budget_is_hard_bounded():
@@ -233,39 +236,34 @@ def test_unique_search_policy_is_bounded_and_returns_safe_observation():
         {"content": json.dumps({"proposals": []})},
     )
     outcome = run_agent(client, needs=[career_need])
-    assert outcome.trace.search_call_count == 4
-    assert outcome.trace.policy_rejected_call_count == 1
+    assert outcome.trace.search_call_count == 2
+    assert outcome.trace.policy_rejected_call_count == 3
     tool_messages = [m for m in client.calls[1]["messages"] if m["role"] == "tool"]
     assert "search_policy_exhausted" in tool_messages[-1]["content"]
 
 
-def test_proposal_without_eligibility_evidence_is_rejected():
+def test_observed_proposal_is_automatically_qualified_before_ranking():
     career_need = need()
     client = SequenceClient(
         {"content": "", "tool_calls": [tool_call("search_courses", {"query": "CSCE 110"})]},
         {"content": proposal("CSCE 110", career_need.need_id)},
     )
     outcome = run_agent(client, needs=[career_need])
-    assert outcome.result.verified_recommendations == []
-    assert outcome.trace.rejected_count == 1
+    assert [item.course_code for item in outcome.result.verified_recommendations] == ["CSCE 110"]
+    assert outcome.trace.qualified_candidate_count >= 1
 
 
-def test_early_stop_after_three_eligible_candidates_stays_below_hard_budget():
+def test_qualification_transition_stops_discovery_below_hard_budget():
     career_need = need()
-    codes = ["CSCE 110", "CSCE 181", "CSCE 206"]
-    calls = []
-    for index, code in enumerate(codes):
-        calls.extend([
-            tool_call("search_courses", {"query": code}, f"search-{index}"),
-            tool_call("check_course_eligibility", {"course_code": code}, f"eligible-{index}"),
-        ])
+    calls = [tool_call("search_courses", {"query": "CSCE 206"}, "search")]
     client = SequenceClient(
         {"content": "", "tool_calls": calls},
         {"content": proposal("CSCE 206", career_need.need_id)},
     )
     outcome = run_agent(client, needs=[career_need])
     assert outcome.result.verified_recommendations
-    assert outcome.trace.tool_call_count == 6 < MAX_TOOL_CALLS
+    assert outcome.trace.tool_call_count == 1 < MAX_TOOL_CALLS
+    assert outcome.trace.qualification_batch_count == 1
     assert client.calls[-1]["extra_body"] is None
 
 
@@ -281,6 +279,21 @@ def test_eligible_candidate_is_preferred_while_unresolved_stays_separate():
     )
     outcome = run_agent(client, needs=[career_need])
     assert [item.course_code for item in outcome.result.verified_recommendations] == ["CSCE 206"]
+    assert outcome.result.requires_verification == []
+
+
+def test_unresolved_cannot_displace_available_eligible_candidates():
+    career_need = need()
+    client = SequenceClient(
+        {"content": "", "tool_calls": [
+            tool_call("search_courses", {"query": "CSCE 206", "limit": 5}, "eligible"),
+            tool_call("search_courses", {"query": "CSCE 331", "limit": 5}, "unresolved"),
+        ]},
+        {"content": proposal("CSCE 331", career_need.need_id)},
+    )
+    outcome = run_agent(client, needs=[career_need])
+    assert outcome.trace.eligible_candidate_count >= 1
+    assert outcome.result.verified_recommendations == []
     assert outcome.result.requires_verification == []
 
 
@@ -310,6 +323,11 @@ def test_safe_evaluation_disposition_records_final_verifier_outcome(ctx, propose
     assert record == {
         "course_code": proposed_code,
         "observed": proposed_code == "CSCE 206",
+        "qualified": proposed_code == "CSCE 206",
+        "qualification_status": (
+            "ALREADY_COMPLETED" if expected == "COMPLETED" else
+            "ALREADY_PLANNED" if expected == "PLANNED" else None
+        ),
         "proposed": True,
         "final_disposition": expected,
     }
@@ -324,7 +342,8 @@ def test_failed_repair_is_not_repeated_and_does_not_rerun_tools():
     outcome = run_agent(client)
     assert outcome.result is None
     assert outcome.trace.repair_count == 1
-    assert outcome.trace.search_call_count == outcome.trace.eligibility_check_count == 1
+    assert outcome.trace.search_call_count == 1
+    assert outcome.trace.eligibility_check_count == outcome.trace.qualified_candidate_count >= 1
     assert len(client.calls) == 3
 
 
@@ -384,6 +403,9 @@ def test_prompt_injection_is_delimited_data_and_cannot_add_tools_or_bypass_verif
     system, user = client.calls[0]["messages"][:2]
     assert "<untrusted_context>" in user["content"]
     assert "student_id" in user["content"]  # retained only as delimited, untrusted data
+    advertised = client.calls[0]["extra_body"]["tools"]
+    assert [item["function"]["name"] for item in advertised] == ["search_courses"]
+    assert "student_id" not in json.dumps(advertised)
     assert TOOL_NAMES == {
         "search_courses", "get_course", "get_student_course_status", "check_course_eligibility"
     }
@@ -398,3 +420,43 @@ def test_trace_contains_only_safe_counts_not_profile_or_tool_payloads():
     assert "description" not in rendered
     safe_trace = outcome.trace.model_dump(exclude={"prompt_name", "prompt_version"})
     assert "prompt" not in json.dumps(safe_trace).lower()
+
+
+def test_auto_qualification_pool_is_strictly_bounded():
+    career_need = need()
+    client = SequenceClient(
+        {"content": "", "tool_calls": [tool_call("search_courses", {"query": "C", "limit": 8})]},
+        {"content": json.dumps({"proposals": []})},
+    )
+    outcome = run_agent(client, needs=[career_need])
+    assert outcome.trace.candidate_count >= outcome.trace.qualified_candidate_count
+    assert outcome.trace.qualified_candidate_count <= 8
+    assert outcome.trace.qualification_batch_count == 1
+
+
+@pytest.mark.parametrize(
+    ("ctx", "expected_status", "expected_final"),
+    (
+        (context(courses=(("done", "CSCE 206", "completed"),)), "ALREADY_COMPLETED", "COMPLETED"),
+        (context(planned=(("plan", "CSCE 206"),)), "ALREADY_PLANNED", "PLANNED"),
+    ),
+)
+def test_excluded_candidate_disposition_does_not_require_bad_model_proposal(
+    ctx, expected_status, expected_final
+):
+    records = []
+    client = SequenceClient(
+        {"content": "", "tool_calls": grounded_calls("CSCE 206")},
+        {"content": json.dumps({"proposals": []})},
+    )
+    outcome = CourseDiscoveryAgent(
+        CourseDiscoveryService(ctx), client, sleep=lambda _: None,
+        evidence_observer=records.extend,
+    ).run("Software Engineering Intern", [need()])
+    target = next(item for item in records if item["course_code"] == "CSCE 206")
+    assert target == {
+        "course_code": "CSCE 206", "observed": True, "qualified": True,
+        "qualification_status": expected_status, "proposed": False,
+        "final_disposition": expected_final,
+    }
+    assert outcome.result.verified_recommendations == []
