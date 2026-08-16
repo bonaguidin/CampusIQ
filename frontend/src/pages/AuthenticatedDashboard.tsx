@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/useAuth';
 import { ChatPanel } from '../components/ChatPanel';
+import { GuidedTour } from '../components/GuidedTour';
 import { DashboardSuccessNotice } from '../components/DashboardSuccessNotice';
 import { FitAnalysisPanel } from '../components/FitAnalysisPanel';
 import { GapAnalysisPanel } from '../components/GapAnalysisPanel';
@@ -21,8 +22,17 @@ const NAV_ITEMS: Array<{ key: NavSection; label: string }> = [
   { key: 'career', label: 'Career' },
 ];
 
+// First-run tour is remembered per user (localStorage), so it auto-shows once
+// and the "?" button replays it on demand. A profile field could hold this
+// later; localStorage keeps it demo-simple with no migration.
+const TOUR_SEEN_PREFIX = 'gradusiq_tour_seen_';
+
 export function AuthenticatedDashboard() {
   const { studentAccount, signOutSession, session, reloadStudentProfile } = useAuth();
+  const tourSeenKey = session?.user?.id ? `${TOUR_SEEN_PREFIX}${session.user.id}` : null;
+  const [tourOpen, setTourOpen] = useState<boolean>(() =>
+    tourSeenKey ? localStorage.getItem(tourSeenKey) !== '1' : false,
+  );
   // The term view reads planned_courses and the catalog through the session
   // bearer token. Absent one, the section falls back to the flat course list
   // below rather than rendering an empty planner.
@@ -77,8 +87,28 @@ export function AuthenticatedDashboard() {
     setRailOpen(false);
   }
 
+  function handleTourClose() {
+    setTourOpen(false);
+    if (tourSeenKey) localStorage.setItem(tourSeenKey, '1');
+  }
+
+  // The tour ends on these; each marks the tour seen (via onClose) then routes.
+  const tourEndActions = [
+    { label: 'Add transcript', onClick: () => { void navigate('/transcript'); } },
+    { label: 'Add resume', onClick: () => { void navigate('/resume'); } },
+  ];
+
   return (
     <ProfileCompletionContext.Provider value={requestField}><div className="shell" data-dashboard-source="authenticated">
+      {/* First-run onboarding tour — carousel that walks the tabs and ends on
+          the transcript/resume upload CTAs. */}
+      {tourOpen && (
+        <GuidedTour
+          onNavigate={setActiveSection}
+          onClose={handleTourClose}
+          endActions={tourEndActions}
+        />
+      )}
       {railOpen && <div className="rail-overlay" onClick={() => setRailOpen(false)} aria-hidden="true" />}
       <aside className={`rail${railOpen ? ' rail--open' : ''}`} aria-label="Dashboard navigation">
         <div className="rail-identity">
@@ -131,6 +161,15 @@ export function AuthenticatedDashboard() {
             <span className="topbar-menu-icon" aria-hidden="true"><span /></span>
           </button>
           <h2 className="topbar-title">{NAV_ITEMS.find((item) => item.key === activeSection)?.label}</h2>
+          <button
+            type="button"
+            className="topbar-help"
+            onClick={() => setTourOpen(true)}
+            aria-label="Replay the new-user tour"
+            title="Take the tour"
+          >
+            ?
+          </button>
         </header>
         <main className="stage-main">
           <div className="stage-inner">
