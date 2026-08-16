@@ -798,6 +798,12 @@ def test_course_discovery_uses_trusted_scope_and_ai_gate(client, monkeypatch):
             return SimpleNamespace(errors=[], result=Result())
 
     monkeypatch.setattr(api, "CourseDiscoveryAgent", Agent)
+    # The handler builds a real AI client to hand the agent; with the agent
+    # mocked, that client is never used, but build_client() still runs and
+    # needs OPENROUTER_API_KEY. Stub it so the test exercises trusted scope and
+    # the gate without a live-key dependency (CI runs with no env). Same pattern
+    # as tests/test_api.py.
+    monkeypatch.setattr(api, "build_client", lambda: object())
     response = _call(
         client, "post", "/api/v2/student/me/analyze/course-discovery",
         {"target_role": "SWE Intern"},
