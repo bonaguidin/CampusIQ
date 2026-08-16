@@ -12,6 +12,7 @@ from GradusIQ_career.action_planning.models import (
 from GradusIQ_career.action_planning.query import dependency_order
 from GradusIQ_career.course_discovery.models import (
     CatalogInstitution,
+    PrerequisiteMode,
     PrerequisiteStatus,
 )
 from tests.test_action_planning_builder import (
@@ -23,6 +24,14 @@ from tests.test_action_planning_builder import (
     skill_need,
     unresolved_mode_evaluation,
     verified,
+)
+from tests.test_course_discovery import context
+from tests.test_course_discovery_agent import (
+    SequenceClient,
+    grounded_calls,
+    need as agent_need,
+    proposal,
+    run_agent,
 )
 
 
@@ -345,3 +354,90 @@ def test_dependency_order_result_round_trips():
     restored = DependencyOrderResult.model_validate(result.model_dump(mode="json"))
     assert restored == result
 
+
+# --- regression: unused ANY-mode alternatives never imply unresolved dependency ----
+# ACCT 210 requires ACCT 209 OR ACCT 229 (real TAMU catalog data, same fixture the
+# Course Discovery prerequisite tests already use). Driving the real agent, not a
+# hand-built object, so the target is a genuine VerifiedCourseRecommendation --
+# prerequisite_status == ELIGIBLE is the only state that type can ever carry.
+
+def _real_any_mode_verified_recommendation():
+    ctx = context(courses=(("a", "ACCT 229", "completed"),))  # ACCT 209 left NOT_TAKEN
+    career_need = agent_need("ACCT 210")
+    client = SequenceClient(
+        {"content": "", "tool_calls": grounded_calls("ACCT 210")},
+        {"content": proposal("ACCT 210", career_need.need_id)},
+    )
+    outcome = run_agent(client, ctx=ctx, needs=[career_need])
+    return career_need, outcome.result
+
+
+def test_verified_recommendation_with_missing_any_alternative_does_not_make_ordering_provisional():
+    career_need, course_discovery_result = _real_any_mode_verified_recommendation()
+    recommendation = course_discovery_result.verified_recommendations[0]
+    evaluation = recommendation.prerequisite_evaluation
+
+    # structural proof this is the real "unused missing alternative" state, not
+    # an assumption -- see semantic audit Step 2/4.
+    assert recommendation.prerequisite_status == PrerequisiteStatus.ELIGIBLE
+    assert evaluation.requirement.mode == PrerequisiteMode.ANY
+    assert evaluation.satisfied_courses == ["ACCT 229"]
+    assert evaluation.missing_courses == ["ACCT 209"]
+
+    built_plan = build_action_plan(
+        target_role=TARGET_ROLE, skill_needs=[career_need], course_discovery_result=course_discovery_result,
+    )
+    result = dependency_order(built_plan, course_discovery_result)
+
+    assert result.status == "ORDERED"
+    assert result.completeness == "COMPLETE"
+    assert result.limitations == []
+    # the unused missing alternative (ACCT 209) never became a node or an edge
+    unused_id = course_node_id(CatalogInstitution.TAMU, "ACCT 209")
+    known_node_ids = {n.node_id for n in built_plan.nodes}
+    assert unused_id not in known_node_ids
+    assert not any(edge.to_node_id == unused_id or edge.from_node_id == unused_id for edge in built_plan.edges)
+    assert [edge for edge in built_plan.edges if edge.relation == "requires"] == []
+
+
+def test_verified_recommendation_with_unknown_any_alternative_does_not_make_ordering_provisional():
+    career_need, course_discovery_result = _real_any_mode_verified_recommendation()
+    recommendation = course_discovery_result.verified_recommendations[0]
+    # Reaching a genuine StudentCourseState.UNKNOWN for a real catalog alternative
+    # requires a code absent from the local catalog snapshot, which the real
+    # fixture data doesn't happen to exercise for ACCT 209/229. Starting from the
+    # real agent-produced recommendation (same course, same title, same
+    # provenance, same matched_needs) and moving the one unused alternative from
+    # "missing" to "unknown" -- a state my semantic audit already proved is
+    # reachable for ANY-mode ELIGIBLE -- is the minimal realistic construction,
+    # not a hand-built impossible object. status stays ELIGIBLE throughout.
+    evaluation = recommendation.prerequisite_evaluation.model_copy(update={
+        "missing_courses": [],
+        "unknown_courses": ["ACCT 209"],
+    })
+    recommendation = recommendation.model_copy(update={"prerequisite_evaluation": evaluation})
+    course_discovery_result = course_discovery_result.model_copy(
+        update={"verified_recommendations": [recommendation]}
+    )
+
+    assert recommendation.prerequisite_status == PrerequisiteStatus.ELIGIBLE
+    assert evaluation.requirement.mode == PrerequisiteMode.ANY
+    assert evaluation.satisfied_courses == ["ACCT 229"]
+    assert evaluation.unknown_courses == ["ACCT 209"]
+
+    built_plan = build_action_plan(
+        target_role=TARGET_ROLE, skill_needs=[career_need], course_discovery_result=course_discovery_result,
+    )
+    result = dependency_order(built_plan, course_discovery_result)
+
+    assert result.status == "ORDERED"
+    assert result.completeness == "COMPLETE"
+    assert result.limitations == []
+    # the unknown unused alternative never became a node, an edge, or a limitation
+    unused_id = course_node_id(CatalogInstitution.TAMU, "ACCT 209")
+    known_node_ids = {n.node_id for n in built_plan.nodes}
+    assert unused_id not in known_node_ids
+    assert [edge for edge in built_plan.edges if edge.relation == "requires"] == []
+    assert not any(item.node_id == unused_id for item in result.limitations)
+    # the UNKNOWN fact itself is not erased -- it just doesn't affect ordering
+    assert course_discovery_result.verified_recommendations[0].prerequisite_evaluation.unknown_courses == ["ACCT 209"]
