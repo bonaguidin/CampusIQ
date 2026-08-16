@@ -57,6 +57,7 @@ from GradusIQ_career.planning.planned import (
 )
 from GradusIQ_career.planning.search import CatalogSearchError, search_catalog
 from GradusIQ_career.planning.term_view import fetch_terms_view
+from GradusIQ_career.action_planning import build_action_plan, dependency_order
 from GradusIQ_career.course_discovery.agent import CourseDiscoveryAgent
 from GradusIQ_career.course_discovery.models import (
     CourseDiscoveryContext,
@@ -987,9 +988,17 @@ class CourseDiscoveryRequest(BaseModel):
     target_role: str | None = Field(default=None, min_length=1, max_length=150)
 
 
-def _run_authenticated_course_discovery(
+def _resolve_course_discovery_inputs(
     request: Request, body: CourseDiscoveryRequest | None
-) -> dict:
+):
+    """Trusted target_role + CareerSkillNeed[] derivation.
+
+    Shared by the Course Discovery analyze endpoint and the action-plan
+    preview endpoint -- both must plan against the identical needs Course
+    Discovery itself used, not a second, independently reconstructed set.
+    Returns a skip-shaped FeatureResult if a precondition isn't met, or the
+    (client, context, needs, target_role) tuple to actually run the agent.
+    """
     client = _session_client(request)
     student_id = _resolve_session_student_id(client)
     canonical = build_student_intelligence_profile(client, student_id)
@@ -999,7 +1008,7 @@ def _run_authenticated_course_discovery(
             feature="COURSE_DISCOVERY", status="skipped",
             summary="Course discovery is not available for this institution.",
             missing_fields=[MissingField(path="institution.name", label="Supported institution")],
-        ).to_dict()
+        )
     roles = canonical.career.target_roles if canonical.career.confirmed else []
     requested = body.target_role.strip() if body and body.target_role else None
     target_role = requested or (roles[0] if len(roles) == 1 else None)
@@ -1008,7 +1017,7 @@ def _run_authenticated_course_discovery(
             feature="COURSE_DISCOVERY", status="skipped",
             summary="Select a confirmed target role before discovering courses.",
             missing_fields=[MissingField(path="career.target_roles", label="Confirmed target role")],
-        ).to_dict()
+        )
     planned = [
         PlannedCourseEvidence(
             id=item.id, institution=institution, course_code=item.course_code,
@@ -1020,13 +1029,27 @@ def _run_authenticated_course_discovery(
         profile=canonical, institution=institution, planned_courses=planned
     )
     needs = derive_career_skill_needs(canonical, target_role)
+    return client, context, needs, target_role
+
+
+def _run_course_discovery_agent(request: Request, context, needs, target_role):
     try:
         with request.app.state.ai_concurrency.slot():
-            outcome = CourseDiscoveryAgent(
+            return CourseDiscoveryAgent(
                 CourseDiscoveryService(context), build_client()
             ).run(needs=needs, target_role=target_role)
     except Exception as exc:
         raise HTTPException(status_code=502, detail="Course discovery is unavailable.") from exc
+
+
+def _run_authenticated_course_discovery(
+    request: Request, body: CourseDiscoveryRequest | None
+) -> dict:
+    resolved = _resolve_course_discovery_inputs(request, body)
+    if isinstance(resolved, FeatureResult):
+        return resolved.to_dict()
+    _client, context, needs, target_role = resolved
+    outcome = _run_course_discovery_agent(request, context, needs, target_role)
     if outcome.errors or outcome.result is None:
         return FeatureResult(
             feature="COURSE_DISCOVERY", status="failed",
@@ -1036,6 +1059,46 @@ def _run_authenticated_course_discovery(
         feature="COURSE_DISCOVERY", status="success", summary=outcome.result.summary,
         data=outcome.result.model_dump(mode="json"),
     ).to_dict()
+
+
+def _run_authenticated_action_plan_preview(
+    request: Request, body: CourseDiscoveryRequest | None
+) -> dict:
+    """Read-only preview: same trusted Course Discovery execution as
+    /analyze/course-discovery, then the existing, unmodified deterministic
+    action-planning pipeline (build_action_plan -> dependency_order) over its
+    result. No new prerequisite/qualification logic runs here -- this is
+    integration only. Not a schedule, not a persisted plan, not an approval.
+    """
+    resolved = _resolve_course_discovery_inputs(request, body)
+    if isinstance(resolved, FeatureResult):
+        return resolved.to_dict()
+    _client, context, needs, target_role = resolved
+    outcome = _run_course_discovery_agent(request, context, needs, target_role)
+    if outcome.errors or outcome.result is None:
+        return FeatureResult(
+            feature="ACTION_PLAN", status="failed",
+            summary="Course discovery failed.", errors=outcome.errors,
+        ).to_dict()
+    course_discovery_result = outcome.result
+    plan = build_action_plan(
+        target_role=target_role, skill_needs=needs,
+        course_discovery_result=course_discovery_result,
+    )
+    if plan.execution_status == "ERROR":
+        return {
+            "feature": "ACTION_PLAN", "status": "failed",
+            "summary": plan.summary,
+            "action_plan": plan.model_dump(mode="json"),
+            "dependency_order": None,
+        }
+    order = dependency_order(plan, course_discovery_result)
+    return {
+        "feature": "ACTION_PLAN", "status": "success",
+        "summary": plan.summary,
+        "action_plan": plan.model_dump(mode="json"),
+        "dependency_order": order.model_dump(mode="json"),
+    }
 
 
 _GRADUATION_PATTERN = re.compile(r"^(Spring|Fall) 20[0-9]{2}$")
@@ -1089,6 +1152,18 @@ def analyze_me(
             request, internal_name, canonical, profile, slug
         )
     return _run_protected_feature(request, internal_name, slug, profile=profile)
+
+
+@router.post(
+    "/api/v2/student/me/action-plan",
+    dependencies=[Depends(authorize_proxy_request)],
+)
+def action_plan_me(request: Request, body: CourseDiscoveryRequest | None = None) -> dict:
+    """Read-only dependency-order preview over the student's own, freshly
+    computed Course Discovery result. Not persisted; not a schedule; not an
+    enrollment or advisor action. See _run_authenticated_action_plan_preview.
+    """
+    return _run_authenticated_action_plan_preview(request, body)
 
 
 @router.post(

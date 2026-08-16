@@ -29,8 +29,9 @@ ME_ROUTES = [
     ("post", "/api/v2/student/me/analyze/gap", None),
     ("post", "/api/v2/student/me/chat", {"message": "hi", "history": []}),
     ("get", "/api/v2/student/me/profile", None),
+    ("post", "/api/v2/student/me/action-plan", None),
 ]
-ME_IDS = ["analyze", "chat", "profile"]
+ME_IDS = ["analyze", "chat", "profile", "action-plan"]
 
 
 def make_test_config(**overrides):
@@ -948,3 +949,370 @@ def test_uuid_slug_is_rejected_by_isalnum_directly():
     assert len(STUDENT_UUID) <= 64  # length alone would have passed
     assert api.load_cached_feature_result(STUDENT_UUID, "GAP", STUDENT_UUID) is None
     assert api.load_analysis_bundle(STUDENT_UUID) == {}
+
+
+# --- POST /api/v2/student/me/action-plan (feat: expose read-only action-plan preview) ---
+# CourseDiscoveryAgent is mocked at the exact same boundary the existing
+# course-discovery tests above use (monkeypatch api.CourseDiscoveryAgent),
+# but returning a REAL CourseDiscoveryResult so build_action_plan()/
+# dependency_order() -- both unmodified, already-tested pure functions --
+# actually run for real inside the route.
+
+from GradusIQ_career.action_planning.models import (
+    DependencyOrderResult,
+    PlanFailure,
+    UnifiedActionPlan,
+)
+from GradusIQ_career.course_discovery.agent_models import (
+    CourseDiscoveryResult,
+    PrerequisiteBlockedCourse,
+    UnresolvedCourseCandidate,
+    VerifiedCourseRecommendation,
+)
+from GradusIQ_career.course_discovery.models import (
+    CareerSkillNeed,
+    CatalogInstitution,
+    CatalogProvenance,
+    CourseEligibilityStatus,
+    EvidenceState,
+    MatchKind,
+    PrerequisiteEvaluation,
+    PrerequisiteMode,
+    PrerequisiteRequirement,
+    PrerequisiteStatus,
+    StudentCourseState,
+)
+
+ACTION_PLAN_TARGET_ROLE = "SWE Intern"  # matches _canonical_profile()'s confirmed target role
+
+
+def _ap_need(skill="Python"):
+    return CareerSkillNeed(
+        skill=skill, category="skills", target_role=ACTION_PLAN_TARGET_ROLE,
+        importance="required", evidence_state=EvidenceState.VERIFIED_LOCAL,
+        evidence_source="O*NET 15-1252.00 onet",
+    )
+
+
+def _ap_provenance(course_code):
+    return CatalogProvenance(
+        institution=CatalogInstitution.TAMU, course_code=course_code,
+        catalog_year="2026-2027",
+        source_url="https://catalog.tamu.edu/undergraduate/course-descriptions/",
+        source_last_checked="2026-06-20",
+    )
+
+
+def _ap_verified(course_code, need, *, prerequisite_evaluation=None, student_status=StudentCourseState.NOT_TAKEN):
+    evaluation = prerequisite_evaluation or PrerequisiteEvaluation(
+        status=PrerequisiteStatus.ELIGIBLE, requirement=PrerequisiteRequirement(mode=PrerequisiteMode.NONE),
+    )
+    return VerifiedCourseRecommendation(
+        institution=CatalogInstitution.TAMU, course_code=course_code, title=f"{course_code} title",
+        description="Course description.", credit_min=3.0, credit_max=3.0,
+        matched_needs=[need], match_kinds=[MatchKind.TITLE], matched_terms=["match"],
+        student_status=student_status, prerequisite_status=evaluation.status,
+        prerequisite_evaluation=evaluation, eligibility_status=CourseEligibilityStatus.ELIGIBLE,
+        provenance=_ap_provenance(course_code), ranking_reason="Direct match.",
+        skill_alignment_explanation="Covers the need directly.",
+    )
+
+
+def _ap_blocked(course_code, need, evaluation):
+    return PrerequisiteBlockedCourse(
+        institution=CatalogInstitution.TAMU, course_code=course_code, title=f"{course_code} title",
+        matched_needs=[need], match_kinds=[MatchKind.TITLE],
+        eligibility_status=CourseEligibilityStatus.INELIGIBLE,
+        prerequisite_status=evaluation.status, prerequisite_evaluation=evaluation,
+        provenance=_ap_provenance(course_code),
+    )
+
+
+def _ap_unresolved(course_code, need):
+    evaluation = PrerequisiteEvaluation(
+        status=PrerequisiteStatus.UNRESOLVED,
+        requirement=PrerequisiteRequirement(mode=PrerequisiteMode.UNRESOLVED, unresolved_reasons=["mixed grammar"]),
+    )
+    return UnresolvedCourseCandidate(
+        institution=CatalogInstitution.TAMU, course_code=course_code, title=f"{course_code} title",
+        matched_needs=[need], match_kinds=[MatchKind.TITLE],
+        eligibility_status=CourseEligibilityStatus.UNRESOLVED, reasons=["ambiguous restriction"],
+        prerequisite_evaluation=evaluation, provenance=_ap_provenance(course_code),
+    )
+
+
+def _ap_result(need, *, verified_recs=None, blocked_recs=None, unresolved_recs=None):
+    return CourseDiscoveryResult(
+        target_role=ACTION_PLAN_TARGET_ROLE, current_major="Computer Science",
+        intended_major="Computer Science", career_needs=[need],
+        verified_recommendations=verified_recs or [], requires_verification=unresolved_recs or [],
+        prerequisite_blocked=blocked_recs or [], summary="Test fixture.",
+    )
+
+
+def _stub_action_plan_agent(monkeypatch, client, need, result):
+    monkeypatch.setattr(api, "list_planned", lambda client, sid: [])
+    monkeypatch.setattr(api, "derive_career_skill_needs", lambda profile, role: [need])
+
+    class Agent:
+        def __init__(self, service, provider):
+            pass
+
+        def run(self, *, needs, target_role):
+            assert needs == [need]
+            assert target_role == ACTION_PLAN_TARGET_ROLE
+            return SimpleNamespace(errors=[], result=result)
+
+    monkeypatch.setattr(api, "CourseDiscoveryAgent", Agent)
+
+
+def test_action_plan_simple_verified_recommendation_is_complete(client, monkeypatch):
+    _patch_session(monkeypatch, profile=_full_profile())
+    need = _ap_need()
+    result = _ap_result(need, verified_recs=[_ap_verified("CSCE 110", need)])
+    _stub_action_plan_agent(monkeypatch, client, need, result)
+
+    response = _call(client, "post", "/api/v2/student/me/action-plan", {"target_role": ACTION_PLAN_TARGET_ROLE})
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["feature"] == "ACTION_PLAN" and body["status"] == "success"
+    assert body["dependency_order"]["completeness"] == "COMPLETE"
+    assert body["dependency_order"]["status"] == "ORDERED"
+    assert len(body["action_plan"]["nodes"]) == 2  # skill_need + course
+    assert body["action_plan"]["edges"][0]["relation"] == "satisfies"
+
+
+def test_action_plan_all_mode_blocked_prerequisite_orders_prerequisite_before_dependent(client, monkeypatch):
+    _patch_session(monkeypatch, profile=_full_profile())
+    need = _ap_need()
+    evaluation = PrerequisiteEvaluation(
+        status=PrerequisiteStatus.INELIGIBLE,
+        requirement=PrerequisiteRequirement(mode=PrerequisiteMode.ALL, course_codes=["FINC 351"]),
+        missing_courses=["FINC 351"],
+    )
+    result = _ap_result(need, blocked_recs=[_ap_blocked("FINC 446", need, evaluation)])
+    _stub_action_plan_agent(monkeypatch, client, need, result)
+
+    response = _call(client, "post", "/api/v2/student/me/action-plan", {"target_role": ACTION_PLAN_TARGET_ROLE})
+
+    assert response.status_code == 200
+    body = response.json()
+    from GradusIQ_career.action_planning.builder import course_node_id
+    target_id = course_node_id(CatalogInstitution.TAMU, "FINC 446")
+    prereq_id = course_node_id(CatalogInstitution.TAMU, "FINC 351")
+    node_ids = {n["node_id"] for n in body["action_plan"]["nodes"]}
+    assert target_id in node_ids and prereq_id in node_ids
+    requires = [e for e in body["action_plan"]["edges"] if e["relation"] == "requires"]
+    assert requires == [{"from_node_id": target_id, "to_node_id": prereq_id, "relation": "requires"}]
+    ordered = body["dependency_order"]["ordered_node_ids"]
+    assert ordered.index(prereq_id) < ordered.index(target_id)
+    assert body["dependency_order"]["completeness"] == "COMPLETE"
+
+
+def test_action_plan_blocked_course_retains_satisfies_edge(client, monkeypatch):
+    _patch_session(monkeypatch, profile=_full_profile())
+    need = _ap_need()
+    evaluation = PrerequisiteEvaluation(
+        status=PrerequisiteStatus.INELIGIBLE,
+        requirement=PrerequisiteRequirement(mode=PrerequisiteMode.ALL, course_codes=["FINC 351"]),
+        missing_courses=["FINC 351"],
+    )
+    result = _ap_result(need, blocked_recs=[_ap_blocked("FINC 446", need, evaluation)])
+    _stub_action_plan_agent(monkeypatch, client, need, result)
+
+    response = _call(client, "post", "/api/v2/student/me/action-plan", {"target_role": ACTION_PLAN_TARGET_ROLE})
+
+    from GradusIQ_career.action_planning.builder import course_node_id, skill_need_node_id
+    target_id = course_node_id(CatalogInstitution.TAMU, "FINC 446")
+    satisfies = [e for e in response.json()["action_plan"]["edges"] if e["relation"] == "satisfies"]
+    assert satisfies == [{
+        "from_node_id": target_id, "to_node_id": skill_need_node_id(need.need_id), "relation": "satisfies",
+    }]
+
+
+def test_action_plan_any_mode_blocked_is_provisional_with_no_fake_edges(client, monkeypatch):
+    _patch_session(monkeypatch, profile=_full_profile())
+    need = _ap_need()
+    evaluation = PrerequisiteEvaluation(
+        status=PrerequisiteStatus.INELIGIBLE,
+        requirement=PrerequisiteRequirement(mode=PrerequisiteMode.ANY, course_codes=["ACCT 209", "ACCT 229"]),
+        missing_courses=["ACCT 209", "ACCT 229"],
+    )
+    result = _ap_result(need, blocked_recs=[_ap_blocked("ACCT 210", need, evaluation)])
+    _stub_action_plan_agent(monkeypatch, client, need, result)
+
+    response = _call(client, "post", "/api/v2/student/me/action-plan", {"target_role": ACTION_PLAN_TARGET_ROLE})
+
+    body = response.json()
+    assert response.status_code == 200  # PROVISIONAL is not an HTTP error
+    assert [e for e in body["action_plan"]["edges"] if e["relation"] == "requires"] == []
+    order = body["dependency_order"]
+    assert order["completeness"] == "PROVISIONAL"
+    assert order["status"] == "ORDERED"
+    assert len(order["limitations"]) == 1
+    assert order["limitations"][0]["reason_type"] == "ANY_PREREQUISITE"
+    assert set(order["limitations"][0]["course_codes"]) == {"ACCT 209", "ACCT 229"}
+
+
+def test_action_plan_unresolved_candidate_never_enters_the_plan_and_stays_complete(client, monkeypatch):
+    """UNRESOLVED-mode courses land in requires_verification, which
+    build_action_plan() never consumes -- confirms the trusted server path
+    doesn't leak that evidence into a fake node/edge/limitation."""
+    _patch_session(monkeypatch, profile=_full_profile())
+    need = _ap_need()
+    result = _ap_result(need, unresolved_recs=[_ap_unresolved("CSCE 221", need)])
+    _stub_action_plan_agent(monkeypatch, client, need, result)
+
+    response = _call(client, "post", "/api/v2/student/me/action-plan", {"target_role": ACTION_PLAN_TARGET_ROLE})
+
+    body = response.json()
+    # the skill_need node itself always exists (build_action_plan creates one
+    # per requested need, regardless of whether anything satisfies it yet);
+    # only the unresolved candidate's course node must be absent.
+    assert [n for n in body["action_plan"]["nodes"] if n["node_type"] == "course"] == []
+    assert body["dependency_order"]["completeness"] == "COMPLETE"
+    assert body["dependency_order"]["limitations"] == []
+
+
+def test_action_plan_any_verified_with_missing_unused_alternative_is_complete(client, monkeypatch):
+    _patch_session(monkeypatch, profile=_full_profile())
+    need = _ap_need()
+    evaluation = PrerequisiteEvaluation(
+        status=PrerequisiteStatus.ELIGIBLE,
+        requirement=PrerequisiteRequirement(mode=PrerequisiteMode.ANY, course_codes=["ACCT 209", "ACCT 229"]),
+        satisfied_courses=["ACCT 229"], missing_courses=["ACCT 209"],
+    )
+    result = _ap_result(need, verified_recs=[_ap_verified("ACCT 210", need, prerequisite_evaluation=evaluation)])
+    _stub_action_plan_agent(monkeypatch, client, need, result)
+
+    response = _call(client, "post", "/api/v2/student/me/action-plan", {"target_role": ACTION_PLAN_TARGET_ROLE})
+
+    body = response.json()
+    assert body["dependency_order"]["completeness"] == "COMPLETE"
+    assert body["dependency_order"]["limitations"] == []
+    assert [e for e in body["action_plan"]["edges"] if e["relation"] == "requires"] == []
+
+
+def test_action_plan_any_verified_with_unknown_unused_alternative_is_complete(client, monkeypatch):
+    _patch_session(monkeypatch, profile=_full_profile())
+    need = _ap_need()
+    evaluation = PrerequisiteEvaluation(
+        status=PrerequisiteStatus.ELIGIBLE,
+        requirement=PrerequisiteRequirement(mode=PrerequisiteMode.ANY, course_codes=["ACCT 209", "ACCT 229"]),
+        satisfied_courses=["ACCT 229"], unknown_courses=["ACCT 209"],
+    )
+    result = _ap_result(need, verified_recs=[_ap_verified("ACCT 210", need, prerequisite_evaluation=evaluation)])
+    _stub_action_plan_agent(monkeypatch, client, need, result)
+
+    response = _call(client, "post", "/api/v2/student/me/action-plan", {"target_role": ACTION_PLAN_TARGET_ROLE})
+
+    body = response.json()
+    assert body["dependency_order"]["completeness"] == "COMPLETE"
+    assert body["dependency_order"]["limitations"] == []
+    assert [e for e in body["action_plan"]["edges"] if e["relation"] == "requires"] == []
+
+
+def test_action_plan_completed_and_planned_targets_excluded(client, monkeypatch):
+    _patch_session(monkeypatch, profile=_full_profile())
+    need = _ap_need()
+    completed = _ap_verified("CSCE 206", need, student_status=StudentCourseState.COMPLETED)
+    planned_course = _ap_verified("CSCE 207", need, student_status=StudentCourseState.PLANNED)
+    result = _ap_result(need, verified_recs=[completed, planned_course])
+    _stub_action_plan_agent(monkeypatch, client, need, result)
+
+    response = _call(client, "post", "/api/v2/student/me/action-plan", {"target_role": ACTION_PLAN_TARGET_ROLE})
+
+    body = response.json()
+    course_nodes = [n for n in body["action_plan"]["nodes"] if n["node_type"] == "course"]
+    assert course_nodes == []
+
+
+def test_action_plan_request_rejects_client_supplied_course_discovery_result(client, monkeypatch):
+    """CourseDiscoveryRequest forbids extra fields -- a client cannot smuggle
+    a pre-made CourseDiscoveryResult into the trusted planning pipeline."""
+    _patch_session(monkeypatch, profile=_full_profile())
+    response = _call(
+        client, "post", "/api/v2/student/me/action-plan",
+        {"target_role": ACTION_PLAN_TARGET_ROLE, "course_discovery_result": {"fabricated": True}},
+    )
+    assert response.status_code == 422
+
+
+def test_action_plan_response_round_trips_through_domain_models(client, monkeypatch):
+    _patch_session(monkeypatch, profile=_full_profile())
+    need = _ap_need()
+    evaluation = PrerequisiteEvaluation(
+        status=PrerequisiteStatus.INELIGIBLE,
+        requirement=PrerequisiteRequirement(mode=PrerequisiteMode.ALL, course_codes=["FINC 351"]),
+        missing_courses=["FINC 351"],
+    )
+    result = _ap_result(need, blocked_recs=[_ap_blocked("FINC 446", need, evaluation)])
+    _stub_action_plan_agent(monkeypatch, client, need, result)
+
+    response = _call(client, "post", "/api/v2/student/me/action-plan", {"target_role": ACTION_PLAN_TARGET_ROLE})
+    body = response.json()
+
+    plan = UnifiedActionPlan.model_validate(body["action_plan"])
+    order = DependencyOrderResult.model_validate(body["dependency_order"])
+    assert plan.execution_status == "SUCCESS"
+    assert order.status == "ORDERED"
+
+
+def test_action_plan_uses_the_same_skill_need_ids_course_discovery_used(client, monkeypatch):
+    _patch_session(monkeypatch, profile=_full_profile())
+    need = _ap_need()
+    result = _ap_result(need, verified_recs=[_ap_verified("CSCE 110", need)])
+    _stub_action_plan_agent(monkeypatch, client, need, result)
+
+    response = _call(client, "post", "/api/v2/student/me/action-plan", {"target_role": ACTION_PLAN_TARGET_ROLE})
+
+    from GradusIQ_career.action_planning.builder import skill_need_node_id
+    node_ids = {n["node_id"] for n in response.json()["action_plan"]["nodes"]}
+    assert skill_need_node_id(need.need_id) in node_ids
+
+
+def test_action_plan_repeated_identical_requests_are_deterministic(client, monkeypatch):
+    _patch_session(monkeypatch, profile=_full_profile())
+    need = _ap_need()
+    evaluation = PrerequisiteEvaluation(
+        status=PrerequisiteStatus.INELIGIBLE,
+        requirement=PrerequisiteRequirement(mode=PrerequisiteMode.ALL, course_codes=["FINC 351"]),
+        missing_courses=["FINC 351"],
+    )
+    result = _ap_result(need, blocked_recs=[_ap_blocked("FINC 446", need, evaluation)])
+    _stub_action_plan_agent(monkeypatch, client, need, result)
+
+    first = _call(client, "post", "/api/v2/student/me/action-plan", {"target_role": ACTION_PLAN_TARGET_ROLE})
+    second = _call(client, "post", "/api/v2/student/me/action-plan", {"target_role": ACTION_PLAN_TARGET_ROLE})
+
+    assert first.json()["action_plan"] == second.json()["action_plan"]
+    assert first.json()["dependency_order"] == second.json()["dependency_order"]
+
+
+def test_action_plan_typed_error_is_preserved_when_assembly_fails(client, monkeypatch):
+    """Simulates build_action_plan() returning its own typed ERROR envelope
+    (e.g. a cycle) at the integration seam -- confirms the route surfaces the
+    typed PlanFailure as a handled failure, not a 500, and skips computing
+    dependency_order on unusable graph data."""
+    _patch_session(monkeypatch, profile=_full_profile())
+    need = _ap_need()
+    result = _ap_result(need, verified_recs=[_ap_verified("CSCE 110", need)])
+    _stub_action_plan_agent(monkeypatch, client, need, result)
+
+    error_plan = UnifiedActionPlan(
+        target_role=ACTION_PLAN_TARGET_ROLE, nodes=[], edges=[], conflicts=[],
+        execution_status="ERROR",
+        failure=PlanFailure(error_class="CycleDetected", safe_message="simulated for this test"),
+        summary="Graph assembly aborted.",
+    )
+    monkeypatch.setattr(api, "build_action_plan", lambda **kwargs: error_plan)
+
+    response = _call(client, "post", "/api/v2/student/me/action-plan", {"target_role": ACTION_PLAN_TARGET_ROLE})
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["status"] == "failed"
+    assert body["action_plan"]["execution_status"] == "ERROR"
+    assert body["action_plan"]["failure"]["error_class"] == "CycleDetected"
+    assert body["dependency_order"] is None
