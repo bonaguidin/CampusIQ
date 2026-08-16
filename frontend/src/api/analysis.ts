@@ -9,6 +9,7 @@ import type {
   GapAnalysisData,
   ShiftAnalysisData,
   ProfessorCommentAnalysisData,
+  CourseDiscoveryData,
 } from '../types/analysis';
 
 export interface AnalysisIdentity {
@@ -44,10 +45,18 @@ async function analysisFailure(response: Response): Promise<Error> {
   return new Error(detailToText(detail, fallback));
 }
 
-async function postAnalysis<T>(path: string, accessToken?: string): Promise<FeatureResult<T>> {
+async function postAnalysis<T>(
+  path: string,
+  accessToken?: string,
+  body?: unknown,
+): Promise<FeatureResult<T>> {
+  const headers: Record<string, string> = {};
+  if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
+  if (body !== undefined) headers['Content-Type'] = 'application/json';
   const response = await fetch(path, {
     method: 'POST',
-    headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
+    headers,
+    body: body !== undefined ? JSON.stringify(body) : undefined,
   });
   if (!response.ok) {
     throw await analysisFailure(response);
@@ -77,4 +86,22 @@ export function analyzeShift(identity: AnalysisIdentity): Promise<FeatureResult<
 
 export function analyzeProfessorComments(identity: AnalysisIdentity): Promise<FeatureResult<ProfessorCommentAnalysisData>> {
   return postAnalysis(...analysisPath(identity, 'professor-comments'));
+}
+
+/**
+ * targetRole is the only thing this ever sends. The backend derives
+ * everything else (student identity, canonical profile, CareerSkillNeed[])
+ * itself from the trusted session — sending anything more would be rejected
+ * anyway (CourseDiscoveryRequest is extra="forbid"), but the point is this
+ * function structurally cannot construct that payload in the first place.
+ * Omit targetRole (or pass null/undefined) to let the backend auto-select
+ * the student's sole confirmed target role, exactly as CourseDiscoveryRequest
+ * already allows.
+ */
+export function analyzeCourseDiscovery(
+  identity: AnalysisIdentity,
+  targetRole?: string | null,
+): Promise<FeatureResult<CourseDiscoveryData>> {
+  const [path, token] = analysisPath(identity, 'course-discovery');
+  return postAnalysis(path, token, targetRole ? { target_role: targetRole } : undefined);
 }

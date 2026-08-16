@@ -43,6 +43,13 @@ interface AnalysisPanelProps {
    * off 'failed' changes. Absent it, the generic sentence still renders.
    */
   failureMessage?: string;
+  /**
+   * A control that must be set before running (e.g. Course Discovery's
+   * target-role picker, when a student has more than one confirmed role).
+   * Renders in the header, before the run button. Optional and additive --
+   * FIT/GAP/SHIFT/Professor Comments pass nothing and are unaffected.
+   */
+  headerExtra?: ReactNode;
   children?: ReactNode;
 }
 
@@ -58,6 +65,7 @@ export function AnalysisPanel({
   onRun,
   missingFields = [],
   failureMessage,
+  headerExtra,
   children,
 }: AnalysisPanelProps) {
   const requestProfileField = useProfileFieldRequest();
@@ -66,6 +74,7 @@ export function AnalysisPanel({
       <div className="editable-section-header">
         <h3 className="editable-section-title">{title}</h3>
         <div className="editable-section-actions">
+          {headerExtra}
           <button
             type="button"
             className="btn btn-ghost btn-sm"

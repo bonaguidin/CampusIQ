@@ -4,6 +4,7 @@ import { useAuth } from '../auth/useAuth';
 import { ChatPanel } from '../components/ChatPanel';
 import { GuidedTour } from '../components/GuidedTour';
 import { DashboardSuccessNotice } from '../components/DashboardSuccessNotice';
+import { CourseDiscoveryPanel } from '../components/CourseDiscoveryPanel';
 import { FitAnalysisPanel } from '../components/FitAnalysisPanel';
 import { GapAnalysisPanel } from '../components/GapAnalysisPanel';
 import { ShiftAnalysisPanel } from '../components/ShiftAnalysisPanel';
@@ -286,6 +287,10 @@ export function AuthenticatedDashboard() {
                     <GapAnalysisPanel />
                     <FitAnalysisPanel />
                     <ShiftAnalysisPanel />
+                    {/* Natural next action after fit/gaps/trends: given what
+                        the student now understands about the role, which
+                        actual courses at their school build toward it. */}
+                    <CourseDiscoveryPanel targetRoles={dashboard.career.target_roles} />
                     <div className="career-profile-block">
                       <h2 className="career-section-heading">Career Profile</h2>
                       {/* Graduation and the majors are academic record, not
