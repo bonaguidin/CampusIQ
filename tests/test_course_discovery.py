@@ -13,6 +13,7 @@ from GradusIQ_career.course_discovery.evidence import (
 from GradusIQ_career.course_discovery.models import (
     CareerSkillNeed,
     CatalogInstitution,
+    CourseCatalogRecord,
     CourseCodeInput,
     CourseDiscoveryContext,
     CourseEligibilityStatus,
@@ -23,10 +24,11 @@ from GradusIQ_career.course_discovery.models import (
     PrerequisiteStatus,
     SearchCoursesInput,
     StudentCourseState,
+    StudentCourseStatus,
     VerificationDisposition,
     canonical_course_code,
 )
-from GradusIQ_career.course_discovery.prerequisites import prerequisite_requirement
+from GradusIQ_career.course_discovery.prerequisites import evaluate_prerequisites, prerequisite_requirement
 from GradusIQ_career.course_discovery.service import CourseDiscoveryService
 from GradusIQ_career.course_discovery.tools import ReadOnlyCourseTools
 from GradusIQ_career.student_intelligence_profile import StudentIntelligenceProfile
@@ -245,6 +247,69 @@ def test_natural_language_prerequisite_without_parsed_codes_is_unresolved(catalo
     assert requirement.mode == PrerequisiteMode.UNRESOLVED
     assert requirement.course_codes == []
     assert any("no safely parsed" in reason for reason in requirement.unresolved_reasons)
+
+
+def _synthetic_course(codes, text="CSCE 121 and CSCE 222"):
+    return CourseCatalogRecord(
+        institution=CatalogInstitution.TAMU,
+        course_code="TEST 999",
+        title="Synthetic Test Course",
+        description="",
+        department="TEST",
+        credit_min=3,
+        credit_max=3,
+        prerequisite_text=text,
+        prerequisite_courses=codes,
+        catalog_year="2026-2027",
+        source_url="https://catalog.tamu.edu/undergraduate/course-descriptions/test/",
+        source_last_checked="2026-06-20",
+    )
+
+
+def _status_for(states):
+    def lookup(code):
+        return StudentCourseStatus(
+            institution=CatalogInstitution.TAMU, course_code=code,
+            state=states.get(code, StudentCourseState.UNKNOWN), reason="test fixture",
+        )
+    return lookup
+
+
+def test_unknown_prerequisite_course_is_preserved_and_not_misclassified():
+    course = _synthetic_course(["CSCE 121"], text="CSCE 121")
+    evaluation = evaluate_prerequisites(course, _status_for({}))  # no state -> UNKNOWN
+    assert evaluation.unknown_courses == ["CSCE 121"]
+    assert evaluation.satisfied_courses == []
+    assert evaluation.missing_courses == []
+    assert evaluation.in_progress_courses == []
+    assert evaluation.planned_courses == []
+    # already-existing behavior: unknown folds into UNRESOLVED, unchanged by this fix
+    assert evaluation.status == PrerequisiteStatus.UNRESOLVED
+
+
+def test_multiple_unknown_prerequisites_are_preserved_deterministically():
+    course = _synthetic_course(["CSCE 121", "CSCE 222"])
+    evaluation = evaluate_prerequisites(course, _status_for({}))
+    assert evaluation.unknown_courses == ["CSCE 121", "CSCE 222"]
+    assert evaluation.status == PrerequisiteStatus.UNRESOLVED
+
+
+def test_mixed_missing_and_unknown_prerequisites_land_in_separate_buckets():
+    course = _synthetic_course(["CSCE 121", "CSCE 222"])
+    evaluation = evaluate_prerequisites(
+        course, _status_for({"CSCE 121": StudentCourseState.NOT_TAKEN}),
+    )
+    assert evaluation.missing_courses == ["CSCE 121"]
+    assert evaluation.unknown_courses == ["CSCE 222"]
+    assert evaluation.status == PrerequisiteStatus.UNRESOLVED
+
+
+def test_prerequisite_evaluation_round_trips_unknown_courses():
+    course = _synthetic_course(["CSCE 121", "CSCE 222"])
+    evaluation = evaluate_prerequisites(course, _status_for({}))
+    restored = type(evaluation).model_validate(evaluation.model_dump(mode="json"))
+    assert restored == evaluation
+    assert restored.unknown_courses == ["CSCE 121", "CSCE 222"]
 
 
 def test_valid_smu_course_eligibility_uses_smu_history_only():

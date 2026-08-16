@@ -103,6 +103,7 @@ def evaluate_prerequisites(
             missing_courses=missing,
             in_progress_courses=in_progress,
             planned_courses=planned,
+            unknown_courses=unknown,
             reasons=requirement.unresolved_reasons,
         )
 
@@ -127,5 +128,6 @@ def evaluate_prerequisites(
         missing_courses=missing,
         in_progress_courses=in_progress,
         planned_courses=planned,
+        unknown_courses=unknown,
         reasons=reasons,
     )

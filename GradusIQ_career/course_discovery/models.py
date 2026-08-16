@@ -190,6 +190,14 @@ class PrerequisiteEvaluation(StrictModel):
     missing_courses: list[str] = Field(default_factory=list)
     in_progress_courses: list[str] = Field(default_factory=list)
     planned_courses: list[str] = Field(default_factory=list)
+    # A prerequisite course code whose student_course_status() came back
+    # StudentCourseState.UNKNOWN (unparseable code, or absent from the
+    # institution-scoped catalog) previously vanished silently -- it is not
+    # satisfied, missing, in-progress, or planned; it is simply unresolvable
+    # from current evidence. Already folded into `status` (see
+    # evaluate_prerequisites()'s `elif in_progress or unknown: UNRESOLVED`
+    # branch); this field only stops discarding *which* codes caused that.
+    unknown_courses: list[str] = Field(default_factory=list)
     reasons: list[str] = Field(default_factory=list)
 
 

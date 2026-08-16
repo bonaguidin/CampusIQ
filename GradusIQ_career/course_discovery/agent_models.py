@@ -12,6 +12,7 @@ from .models import (
     CourseEligibilityStatus,
     CourseSearchResult,
     MatchKind,
+    PrerequisiteEvaluation,
     PrerequisiteStatus,
     StrictModel,
     StudentCourseState,
@@ -21,6 +22,7 @@ from .models import (
 
 MAX_PROPOSALS = 10
 MAX_VERIFIED_RECOMMENDATIONS = 5
+MAX_PREREQUISITE_BLOCKED = 5
 ProposalParseCategory = Literal[
     "VALID",
     "INVALID_JSON",
@@ -84,6 +86,13 @@ class VerifiedCourseRecommendation(StrictModel):
     matched_terms: list[str]
     student_status: StudentCourseState
     prerequisite_status: PrerequisiteStatus
+    # Deterministic, catalog- and student-state-derived evidence already
+    # computed by C1's evaluate_prerequisites() at verification time -- the
+    # same object `prerequisite_status` above is summarized from, not a
+    # second, independently derived prerequisite fact. None only for courses
+    # that never went through prerequisite evaluation at all (there is none
+    # today; kept optional so this stays a strictly additive field).
+    prerequisite_evaluation: PrerequisiteEvaluation | None = None
     eligibility_status: Literal[CourseEligibilityStatus.ELIGIBLE]
     provenance: CatalogProvenance
     ranking_reason: str
@@ -100,6 +109,40 @@ class UnresolvedCourseCandidate(StrictModel):
     match_kinds: list[MatchKind]
     eligibility_status: Literal[CourseEligibilityStatus.UNRESOLVED]
     reasons: list[str]
+    # Same deterministic C1 evidence as VerifiedCourseRecommendation. This is
+    # where an actually-unresolved prerequisite (ambiguous catalog grammar,
+    # or an in-progress prerequisite course) becomes reviewable -- a
+    # VerifiedCourseRecommendation can only ever carry an ELIGIBLE
+    # prerequisite_evaluation.status, since eligibility_status ELIGIBLE
+    # requires it structurally (see service.py::check_eligibility).
+    prerequisite_evaluation: PrerequisiteEvaluation | None = None
+    provenance: CatalogProvenance
+
+
+class PrerequisiteBlockedCourse(StrictModel):
+    """A real, qualified catalog candidate that cannot currently be
+    recommended for exactly one deterministic reason: an unmet prerequisite.
+
+    Distinct from UnresolvedCourseCandidate on purpose. UNRESOLVED means C1
+    could not determine an eligibility verdict at all (ambiguous catalog
+    grammar, an in-progress prerequisite). This type means C1 reached a
+    definite verdict -- CourseEligibilityStatus.INELIGIBLE -- and that
+    verdict is known, structurally, to be caused only by prerequisites:
+    service.py::check_eligibility() has no other path to INELIGIBLE (every
+    other rejection reason -- already completed, already planned, wrong
+    institution, course not found -- returns a distinct status before
+    prerequisite evaluation even runs). prerequisite_evaluation is therefore
+    required here, not optional: this type only exists to carry it.
+    """
+
+    institution: CatalogInstitution
+    course_code: str
+    title: str
+    matched_needs: list[CareerSkillNeed]
+    match_kinds: list[MatchKind]
+    eligibility_status: Literal[CourseEligibilityStatus.INELIGIBLE]
+    prerequisite_status: PrerequisiteStatus
+    prerequisite_evaluation: PrerequisiteEvaluation
     provenance: CatalogProvenance
 
 
@@ -112,6 +155,14 @@ class CourseDiscoveryResult(StrictModel):
         default_factory=list, max_length=MAX_VERIFIED_RECOMMENDATIONS
     )
     requires_verification: list[UnresolvedCourseCandidate] = Field(default_factory=list, max_length=5)
+    # Real, qualified catalog courses currently not actionable specifically
+    # because a deterministic prerequisite requirement is unmet -- not a new
+    # kind of recommendation and not "unresolved" evidence, just reviewable
+    # blocked-dependency information that previously vanished at this
+    # boundary (see agent.py's REJECT branch).
+    prerequisite_blocked: list[PrerequisiteBlockedCourse] = Field(
+        default_factory=list, max_length=MAX_PREREQUISITE_BLOCKED
+    )
     summary: str
     degree_applicability: Literal["UNKNOWN"] = "UNKNOWN"
     offering_status: Literal["UNKNOWN"] = "UNKNOWN"
@@ -162,6 +213,7 @@ class CourseDiscoveryTrace(StrictModel):
     proposal_count: int = 0
     verified_count: int = 0
     unresolved_count: int = 0
+    prerequisite_blocked_count: int = 0
     rejected_count: int = 0
     provider_ms: int = 0
     tool_ms: int = 0

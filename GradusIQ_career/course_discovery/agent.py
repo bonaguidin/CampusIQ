@@ -18,7 +18,9 @@ from .agent_models import (
     CourseDiscoveryProposal,
     CourseDiscoveryResult,
     CourseDiscoveryTrace,
+    MAX_PREREQUISITE_BLOCKED,
     MAX_VERIFIED_RECOMMENDATIONS,
+    PrerequisiteBlockedCourse,
     QualifiedCourseCandidate,
     SafeToolTrace,
     UnresolvedCourseCandidate,
@@ -413,6 +415,7 @@ class CourseDiscoveryAgent:
         needs_by_id = {need.need_id: need for need in needs}
         verified = []
         unresolved = []
+        prerequisite_blocked = []
         rejected = 0
         excluded_disposition = {
             CourseEligibilityStatus.ALREADY_COMPLETED: "COMPLETED",
@@ -504,6 +507,7 @@ class CourseDiscoveryAgent:
                     matched_terms=evidence.matched_terms,
                     student_status=eligibility.student_status.state,
                     prerequisite_status=prerequisite_status,
+                    prerequisite_evaluation=eligibility.prerequisite_evaluation,
                     eligibility_status=CourseEligibilityStatus.ELIGIBLE,
                     provenance=course.provenance,
                     ranking_reason=proposed.ranking_reason,
@@ -520,7 +524,31 @@ class CourseDiscoveryAgent:
                     title=course.title, matched_needs=linked,
                     match_kinds=evidence.match_kinds,
                     eligibility_status=CourseEligibilityStatus.UNRESOLVED,
-                    reasons=eligibility.reasons, provenance=course.provenance,
+                    reasons=eligibility.reasons,
+                    prerequisite_evaluation=eligibility.prerequisite_evaluation,
+                    provenance=course.provenance,
+                ))
+            elif (
+                eligibility.status == CourseEligibilityStatus.INELIGIBLE
+                and eligibility.prerequisite_evaluation is not None
+                and len(prerequisite_blocked) < MAX_PREREQUISITE_BLOCKED
+            ):
+                # INELIGIBLE has exactly one cause in service.py::check_eligibility --
+                # every other rejection reason (completed/planned/in-progress/wrong
+                # institution/not found) returns its own distinct status first. This
+                # candidate already passed every upstream boundary the VERIFIED/FLAG
+                # branches above did (observed, qualified, needs linked, eligibility
+                # checked); it is not a new or weaker gate, only a third typed outcome
+                # for the same already-verified candidate.
+                disposition["final_disposition"] = "INELIGIBLE"
+                prerequisite_blocked.append(PrerequisiteBlockedCourse(
+                    institution=course.institution, course_code=course.course_code,
+                    title=course.title, matched_needs=linked,
+                    match_kinds=evidence.match_kinds,
+                    eligibility_status=CourseEligibilityStatus.INELIGIBLE,
+                    prerequisite_status=eligibility.prerequisite_evaluation.status,
+                    prerequisite_evaluation=eligibility.prerequisite_evaluation,
+                    provenance=course.provenance,
                 ))
             else:
                 disposition["final_disposition"] = {
@@ -537,10 +565,12 @@ class CourseDiscoveryAgent:
         trace.proposal_count = len(proposal.proposals)
         trace.verified_count = len(verified)
         trace.unresolved_count = len(unresolved)
+        trace.prerequisite_blocked_count = len(prerequisite_blocked)
         trace.rejected_count = rejected
         summary = (
             f"Verified {len(verified)} institution-scoped course recommendation(s); "
-            f"{len(unresolved)} additional candidate(s) require human verification. "
+            f"{len(unresolved)} additional candidate(s) require human verification; "
+            f"{len(prerequisite_blocked)} candidate(s) blocked by an unmet prerequisite. "
             "Degree applicability and future offering remain unknown."
         )
         profile = self.service.context.profile
@@ -553,6 +583,7 @@ class CourseDiscoveryAgent:
             career_needs=needs,
             verified_recommendations=verified,
             requires_verification=unresolved,
+            prerequisite_blocked=prerequisite_blocked,
             summary=summary,
         )
 

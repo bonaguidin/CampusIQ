@@ -16,6 +16,8 @@ from GradusIQ_career.course_discovery.models import (
     CareerSkillNeed,
     CourseEligibilityStatus,
     EvidenceState,
+    PrerequisiteMode,
+    PrerequisiteStatus,
     StudentCourseState,
 )
 from GradusIQ_career.course_discovery.needs import derive_career_skill_needs
@@ -135,7 +137,7 @@ def test_no_seed_floor_keeps_bounded_supplemental_search_available():
         (context(courses=(("done", "CSCE 110", "completed"),)), "CSCE 110", "rejected"),
         (context(courses=(("active", "CSCE 110", "in_progress"),)), "CSCE 110", "rejected"),
         (context(planned=(("plan", "CSCE 110"),)), "CSCE 110", "rejected"),
-        (context(), "FINC 446", "rejected"),
+        (context(), "FINC 446", "prerequisite_blocked"),
         (context(), "CSCE 221", "unresolved"),
     ),
 )
@@ -149,9 +151,16 @@ def test_final_verifier_overrides_model_preference(ctx, code, expected):
     if expected == "unresolved":
         assert [item.course_code for item in outcome.result.requires_verification] == [code]
         assert outcome.result.verified_recommendations == []
+        assert outcome.result.prerequisite_blocked == []
+    elif expected == "prerequisite_blocked":
+        assert [item.course_code for item in outcome.result.prerequisite_blocked] == [code]
+        assert outcome.result.verified_recommendations == []
+        assert outcome.result.requires_verification == []
+        assert outcome.trace.rejected_count == 0
     else:
         assert outcome.result.verified_recommendations == []
         assert outcome.result.requires_verification == []
+        assert outcome.result.prerequisite_blocked == []
         assert outcome.trace.rejected_count == 1
 
 
@@ -735,3 +744,368 @@ def test_excluded_candidate_disposition_does_not_require_bad_model_proposal(
         "final_disposition": expected_final,
     }
     assert outcome.result.verified_recommendations == []
+
+
+# --- prerequisite evidence preservation (feat: preserve prerequisite evidence) ---
+# These exercise the real construction sites in agent.py's _finalize(), not a
+# hand-built VerifiedCourseRecommendation/UnresolvedCourseCandidate -- proving
+# the field is populated by the actual pipeline, not reconstructed in tests.
+
+def test_none_mode_prerequisite_is_preserved_on_verified_recommendation():
+    career_need = need()
+    client = SequenceClient(
+        {"content": "", "tool_calls": grounded_calls("CSCE 110")},
+        {"content": proposal("CSCE 110", career_need.need_id)},
+    )
+    outcome = run_agent(client, needs=[career_need])
+    recommendation = outcome.result.verified_recommendations[0]
+    assert recommendation.prerequisite_status == PrerequisiteStatus.ELIGIBLE
+    evaluation = recommendation.prerequisite_evaluation
+    assert evaluation is not None
+    assert evaluation.status == PrerequisiteStatus.ELIGIBLE
+    assert evaluation.requirement.mode == PrerequisiteMode.NONE
+    assert evaluation.requirement.course_codes == []
+    assert evaluation.missing_courses == evaluation.satisfied_courses == []
+
+
+def test_all_mode_satisfied_prerequisite_is_preserved_on_verified_recommendation():
+    ctx = context(courses=(
+        ("a", "FINC 351", "completed"), ("b", "FINC 361", "completed"),
+    ))
+    career_need = need("FINC 446")
+    client = SequenceClient(
+        {"content": "", "tool_calls": grounded_calls("FINC 446")},
+        {"content": proposal("FINC 446", career_need.need_id)},
+    )
+    outcome = run_agent(client, ctx=ctx, needs=[career_need])
+    recommendation = outcome.result.verified_recommendations[0]
+    assert recommendation.course_code == "FINC 446"
+    evaluation = recommendation.prerequisite_evaluation
+    assert evaluation.status == PrerequisiteStatus.ELIGIBLE
+    assert evaluation.requirement.mode == PrerequisiteMode.ALL
+    assert evaluation.requirement.course_codes == ["FINC 351", "FINC 361"]
+    assert evaluation.satisfied_courses == ["FINC 351", "FINC 361"]
+    assert evaluation.missing_courses == []
+    # No recomputation: an independent, fresh eligibility check for the same
+    # student context must agree exactly with what the agent already
+    # attached -- proving the field is a pass-through of C1's own
+    # evaluation, not a second, potentially divergent computation.
+    independent = CourseDiscoveryService(ctx).check_eligibility("FINC 446")
+    assert independent.prerequisite_evaluation == evaluation
+
+
+def test_any_mode_satisfied_prerequisite_is_preserved_on_verified_recommendation():
+    ctx = context(courses=(("a", "ACCT 229", "completed"),))
+    career_need = need("ACCT 210")
+    client = SequenceClient(
+        {"content": "", "tool_calls": grounded_calls("ACCT 210")},
+        {"content": proposal("ACCT 210", career_need.need_id)},
+    )
+    outcome = run_agent(client, ctx=ctx, needs=[career_need])
+    recommendation = outcome.result.verified_recommendations[0]
+    evaluation = recommendation.prerequisite_evaluation
+    assert evaluation.status == PrerequisiteStatus.ELIGIBLE
+    assert evaluation.requirement.mode == PrerequisiteMode.ANY
+    assert evaluation.requirement.course_codes == ["ACCT 209", "ACCT 229"]
+    assert evaluation.satisfied_courses == ["ACCT 229"]
+
+
+def test_in_progress_prerequisite_is_preserved_on_unresolved_candidate():
+    ctx = context(courses=(
+        ("a", "FINC 351", "in_progress"), ("b", "FINC 361", "completed"),
+    ))
+    career_need = need("FINC 446")
+    client = SequenceClient(
+        {"content": "", "tool_calls": grounded_calls("FINC 446")},
+        {"content": proposal("FINC 446", career_need.need_id)},
+    )
+    outcome = run_agent(client, ctx=ctx, needs=[career_need])
+    assert outcome.result.verified_recommendations == []
+    candidate = outcome.result.requires_verification[0]
+    assert candidate.course_code == "FINC 446"
+    evaluation = candidate.prerequisite_evaluation
+    assert evaluation is not None
+    assert evaluation.status == PrerequisiteStatus.UNRESOLVED
+    assert evaluation.in_progress_courses == ["FINC 351"]
+    assert evaluation.satisfied_courses == ["FINC 361"]
+    assert evaluation.missing_courses == []
+
+
+def test_unresolved_prerequisite_grammar_is_preserved_on_unresolved_candidate():
+    career_need = need("CSCE 221")
+    client = SequenceClient(
+        {"content": "", "tool_calls": grounded_calls("CSCE 221")},
+        {"content": proposal("CSCE 221", career_need.need_id)},
+    )
+    outcome = run_agent(client, needs=[career_need])
+    assert outcome.result.verified_recommendations == []
+    candidate = outcome.result.requires_verification[0]
+    evaluation = candidate.prerequisite_evaluation
+    assert evaluation is not None
+    assert evaluation.status == PrerequisiteStatus.UNRESOLVED
+    assert evaluation.requirement.mode == PrerequisiteMode.UNRESOLVED
+    assert evaluation.requirement.unresolved_reasons
+
+
+def test_verified_recommendation_prerequisite_evaluation_round_trips():
+    career_need = need()
+    client = SequenceClient(
+        {"content": "", "tool_calls": grounded_calls("CSCE 110")},
+        {"content": proposal("CSCE 110", career_need.need_id)},
+    )
+    outcome = run_agent(client, needs=[career_need])
+    recommendation = outcome.result.verified_recommendations[0]
+    restored = type(recommendation).model_validate(recommendation.model_dump(mode="json"))
+    assert restored == recommendation
+    assert restored.prerequisite_evaluation == recommendation.prerequisite_evaluation
+
+
+# --- prerequisite_blocked (feat: preserve blocked-dependency evidence) ----------
+# A missing/planned-only prerequisite produces CourseEligibilityStatus.INELIGIBLE,
+# which used to vanish entirely as a REJECT disposition. It now survives as a
+# PrerequisiteBlockedCourse -- a real, qualified catalog candidate that is not
+# actionable specifically because a deterministic prerequisite is unmet. These
+# tests drive the real agent end-to-end, same convention as the rest of this file.
+
+def test_missing_prerequisite_course_becomes_a_prerequisite_blocked_candidate():
+    ctx = context(courses=(("a", "FINC 351", "completed"),))  # FINC 361 missing
+    independent = CourseDiscoveryService(ctx).check_eligibility("FINC 446")
+    assert independent.status == CourseEligibilityStatus.INELIGIBLE
+
+    career_need = need("FINC 446")
+    client = SequenceClient(
+        {"content": "", "tool_calls": grounded_calls("FINC 446")},
+        {"content": proposal("FINC 446", career_need.need_id)},
+    )
+    outcome = run_agent(client, ctx=ctx, needs=[career_need])
+    assert outcome.result.verified_recommendations == []
+    assert outcome.result.requires_verification == []
+    assert outcome.trace.rejected_count == 0
+    assert outcome.trace.prerequisite_blocked_count == 1
+
+    blocked = outcome.result.prerequisite_blocked[0]
+    assert blocked.course_code == "FINC 446"
+    assert blocked.institution == ctx.institution
+    assert blocked.eligibility_status == CourseEligibilityStatus.INELIGIBLE
+    assert blocked.prerequisite_status == PrerequisiteStatus.INELIGIBLE
+    assert [n.need_id for n in blocked.matched_needs] == [career_need.need_id]
+    evaluation = blocked.prerequisite_evaluation
+    assert evaluation.status == PrerequisiteStatus.INELIGIBLE
+    assert evaluation.requirement.mode == PrerequisiteMode.ALL
+    assert evaluation.requirement.course_codes == ["FINC 351", "FINC 361"]
+    assert evaluation.satisfied_courses == ["FINC 351"]
+    assert evaluation.missing_courses == ["FINC 361"]
+    assert blocked.provenance.course_code == "FINC 446"
+    # no recomputation: matches an independent, fresh check exactly
+    assert evaluation == independent.prerequisite_evaluation
+
+
+def test_multiple_missing_prerequisites_all_survive_on_the_blocked_candidate():
+    ctx = context()  # neither FINC 351 nor FINC 361 taken
+    career_need = need("FINC 446")
+    client = SequenceClient(
+        {"content": "", "tool_calls": grounded_calls("FINC 446")},
+        {"content": proposal("FINC 446", career_need.need_id)},
+    )
+    outcome = run_agent(client, ctx=ctx, needs=[career_need])
+    blocked = outcome.result.prerequisite_blocked[0]
+    assert blocked.prerequisite_evaluation.missing_courses == ["FINC 351", "FINC 361"]
+    assert blocked.prerequisite_evaluation.satisfied_courses == []
+
+
+def test_any_mode_prerequisite_does_not_falsely_require_every_alternative():
+    """ACCT 210 requires ACCT 209 OR ACCT 229. With neither completed it is
+    genuinely INELIGIBLE (blocked) -- but missing_courses must list both
+    alternatives without the evaluation claiming ALL are individually required
+    (requirement.mode stays ANY, not silently upgraded to ALL)."""
+    ctx = context()
+    career_need = need("ACCT 210")
+    client = SequenceClient(
+        {"content": "", "tool_calls": grounded_calls("ACCT 210")},
+        {"content": proposal("ACCT 210", career_need.need_id)},
+    )
+    outcome = run_agent(client, ctx=ctx, needs=[career_need])
+    blocked = outcome.result.prerequisite_blocked[0]
+    assert blocked.prerequisite_evaluation.requirement.mode == PrerequisiteMode.ANY
+    assert blocked.prerequisite_evaluation.requirement.course_codes == ["ACCT 209", "ACCT 229"]
+    assert blocked.prerequisite_evaluation.missing_courses == ["ACCT 209", "ACCT 229"]
+
+
+def test_in_progress_prerequisite_stays_on_the_unresolved_path_not_blocked():
+    ctx = context(courses=(
+        ("a", "FINC 351", "in_progress"), ("b", "FINC 361", "completed"),
+    ))
+    career_need = need("FINC 446")
+    client = SequenceClient(
+        {"content": "", "tool_calls": grounded_calls("FINC 446")},
+        {"content": proposal("FINC 446", career_need.need_id)},
+    )
+    outcome = run_agent(client, ctx=ctx, needs=[career_need])
+    assert outcome.result.prerequisite_blocked == []
+    assert [item.course_code for item in outcome.result.requires_verification] == ["FINC 446"]
+
+
+def test_ambiguous_prerequisite_grammar_stays_on_the_unresolved_path_not_blocked():
+    career_need = need("CSCE 221")
+    client = SequenceClient(
+        {"content": "", "tool_calls": grounded_calls("CSCE 221")},
+        {"content": proposal("CSCE 221", career_need.need_id)},
+    )
+    outcome = run_agent(client, needs=[career_need])
+    assert outcome.result.prerequisite_blocked == []
+    assert [item.course_code for item in outcome.result.requires_verification] == ["CSCE 221"]
+
+
+@pytest.mark.parametrize("code", ["BUS 301", "CS 2341", "CSCE 999"])
+def test_fabricated_or_wrong_institution_course_never_enters_blocked_candidates(code):
+    career_need = need()
+    client = SequenceClient(
+        {"content": "", "tool_calls": grounded_calls("CSCE 110")},
+        {"content": proposal(code, career_need.need_id)},
+    )
+    outcome = run_agent(client, needs=[career_need])
+    assert outcome.result.prerequisite_blocked == []
+    assert outcome.result.verified_recommendations == []
+
+
+def test_unqualified_proposal_never_enters_blocked_candidates():
+    """A course the model proposes that was never in the qualified pool at all
+    (UNQUALIFIED disposition) must not surface as blocked -- being mentioned by
+    the model is not evidence of anything; only the deterministic qualification
+    pool establishes a real candidate."""
+    career_need = need()
+    other_need = need("CSCE 206").model_copy(update={
+        "evidence_state": EvidenceState.EXTERNAL_EVIDENCE_PRESENT,
+    })
+    client = SequenceClient(
+        {"content": "", "tool_calls": grounded_calls("CSCE 110")},
+        {"content": proposal("CSCE 206", other_need.need_id)},
+    )
+    outcome = run_agent(client, needs=[career_need])
+    assert outcome.result.prerequisite_blocked == []
+    assert outcome.result.verified_recommendations == []
+
+
+def test_target_course_already_completed_does_not_enter_blocked_candidates():
+    """ALREADY_COMPLETED is a distinct CourseEligibilityStatus from INELIGIBLE
+    (service.py's state_to_status branch returns before prerequisite evaluation
+    even runs) -- must not be confused with a prerequisite-blocked course."""
+    ctx = context(courses=(("done", "CSCE 110", "completed"),))
+    career_need = need("CSCE 110")
+    client = SequenceClient(
+        {"content": "", "tool_calls": grounded_calls("CSCE 110")},
+        {"content": proposal("CSCE 110", career_need.need_id)},
+    )
+    outcome = run_agent(client, ctx=ctx, needs=[career_need])
+    assert outcome.result.prerequisite_blocked == []
+    assert outcome.trace.rejected_count == 1
+
+
+def test_target_course_already_planned_does_not_enter_blocked_candidates():
+    """The TARGET course being PLANNED (ALREADY_PLANNED) is a different concept
+    from the target's PREREQUISITE being planned -- see
+    test_planned_prerequisite_blocks_the_dependent_course below for the latter."""
+    ctx = context(planned=(("plan", "CSCE 110"),))
+    career_need = need("CSCE 110")
+    client = SequenceClient(
+        {"content": "", "tool_calls": grounded_calls("CSCE 110")},
+        {"content": proposal("CSCE 110", career_need.need_id)},
+    )
+    outcome = run_agent(client, ctx=ctx, needs=[career_need])
+    assert outcome.result.prerequisite_blocked == []
+    assert outcome.trace.rejected_count == 1
+
+
+def test_planned_prerequisite_blocks_the_dependent_course():
+    """A prerequisite that is merely PLANNED (not completed, not in progress)
+    is not satisfied -- evaluate_prerequisites() lands this on INELIGIBLE, not
+    UNRESOLVED, so it surfaces as prerequisite_blocked, carrying
+    planned_courses as real future-dependency evidence."""
+    ctx = context(
+        planned=(("plan", "FINC 351"),),
+        courses=(("b", "FINC 361", "completed"),),
+    )
+    independent = CourseDiscoveryService(ctx).check_eligibility("FINC 446")
+    assert independent.status == CourseEligibilityStatus.INELIGIBLE
+    assert independent.prerequisite_evaluation.planned_courses == ["FINC 351"]
+
+    career_need = need("FINC 446")
+    client = SequenceClient(
+        {"content": "", "tool_calls": grounded_calls("FINC 446")},
+        {"content": proposal("FINC 446", career_need.need_id)},
+    )
+    outcome = run_agent(client, ctx=ctx, needs=[career_need])
+    blocked = outcome.result.prerequisite_blocked[0]
+    assert blocked.prerequisite_evaluation.planned_courses == ["FINC 351"]
+    assert blocked.prerequisite_evaluation.missing_courses == []
+
+
+def test_prerequisite_blocked_course_round_trips():
+    ctx = context(courses=(("a", "FINC 351", "completed"),))
+    career_need = need("FINC 446")
+    client = SequenceClient(
+        {"content": "", "tool_calls": grounded_calls("FINC 446")},
+        {"content": proposal("FINC 446", career_need.need_id)},
+    )
+    outcome = run_agent(client, ctx=ctx, needs=[career_need])
+    blocked = outcome.result.prerequisite_blocked[0]
+    restored = type(blocked).model_validate(blocked.model_dump(mode="json"))
+    assert restored == blocked
+    assert restored.prerequisite_evaluation == blocked.prerequisite_evaluation
+
+
+# --- unknown-prerequisite pass-through (fix: preserve unknown prerequisite states) -
+# evaluate_prerequisites() already computes unknown_courses (tested directly in
+# tests/test_course_discovery.py); these confirm the new field survives nested
+# round-trips through all three result types that embed PrerequisiteEvaluation,
+# using real agent outcomes with the evaluation swapped in via model_copy so no
+# new fixture-construction machinery is needed.
+
+def test_verified_recommendation_round_trips_with_unknown_prerequisite_courses():
+    career_need = need()
+    client = SequenceClient(
+        {"content": "", "tool_calls": grounded_calls("CSCE 110")},
+        {"content": proposal("CSCE 110", career_need.need_id)},
+    )
+    outcome = run_agent(client, needs=[career_need])
+    recommendation = outcome.result.verified_recommendations[0]
+    evaluation = recommendation.prerequisite_evaluation.model_copy(
+        update={"unknown_courses": ["CSCE 999"]}
+    )
+    updated = recommendation.model_copy(update={"prerequisite_evaluation": evaluation})
+    restored = type(updated).model_validate(updated.model_dump(mode="json"))
+    assert restored == updated
+    assert restored.prerequisite_evaluation.unknown_courses == ["CSCE 999"]
+
+
+def test_unresolved_candidate_round_trips_with_unknown_prerequisite_courses():
+    career_need = need("CSCE 221")
+    client = SequenceClient(
+        {"content": "", "tool_calls": grounded_calls("CSCE 221")},
+        {"content": proposal("CSCE 221", career_need.need_id)},
+    )
+    outcome = run_agent(client, needs=[career_need])
+    candidate = outcome.result.requires_verification[0]
+    evaluation = candidate.prerequisite_evaluation.model_copy(
+        update={"unknown_courses": ["CSCE 999"]}
+    )
+    updated = candidate.model_copy(update={"prerequisite_evaluation": evaluation})
+    restored = type(updated).model_validate(updated.model_dump(mode="json"))
+    assert restored == updated
+    assert restored.prerequisite_evaluation.unknown_courses == ["CSCE 999"]
+
+
+def test_prerequisite_blocked_course_round_trips_with_unknown_prerequisite_courses():
+    ctx = context(courses=(("a", "FINC 351", "completed"),))
+    career_need = need("FINC 446")
+    client = SequenceClient(
+        {"content": "", "tool_calls": grounded_calls("FINC 446")},
+        {"content": proposal("FINC 446", career_need.need_id)},
+    )
+    outcome = run_agent(client, ctx=ctx, needs=[career_need])
+    course = outcome.result.prerequisite_blocked[0]
+    evaluation = course.prerequisite_evaluation.model_copy(update={"unknown_courses": ["CSCE 999"]})
+    updated = course.model_copy(update={"prerequisite_evaluation": evaluation})
+    restored = type(updated).model_validate(updated.model_dump(mode="json"))
+    assert restored == updated
+    assert restored.prerequisite_evaluation.unknown_courses == ["CSCE 999"]
