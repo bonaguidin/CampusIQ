@@ -208,9 +208,49 @@ def test_malformed_final_proposal_gets_one_repair_without_repeating_tools():
     assert outcome.trace.first_attempt_parse_category == "INVALID_JSON"
     assert outcome.trace.repair_parse_category == "VALID"
     assert outcome.trace.search_call_count == 1
-    assert client.calls[-1]["extra_body"] is None
+    assert client.calls[-1]["extra_body"] == {"reasoning": {"enabled": False}}
     assert "Safe validation problems:" in client.calls[-1]["messages"][-1]["content"]
     assert outcome.result.verified_recommendations
+
+
+def test_final_proposal_calls_disable_provider_reasoning():
+    """Regression: some providers (observed: deepseek/deepseek-v4-flash) can spend
+    the entire token budget on hidden reasoning under a complex qualified-pool
+    prompt and return empty content, which reads identically to a real failure.
+    Both the initial finalize call and the repair call must opt out."""
+    career_need = need()
+    client = SequenceClient(
+        {"content": "", "tool_calls": grounded_calls("CSCE 110")},
+        {"content": ""},
+        {"content": proposal("CSCE 110", career_need.need_id)},
+    )
+    outcome = run_agent(client, needs=[career_need])
+    assert outcome.trace.first_attempt_parse_category == "EMPTY_OUTPUT"
+    assert outcome.trace.repair_parse_category == "VALID"
+    finalize_calls = [call for call in client.calls if "tools" not in (call["extra_body"] or {})]
+    assert len(finalize_calls) == 2
+    assert all(call["extra_body"] == {"reasoning": {"enabled": False}} for call in finalize_calls)
+
+
+def test_final_proposal_double_empty_output_yields_safe_typed_failure():
+    """If the provider returns empty content on both the finalize call and the
+    single bounded repair, the agent must fail safely with a typed error rather
+    than raising an unhandled exception or fabricating a proposal."""
+    career_need = need()
+    client = SequenceClient(
+        {"content": "", "tool_calls": grounded_calls("CSCE 110")},
+        {"content": ""},
+        {"content": ""},
+    )
+    outcome = run_agent(client, needs=[career_need])
+    assert outcome.result is None
+    assert outcome.errors == ["Course Discovery could not complete safely."]
+    assert outcome.trace.first_attempt_parse_category == "EMPTY_OUTPUT"
+    assert outcome.trace.repair_parse_category == "EMPTY_OUTPUT"
+    assert outcome.trace.error_class == "AIResponseParseError"
+    finalize_calls = [call for call in client.calls if "tools" not in (call["extra_body"] or {})]
+    assert len(finalize_calls) == 2
+    assert all(call["extra_body"] == {"reasoning": {"enabled": False}} for call in finalize_calls)
 
 
 def test_full_seed_floor_first_turn_contains_exact_current_proposal_contract():
@@ -227,7 +267,7 @@ def test_full_seed_floor_first_turn_contains_exact_current_proposal_contract():
     prompt = "\n".join(
         str(item.get("content") or "") for item in client.calls[0]["messages"]
     )
-    assert client.calls[0]["extra_body"] is None
+    assert client.calls[0]["extra_body"] == {"reasoning": {"enabled": False}}
     assert '"proposals"' in prompt
     assert all(
         field in prompt

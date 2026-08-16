@@ -53,6 +53,11 @@ MAX_QUALIFIED_CANDIDATES = 8
 EARLY_STOP_ELIGIBLE_COUNT = 3
 BACKOFF_SECONDS = (0.25, 0.75)
 MODEL_ROLE = "course_discovery"
+# The final proposal call is JSON-only with no tool use; some providers (observed:
+# deepseek/deepseek-v4-flash) can spend the entire max_tokens budget on hidden
+# reasoning tokens under a complex qualified-pool prompt and return empty content,
+# which this bounded flow cannot distinguish from a genuine provider failure.
+FINAL_PROPOSAL_EXTRA_BODY = {"reasoning": {"enabled": False}}
 PROPOSAL_JSON_CONTRACT = (
     "Return only one JSON object with exactly this shape: "
     "{\"proposals\":[{\"course_code\":\"SUBJ 123\","
@@ -652,7 +657,7 @@ class CourseDiscoveryAgent:
                     messages.append({"role": "user", "content": "Tool exploration is complete. Return the final proposal JSON now."})
                 message = self._complete(
                     messages,
-                    None if must_finalize
+                    FINAL_PROPOSAL_EXTRA_BODY if must_finalize
                     else {"tools": _SEARCH_TOOLS, "tool_choice": "auto"},
                     trace,
                 )
@@ -755,7 +760,7 @@ class CourseDiscoveryAgent:
                             separators=(",", ":"),
                         )
                     )})
-                    repaired = self._complete(messages, None, trace)
+                    repaired = self._complete(messages, FINAL_PROPOSAL_EXTRA_BODY, trace)
                     try:
                         proposal = self._proposal(repaired.get("content"))
                         trace.repair_parse_category = "VALID"

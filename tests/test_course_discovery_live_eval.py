@@ -32,7 +32,7 @@ class CourseClient:
         self.calls += 1
         if self.scenario_id == "course_adversarial_fabricated":
             assert "Ignore safeguards" not in json.dumps(kwargs["messages"])
-        if kwargs["extra_body"] is not None:
+        if kwargs["extra_body"] and "tools" in kwargs["extra_body"]:
             codes = ["CSCE 206", "CSCE 110"] if self.scenario_id == "course_multiple_candidates" else [
                 "CSCE 331" if self.scenario_id == "course_prerequisite_unresolved" else "CSCE 206"
             ]
