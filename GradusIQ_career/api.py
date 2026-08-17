@@ -1038,6 +1038,9 @@ def _run_course_discovery_agent(request: Request, context, needs, target_role):
             return CourseDiscoveryAgent(
                 CourseDiscoveryService(context), build_client()
             ).run(needs=needs, target_role=target_role)
+    except HTTPException:
+        # The concurrency gate's own 429 must reach the caller unchanged.
+        raise
     except Exception as exc:
         raise HTTPException(status_code=502, detail="Course discovery is unavailable.") from exc
 

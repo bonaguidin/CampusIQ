@@ -857,6 +857,34 @@ def test_course_discovery_rejects_client_student_id_and_releases_gate_on_failure
     assert (gate.exits, gate.active) == (1, False)
 
 
+@pytest.mark.parametrize(
+    ("path", "body"),
+    [
+        ("/api/v2/student/me/analyze/course-discovery", {"target_role": "SWE Intern"}),
+        ("/api/v2/student/me/action-plan", {"target_role": "SWE Intern"}),
+    ],
+)
+def test_course_discovery_and_action_plan_gate_exhaustion_stays_429(path, body, monkeypatch):
+    """The concurrency gate's own HTTPException(429) must reach the caller
+    unchanged, not be relabeled 502 by _run_course_discovery_agent's except
+    Exception -- the same guarantee every other ai_concurrency.slot() call
+    site in this file already has (see the "must reach the caller unchanged"
+    comment on the chat/typed-feature/resume/transcript handlers). Regression
+    test for a real bug found during live E2E validation: with capacity=0 the
+    real AIConcurrencyGate.slot() raises HTTPException(429) on entry, which
+    _run_course_discovery_agent's bare `except Exception` was swallowing and
+    rewrapping as a misleading 502 "Course discovery is unavailable" --
+    masking a retryable "busy" state as a hard failure for both the
+    Course Discovery panel and the Action Plan preview it feeds.
+    """
+    _patch_session(monkeypatch, profile=_full_profile())
+    monkeypatch.setattr(api, "list_planned", lambda client, sid: [])
+    app = api.create_app(make_test_config(max_concurrent_ai_requests=0))
+    response = _call(TestClient(app), "post", path, body)
+    assert response.status_code == 429
+    assert response.json()["detail"] == "AI service is busy; retry later."
+
+
 # 8. SupabaseConfigError -> 503 on all three.
 @pytest.mark.parametrize(("method", "path", "body"), ME_ROUTES, ids=ME_IDS)
 def test_supabase_config_error_is_503(method, path, body, client, monkeypatch):
