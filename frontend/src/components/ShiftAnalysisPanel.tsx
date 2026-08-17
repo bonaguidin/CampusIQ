@@ -1,6 +1,7 @@
 import { useAuth } from '../auth/useAuth';
 import { analyzeShift } from '../api/analysis';
-import { analysisFailureMessage, useAnalysisRun, type AnalysisRunState } from '../hooks/useAnalysisRun';
+import { analysisFailureMessage, type AnalysisRunState } from '../hooks/useAnalysisRun';
+import { useCachedAnalysisRun } from '../hooks/useCachedAnalysisRun';
 import type {
   FeatureResult,
   ShiftAnalysisData,
@@ -13,6 +14,9 @@ import { AnalysisPanel, type AnalysisPhase } from './AnalysisPanel';
 export interface ShiftAnalysisRun {
   state: AnalysisRunState<FeatureResult<ShiftAnalysisData>>;
   trigger: () => void;
+  /** From useCachedAnalysisRun -- see GapAnalysisRun. */
+  refreshing?: boolean;
+  refreshError?: string;
 }
 
 interface ShiftAnalysisPanelProps {
@@ -30,10 +34,10 @@ interface ShiftAnalysisPanelProps {
 // model response — see frontend/src/types/analysis.ts.
 export function ShiftAnalysisPanel({ run: externalRun }: ShiftAnalysisPanelProps = {}) {
   const { slug, session } = useAuth();
-  const internalRun = useAnalysisRun(() =>
+  const internalRun = useCachedAnalysisRun('shift', () =>
     analyzeShift({ slug, accessToken: session?.access_token ?? null }),
   );
-  const { state, trigger } = externalRun ?? internalRun;
+  const { state, trigger, refreshing, refreshError } = externalRun ?? internalRun;
 
   const phase: AnalysisPhase =
     state.phase === 'idle'
@@ -58,6 +62,8 @@ export function ShiftAnalysisPanel({ run: externalRun }: ShiftAnalysisPanelProps
       onRun={trigger}
       missingFields={missingFields}
       failureMessage={analysisFailureMessage(state)}
+      refreshing={refreshing}
+      refreshError={refreshError}
     >
       {state.phase === 'done' && state.result.status === 'success' && (
         <ShiftResult data={state.result.data} summary={state.result.summary} />

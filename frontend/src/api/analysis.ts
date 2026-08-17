@@ -71,6 +71,29 @@ async function postAnalysis<TResult>(
   return (await response.json()) as TResult;
 }
 
+/**
+ * Real-student counterpart to demo's cache-first analyze route: a previously
+ * computed GAP/FIT/SHIFT result, served without re-running the analysis.
+ * Demo identity has no equivalent call -- its POST analyze endpoint is
+ * already cache-first, so callers branch on `identity.slug` before reaching
+ * for this (see useCachedAnalysisRun).
+ *
+ * Returns null on a 404 (no cached result yet) rather than throwing, since
+ * that is an expected, non-exceptional outcome for a student who has never
+ * run this analysis -- every other non-OK status is a real failure.
+ */
+export async function getCachedAnalysis<T>(
+  feature: 'gap' | 'fit' | 'shift',
+  accessToken: string,
+): Promise<FeatureResult<T> | null> {
+  const response = await fetch(`/api/v2/student/me/analysis-cache/${feature}`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  if (response.status === 404) return null;
+  if (!response.ok) throw await analysisFailure(response);
+  return (await response.json()) as FeatureResult<T>;
+}
+
 function analysisPath(identity: AnalysisIdentity, feature: string): [string, string?] {
   if (identity.slug) {
     return [`/api/students/${encodeURIComponent(identity.slug)}/analyze/${feature}`];

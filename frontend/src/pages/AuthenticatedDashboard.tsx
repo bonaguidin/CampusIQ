@@ -2,7 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/useAuth';
 import { analyzeFit, analyzeGap, analyzeShift } from '../api/analysis';
-import { useAnalysisRun } from '../hooks/useAnalysisRun';
+import { useCachedAnalysisRun } from '../hooks/useCachedAnalysisRun';
 import { ChatPanel } from '../components/ChatPanel';
 import { GuidedTour } from '../components/GuidedTour';
 import { DashboardSuccessNotice } from '../components/DashboardSuccessNotice';
@@ -58,12 +58,15 @@ export function AuthenticatedDashboard() {
   const [fieldFocus, setFieldFocus] = useState<CareerFieldFocus | null>(null);
   const [profileSaved, setProfileSaved] = useState(false);
   // Lifted out of GapAnalysisPanel/FitAnalysisPanel/ShiftAnalysisPanel (each
-  // still owns its own internal useAnalysisRun by default) so the Snapshot
-  // sub-tab can read the exact same run state its full-panel sibling shows —
-  // one run, reflected in both places, instead of a second independent fetch.
-  const gapRun = useAnalysisRun(() => analyzeGap({ slug, accessToken }));
-  const fitRun = useAnalysisRun(() => analyzeFit({ slug, accessToken }));
-  const shiftRun = useAnalysisRun(() => analyzeShift({ slug, accessToken }));
+  // still owns its own internal useCachedAnalysisRun by default) so the
+  // Snapshot sub-tab can read the exact same run state its full-panel sibling
+  // shows — one run, reflected in both places, instead of a second
+  // independent fetch. useCachedAnalysisRun (not the older useAnalysisRun)
+  // so this shared instance also gets cache-hit-on-mount for real students
+  // and cache-first auto-trigger for demo, matching each panel's own default.
+  const gapRun = useCachedAnalysisRun('gap', () => analyzeGap({ slug, accessToken }));
+  const fitRun = useCachedAnalysisRun('fit', () => analyzeFit({ slug, accessToken }));
+  const shiftRun = useCachedAnalysisRun('shift', () => analyzeShift({ slug, accessToken }));
   const canonical = studentAccount.profile?.intelligence_profile;
   const dashboard = useMemo(
     () => (canonical ? buildDashboardViewModel(canonical) : null),
@@ -333,6 +336,11 @@ export function AuthenticatedDashboard() {
                         gap={gapRun}
                         fit={fitRun}
                         shift={shiftRun}
+                        headline={{
+                          targetRoles: dashboard.career.target_roles,
+                          expectedGraduation: dashboard.expectedGraduation,
+                          majorCurrent: dashboard.majorCurrent,
+                        }}
                         onViewFull={setCareerSubTab}
                       />
                     </div>

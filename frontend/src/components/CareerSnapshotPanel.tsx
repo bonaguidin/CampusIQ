@@ -13,10 +13,23 @@ import type { ShiftAnalysisRun } from './ShiftAnalysisPanel';
 // gap/fit/shift are the same AnalysisRunState instances the Readiness/Role
 // Fit/Trend Guidance sub-tabs render, lifted by the caller, so running an
 // analysis from either place updates both.
+/**
+ * Headline profile facts shown above the condensed GAP/FIT/SHIFT cards.
+ * Sourced from whatever AuthenticatedDashboard already has on hand (the
+ * dashboard view model built from the student's own profile) -- nothing here
+ * issues a new fetch.
+ */
+export interface CareerSnapshotHeadline {
+  targetRoles: string[];
+  expectedGraduation?: string | null;
+  majorCurrent?: string | null;
+}
+
 interface CareerSnapshotPanelProps {
   gap: GapAnalysisRun;
   fit: FitAnalysisRun;
   shift: ShiftAnalysisRun;
+  headline: CareerSnapshotHeadline;
   onViewFull(tab: 'gap' | 'fit' | 'shift'): void;
 }
 
@@ -29,13 +42,22 @@ function phaseOf(state: { phase: string; result?: { status: string } }): Analysi
   return 'success';
 }
 
-export function CareerSnapshotPanel({ gap, fit, shift, onViewFull }: CareerSnapshotPanelProps) {
+export function CareerSnapshotPanel({ gap, fit, shift, headline, onViewFull }: CareerSnapshotPanelProps) {
   const gapMissing = gap.state.phase === 'done' ? gap.state.result.missing_fields ?? [] : [];
   const fitMissing = fit.state.phase === 'done' ? fit.state.result.missing_fields ?? [] : [];
   const shiftMissing = shift.state.phase === 'done' ? shift.state.result.missing_fields ?? [] : [];
 
   return (
     <div className="career-snapshot">
+      <SnapshotHeadline headline={headline} />
+
+      {/* Reads gap/fit/shift's run state exactly as handed down by the
+          caller -- never calls .trigger() itself except via the AnalysisPanel
+          onRun affordance below, which is the same manual re-run button every
+          other panel exposes. By the time this renders, each run has already
+          resolved on its own mount effect (cache-hit for a real student,
+          cache-first auto-run for demo, or the idle "not yet analyzed"
+          invitation) -- nothing here decides that. */}
       <AnalysisPanel
         title="Readiness Check (GAP)"
         invitation="Run a readiness check against your target roles — see your GAP score, what's missing, and what to do next."
@@ -43,6 +65,8 @@ export function CareerSnapshotPanel({ gap, fit, shift, onViewFull }: CareerSnaps
         onRun={gap.trigger}
         missingFields={gapMissing}
         failureMessage={analysisFailureMessage(gap.state)}
+        refreshing={gap.refreshing}
+        refreshError={gap.refreshError}
       >
         {gap.state.phase === 'done' && gap.state.result.status === 'success' && (
           <SnapshotCardBody
@@ -60,6 +84,8 @@ export function CareerSnapshotPanel({ gap, fit, shift, onViewFull }: CareerSnaps
         onRun={fit.trigger}
         missingFields={fitMissing}
         failureMessage={analysisFailureMessage(fit.state)}
+        refreshing={fit.refreshing}
+        refreshError={fit.refreshError}
       >
         {fit.state.phase === 'done' && fit.state.result.status === 'success' && (
           <SnapshotCardBody
@@ -76,6 +102,8 @@ export function CareerSnapshotPanel({ gap, fit, shift, onViewFull }: CareerSnaps
         onRun={shift.trigger}
         missingFields={shiftMissing}
         failureMessage={analysisFailureMessage(shift.state)}
+        refreshing={shift.refreshing}
+        refreshError={shift.refreshError}
       >
         {shift.state.phase === 'done' && shift.state.result.status === 'success' && (
           <SnapshotCardBody
@@ -84,6 +112,28 @@ export function CareerSnapshotPanel({ gap, fit, shift, onViewFull }: CareerSnaps
           />
         )}
       </AnalysisPanel>
+    </div>
+  );
+}
+
+function SnapshotHeadline({ headline }: { headline: CareerSnapshotHeadline }) {
+  const { targetRoles, expectedGraduation, majorCurrent } = headline;
+  return (
+    <div className="card snapshot-headline">
+      <div className="snapshot-headline-fact">
+        <span className="snapshot-headline-label">Target roles</span>
+        <span className="snapshot-headline-value">
+          {targetRoles.length > 0 ? targetRoles.join(', ') : '—'}
+        </span>
+      </div>
+      <div className="snapshot-headline-fact">
+        <span className="snapshot-headline-label">Expected graduation</span>
+        <span className="snapshot-headline-value">{expectedGraduation || '—'}</span>
+      </div>
+      <div className="snapshot-headline-fact">
+        <span className="snapshot-headline-label">Current major</span>
+        <span className="snapshot-headline-value">{majorCurrent || '—'}</span>
+      </div>
     </div>
   );
 }

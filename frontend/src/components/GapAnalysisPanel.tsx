@@ -1,12 +1,20 @@
 import { useAuth } from '../auth/useAuth';
 import { analyzeGap } from '../api/analysis';
-import { analysisFailureMessage, useAnalysisRun, type AnalysisRunState } from '../hooks/useAnalysisRun';
+import { analysisFailureMessage, type AnalysisRunState } from '../hooks/useAnalysisRun';
+import { useCachedAnalysisRun } from '../hooks/useCachedAnalysisRun';
 import type { FeatureResult, GapAnalysisData, GapMustHaveGap } from '../types/analysis';
 import { AnalysisPanel, type AnalysisPhase } from './AnalysisPanel';
 
 export interface GapAnalysisRun {
   state: AnalysisRunState<FeatureResult<GapAnalysisData>>;
   trigger: () => void;
+  /**
+   * From useCachedAnalysisRun -- absent when a caller still constructs this
+   * shape by hand (e.g. an internal fallback instance), in which case the
+   * panel behaves exactly as it did before these existed.
+   */
+  refreshing?: boolean;
+  refreshError?: string;
 }
 
 interface GapAnalysisPanelProps {
@@ -26,10 +34,10 @@ interface GapAnalysisPanelProps {
 // frontend/src/types/analysis.ts.
 export function GapAnalysisPanel({ run: externalRun }: GapAnalysisPanelProps = {}) {
   const { slug, session } = useAuth();
-  const internalRun = useAnalysisRun(() =>
+  const internalRun = useCachedAnalysisRun('gap', () =>
     analyzeGap({ slug, accessToken: session?.access_token ?? null }),
   );
-  const { state, trigger } = externalRun ?? internalRun;
+  const { state, trigger, refreshing, refreshError } = externalRun ?? internalRun;
 
   const phase: AnalysisPhase =
     state.phase === 'idle'
@@ -54,6 +62,8 @@ export function GapAnalysisPanel({ run: externalRun }: GapAnalysisPanelProps = {
       onRun={trigger}
       missingFields={missingFields}
       failureMessage={analysisFailureMessage(state)}
+      refreshing={refreshing}
+      refreshError={refreshError}
     >
       {state.phase === 'done' && state.result.status === 'success' && (
         <GapResult data={state.result.data} summary={state.result.summary} />

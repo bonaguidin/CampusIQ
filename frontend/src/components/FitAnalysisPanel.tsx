@@ -1,12 +1,16 @@
 import { useAuth } from '../auth/useAuth';
 import { analyzeFit } from '../api/analysis';
-import { analysisFailureMessage, useAnalysisRun, type AnalysisRunState } from '../hooks/useAnalysisRun';
+import { analysisFailureMessage, type AnalysisRunState } from '../hooks/useAnalysisRun';
+import { useCachedAnalysisRun } from '../hooks/useCachedAnalysisRun';
 import type { FeatureResult, FitAnalysisData, FitLevel, FitRoleMatch } from '../types/analysis';
 import { AnalysisPanel, type AnalysisPhase } from './AnalysisPanel';
 
 export interface FitAnalysisRun {
   state: AnalysisRunState<FeatureResult<FitAnalysisData>>;
   trigger: () => void;
+  /** From useCachedAnalysisRun -- see GapAnalysisRun. */
+  refreshing?: boolean;
+  refreshError?: string;
 }
 
 interface FitAnalysisPanelProps {
@@ -23,10 +27,10 @@ interface FitAnalysisPanelProps {
 // see frontend/src/types/analysis.ts.
 export function FitAnalysisPanel({ run: externalRun }: FitAnalysisPanelProps = {}) {
   const { slug, session } = useAuth();
-  const internalRun = useAnalysisRun(() =>
+  const internalRun = useCachedAnalysisRun('fit', () =>
     analyzeFit({ slug, accessToken: session?.access_token ?? null }),
   );
-  const { state, trigger } = externalRun ?? internalRun;
+  const { state, trigger, refreshing, refreshError } = externalRun ?? internalRun;
 
   const phase: AnalysisPhase =
     state.phase === 'idle'
@@ -51,6 +55,8 @@ export function FitAnalysisPanel({ run: externalRun }: FitAnalysisPanelProps = {
       onRun={trigger}
       missingFields={missingFields}
       failureMessage={analysisFailureMessage(state)}
+      refreshing={refreshing}
+      refreshError={refreshError}
     >
       {state.phase === 'done' && state.result.status === 'success' && (
         <FitResult data={state.result.data} summary={state.result.summary} />
