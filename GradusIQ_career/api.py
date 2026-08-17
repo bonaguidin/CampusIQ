@@ -950,6 +950,81 @@ def _me_canonical_feature_profile(request: Request):
     return canonical, canonical_to_legacy_profile(canonical), str(student_id)
 
 
+def _canonical_target_role(profile: dict) -> str | None:
+    """Canonical representation of the student's whole target_roles array.
+
+    None of GAP/FIT/SHIFT take a per-request target role -- all three read the
+    full `career.target_roles` array off the profile (career.get("target_roles",
+    []), matching gap.py/fit.py/shift.py) -- so this is not "the" target role,
+    it is a stable key for the whole role *set* a result was computed against.
+    Sorted so role order in the profile doesn't create spurious cache misses;
+    joined with "|" to produce one string for the analysis-cache table's
+    target_role column. Returns None when target_roles is missing or empty,
+    matching that column's nullability.
+    """
+    career = profile.get("career") or {}
+    roles = career.get("target_roles") or []
+    if not roles:
+        return None
+    return "|".join(sorted(roles))
+
+
+# Analysis-cache is scoped to real (Postgres-backed) students only -- demo
+# students have no `students` row for student_analysis_cache.student_id to
+# reference, and already have their own persistent cache (data/demo_cache/).
+_ANALYSIS_CACHE_FEATURES = {"gap", "fit", "shift"}
+
+
+def _write_analysis_cache(
+    client, student_id: str, feature: str, target_role: str | None, result: dict
+) -> None:
+    """Best-effort upsert of a fresh GAP/FIT/SHIFT result for a real student.
+
+    Called after a live run succeeds so the next page load (or a fresh login)
+    can serve this result from Postgres instead of re-running the analysis.
+    Never allowed to break the actual analyze response: any failure here
+    (RLS denial, transport error, schema drift) is swallowed after the caller
+    already has their live result in hand.
+    """
+    try:
+        client.table("student_analysis_cache").upsert(
+            {
+                "student_id": student_id,
+                "feature": feature.lower(),
+                "target_role": target_role,
+                "result": result,
+                "status": "success" if result.get("status") == "success" else "error",
+                "updated_at": datetime.now(timezone.utc).isoformat(),
+            },
+            on_conflict="student_id,feature,target_role",
+        ).execute()
+    except Exception:  # noqa: BLE001 -- caching is best-effort, never fatal
+        pass
+
+
+def _read_analysis_cache(
+    client, student_id: str, feature: str, target_role: str | None
+) -> dict | None:
+    """The stored `result` JSON for this student/feature/role-set, or None."""
+    try:
+        query = (
+            client.table("student_analysis_cache")
+            .select("result")
+            .eq("student_id", student_id)
+            .eq("feature", feature.lower())
+        )
+        if target_role is None:
+            query = query.is_("target_role", "null")
+        else:
+            query = query.eq("target_role", target_role)
+        rows = query.execute().data
+    except Exception:  # noqa: BLE001 -- a transport/RLS failure is a cache miss
+        return None
+    if not rows:
+        return None
+    return rows[0].get("result")
+
+
 def _run_authenticated_typed_feature(
     request: Request, feature: str, canonical, profile: dict, slug: str
 ) -> dict:
@@ -961,11 +1036,17 @@ def _run_authenticated_typed_feature(
     try:
         with request.app.state.ai_concurrency.slot():
             runner = RUNNERS[feature](client=build_client())
-            return runner.run_canonical(canonical, profile)
+            result = runner.run_canonical(canonical, profile)
     except HTTPException:
         raise
     except Exception as exc:
         raise HTTPException(status_code=502, detail="Analysis service is unavailable.") from exc
+    if feature.lower() in _ANALYSIS_CACHE_FEATURES and student_id is not None:
+        client = _session_client(request)
+        _write_analysis_cache(
+            client, student_id, feature, _canonical_target_role(profile), result
+        )
+    return result
 
 
 class ProfileUpdateRequest(BaseModel):
@@ -1173,6 +1254,35 @@ def analyze_me(
             request, internal_name, canonical, profile, slug
         )
     return _run_protected_feature(request, internal_name, slug, profile=profile)
+
+
+@router.get(
+    "/api/v2/student/me/analysis-cache/{feature}",
+    dependencies=[Depends(authorize_proxy_request)],
+)
+def get_me_analysis_cache(request: Request, feature: str) -> dict:
+    """Serve a previously computed GAP/FIT/SHIFT result without re-running it.
+
+    Real-student counterpart to demo's file-based cache-first behavior: the
+    frontend calls this on mount instead of auto-triggering a live run (see
+    useCachedAnalysisRun), and only falls back to POST .../analyze/{feature}
+    on a 404 here or when the student clicks "Run analysis" themselves.
+    """
+    if feature not in {"gap", "fit", "shift"}:
+        raise HTTPException(
+            status_code=404,
+            detail="Unknown feature. Expected one of: fit, gap, shift.",
+        )
+    client = _session_client(request)
+    _canonical, profile, slug = _me_canonical_feature_profile(request)
+    # _me_canonical_feature_profile's slug is str(student_id) (see UUID-AS-SLUG
+    # note on that function) -- reused here instead of re-resolving the
+    # session's student row a second time.
+    target_role = _canonical_target_role(profile)
+    cached = _read_analysis_cache(client, slug, feature, target_role)
+    if cached is None:
+        raise HTTPException(status_code=404, detail="No cached result for this feature yet.")
+    return cached
 
 
 @router.post(
