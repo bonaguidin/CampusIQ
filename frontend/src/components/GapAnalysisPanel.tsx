@@ -1,18 +1,35 @@
 import { useAuth } from '../auth/useAuth';
 import { analyzeGap } from '../api/analysis';
-import { analysisFailureMessage, useAnalysisRun } from '../hooks/useAnalysisRun';
-import type { GapAnalysisData, GapMustHaveGap } from '../types/analysis';
+import { analysisFailureMessage, useAnalysisRun, type AnalysisRunState } from '../hooks/useAnalysisRun';
+import type { FeatureResult, GapAnalysisData, GapMustHaveGap } from '../types/analysis';
 import { AnalysisPanel, type AnalysisPhase } from './AnalysisPanel';
+
+export interface GapAnalysisRun {
+  state: AnalysisRunState<FeatureResult<GapAnalysisData>>;
+  trigger: () => void;
+}
+
+interface GapAnalysisPanelProps {
+  /**
+   * Lets a parent (the Career Snapshot sub-tab) share this exact run state
+   * instead of each holding its own — so a GAP run triggered from Snapshot
+   * shows up on the Readiness sub-tab and vice versa. Omitted by every other
+   * caller, which keeps its own internal useAnalysisRun instance exactly as
+   * before.
+   */
+  run?: GapAnalysisRun;
+}
 
 // GAP readiness panel — data shape is gap.py's output_contract (readiness_score,
 // strengths, must_have_gaps, nice_to_have_gaps, recommended_next_steps).
 // PROVISIONAL: unvalidated against a real (non-mocked) model response — see
 // frontend/src/types/analysis.ts.
-export function GapAnalysisPanel() {
+export function GapAnalysisPanel({ run: externalRun }: GapAnalysisPanelProps = {}) {
   const { slug, session } = useAuth();
-  const { state, trigger } = useAnalysisRun(() =>
+  const internalRun = useAnalysisRun(() =>
     analyzeGap({ slug, accessToken: session?.access_token ?? null }),
   );
+  const { state, trigger } = externalRun ?? internalRun;
 
   const phase: AnalysisPhase =
     state.phase === 'idle'

@@ -1,7 +1,8 @@
 import { useAuth } from '../auth/useAuth';
 import { analyzeShift } from '../api/analysis';
-import { analysisFailureMessage, useAnalysisRun } from '../hooks/useAnalysisRun';
+import { analysisFailureMessage, useAnalysisRun, type AnalysisRunState } from '../hooks/useAnalysisRun';
 import type {
+  FeatureResult,
   ShiftAnalysisData,
   ShiftTaskShift,
   ShiftDurableSkill,
@@ -9,15 +10,30 @@ import type {
 } from '../types/analysis';
 import { AnalysisPanel, type AnalysisPhase } from './AnalysisPanel';
 
+export interface ShiftAnalysisRun {
+  state: AnalysisRunState<FeatureResult<ShiftAnalysisData>>;
+  trigger: () => void;
+}
+
+interface ShiftAnalysisPanelProps {
+  /**
+   * Lets a parent (the Career Snapshot sub-tab) share this exact run state
+   * instead of each holding its own. Omitted by every other caller, which
+   * keeps its own internal useAnalysisRun instance exactly as before.
+   */
+  run?: ShiftAnalysisRun;
+}
+
 // SHIFT trend-aware guidance panel — data shape is shift.py's output_contract
 // (role_evolution_summary, task_shifts[], durable_skills[], adjacent_paths[],
 // ai_fluency_guidance[]). PROVISIONAL: unvalidated against a real (non-mocked)
 // model response — see frontend/src/types/analysis.ts.
-export function ShiftAnalysisPanel() {
+export function ShiftAnalysisPanel({ run: externalRun }: ShiftAnalysisPanelProps = {}) {
   const { slug, session } = useAuth();
-  const { state, trigger } = useAnalysisRun(() =>
+  const internalRun = useAnalysisRun(() =>
     analyzeShift({ slug, accessToken: session?.access_token ?? null }),
   );
+  const { state, trigger } = externalRun ?? internalRun;
 
   const phase: AnalysisPhase =
     state.phase === 'idle'

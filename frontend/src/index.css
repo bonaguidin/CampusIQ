@@ -954,6 +954,71 @@ a {
   border-bottom: 1px solid var(--line);
 }
 
+/* Second-level tab row for the Career section's Snapshot/Readiness/Role Fit/
+   Trend Guidance/Profile sub-tabs. Same underline pattern as .academic-tabs,
+   kept as its own class set since the two sections are independent and only
+   happen to agree on a visual language. */
+.career-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: var(--sp-6);
+}
+
+.career-tab {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  padding: var(--sp-2) var(--sp-4);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--muted);
+  cursor: pointer;
+  transition: color 0.12s ease, border-color 0.12s ease;
+  white-space: nowrap;
+  letter-spacing: 0.01em;
+}
+
+.career-tab:first-child {
+  padding-left: 0;
+}
+
+.career-tab:hover {
+  color: var(--ink);
+}
+
+.career-tab--active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+  font-weight: 600;
+}
+
+/* Sub-tab content stays mounted at all times (so GAP/FIT/SHIFT run state
+   survives switching away and back); only visibility toggles. */
+.career-subtab-panel--hidden {
+  display: none;
+}
+
+.career-snapshot {
+  display: flex;
+  flex-direction: column;
+}
+
+.snapshot-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.snapshot-score {
+  font-family: var(--font-data);
+  font-size: var(--text-lg);
+  font-weight: 500;
+  color: var(--ink);
+}
+
 /* Separates the profile record from the analysis runners stacked above it.
    Spacing follows .overview-demo, the page's other trailing block. No rule of
    its own: the .career-section-heading this block now opens with already draws
