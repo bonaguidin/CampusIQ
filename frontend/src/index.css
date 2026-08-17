@@ -148,9 +148,24 @@
      account. Values from the existing style reference (#82640F / #D9A62B). */
   --gold-text:  #82640F;
   --gold:       #D9A62B;
-  --gold-tint:  rgb(217 166 43 / 0.08);
+  /* One fill strength for every gold-tinted surface -- stat tiles, skill
+     chips, project tool chips -- so they read as one system regardless of
+     what they sit on (paper or an elevated white card). Raised from 0.08 to
+     0.13: at 0.08 the fill nearly disappeared against --surface-elevated
+     (#FFFFFF), which is what made the project chips in particular look
+     washed out next to the same chip style on Skills' --paper backdrop. */
+  --gold-tint:  rgb(217 166 43 / 0.13);
   --gold-tint-strong: rgb(217 166 43 / 0.16);
   --gold-line:  rgb(217 166 43 / 0.35);
+  /* Every gold-filled chip/tile pairs its fill with this hairline border --
+     definition that does not depend on the surface behind it. */
+  --gold-fill-border: rgb(217 166 43 / 0.3);
+
+  /* Fixed underline length for section-label accents (.cp-section-title,
+     .editable-section-title). A single tick, not sized to each label's text
+     -- five labels of different lengths drawing five different-length
+     underlines read as unintentional, not as emphasis. */
+  --tick-length: 28px;
 
   /* Elevated card surface -- the one deliberate departure from the site's
      flat instrument language, scoped to the Career tab's card-shaped
@@ -1153,41 +1168,76 @@ a {
 }
 
 /* ── section header hairline ──
-   A short accent rule under the label only, not the full section width, and
-   not a numbered marker -- section order here is not a sequence to encode. */
+   A short accent rule under the label, not the full section width and not a
+   numbered marker -- section order here is not a sequence to encode. Fixed
+   at --tick-length rather than a border-bottom sized to the label's own text
+   width: "DETAILS" and "CAREER DIRECTION" drawing two different-length
+   underlines read as an accident, not as five labels sharing one accent. */
 .career-subtab-panel .cp-section-title,
 .career-subtab-panel .editable-section-title {
+  position: relative;
   display: inline-block;
   padding-bottom: var(--sp-1);
-  border-bottom: 2px solid var(--gold-line);
+}
+
+.career-subtab-panel .cp-section-title::after,
+.career-subtab-panel .editable-section-title::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: var(--tick-length);
+  height: 2px;
+  background: var(--gold);
 }
 
 /* ── stat counts ──
    Skills/Experiences/Projects/Certifications go from plain numerals to
-   small tiles with a gold top accent -- more structure than a bare number,
-   still restrained at four across a row. */
+   small tiles with a gold-tinted fill -- more structure than a bare number,
+   still restrained at four across a row. A gold top border over an
+   otherwise plain white body read as an incomplete rule rather than a
+   deliberate accent, so the fill (the same --gold-tint every chip below
+   uses) replaces it outright instead of stacking two half-measures. */
 .career-subtab-panel .cp-metrics {
   gap: var(--sp-4);
 }
 
 .career-subtab-panel .cp-metric {
   padding: var(--sp-3) var(--sp-4);
-  background: var(--surface-elevated);
+  background: var(--gold-tint);
+  border: 1px solid var(--gold-fill-border);
   border-radius: var(--radius-card);
   box-shadow: var(--shadow-card);
-  border-top: 2px solid var(--gold);
 }
 
 /* ── skill chips ──
-   Filled, borderless, gold-tinted -- reads calmer than a bordered box at
-   48+ chips, and distinguishes a skill (informational) from an interactive
-   control (which nothing in this list is; see SkillCloud's own note on why
-   chips are <li>, not <button>). */
+   Filled, gold-tinted, with a hairline border -- reads calmer than a
+   heavily bordered box at 48+ chips, and distinguishes a skill
+   (informational) from an interactive control (which nothing in this list
+   is; see SkillCloud's own note on why chips are <li>, not <button>). The
+   hairline keeps the chip legible regardless of what it sits on: the base
+   fill alone read fine against Skills' --paper backdrop but nearly
+   disappeared against a project card's --surface-elevated white, which is
+   what --gold-fill-border exists to fix everywhere at once. */
 .career-subtab-panel .cp-chip {
-  border: none;
+  border: 1px solid var(--gold-fill-border);
   border-radius: var(--radius-chip);
   background: var(--gold-tint);
   color: var(--ink);
+}
+
+/* Project tool chips (ProjectCard's "quiet" variant) previously fell back to
+   a transparent, borderless, muted-text style -- but every project card sits
+   on the elevated white surface, and the .career-subtab-panel .cp-chip rule
+   above outranks .cp-chip--quiet on specificity, so the quiet background was
+   silently overridden by the gold fill anyway while the border stayed off.
+   Made deliberate here rather than left as a specificity accident: quiet
+   chips keep their smaller, monospace, muted-text treatment (they carry a
+   tool name, not a confirmed skill) but share the same fill+hairline as
+   every other gold chip in the tab. */
+.career-subtab-panel .cp-chip--quiet {
+  border-color: var(--gold-fill-border);
+  background: var(--gold-tint);
 }
 
 /* ── experience timeline ──
@@ -3199,6 +3249,21 @@ a {
 .cp-field .editable-section-header {
   margin-bottom: var(--sp-1);
   gap: var(--sp-2);
+  /* Baseline, not the inherited center: centering an icon-only pencil
+     against a full-height row means it tracks the row's tallest sibling
+     (itself, at 26px) rather than the label text next to it, which read as
+     the button pinned to the row's top edge instead of keyed to the label.
+     Baseline keys it to the label's own type instead. */
+  align-items: baseline;
+}
+
+/* Target roles / Interests sit in a two-up sub-grid at --sp-8 apart, but
+   nothing inset the label/value column from the grid's own edge, leaving
+   Target Roles' text flush left while the pencil crowded the right edge --
+   uneven relative to how much air the two sides actually got. A small,
+   even inline pad gives both sides the same breathing room. */
+.cp-direction-grid .cp-field {
+  padding-inline: var(--sp-1);
 }
 
 /* The section title stands in for the row label when the row is editable, so
@@ -3414,6 +3479,35 @@ a {
 }
 
 .cp-more:hover { border-bottom-color: var(--accent-text); }
+
+/* ProjectCard's "View details"/"Hide details" specifically -- a trailing
+   chevron so it carries some visual weight against the dense card content
+   (description, tool chips) sitting directly above it. It is always the
+   card's last flex child (.cp-project is a column flex container), so it
+   already sits at the bottom of that card's own content regardless of how
+   long the description is -- cards are intentionally unequal height (see
+   .cp-projects above), so this never tries to match a neighboring card's
+   position, only its own. */
+.cp-project .cp-more::after {
+  content: '';
+  width: 10px;
+  height: 10px;
+  flex-shrink: 0;
+  background-color: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 6l6 6-6 6'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 6l6 6-6 6'/%3E%3C/svg%3E") center / contain no-repeat;
+  transition: transform 120ms ease;
+}
+
+.cp-project .cp-more[aria-expanded='true']::after { transform: rotate(90deg); }
+
+.cp-project .cp-more:hover::after { transform: translateX(2px); }
+
+.cp-project .cp-more[aria-expanded='true']:hover::after { transform: rotate(90deg); }
+
+@media (prefers-reduced-motion: reduce) {
+  .cp-project .cp-more::after { transition: none; }
+}
 
 /* ── experience timeline ── */
 .cp-timeline {

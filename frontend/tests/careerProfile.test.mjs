@@ -166,7 +166,7 @@ test('career profile: summary, direction, skills collapse, timeline, certificati
   // the chip fill tracks the fixed token rather than --accent-text-rgb (set
   // above), not that it is neutral gray.
   const chipBg = await page.locator('.cp-skills .cp-chip').first().evaluate((el) => getComputedStyle(el).backgroundColor)
-  assert.equal(chipBg, 'rgba(217, 166, 43, 0.08)', 'skill chips must not be filled with the institution colour')
+  assert.equal(chipBg, 'rgba(217, 166, 43, 0.13)', 'skill chips must not be filled with the institution colour')
 })
 
 test('career profile: absences collapse and never become empty rectangles', { timeout: 45_000 }, async (t) => {
