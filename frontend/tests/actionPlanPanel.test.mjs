@@ -166,6 +166,9 @@ test('Action Plan preview: CTA lifecycle, ordering, dependency text, unconstrain
 
   await page.goto(`${origin}/authenticated-dashboard-preview.html?mode=complete`)
   await page.getByRole('button', { name: 'Career' }).click()
+  // Course Discovery now lives on the Career tab's Profile sub-tab, grouped
+  // with CareerProfile, rather than directly on the tab body.
+  await page.getByRole('tab', { name: 'Profile' }).click()
   const panel = page.locator('.card.analysis-panel', { has: page.getByRole('heading', { name: 'Course Discovery' }) })
 
   // ── CTA only appears once Course Discovery has succeeded ──────────────────

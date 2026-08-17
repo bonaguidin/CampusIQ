@@ -27,10 +27,13 @@ async function startServer(t, plugins = []) {
   return `http://127.0.0.1:${String(address.port)}`
 }
 
-/** Opens the dashboard on the Career tab for a given fixture. */
+/** Opens the dashboard on the Career tab's Profile sub-tab for a given fixture. */
 async function openCareer(page, origin, query) {
   await page.goto(`${origin}/authenticated-dashboard-preview.html?${query}`)
   await page.getByRole('button', { name: 'Career' }).click()
+  // CareerProfile now lives on the Career tab's Profile sub-tab, not directly
+  // on the tab body -- the sub-tab row defaults to Snapshot.
+  await page.getByRole('tab', { name: 'Profile' }).click()
   await page.locator('.cp').waitFor()
 }
 

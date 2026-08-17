@@ -151,6 +151,8 @@ test('authenticated dashboard covers canonical states, routing, themes, errors, 
   assert.equal(planning.state.planned.length, 0)
 
   await page.getByRole('button', { name: 'Career' }).click()
+  // CareerProfile now lives on the Career tab's Profile sub-tab.
+  await page.getByRole('tab', { name: 'Profile' }).click()
   // Target roles now appear twice by design -- once as the Career summary
   // headline, once in the Career direction list -- so both are named rather
   // than matched loosely.
@@ -231,6 +233,10 @@ test('authenticated dashboard covers canonical states, routing, themes, errors, 
   // FIT routes through the same handler, and asking a SECOND time for a field
   // already visited still moves -- the request is keyed on a nonce, not on the
   // path, or the second click would be indistinguishable from no click.
+  // Back to Snapshot, where FIT's skipped state (unchanged since the earlier
+  // run -- GAP/FIT/SHIFT state is lifted and shared with the Snapshot cards)
+  // is visible again; the AI-comfort jump above moved to Profile.
+  await page.getByRole('tab', { name: 'Snapshot' }).click()
   const fitSkipped = page.locator('.analysis-panel').filter({ hasText: 'Role Fit (FIT)' }).locator('.analysis-skipped')
   await fitSkipped.getByRole('button', { name: 'Add this' }).first().click()
   await page.waitForFunction(() =>

@@ -164,6 +164,9 @@ test('Course Discovery panel: CTA, loading, three typed outcomes, empty/failure 
   // ── single confirmed target role: no selector, plain CTA ──────────────────
   await page.goto(`${origin}/authenticated-dashboard-preview.html?mode=complete`)
   await page.getByRole('button', { name: 'Career' }).click()
+  // Course Discovery now lives on the Career tab's Profile sub-tab, grouped
+  // with CareerProfile, rather than directly on the tab body.
+  await page.getByRole('tab', { name: 'Profile' }).click()
   await page.getByRole('heading', { name: 'Course Discovery' }).waitFor()
   assert.equal(await page.locator('#course-discovery-target-role').count(), 0)
   await page.getByText('Find courses at your school that build the skills your target role needs.').waitFor()
@@ -240,6 +243,7 @@ test('Course Discovery panel: CTA, loading, three typed outcomes, empty/failure 
   discoveryResponse = { status: 200, body: featureResult(discoveryResult()) }
   await page.goto(`${origin}/authenticated-dashboard-preview.html?mode=complete&career=rich`)
   await page.getByRole('button', { name: 'Career' }).click()
+  await page.getByRole('tab', { name: 'Profile' }).click()
   const roleSelect = page.locator('#course-discovery-target-role')
   await roleSelect.waitFor()
   const options = await roleSelect.locator('option').allTextContents()
@@ -254,6 +258,7 @@ test('Course Discovery panel: CTA, loading, three typed outcomes, empty/failure 
   // ── missing target role: existing profile-completion flow, no new modal ───
   await page.goto(`${origin}/authenticated-dashboard-preview.html?mode=complete&career=partial`)
   await page.getByRole('button', { name: 'Career' }).click()
+  await page.getByRole('tab', { name: 'Profile' }).click()
   discoveryResponse = {
     status: 200,
     body: {
@@ -268,15 +273,21 @@ test('Course Discovery panel: CTA, loading, three typed outcomes, empty/failure 
   // no bespoke second modal/page introduced for this
   assert.equal(await page.locator('.course-discovery-modal').count(), 0)
 
-  // ── existing FIT/GAP/SHIFT panels remain present alongside it ─────────────
+  // ── existing FIT/GAP/SHIFT panels remain present, now on their own Career
+  // sub-tabs (Readiness/Role Fit/Trend Guidance) rather than stacked with
+  // Course Discovery on one page ───────────────────────────────────────────
+  await page.getByRole('tab', { name: 'Readiness' }).click()
   await page.getByRole('heading', { name: /GAP/ }).waitFor()
+  await page.getByRole('tab', { name: 'Role Fit' }).click()
   await page.getByRole('heading', { name: /FIT/ }).waitFor()
+  await page.getByRole('tab', { name: 'Trend Guidance' }).click()
   await page.getByRole('heading', { name: /SHIFT/ }).waitFor()
 
   // ── responsive: 390 / 834 / 1280, no page-level horizontal overflow ───────
   discoveryResponse = { status: 200, body: featureResult(discoveryResult({ verified: [verifiedCourse({ title: 'A Very Long Course Title That Should Wrap Instead Of Overflowing The Card On A Narrow Screen' })], blocked: [blockedCourse()] })) }
   await page.goto(`${origin}/authenticated-dashboard-preview.html?mode=complete`)
   await page.getByRole('button', { name: 'Career' }).click()
+  await page.getByRole('tab', { name: 'Profile' }).click()
   const wideRunButton = page.locator('.card.analysis-panel', { has: page.getByRole('heading', { name: 'Course Discovery' }) }).getByRole('button', { name: 'Run analysis' })
   await wideRunButton.click()
   await page.getByText('Recommended courses').waitFor()
