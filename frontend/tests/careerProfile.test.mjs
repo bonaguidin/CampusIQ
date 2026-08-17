@@ -160,9 +160,13 @@ test('career profile: summary, direction, skills collapse, timeline, certificati
   assert.deepEqual(await accentOf('0 51 160'), { marker: 'rgb(0, 51, 160)', more: 'rgb(0, 51, 160)' })
   await page.evaluate(() => { document.documentElement.style.removeProperty('--accent-text-rgb') })
 
-  // Restraint: the accent is an accent. Chips and card surfaces stay neutral.
+  // Restraint: the institution accent is an accent, not a fill -- chips stay
+  // off it regardless of theme. They do carry a fixed, non-themed gold tint
+  // (--gold-tint) as of the Career tab visual redesign, so this now pins that
+  // the chip fill tracks the fixed token rather than --accent-text-rgb (set
+  // above), not that it is neutral gray.
   const chipBg = await page.locator('.cp-skills .cp-chip').first().evaluate((el) => getComputedStyle(el).backgroundColor)
-  assert.equal(chipBg, 'rgb(247, 247, 247)', 'skill chips must not be filled with the institution colour')
+  assert.equal(chipBg, 'rgba(217, 166, 43, 0.08)', 'skill chips must not be filled with the institution colour')
 })
 
 test('career profile: absences collapse and never become empty rectangles', { timeout: 45_000 }, async (t) => {
@@ -306,9 +310,11 @@ test('career profile: details rows report graduation, majors and AI comfort', { 
   await bare.getByRole('button', { name: 'Cancel' }).click()
   // A value never carries a subordinate caption. The switching state used to
   // hang off the current major that way, which said the two were one fact;
-  // they are two, and each now has its own labelled unit.
+  // they are two, and each is its own independent slot in the 4-column
+  // Details row (Expected Graduation, Current Major, Intended Major, AI
+  // Comfort) rather than a nested "unit" pair.
   assert.equal(await bare.locator('.cp-detail-note').count(), 0, 'a value grew a caption again')
-  assert.equal(await bare.locator('.cp-detail-unit').count(), 2, 'the major row must hold two units')
+  assert.equal(await bare.locator('.cp-detail').count(), 4, 'details must report exactly four independent slots')
 })
 
 /**
@@ -508,14 +514,29 @@ test('career profile: responsive at 1280, 834 and 390 with no overflow', { timeo
       [...root.querySelectorAll('*')].filter((el) => el.scrollWidth > el.clientWidth + 1).map((el) => el.className).slice(0, 5))
     assert.deepEqual(overflowing, [], `overflowing elements at ${String(width)}px`)
 
-    // The unequal desktop split must collapse rather than become two strips.
-    const columns = await page.locator('.cp-grid--split').first().evaluate((el) => getComputedStyle(el).gridTemplateColumns)
-    if (width <= 834) {
-      assert.equal(columns.split(' ').length, 1, `columns did not stack at ${String(width)}px`)
+    // Details is an explicit 4-column row on desktop, stepping down to 2 on
+    // tablet and 1 on phone -- replacing the old 3-item auto-fit grid whose
+    // middle item (a stack of Current Major + Intended Major) orphaned the
+    // second field onto its own line at desktop widths.
+    const detailColumns = await page.locator('.cp-details').first()
+      .evaluate((el) => getComputedStyle(el).gridTemplateColumns)
+    if (width <= 640) {
+      assert.equal(detailColumns.split(' ').length, 1, `.cp-details did not stack at ${String(width)}px`)
+    } else if (width <= 960) {
+      assert.equal(detailColumns.split(' ').length, 2, `.cp-details must be 2-up at ${String(width)}px`)
     } else {
-      assert.equal(columns.split(' ').length, 2, 'desktop must keep the unequal split')
-      const [left, right] = columns.split(' ').map(parseFloat)
-      assert.ok(right > left, 'skills column must be the wider one')
+      assert.equal(detailColumns.split(' ').length, 4, `.cp-details must be 4-up at ${String(width)}px`)
+    }
+
+    // Career direction, Skills, Experience and Certifications are all
+    // full-width bands now -- none of them shares a row with a sibling
+    // section, so each spans the same width as the profile container itself.
+    const cpWidth = await page.locator('.cp').first().evaluate((el) => el.clientWidth)
+    for (const selector of ['.cp-section', '.cp-certs', '.cp-projects']) {
+      const widths = await page.locator(selector).evaluateAll((nodes) => nodes.map((n) => n.clientWidth))
+      for (const w of widths) {
+        assert.ok(w >= cpWidth - 2, `${selector} is not full-width at ${String(width)}px (${String(w)} < ${String(cpWidth)})`)
+      }
     }
 
     // The four summary metrics: a single row on wide layouts, a balanced 2x2 on
