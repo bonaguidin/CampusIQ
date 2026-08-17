@@ -148,18 +148,19 @@ export function CareerProfile({
         focus={focus}
       />
 
-      <div className="cp-grid cp-grid--split">
-        {/* Each field below answers for itself. The section used to be gated on
-            one boolean covering all four, which meant a student with interests
-            and no target roles saw the interests and heard nothing at all about
-            the roles -- the field every analysis requires. */}
-        <Section title="Career direction" count={null}>
-          <div className="cp-direction">
-            {/* TargetRolesEditor and InterestsEditor are reused unchanged, but
-                only for the editing half. Their read-only half renders chips,
-                and this page states roles as a list and interests as one line
-                -- so the display above stands and the editors supply the input
-                surface they were written for. */}
+      {/* Career direction is its own full-width band -- it no longer shares a
+          row (and competes for column width) with Skills, which needs the
+          full measure for however many chips it holds. Target roles and
+          interests sit side-by-side WITHIN this band, in a 2-column sub-grid,
+          since they are the two fields every analysis actually reads. */}
+      <Section title="Career direction" count={null}>
+        <div className="cp-direction">
+          {/* TargetRolesEditor and InterestsEditor are reused unchanged, but
+              only for the editing half. Their read-only half renders chips,
+              and this page states roles as a list and interests as one line
+              -- so the display above stands and the editors supply the input
+              surface they were written for. */}
+          <div className="cp-direction-grid">
             <FieldSlot
               label="Target roles"
               path="career.target_roles"
@@ -189,58 +190,63 @@ export function CareerProfile({
                 <InterestsEditor interests={draft} isEditing onChange={setDraft} />
               )}
             />
-            {/* Goals and location keep the treatment they had: present or
-                silent. Neither is required by any analysis, so neither earns
-                an absence line arguing for itself. */}
-            {direction.goals && (
-              <div className="cp-field">
-                <h4 className="cp-subhead">Goal</h4>
-                <p className="cp-prose">{direction.goals}</p>
-              </div>
-            )}
-            {direction.location && (
-              <div className="cp-field">
-                <h4 className="cp-subhead">Location preference</h4>
-                <p className="cp-prose">{direction.location}</p>
-              </div>
-            )}
           </div>
-        </Section>
-
-        <Section title="Skills" count={counts.skills}>
-          {counts.skills > 0 ? (
-            <SkillCloud groups={model.skillGroups} total={counts.skills} />
-          ) : (
-            <Absence line="No skills confirmed yet." />
+          {/* Goals and location keep the treatment they had: present or
+              silent. Neither is required by any analysis, so neither earns
+              an absence line arguing for itself. */}
+          {direction.goals && (
+            <div className="cp-field">
+              <h4 className="cp-subhead">Goal</h4>
+              <p className="cp-prose">{direction.goals}</p>
+            </div>
           )}
-        </Section>
-      </div>
-
-      <div className="cp-grid cp-grid--split cp-grid--reverse">
-        <Section title="Experience" count={counts.experience}>
-          {counts.experience > 0 ? (
-            <ol className="cp-timeline">
-              {model.experience.map((entry) => (
-                <ExperienceRow entry={entry} key={entry.key} />
-              ))}
-            </ol>
-          ) : (
-            <Absence line="No experience confirmed yet." />
+          {direction.location && (
+            <div className="cp-field">
+              <h4 className="cp-subhead">Location preference</h4>
+              <p className="cp-prose">{direction.location}</p>
+            </div>
           )}
-        </Section>
+        </div>
+      </Section>
 
-        <Section title="Certifications" count={counts.certifications}>
-          {counts.certifications > 0 ? (
-            <ul className="cp-certs">
-              {model.certifications.map((entry) => (
-                <CertificationRow entry={entry} key={entry.key} />
-              ))}
-            </ul>
-          ) : (
-            <Absence line="No certifications yet." />
-          )}
-        </Section>
-      </div>
+      {/* Skills is its own full-width band, not a sidebar column -- the
+          "Show 30 more" expand-in-place behaviour inside SkillCloud is
+          untouched, only the outer container changed. */}
+      <Section title="Skills" count={counts.skills}>
+        {counts.skills > 0 ? (
+          <SkillCloud groups={model.skillGroups} total={counts.skills} />
+        ) : (
+          <Absence line="No skills confirmed yet." />
+        )}
+      </Section>
+
+      {/* Experience: full-width vertical list, not a half-width column. */}
+      <Section title="Experience" count={counts.experience}>
+        {counts.experience > 0 ? (
+          <ol className="cp-timeline">
+            {model.experience.map((entry) => (
+              <ExperienceRow entry={entry} key={entry.key} />
+            ))}
+          </ol>
+        ) : (
+          <Absence line="No experience confirmed yet." />
+        )}
+      </Section>
+
+      {/* Certifications: full-width horizontal row of compact cards, not a
+          tall sidebar column sitting next to Experience with dead space
+          beside it. */}
+      <Section title="Certifications" count={counts.certifications}>
+        {counts.certifications > 0 ? (
+          <ul className="cp-certs">
+            {model.certifications.map((entry) => (
+              <CertificationRow entry={entry} key={entry.key} />
+            ))}
+          </ul>
+        ) : (
+          <Absence line="No certifications yet." />
+        )}
+      </Section>
 
       <Section title="Projects" count={counts.projects}>
         {counts.projects > 0 ? (
@@ -352,46 +358,46 @@ function DetailsSection({
           display={<DetailValue value={expectedGraduation} />}
           edit={(draft, setDraft) => <GraduationInputs value={draft} onChange={setDraft} />}
         />
-        {/* TWO UNITS, ONE ROW. Correcting a mis-parsed current major and
-            deciding to switch are unrelated events, so pairing them made the
-            first wait on the second -- and made a student answer a question
-            about their future to fix a typo about their present. */}
-        <div className="cp-detail cp-detail--stack">
-          <FieldSlot
-            label="Current major"
-            wrapperClass="cp-detail-unit"
-            labelClass="cp-detail-label"
-            editing={editing}
-            value={majorCurrent ?? ''}
-            toChanges={(draft) => majorCurrentChanges(draft, majorCurrent)}
-            display={<DetailValue value={majorCurrent} />}
-            edit={(draft, setDraft) => <CurrentMajorInput value={draft} onChange={setDraft} />}
-          />
-          <FieldSlot
-            label="Intended major"
-            path="student.major_intended"
-            focus={focus}
-            wrapperClass="cp-detail-unit"
-            labelClass="cp-detail-label"
-            editing={editing}
-            value={major}
-            validate={validateMajor}
-            toChanges={(draft) => majorChanges(draft, majorIntended)}
-            // Only a switching student has an intended major to report. "Not
-            // switching majors" is a real answer, but it is the absence of a
-            // second major, so it reads in the quieter absent voice rather
-            // than sitting where a major name would.
-            display={
-              <DetailValue
-                value={major.switching ? major.majorIntended : null}
-                absentLabel="Not switching majors"
-              />
-            }
-            edit={(draft, setDraft) => (
-              <MajorInputs value={draft} onChange={setDraft} idPrefix="cp-major" />
-            )}
-          />
-        </div>
+        {/* Correcting a mis-parsed current major and deciding to switch are
+            unrelated events, so they are two independent slots -- pairing
+            them under one label made the first wait on the second, and made
+            a student answer a question about their future to fix a typo
+            about their present. Each is now its own column in the same
+            4-column row as Expected Graduation and AI Comfort. */}
+        <FieldSlot
+          label="Current major"
+          wrapperClass="cp-detail"
+          labelClass="cp-detail-label"
+          editing={editing}
+          value={majorCurrent ?? ''}
+          toChanges={(draft) => majorCurrentChanges(draft, majorCurrent)}
+          display={<DetailValue value={majorCurrent} />}
+          edit={(draft, setDraft) => <CurrentMajorInput value={draft} onChange={setDraft} />}
+        />
+        <FieldSlot
+          label="Intended major"
+          path="student.major_intended"
+          focus={focus}
+          wrapperClass="cp-detail"
+          labelClass="cp-detail-label"
+          editing={editing}
+          value={major}
+          validate={validateMajor}
+          toChanges={(draft) => majorChanges(draft, majorIntended)}
+          // Only a switching student has an intended major to report. "Not
+          // switching majors" is a real answer, but it is the absence of a
+          // second major, so it reads in the quieter absent voice rather
+          // than sitting where a major name would.
+          display={
+            <DetailValue
+              value={major.switching ? major.majorIntended : null}
+              absentLabel="Not switching majors"
+            />
+          }
+          edit={(draft, setDraft) => (
+            <MajorInputs value={draft} onChange={setDraft} idPrefix="cp-major" />
+          )}
+        />
         <FieldSlot
           label="AI comfort"
           path="career.ai_anxiety_level"
