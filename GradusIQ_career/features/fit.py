@@ -11,7 +11,7 @@ from GradusIQ_career.ai.runtime import AIRuntime
 from GradusIQ_career.student_intelligence_profile import StudentIntelligenceProfile
 
 from .base import CareerFeatureRunner, FeatureResult, load_prompt_template
-from .market_data import get_market_requirements, get_shift_signals
+from .market_data import get_market_requirements, get_shift_signals, is_role_supported
 
 # Sentinel value used in the data for "not switching majors" (Decision (b) —
 # it stays in the data as-is; FIT resolves around it here in feature logic).
@@ -61,6 +61,21 @@ class FitRunner(CareerFeatureRunner):
         super().__init__(*args, **kwargs)
         self.runtime_factory = runtime_factory
         self.last_trace: dict[str, Any] | None = None
+
+    def additional_missing_fields(self, student_profile: Mapping[str, Any]) -> list[str]:
+        """FIT has no research-agent fallback (see build_student_context's
+        "Deliberately no research agent" note) -- an unmatched target role
+        goes straight into the prompt as an ungrounded block, and FIT still
+        produces a confident-looking fit judgement from pure model recall.
+        Gated here rather than left to silently degrade: required_paths
+        already guarantees career.target_roles is non-empty by the time this
+        runs, so an empty result means every listed role is unsupported, not
+        that none were chosen (that's the required_paths gate's job).
+        """
+        target_roles = student_profile.get("career", {}).get("target_roles") or []
+        if target_roles and not any(is_role_supported(role) for role in target_roles):
+            return ["career.target_roles"]
+        return []
 
     def validate_data(self, data, student_profile):
         """Use the same semantic contract as authenticated and cached FIT."""

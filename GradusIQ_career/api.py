@@ -65,6 +65,7 @@ from GradusIQ_career.course_discovery.models import (
     resolve_institution,
 )
 from GradusIQ_career.course_discovery.needs import derive_career_skill_needs
+from GradusIQ_career.features.market_data import is_role_supported, supported_target_roles
 from GradusIQ_career.course_discovery.service import CourseDiscoveryService
 from GradusIQ_career.resume.extraction import extract_resume_text
 from GradusIQ_career.resume.parser import parse_resume_text
@@ -1018,6 +1019,23 @@ def _resolve_course_discovery_inputs(
             summary="Select a confirmed target role before discovering courses.",
             missing_fields=[MissingField(path="career.target_roles", label="Confirmed target role")],
         )
+    if not is_role_supported(target_role):
+        # A confirmed, real target role -- just not one the curated
+        # role-requirements vocabulary has coverage for. Distinct from the
+        # "no role chosen" skip above: derive_career_skill_needs() would
+        # silently return [] here (its own provenance/matched check would
+        # fail the same lookup), producing an empty-looking Course Discovery
+        # result that reads as "nothing relevant" when the real reason is
+        # "GradusIQ has no analysis coverage for this role yet". Caught here,
+        # before spending an agent run, so the student sees the real reason.
+        return FeatureResult(
+            feature="COURSE_DISCOVERY", status="skipped",
+            summary="Career analysis isn't available for this target role yet.",
+            missing_fields=[MissingField(
+                path="career.target_roles",
+                label="Career analysis isn't available for this target role yet. Choose a supported target role.",
+            )],
+        )
     planned = [
         PlannedCourseEvidence(
             id=item.id, institution=institution, course_code=item.course_code,
@@ -1203,6 +1221,26 @@ def get_me_profile(request: Request) -> dict:
     canonical = build_student_intelligence_profile(client, student_id)
     legacy = canonical_to_legacy_profile(canonical)
     return {**legacy, "intelligence_profile": canonical.model_dump(mode="json")}
+
+
+@router.get(
+    "/api/v2/student/me/career-role-options",
+    dependencies=[Depends(authorize_proxy_request)],
+)
+def get_me_career_role_options(request: Request) -> dict:
+    """The curated target-role vocabulary career analysis has coverage for.
+
+    Read-only and static -- not derived from the caller's own profile at all
+    (every student sees the same list) -- but still requires a real session
+    with a visible students row, like every other /me route, rather than
+    being reachable on the shared proxy secret alone. Lets the Career Profile
+    target-role editor offer only roles FIT/GAP/SHIFT/Course Discovery can
+    actually analyze, instead of duplicating a hand-maintained role list in
+    the frontend.
+    """
+    client = _session_client(request)
+    _resolve_session_student_id(client)  # 404s if no student row is visible; unused otherwise
+    return {"roles": supported_target_roles()}
 
 
 @router.patch(

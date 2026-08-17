@@ -41,7 +41,7 @@ def canonical_profile():
             },
             "career": {
                 "confirmed": True,
-                "target_roles": ["Software Engineer Intern"],
+                "target_roles": ["Software Engineering Intern"],
                 "interests": ["backend"],
                 "skills": {"technical": ["Python"], "soft": []},
                 "work_experience": [],
@@ -239,7 +239,7 @@ def test_fit_runner_builds_grounding_once_across_repair(monkeypatch):
     legacy = {
         "student": {"major_intended": "Computer Science", "major_current": "Computer Science"},
         "career": {
-            "target_roles": ["Software Engineer Intern"],
+            "target_roles": ["Software Engineering Intern"],
             "interests": ["backend"],
             "skills_self_reported": {"technical": ["Python"]},
         },

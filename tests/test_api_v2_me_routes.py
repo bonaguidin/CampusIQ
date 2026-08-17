@@ -30,8 +30,9 @@ ME_ROUTES = [
     ("post", "/api/v2/student/me/chat", {"message": "hi", "history": []}),
     ("get", "/api/v2/student/me/profile", None),
     ("post", "/api/v2/student/me/action-plan", None),
+    ("get", "/api/v2/student/me/career-role-options", None),
 ]
-ME_IDS = ["analyze", "chat", "profile", "action-plan"]
+ME_IDS = ["analyze", "chat", "profile", "action-plan", "role-options"]
 
 
 def make_test_config(**overrides):
@@ -147,7 +148,7 @@ def _full_profile():
             "gpa_current": None,
         },
         "career": {
-            "target_roles": ["SWE Intern"],
+            "target_roles": ["Software Engineering Intern"],
             "interests": ["backend"],
             "career_goals": "Ship things.",
             "geographic_preference": "DFW",
@@ -190,7 +191,7 @@ def _canonical_profile():
             },
             "career": {
                 "confirmed": True,
-                "target_roles": ["SWE Intern"], "interests": ["backend"],
+                "target_roles": ["Software Engineering Intern"], "interests": ["backend"],
                 "career_goals": "Ship things.", "geographic_preference": "DFW",
                 "ai_anxiety_level": "low",
                 "skills": {"technical": ["Python"], "soft": ["communication"], "ai_exposure": "some"},
@@ -300,7 +301,7 @@ def test_me_profile_returns_the_profile(client, monkeypatch):
     body = response.json()
     assert body["student"]["id"] == STUDENT_UUID
     assert body["student"]["institution"] == "Texas A&M University"
-    assert body["career"]["target_roles"] == ["SWE Intern"]
+    assert body["career"]["target_roles"] == ["Software Engineering Intern"]
     assert body["intelligence_profile"]["contract_version"] == "1.0"
 
 
@@ -761,6 +762,89 @@ def test_me_chat_releases_concurrency_slot_after_retry_exhaustion(client, monkey
     assert (gate.exits, gate.active) == (1, False)
 
 
+@pytest.mark.parametrize(
+    "path", ["/api/v2/student/me/analyze/course-discovery", "/api/v2/student/me/action-plan"],
+)
+def test_unsupported_target_role_skips_before_any_agent_run(path, client, monkeypatch):
+    """A confirmed, real target role that role_requirements.json has no
+    curated entry for must be distinguished from "no role chosen": the
+    student sees a typed skip explaining GradusIQ has no analysis coverage
+    for the role, not an empty-looking success. Regression test for the
+    exact live E2E finding: Course Discovery silently returned zero verified/
+    blocked/unresolved candidates for "Software Engineer", which reads
+    identically to "nothing relevant to recommend" -- the real reason was the
+    role itself, not the student's profile.
+    """
+    _patch_session(monkeypatch, profile=_full_profile())
+    # _patch_session hardcodes build_student_intelligence_profile to
+    # _canonical_profile(); course-discovery/action-plan resolve target_role
+    # from THAT canonical model, not the legacy profile dict, so the
+    # unsupported role has to be injected there.
+    unsupported_canonical = _canonical_profile().model_copy(
+        update={"career": _canonical_profile().career.model_copy(update={"target_roles": ["Software Engineer"]})}
+    )
+    monkeypatch.setattr(api, "build_student_intelligence_profile", lambda client, sid: unsupported_canonical)
+    monkeypatch.setattr(api, "list_planned", lambda client, sid: [])
+    monkeypatch.setattr(api, "CourseDiscoveryAgent", lambda *a, **k: pytest.fail("must skip before any agent run"))
+    monkeypatch.setattr(api, "build_client", lambda: pytest.fail("must skip before building an AI client"))
+
+    response = _call(client, "post", path, {"target_role": "Software Engineer"})
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["status"] == "skipped"
+    assert body["summary"] == "Career analysis isn't available for this target role yet."
+    assert body["missing_fields"][0]["path"] == "career.target_roles"
+    assert "supported target role" in body["missing_fields"][0]["label"].lower()
+    # Not a generic "add this" -- the role IS present, just unsupported.
+    assert "Software Engineer" not in body["missing_fields"][0]["label"]
+
+
+def test_supported_target_role_is_unaffected_by_the_new_gate(client, monkeypatch):
+    """The exact same request shape that already worked (curated role)
+    continues to reach the agent -- the new gate only intercepts unsupported
+    roles, it does not change resolution for supported ones."""
+    _patch_session(monkeypatch, profile=_full_profile())  # target_roles: ["Software Engineering Intern"]
+    monkeypatch.setattr(api, "list_planned", lambda client, sid: [])
+
+    class Result:
+        summary = "ok"
+
+        def model_dump(self, **kwargs):
+            return {"target_role": "Software Engineering Intern", "verified_recommendations": []}
+
+    class Agent:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def run(self, *, needs, target_role):
+            return SimpleNamespace(errors=[], result=Result())
+
+    monkeypatch.setattr(api, "CourseDiscoveryAgent", Agent)
+    monkeypatch.setattr(api, "build_client", lambda: object())
+
+    response = _call(
+        client, "post", "/api/v2/student/me/analyze/course-discovery",
+        {"target_role": "Software Engineering Intern"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["status"] == "success"
+
+
+def test_career_role_options_returns_the_curated_vocabulary(client, monkeypatch):
+    _patch_session(monkeypatch, profile=_full_profile())
+
+    response = _call(client, "get", "/api/v2/student/me/career-role-options", None)
+
+    assert response.status_code == 200
+    body = response.json()
+    assert set(body) == {"roles"}
+    assert "Software Engineering Intern" in body["roles"]
+    assert "Software Engineer" not in body["roles"]
+    assert body["roles"] == sorted(body["roles"])
+
+
 def test_course_discovery_uses_trusted_scope_and_ai_gate(client, monkeypatch):
     _patch_session(monkeypatch, profile=_full_profile())
     monkeypatch.setattr(api, "list_planned", lambda client, sid: [])
@@ -786,7 +870,7 @@ def test_course_discovery_uses_trusted_scope_and_ai_gate(client, monkeypatch):
         summary = "No verified course matched."
 
         def model_dump(self, **kwargs):
-            return {"target_role": "SWE Intern", "verified_recommendations": []}
+            return {"target_role": "Software Engineering Intern", "verified_recommendations": []}
 
     class Agent:
         def __init__(self, service, provider):
@@ -795,7 +879,7 @@ def test_course_discovery_uses_trusted_scope_and_ai_gate(client, monkeypatch):
 
         def run(self, *, needs, target_role):
             assert gate.active is True
-            assert target_role == "SWE Intern"
+            assert target_role == "Software Engineering Intern"
             return SimpleNamespace(errors=[], result=Result())
 
     monkeypatch.setattr(api, "CourseDiscoveryAgent", Agent)
@@ -807,7 +891,7 @@ def test_course_discovery_uses_trusted_scope_and_ai_gate(client, monkeypatch):
     monkeypatch.setattr(api, "build_client", lambda: object())
     response = _call(
         client, "post", "/api/v2/student/me/analyze/course-discovery",
-        {"target_role": "SWE Intern"},
+        {"target_role": "Software Engineering Intern"},
     )
     assert response.status_code == 200
     assert set(response.json()) == {"feature", "status", "summary", "data", "errors", "missing_fields"}
@@ -818,7 +902,7 @@ def test_course_discovery_rejects_client_student_id_and_releases_gate_on_failure
     _patch_session(monkeypatch, profile=_full_profile())
     rejected = _call(
         client, "post", "/api/v2/student/me/analyze/course-discovery",
-        {"target_role": "SWE Intern", "student_id": "other-student"},
+        {"target_role": "Software Engineering Intern", "student_id": "other-student"},
     )
     assert rejected.status_code == 422
 
@@ -851,7 +935,7 @@ def test_course_discovery_rejects_client_student_id_and_releases_gate_on_failure
     monkeypatch.setattr(api, "CourseDiscoveryAgent", Agent)
     response = _call(
         client, "post", "/api/v2/student/me/analyze/course-discovery",
-        {"target_role": "SWE Intern"},
+        {"target_role": "Software Engineering Intern"},
     )
     assert response.status_code == 502
     assert (gate.exits, gate.active) == (1, False)
@@ -860,8 +944,8 @@ def test_course_discovery_rejects_client_student_id_and_releases_gate_on_failure
 @pytest.mark.parametrize(
     ("path", "body"),
     [
-        ("/api/v2/student/me/analyze/course-discovery", {"target_role": "SWE Intern"}),
-        ("/api/v2/student/me/action-plan", {"target_role": "SWE Intern"}),
+        ("/api/v2/student/me/analyze/course-discovery", {"target_role": "Software Engineering Intern"}),
+        ("/api/v2/student/me/action-plan", {"target_role": "Software Engineering Intern"}),
     ],
 )
 def test_course_discovery_and_action_plan_gate_exhaustion_stays_429(path, body, monkeypatch):
@@ -1011,7 +1095,7 @@ from GradusIQ_career.course_discovery.models import (
     StudentCourseState,
 )
 
-ACTION_PLAN_TARGET_ROLE = "SWE Intern"  # matches _canonical_profile()'s confirmed target role
+ACTION_PLAN_TARGET_ROLE = "Software Engineering Intern"  # matches _canonical_profile()'s confirmed target role
 
 
 def _ap_need(skill="Python"):

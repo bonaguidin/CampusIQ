@@ -6,6 +6,7 @@ import type { CanonicalCareer } from '../../types/studentIntelligenceProfile';
 import type { CertificationEntry, ExperienceEntry } from '../../data/careerViewModel.mjs';
 import { InterestsEditor } from '../InterestsEditor';
 import { TargetRolesEditor } from '../TargetRolesEditor';
+import { useSupportedTargetRoles } from '../../hooks/useSupportedTargetRoles';
 import { AiComfortField, aiComfortChanges, aiComfortLabel } from '../profile/fields/AiComfortField';
 import {
   GraduationInputs,
@@ -107,13 +108,21 @@ export function CareerProfile({
 }) {
   const model = buildCareerViewModel(career);
   const { direction, counts } = model;
+  const supportedRoles = useSupportedTargetRoles();
 
   // The read-only renderings, named once so the editable and read-only paths
   // cannot drift into showing two different things for the same data.
   const rolesDisplay = direction.hasTargetRoles ? (
     <ul className="cp-roles">
       {direction.targetRoles.map((role) => (
-        <li key={role}>{role}</li>
+        <li key={role}>
+          {role}
+          {supportedRoles !== null && !supportedRoles.includes(role) && (
+            <span className="course-discovery-status-badge course-discovery-status-badge--verify cp-role-coverage-badge">
+              Analysis coverage unavailable
+            </span>
+          )}
+        </li>
       ))}
     </ul>
   ) : (

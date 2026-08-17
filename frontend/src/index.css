@@ -1959,6 +1959,47 @@ a {
   align-items: center;
 }
 
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Target roles: each chip may carry a coverage badge (role_requirements.json
+   has no curated data for it) beside it -- same visual family as Course
+   Discovery's status badges (course-discovery-status-badge--verify), just
+   applied to a role rather than a course. */
+.target-role-chip-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.target-role-add-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+}
+
+.target-role-add-row .form-select {
+  flex: 1;
+  min-width: 200px;
+}
+
+.target-role-add-note {
+  font-size: var(--text-xs);
+  color: var(--muted);
+  margin-top: var(--sp-1);
+}
+
 /* ─── SKILLS ──────────────────────────────────────────────────────────────── */
 .skills-view {
   display: flex;
@@ -2936,6 +2977,12 @@ a {
   font-size: var(--text-lg);
   line-height: 1.3;
   color: var(--ink);
+}
+
+.cp-role-coverage-badge {
+  font-family: var(--font-ui);
+  margin-left: var(--sp-2);
+  vertical-align: middle;
 }
 
 .cp-inline-list,

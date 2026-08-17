@@ -643,3 +643,162 @@ test('career profile: the not-switching sentinel is not a missing detail', { tim
   assert.equal(items.includes('Intended major'), false, 'the sentinel was counted as missing')
   assert.deepEqual(items, ['Target roles', 'Career interests'])
 })
+
+// feat: make target-role selection compatible with supported career analysis
+// roles. FIT/GAP/SHIFT/Course Discovery only have coverage for the curated
+// vocabulary GET /career-role-options exposes; a target role outside it used
+// to silently produce empty/low-information analysis results with no signal
+// that the ROLE was the reason. This pins the Career Profile-side half of the
+// fix: existing unsupported roles are preserved and clearly flagged, new
+// roles can only be added from the supported list, and Course Discovery's
+// role selector marks unsupported roles instead of letting a student run into
+// a silent empty result.
+function roleOptionsPlugin(roles) {
+  return {
+    name: 'role-options-api',
+    configureServer(server) {
+      server.middlewares.use((request, response, next) => {
+        if (request.url?.split('?')[0] === '/api/v2/student/me/career-role-options' && request.method === 'GET') {
+          response.statusCode = 200
+          response.setHeader('content-type', 'application/json')
+          response.end(JSON.stringify({ roles }))
+          return
+        }
+        next()
+      })
+    },
+  }
+}
+
+test('career profile: target roles show coverage status and only offer supported additions', { timeout: 45_000 }, async (t) => {
+  const patches = []
+  const apiPlugin = {
+    name: 'role-support-profile-api',
+    configureServer(server) {
+      server.middlewares.use((request, response, next) => {
+        const path = request.url?.split('?')[0]
+        if (path === '/api/v2/student/me/career-role-options' && request.method === 'GET') {
+          response.statusCode = 200
+          response.setHeader('content-type', 'application/json')
+          response.end(JSON.stringify({ roles: ['Embedded Systems Intern', 'Software Engineering Intern'] }))
+          return
+        }
+        if (path === '/api/v2/student/me/profile' && request.method === 'PATCH') {
+          let body = ''
+          request.on('data', (chunk) => { body += chunk })
+          request.on('end', () => {
+            patches.push(JSON.parse(body))
+            response.statusCode = 200
+            response.setHeader('content-type', 'application/json')
+            response.end(JSON.stringify({ ok: true }))
+          })
+          return
+        }
+        next()
+      })
+    },
+  }
+
+  const origin = await startServer(t, [apiPlugin])
+  const browser = await chromium.launch()
+  t.after(async () => browser.close())
+  const page = await browser.newPage({ viewport: { width: 1280, height: 1000 } })
+  // mode=complete's fixture target_roles is ['Software Engineer'] -- a
+  // realistic role not in the mocked supported list above, i.e. exactly the
+  // "legacy unsupported role" case this feature exists to handle.
+  await openCareer(page, origin, 'mode=complete')
+
+  // ── view mode: the unsupported legacy role is preserved and flagged ──────
+  const roleItem = page.locator('.cp-roles li', { hasText: 'Software Engineer' })
+  await roleItem.waitFor()
+  await roleItem.getByText('Analysis coverage unavailable').waitFor()
+
+  // ── edit mode: the existing role stays; the add control only offers
+  //    supported roles, never free text ──────────────────────────────────
+  const rolesField = page.locator('[data-profile-field="career.target_roles"]')
+  await rolesField.getByRole('button', { name: 'Edit' }).click()
+  await rolesField.getByRole('button', { name: 'Remove Software Engineer', exact: true }).waitFor()
+  await rolesField.getByText('Analysis coverage unavailable').waitFor()
+  // No free-text input exists for target roles -- only the supported-role
+  // select and the existing chips' remove buttons.
+  assert.equal(await rolesField.locator('input[type="text"]').count(), 0)
+
+  const addSelect = rolesField.locator('#target-role-add-select')
+  await addSelect.waitFor()
+  const options = await addSelect.locator('option').allTextContents()
+  assert.deepEqual(
+    options.filter((o) => o !== 'Choose a supported role to add…'),
+    ['Embedded Systems Intern', 'Software Engineering Intern'],
+  )
+
+  await addSelect.selectOption('Software Engineering Intern')
+  await rolesField.getByRole('button', { name: 'Add role' }).click()
+  await rolesField.getByRole('button', { name: 'Remove Software Engineering Intern' }).waitFor()
+  // The newly added role is supported -- no coverage badge on its chip group.
+  assert.equal(
+    await rolesField.locator('.target-role-chip-group', { hasText: 'Software Engineering Intern' })
+      .locator('.course-discovery-status-badge').count(),
+    0,
+  )
+  // Already-added roles are not offered a second time.
+  assert.equal((await addSelect.locator('option').allTextContents()).includes('Software Engineering Intern'), false)
+
+  // ── removing the legacy unsupported role still works ─────────────────────
+  await rolesField.getByRole('button', { name: 'Remove Software Engineer', exact: true }).click()
+  assert.equal(await rolesField.getByRole('button', { name: 'Remove Software Engineer', exact: true }).count(), 0)
+  assert.equal(await rolesField.getByRole('button', { name: 'Remove Software Engineering Intern' }).count(), 1)
+
+  // ── keyboard: the add control is a real, focusable, labelled select ──────
+  await addSelect.focus()
+  assert.equal(await addSelect.evaluate((node) => node === document.activeElement), true)
+  await addSelect.selectOption('Embedded Systems Intern')
+  assert.equal(await rolesField.getByRole('button', { name: 'Add role' }).isEnabled(), true)
+  await rolesField.getByRole('button', { name: 'Add role' }).click()
+  await rolesField.getByRole('button', { name: 'Remove Embedded Systems Intern' }).waitFor()
+
+  await rolesField.getByRole('button', { name: 'Save' }).click()
+  await rolesField.getByRole('button', { name: 'Edit' }).waitFor()
+  assert.deepEqual(patches.at(-1), { target_roles: ['Software Engineering Intern', 'Embedded Systems Intern'] })
+
+  // ── responsive: 390 / 834 / 1280, no page-level horizontal overflow ──────
+  for (const width of [390, 834, 1280]) {
+    await page.setViewportSize({ width, height: 1000 })
+    assert.equal(
+      await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1),
+      true,
+      `page overflows horizontally at ${width}px`,
+    )
+  }
+})
+
+test('career profile: Course Discovery role selector marks unsupported roles instead of letting them run silently', { timeout: 45_000 }, async (t) => {
+  const origin = await startServer(t, [roleOptionsPlugin(['Robotics Engineer'])])
+  const browser = await chromium.launch()
+  t.after(async () => browser.close())
+  const page = await browser.newPage({ viewport: { width: 1280, height: 1000 } })
+  // career=rich has three confirmed roles: AI Engineer, ML Engineer, Robotics
+  // Engineer -- only the last is in the mocked supported list, so this
+  // exercises a genuinely mixed selector.
+  await openCareer(page, origin, 'mode=complete&career=rich')
+
+  const cdPanel = page.locator('.card.analysis-panel', { has: page.getByRole('heading', { name: 'Course Discovery' }) })
+  const roleSelect = cdPanel.locator('#course-discovery-target-role')
+  await roleSelect.waitFor()
+
+  const aiOption = roleSelect.locator('option', { hasText: 'AI Engineer' })
+  const mlOption = roleSelect.locator('option', { hasText: 'ML Engineer' })
+  const roboticsOption = roleSelect.locator('option', { hasText: 'Robotics Engineer' })
+
+  // Option text stays exactly the role name -- a long inline coverage
+  // suffix here made native <select> intrinsic sizing overflow the row on
+  // narrow viewports (Chromium does not reliably honor max-width/overflow
+  // truncation for closed-state <select> width). `disabled` alone already
+  // prevents a student from selecting an unsupported role through this
+  // control; the backend's skip response is the authoritative explanation.
+  assert.equal(await aiOption.innerText(), 'AI Engineer')
+  assert.equal(await aiOption.isDisabled(), true)
+  assert.equal(await mlOption.innerText(), 'ML Engineer')
+  assert.equal(await mlOption.isDisabled(), true)
+  assert.equal(await roboticsOption.innerText(), 'Robotics Engineer')
+  assert.equal(await roboticsOption.isDisabled(), false)
+})

@@ -4,6 +4,7 @@ import { updateProfile, type ProfileChanges } from '../../api/profile';
 import type { MissingField } from '../../types/analysis';
 import type { StudentIntelligenceProfile } from '../../types/studentIntelligenceProfile';
 import { TagInput } from '../TagInput';
+import { TargetRolesEditor } from '../TargetRolesEditor';
 import { AiComfortOptions, aiComfortChanges } from './fields/AiComfortField';
 import {
   GraduationInputs,
@@ -142,7 +143,7 @@ export function ProfileCompletionForm({ profile, accessToken, missingFields = []
 
       <section className="profile-form-section">
         <h3 className="editable-section-title">Career direction</h3>
-        <div className={fieldClass('career.target_roles')}><TagInput label="Target roles" value={targetRoles} onChange={setTargetRoles} placeholder="Add role" />{helper('career.target_roles') && <small>{helper('career.target_roles')}</small>}</div>
+        <div className={fieldClass('career.target_roles')}><TargetRolesEditor roles={targetRoles} isEditing onChange={setTargetRoles} />{helper('career.target_roles') && <small>{helper('career.target_roles')}</small>}</div>
         <div className={fieldClass('career.interests')}><TagInput label="Career interests" value={interests} onChange={setInterests} placeholder="Add interest" />{helper('career.interests') && <small>{helper('career.interests')}</small>}</div>
       </section>
 

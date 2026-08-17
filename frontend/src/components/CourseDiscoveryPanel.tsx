@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../auth/useAuth';
 import { analyzeActionPlan, analyzeCourseDiscovery, type AnalysisIdentity } from '../api/analysis';
 import { analysisFailureMessage, useAnalysisRun } from '../hooks/useAnalysisRun';
+import { useSupportedTargetRoles } from '../hooks/useSupportedTargetRoles';
 import type {
   CourseDiscoveryData,
   VerifiedCourseRecommendation,
@@ -31,6 +32,7 @@ import { AnalysisPanel, type AnalysisPhase } from './AnalysisPanel';
 export function CourseDiscoveryPanel({ targetRoles }: { targetRoles: string[] }) {
   const { slug, session } = useAuth();
   const [selectedRole, setSelectedRole] = useState(targetRoles[0] ?? '');
+  const supportedRoles = useSupportedTargetRoles();
   const { state, trigger } = useAnalysisRun(() =>
     analyzeCourseDiscovery(
       { slug, accessToken: session?.access_token ?? null },
@@ -83,11 +85,14 @@ export function CourseDiscoveryPanel({ targetRoles }: { targetRoles: string[] })
               value={selectedRole}
               onChange={(event) => setSelectedRole(event.target.value)}
             >
-              {targetRoles.map((role) => (
-                <option key={role} value={role}>
-                  {role}
-                </option>
-              ))}
+              {targetRoles.map((role) => {
+                const unsupported = supportedRoles !== null && !supportedRoles.includes(role);
+                return (
+                  <option key={role} value={role} disabled={unsupported}>
+                    {role}
+                  </option>
+                );
+              })}
             </select>
           </span>
         ) : undefined
