@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 
-import { analyzeCourseDiscovery } from '../src/api/analysis.ts'
+import { analyzeCourseDiscovery } from '../src/api/analysisApi.mjs'
 
 function fakeFetch(calls, body = { feature: 'COURSE_DISCOVERY', status: 'success', summary: '', data: {}, errors: [] }) {
   return async (url, init) => {

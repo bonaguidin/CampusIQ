@@ -933,6 +933,7 @@ def test_course_discovery_rejects_client_student_id_and_releases_gate_on_failure
             raise RuntimeError("provider unavailable")
 
     monkeypatch.setattr(api, "CourseDiscoveryAgent", Agent)
+    monkeypatch.setattr(api, "build_client", lambda: object())
     response = _call(
         client, "post", "/api/v2/student/me/analyze/course-discovery",
         {"target_role": "Software Engineering Intern"},
@@ -1165,6 +1166,7 @@ def _ap_result(need, *, verified_recs=None, blocked_recs=None, unresolved_recs=N
 def _stub_action_plan_agent(monkeypatch, client, need, result):
     monkeypatch.setattr(api, "list_planned", lambda client, sid: [])
     monkeypatch.setattr(api, "derive_career_skill_needs", lambda profile, role: [need])
+    monkeypatch.setattr(api, "build_client", lambda: object())
 
     class Agent:
         def __init__(self, service, provider):
