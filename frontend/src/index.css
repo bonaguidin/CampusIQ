@@ -3193,6 +3193,14 @@ a {
   grid-template-columns: repeat(4, minmax(min(12rem, 100%), 1fr));
   gap: var(--sp-5) var(--sp-8);
   margin: 0;
+  /* Grid items stretch to the row's tallest sibling by default. Expected
+     Graduation/Current Major have short content while Intended Major/AI
+     Comfort carry helper text, so stretching left invisible dead space
+     under the shorter fields' Save/Cancel. Top-aligning lets each column
+     sit only as tall as its own content -- the row still reads even
+     because every field starts at the same top edge, just without the
+     forced equal height. */
+  align-items: start;
 }
 
 @media (max-width: 60rem) {
@@ -3257,6 +3265,26 @@ a {
   align-items: baseline;
 }
 
+/* Editing state only (Save appears beside Cancel, never alongside a lone
+   pencil): the label above reserves two lines' worth of height regardless
+   of whether it actually wraps, so "Expected graduation" (two lines) and
+   "AI comfort" (one line) leave Save/Cancel -- and the input below them --
+   starting at the same offset in every column of the row. Baseline
+   alignment above is right for the single pencil, which tracks the
+   label's own line; a two-button pair needs a fixed anchor instead, since
+   its own height does not vary with the label's line count the way a
+   glyph would. */
+.cp-detail .editable-section-header:has(.btn-primary),
+.cp-field .editable-section-header:has(.btn-primary) {
+  align-items: flex-start;
+}
+
+.cp-detail .editable-section-header:has(.btn-primary) .editable-section-title,
+.cp-field .editable-section-header:has(.btn-primary) .editable-section-title {
+  min-height: calc(2 * 1.3em);
+  line-height: 1.3;
+}
+
 /* Target roles / Interests sit in a two-up sub-grid at --sp-8 apart, but
    nothing inset the label/value column from the grid's own edge, leaving
    Target Roles' text flush left while the pencil crowded the right edge --
@@ -3293,6 +3321,85 @@ a {
 
 /* The editing surface inside a row: inputs stacked, never a second card. */
 .cp-field-edit { display: flex; flex-direction: column; gap: var(--sp-2); min-width: 0; }
+
+/* Text/select inputs inherit the base form styling (border, --radius,
+   padding -- see the shared .cp-field-edit input rule further down), but
+   this row's chrome is otherwise borderless-card (see
+   ".cp-detail .editable-section" above), so a hairline --radius corner
+   reads flatter here than it does in a bordered modal. --radius-chip
+   matches the pill/chip rounding this tab already uses everywhere else
+   (AI comfort pills, skill chips), so an input reads as part of the same
+   system rather than a smaller, sharper-edged control dropped in from the
+   completion form. */
+.career-subtab-panel .cp-field-edit input:not([type='radio']):not([type='checkbox']),
+.career-subtab-panel .cp-field-edit select {
+  border-radius: var(--radius-chip);
+  transition: border-color 120ms ease;
+}
+
+.career-subtab-panel .cp-field-edit input:not([type='radio']):not([type='checkbox']):focus-visible,
+.career-subtab-panel .cp-field-edit select:focus-visible {
+  border-color: rgb(var(--accent-rgb));
+}
+
+/* Checkbox and radio inputs (the major-switch checkbox, the AI comfort
+   options) get the same custom-drawn treatment: the browser default reads
+   as an unstyled form control next to pill-shaped, gold/accent-toned
+   controls everywhere else on this tab. Sized and colored off the same
+   --accent-rgb the app already uses for accent-color on these inputs
+   (see the unscoped input[type=radio/checkbox] rule), so the selected
+   state is the one color these controls have always used here, just
+   drawn by hand instead of left to the browser. */
+.career-subtab-panel .cp-field-edit input[type='radio'],
+.career-subtab-panel .cp-field-edit input[type='checkbox'] {
+  appearance: none;
+  -webkit-appearance: none;
+  flex: none;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  border: 1.5px solid var(--line);
+  background: var(--surface);
+  display: inline-grid;
+  place-content: center;
+  cursor: pointer;
+  transition: border-color 120ms ease, background-color 120ms ease;
+}
+
+.career-subtab-panel .cp-field-edit input[type='radio'] { border-radius: 50%; }
+.career-subtab-panel .cp-field-edit input[type='checkbox'] { border-radius: var(--radius-sm); }
+
+.career-subtab-panel .cp-field-edit input[type='radio']:checked,
+.career-subtab-panel .cp-field-edit input[type='checkbox']:checked {
+  border-color: rgb(var(--accent-rgb));
+}
+
+.career-subtab-panel .cp-field-edit input[type='radio']:checked::after {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgb(var(--accent-rgb));
+}
+
+.career-subtab-panel .cp-field-edit input[type='checkbox']:checked {
+  background: rgb(var(--accent-rgb));
+}
+
+.career-subtab-panel .cp-field-edit input[type='checkbox']:checked::after {
+  content: '';
+  width: 4px;
+  height: 8px;
+  border: solid var(--on-accent);
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg) translate(-1px, -1px);
+}
+
+.career-subtab-panel .cp-field-edit input[type='radio']:disabled,
+.career-subtab-panel .cp-field-edit input[type='checkbox']:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
 
 /* TagInput names itself, which is right in the completion form where nothing
    else does. Inline, EditableSection's title already names the row, so the
