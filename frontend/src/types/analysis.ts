@@ -238,3 +238,111 @@ export interface CourseDiscoveryData {
   degree_applicability: 'UNKNOWN';
   offering_status: 'UNKNOWN';
 }
+
+// ── ACTION PLAN (dependency-order preview) — action_planning/models.py ──────
+// Mirrors GradusIQ_career/action_planning/models.py exactly (read directly,
+// not from memory). Node/edge shape only; no graph layout, no scheduling.
+//
+// Edge orientation (easy to get backwards): a stored PlanEdge with
+// relation "requires" is dependent --requires--> prerequisite, i.e.
+// from_node_id is the dependent, to_node_id is the prerequisite. In
+// dependency_order.ordered_node_ids the prerequisite appears BEFORE the
+// dependent. Render "from_node_id requires to_node_id", never the reverse.
+
+export type PlanNodeType = 'skill_need' | 'course' | 'project' | 'experience';
+export type PlanNodeStatus = 'OPEN' | 'IN_PROGRESS' | 'SATISFIED';
+export type PlanEdgeRelation = 'requires' | 'satisfies' | 'blocks';
+export type PlanConflictResolution = 'UNRESOLVED' | 'DEFERRED' | 'MANUAL_REVIEW_REQUIRED';
+export type PlanExecutionStatus = 'SUCCESS' | 'PARTIAL' | 'ERROR';
+export type DependencyOrderCompleteness = 'COMPLETE' | 'PROVISIONAL';
+export type DependencyOrderStatus = 'ORDERED' | 'ERROR';
+export type DependencyOrderReasonType =
+  | 'ANY_PREREQUISITE'
+  | 'UNRESOLVED_PREREQUISITE'
+  | 'UNKNOWN_COURSE_STATE';
+
+export interface PlanNode {
+  node_id: string;
+  node_type: PlanNodeType;
+  // Back-reference to already-validated evidence (a CareerSkillNeed.need_id,
+  // or a course_code/institution pair) — never a copy of that data.
+  source_ref: string;
+  status: PlanNodeStatus;
+}
+
+export interface PlanEdge {
+  from_node_id: string;
+  to_node_id: string;
+  relation: PlanEdgeRelation;
+}
+
+export interface PlanConflict {
+  node_ids: string[];
+  reason: string;
+  resolution: PlanConflictResolution;
+}
+
+export interface PlanFailure {
+  category: 'PLANNER_FAILURE';
+  error_class: string | null;
+  safe_message: string;
+}
+
+export interface DependencyOrderLimitation {
+  node_id: string;
+  reason_type: DependencyOrderReasonType;
+  // The ANY-mode alternative set, or the UNKNOWN-state course codes, verbatim
+  // from source evidence — never invented.
+  course_codes: string[];
+}
+
+export interface DependencyOrderResult {
+  ordered_node_ids: string[];
+  // Action nodes with zero `requires` edges — no proven ordering constraint,
+  // deliberately excluded from ordered_node_ids rather than given an
+  // arbitrary position that would imply one.
+  unconstrained_node_ids: string[];
+  completeness: DependencyOrderCompleteness;
+  limitations: DependencyOrderLimitation[];
+  status: DependencyOrderStatus;
+  failure: PlanFailure | null;
+}
+
+export interface UnifiedActionPlan {
+  target_role: string;
+  nodes: PlanNode[];
+  edges: PlanEdge[];
+  conflicts: PlanConflict[];
+  execution_status: PlanExecutionStatus;
+  failure: PlanFailure | null;
+  summary: string;
+}
+
+// POST /api/v2/student/me/action-plan's response is NOT a FeatureResult — it
+// is one of two distinct shapes depending on how far the request got:
+//
+// - Precondition not met, or the Course Discovery run itself failed: the
+//   endpoint returns _resolve_course_discovery_inputs's/the course-discovery
+//   failure's FeatureResult.to_dict() verbatim (same data/errors/
+//   missing_fields shape as every other analyze endpoint).
+// - Course Discovery succeeded: build_action_plan always ran, so action_plan
+//   is always present; dependency_order is present only when the plan itself
+//   didn't hit execution_status "ERROR".
+export interface ActionPlanFeatureFailure {
+  feature: string;
+  status: 'skipped' | 'failed';
+  summary: string;
+  data: Record<string, never>;
+  errors: string[];
+  missing_fields?: MissingField[];
+}
+
+export interface ActionPlanResult {
+  feature: 'ACTION_PLAN';
+  status: 'failed' | 'success';
+  summary: string;
+  action_plan: UnifiedActionPlan;
+  dependency_order: DependencyOrderResult | null;
+}
+
+export type ActionPlanPreviewResponse = ActionPlanFeatureFailure | ActionPlanResult;

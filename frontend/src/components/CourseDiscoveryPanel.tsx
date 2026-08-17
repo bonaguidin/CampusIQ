@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../auth/useAuth';
-import { analyzeCourseDiscovery } from '../api/analysis';
+import { analyzeActionPlan, analyzeCourseDiscovery, type AnalysisIdentity } from '../api/analysis';
 import { analysisFailureMessage, useAnalysisRun } from '../hooks/useAnalysisRun';
 import type {
   CourseDiscoveryData,
@@ -9,6 +9,10 @@ import type {
   UnresolvedCourseCandidate,
   PrerequisiteEvaluation,
   CareerSkillNeed,
+  ActionPlanPreviewResponse,
+  UnifiedActionPlan,
+  DependencyOrderResult,
+  DependencyOrderLimitation,
 } from '../types/analysis';
 import { AnalysisPanel, type AnalysisPhase } from './AnalysisPanel';
 
@@ -18,9 +22,12 @@ import { AnalysisPanel, type AnalysisPhase } from './AnalysisPanel';
 // requires_verification), rendered as three visually distinct registers —
 // see the file header comment in index.css's COURSE DISCOVERY block.
 //
-// Deliberately does not call /api/v2/student/me/action-plan or render any
-// dependency-order/graph data — that is a separate, later unit. This panel
-// only makes the Course Discovery result itself understandable.
+// Also owns the Action Plan dependency-order preview (ActionPlanSection,
+// below): it is a continuation of these results, not an independent
+// analysis, so it is colocated here rather than given its own panel/route —
+// selectedRole and the successful CourseDiscoveryData are already
+// authoritative in this scope; lifting them elsewhere would just create a
+// second copy of state this component already owns.
 export function CourseDiscoveryPanel({ targetRoles }: { targetRoles: string[] }) {
   const { slug, session } = useAuth();
   const [selectedRole, setSelectedRole] = useState(targetRoles[0] ?? '');
@@ -30,6 +37,19 @@ export function CourseDiscoveryPanel({ targetRoles }: { targetRoles: string[] })
       targetRoles.length > 1 ? selectedRole : null,
     ),
   );
+
+  const successData = state.phase === 'done' && state.result.status === 'success' ? state.result.data : null;
+
+  // A fresh Course Discovery result — same role rerun or a new one — means
+  // any previously displayed Action Plan no longer describes what's on
+  // screen. successData gets a new object identity on every successful run,
+  // so bumping a token off that identity and keying ActionPlanSection with
+  // it forces a full remount back to its idle state, rather than teaching
+  // useAnalysisRun a bespoke invalidation API.
+  const [planToken, setPlanToken] = useState(0);
+  useEffect(() => {
+    if (successData) setPlanToken((token) => token + 1);
+  }, [successData]);
 
   const phase: AnalysisPhase =
     state.phase === 'idle'
@@ -74,7 +94,15 @@ export function CourseDiscoveryPanel({ targetRoles }: { targetRoles: string[] })
       }
     >
       {state.phase === 'done' && state.result.status === 'success' && (
-        <CourseDiscoveryResults data={state.result.data} summary={state.result.summary} />
+        <>
+          <CourseDiscoveryResults data={state.result.data} summary={state.result.summary} />
+          <ActionPlanSection
+            key={planToken}
+            identity={{ slug, accessToken: session?.access_token ?? null }}
+            targetRole={state.result.data.target_role}
+            courseDiscoveryData={state.result.data}
+          />
+        </>
       )}
     </AnalysisPanel>
   );
@@ -274,5 +302,278 @@ function UnresolvedCourseCard({ course }: { course: UnresolvedCourseCandidate })
       </p>
       <MatchedNeeds needs={course.matched_needs} />
     </div>
+  );
+}
+
+// ── ACTION PLAN (dependency-order preview) ──────────────────────────────────
+// Reads action_plan.edges / dependency_order exactly as the backend returns
+// them (GradusIQ_career/action_planning/query.py's dependency_order()). No
+// topological sort, no cycle detection, and no pairwise-adjacency inference
+// happen here — ordered_node_ids is rendered in the order the backend gave
+// it, and a "requires" line only appears when a real edge proves it.
+
+/**
+ * Deterministic node_id -> human label lookup, built only from the already-
+ * loaded, already-trusted CourseDiscoveryData for this exact result — never
+ * from requires_verification (those never become plan nodes; see builder.py).
+ * Keys are built the same way action_planning/builder.py's course_node_id()
+ * builds a PlanNode's node_id, so a hit is an exact identifier match, not a
+ * guess. A miss (institution/course_code that didn't round-trip to the same
+ * canonical form) falls back to the code embedded in the node_id itself,
+ * never an invented title.
+ */
+function buildCourseLabelLookup(data: CourseDiscoveryData): Map<string, string> {
+  const lookup = new Map<string, string>();
+  for (const course of [...data.verified_recommendations, ...data.prerequisite_blocked]) {
+    lookup.set(`course:${course.institution}:${course.course_code}`, `${course.course_code} — ${course.title}`);
+  }
+  return lookup;
+}
+
+function displayLabel(nodeId: string, lookup: Map<string, string>): string {
+  const known = lookup.get(nodeId);
+  if (known) return known;
+  const parts = nodeId.split(':');
+  return parts.length >= 3 ? parts.slice(2).join(':') : nodeId;
+}
+
+function ActionPlanSection({
+  identity,
+  targetRole,
+  courseDiscoveryData,
+}: {
+  identity: AnalysisIdentity;
+  targetRole: string;
+  courseDiscoveryData: CourseDiscoveryData;
+}) {
+  const { state, trigger } = useAnalysisRun<ActionPlanPreviewResponse>(() =>
+    analyzeActionPlan(identity, targetRole),
+  );
+  const labelLookup = useMemo(() => buildCourseLabelLookup(courseDiscoveryData), [courseDiscoveryData]);
+
+  return (
+    <div className="action-plan-section">
+      <div className="action-plan-divider" role="separator" aria-hidden="true" />
+      <h4 className="course-discovery-section-title">Your course path</h4>
+
+      {state.phase === 'idle' && (
+        <div className="action-plan-cta">
+          <p className="analysis-empty">
+            See which of these courses depend on others, and what order to work through them in.
+          </p>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={trigger}>
+            Build my course path
+          </button>
+        </div>
+      )}
+
+      {state.phase === 'loading' && (
+        <div className="analysis-loading" role="status" aria-live="polite">
+          <span className="spinner" aria-hidden="true" />
+          <p>Working out the dependency order for your course path…</p>
+        </div>
+      )}
+
+      {state.phase === 'transport-error' && (
+        <div className="analysis-failed">
+          <p>{state.message}</p>
+          <button
+            type="button"
+            className="btn btn-ghost btn-sm analysis-failed-retry"
+            onClick={trigger}
+          >
+            Try again
+          </button>
+        </div>
+      )}
+
+      {state.phase === 'done' && (
+        <ActionPlanResultView result={state.result} labelLookup={labelLookup} onRetry={trigger} />
+      )}
+    </div>
+  );
+}
+
+function ActionPlanResultView({
+  result,
+  labelLookup,
+  onRetry,
+}: {
+  result: ActionPlanPreviewResponse;
+  labelLookup: Map<string, string>;
+  onRetry(): void;
+}) {
+  // Precondition not met (e.g. role no longer confirmed) or the Course
+  // Discovery re-run inside /action-plan itself failed — same FeatureResult
+  // shape every other analyze endpoint uses, distinguished here by the
+  // absence of action_plan rather than a feature-name check (the skip path
+  // reports feature "COURSE_DISCOVERY", not "ACTION_PLAN").
+  if (!('action_plan' in result)) {
+    if (result.status === 'skipped') {
+      return (
+        <div className="analysis-skipped">
+          <p>{result.summary}</p>
+        </div>
+      );
+    }
+    return (
+      <div className="analysis-failed">
+        <p>{result.errors[0] ?? result.summary}</p>
+        <button type="button" className="btn btn-ghost btn-sm analysis-failed-retry" onClick={onRetry}>
+          Try again
+        </button>
+      </div>
+    );
+  }
+
+  const { action_plan, dependency_order } = result;
+
+  // action_plan.execution_status === "ERROR" (e.g. a cycle was detected) --
+  // typed failure, safe_message only, never error_class.
+  if (result.status === 'failed' || dependency_order === null) {
+    return (
+      <div className="analysis-failed">
+        <p>{action_plan.failure?.safe_message ?? action_plan.summary}</p>
+        <button type="button" className="btn btn-ghost btn-sm analysis-failed-retry" onClick={onRetry}>
+          Try again
+        </button>
+      </div>
+    );
+  }
+
+  // dependency_order.status === "ERROR" can happen even when the plan itself
+  // built successfully -- a distinct failure from the one above.
+  if (dependency_order.status === 'ERROR') {
+    return (
+      <div className="analysis-failed">
+        <p>
+          {dependency_order.failure?.safe_message ??
+            'The dependency order could not be determined safely.'}
+        </p>
+        <button type="button" className="btn btn-ghost btn-sm analysis-failed-retry" onClick={onRetry}>
+          Try again
+        </button>
+      </div>
+    );
+  }
+
+  return <DependencyOrderView plan={action_plan} order={dependency_order} labelLookup={labelLookup} />;
+}
+
+function DependencyOrderView({
+  plan,
+  order,
+  labelLookup,
+}: {
+  plan: UnifiedActionPlan;
+  order: DependencyOrderResult;
+  labelLookup: Map<string, string>;
+}) {
+  const requiresByDependent = useMemo(() => {
+    const map = new Map<string, string[]>();
+    for (const edge of plan.edges) {
+      if (edge.relation !== 'requires') continue;
+      const list = map.get(edge.from_node_id) ?? [];
+      list.push(edge.to_node_id);
+      map.set(edge.from_node_id, list);
+    }
+    return map;
+  }, [plan.edges]);
+
+  const label = (nodeId: string) => displayLabel(nodeId, labelLookup);
+  const isEmpty = order.ordered_node_ids.length === 0 && order.unconstrained_node_ids.length === 0;
+
+  return (
+    <div>
+      {isEmpty && <p className="empty-state">No course actions to sequence yet.</p>}
+
+      {order.ordered_node_ids.length > 0 && (
+        <div className="course-discovery-section">
+          <div className="course-discovery-section-title">Suggested dependency order</div>
+          {/* A topological order, not a chain: item 2 does not necessarily
+              require item 1 directly -- only the "Requires" line under an
+              item, drawn from a real `requires` edge, states that. */}
+          <ol className="action-plan-ordered-list">
+            {order.ordered_node_ids.map((nodeId) => {
+              const requires = requiresByDependent.get(nodeId) ?? [];
+              return (
+                <li key={nodeId} className="action-plan-ordered-item">
+                  <span className="action-plan-item-label">{label(nodeId)}</span>
+                  {requires.length > 0 && (
+                    <span className="action-plan-item-requires">
+                      Requires: {requires.map(label).join(', ')}
+                    </span>
+                  )}
+                </li>
+              );
+            })}
+          </ol>
+        </div>
+      )}
+
+      {order.unconstrained_node_ids.length > 0 && (
+        <div className="course-discovery-section">
+          <div className="course-discovery-section-title">Can be considered independently</div>
+          <p className="course-discovery-meta">No prerequisite order constrains these.</p>
+          <ul className="action-plan-unconstrained-list">
+            {order.unconstrained_node_ids.map((nodeId) => (
+              <li key={nodeId}>{label(nodeId)}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      <div
+        className={
+          order.completeness === 'COMPLETE'
+            ? 'action-plan-banner action-plan-banner--complete'
+            : 'action-plan-banner action-plan-banner--provisional'
+        }
+      >
+        <p className="action-plan-banner-status">
+          {order.completeness === 'COMPLETE' ? 'Dependency order complete' : 'Dependency order provisional'}
+        </p>
+        <p className="action-plan-banner-detail">
+          {order.completeness === 'COMPLETE'
+            ? 'The prerequisites currently known for these actions can be represented in this course path.'
+            : 'Some prerequisite choices still need to be resolved.'}
+        </p>
+        {order.limitations.length > 0 && (
+          <ul className="action-plan-limitation-list">
+            {order.limitations.map((limitation, index) => (
+              <li key={`${limitation.node_id}-${limitation.reason_type}-${index}`}>
+                <LimitationText limitation={limitation} label={label} />
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function LimitationText({
+  limitation,
+  label,
+}: {
+  limitation: DependencyOrderLimitation;
+  label(nodeId: string): string;
+}) {
+  const nodeLabel = label(limitation.node_id);
+  if (limitation.reason_type === 'ANY_PREREQUISITE') {
+    return (
+      <span>
+        {nodeLabel} requires one of: {limitation.course_codes.join(' / ')}
+      </span>
+    );
+  }
+  if (limitation.reason_type === 'UNKNOWN_COURSE_STATE') {
+    return <span>We couldn't confirm your status for: {limitation.course_codes.join(', ')}</span>;
+  }
+  return (
+    <span>
+      {nodeLabel}: this prerequisite could not be represented safely from the catalog evidence.
+      {limitation.course_codes.length > 0 ? ` (${limitation.course_codes.join(', ')})` : ''}
+    </span>
   );
 }

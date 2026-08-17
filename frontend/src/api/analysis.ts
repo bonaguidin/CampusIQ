@@ -10,6 +10,7 @@ import type {
   ShiftAnalysisData,
   ProfessorCommentAnalysisData,
   CourseDiscoveryData,
+  ActionPlanPreviewResponse,
 } from '../types/analysis';
 
 export interface AnalysisIdentity {
@@ -45,11 +46,17 @@ async function analysisFailure(response: Response): Promise<Error> {
   return new Error(detailToText(detail, fallback));
 }
 
-async function postAnalysis<T>(
+// TResult is the whole resolved JSON body, not a payload nested inside it.
+// Every existing caller passes FeatureResult<X> as TResult, inferred from
+// each wrapper's own return-type annotation below, so nothing about those
+// call sites changes. This lets analyzeActionPlan reuse the same request/
+// error-handling logic even though its response is not a FeatureResult
+// (it has action_plan/dependency_order in place of data/errors/missing_fields).
+async function postAnalysis<TResult>(
   path: string,
   accessToken?: string,
   body?: unknown,
-): Promise<FeatureResult<T>> {
+): Promise<TResult> {
   const headers: Record<string, string> = {};
   if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
   if (body !== undefined) headers['Content-Type'] = 'application/json';
@@ -61,7 +68,7 @@ async function postAnalysis<T>(
   if (!response.ok) {
     throw await analysisFailure(response);
   }
-  return (await response.json()) as FeatureResult<T>;
+  return (await response.json()) as TResult;
 }
 
 function analysisPath(identity: AnalysisIdentity, feature: string): [string, string?] {
@@ -104,4 +111,25 @@ export function analyzeCourseDiscovery(
 ): Promise<FeatureResult<CourseDiscoveryData>> {
   const [path, token] = analysisPath(identity, 'course-discovery');
   return postAnalysis(path, token, targetRole ? { target_role: targetRole } : undefined);
+}
+
+/**
+ * Read-only dependency-order preview over the student's own, freshly
+ * computed Course Discovery result -- not a schedule, not persisted. Bespoke
+ * URL: this endpoint lives at /api/v2/student/me/action-plan, not under
+ * /analyze/, and has no demo-slug equivalent (authenticated only), so it
+ * cannot reuse analysisPath(). Sends only target_role, same as
+ * analyzeCourseDiscovery -- the backend recomputes trusted Course Discovery
+ * server-side and derives everything else from the session.
+ */
+export function analyzeActionPlan(
+  identity: AnalysisIdentity,
+  targetRole?: string | null,
+): Promise<ActionPlanPreviewResponse> {
+  if (!identity.accessToken) throw new Error('Authenticated analysis requires a session.');
+  return postAnalysis(
+    '/api/v2/student/me/action-plan',
+    identity.accessToken,
+    targetRole ? { target_role: targetRole } : undefined,
+  );
 }
