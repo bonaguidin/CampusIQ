@@ -3242,14 +3242,16 @@ a {
 .cp-detail-value--absent { color: var(--muted); }
 
 /* EditableSection is reused unmodified for the inline fields, which means it
-   arrives carrying .card. A bordered, padded panel per field would turn this
-   page back into the grid of rectangles the redesign removed, so the chrome is
-   dropped HERE rather than by changing a component four other screens use. */
+   arrives carrying .card. A bordered, padded, elevated panel per field would
+   turn this page back into the grid of rectangles the redesign removed, so the
+   chrome is dropped HERE rather than by changing a component four other
+   screens use. */
 .cp-detail .editable-section,
 .cp-field .editable-section {
   background: none;
   border: 0;
   border-radius: 0;
+  box-shadow: none;
   padding: 0;
 }
 
