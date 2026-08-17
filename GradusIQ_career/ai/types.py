@@ -12,6 +12,7 @@ AgentRole = Literal[
     "chat",
     "report",
     "role_research",
+    "course_discovery",
 ]
 
 
@@ -37,3 +38,10 @@ class AIResponse:
     model: str
     provider: str = "openrouter"
     metadata: Mapping[str, Any] = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
+class AIMessageResponse:
+    message: Mapping[str, Any]
+    model: str
+    usage: Mapping[str, Any] = field(default_factory=dict)

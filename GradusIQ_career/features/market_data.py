@@ -132,6 +132,31 @@ def resolve_soc(target_role: str) -> str | None:
     return _load_role_soc_map().get(target_role)
 
 
+def is_role_supported(target_role: str) -> bool:
+    """Whether `target_role` has a curated requirements entry -- the same
+    exact-string boundary resolve_soc() enforces, exposed as a plain bool so
+    callers that only need a yes/no coverage signal (rather than the SOC code
+    itself) don't have to re-derive it from `resolve_soc(...) is not None`.
+
+    This answers "does the curated vocabulary recognize this exact role
+    string", nothing more. It does NOT account for a feature's own further
+    fallback (GAP/SHIFT's live role_research_agent) -- those already degrade
+    gracefully on an unmatched role and keep doing so; this helper exists for
+    the callers that have no such fallback (Course Discovery, FIT) and would
+    otherwise silently produce an empty or under-grounded result with no
+    signal that the target role itself, not the student's profile, is why.
+    """
+    return resolve_soc(target_role) is not None
+
+
+def supported_target_roles() -> list[str]:
+    """Every target role the curated vocabulary has coverage for, sorted for
+    stable display order. This is the same 14-role set resolve_soc() checks
+    against -- the authoritative list for any UI that wants to let a student
+    pick a role GradusIQ can actually analyze."""
+    return sorted(_load_role_soc_map())
+
+
 def _nearest_rated_neighbour(
     entry: Mapping[str, Any], catalog: Mapping[str, Any]
 ) -> tuple[dict[str, str], Mapping[str, Any]] | None:

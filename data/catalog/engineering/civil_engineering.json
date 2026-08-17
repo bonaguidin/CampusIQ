@@ -1,0 +1,1837 @@
+[
+  {
+    "code": "CVEN 207",
+    "title": "Introduction to the Civil Engineering Profession",
+    "credit_hours": 2,
+    "description": "Introduction to the study and practice of civil engineering; specialized subdisciplines of civil engineering; professionalism and professional registration; engineering ethics; exercises in engineering technical communications.",
+    "prerequisites": "Prerequisite: Grade of C or better in ENGL 103 or ENGL 104 ; admitted to major degree sequence in civil engineering.",
+    "department": "Civil Engineering",
+    "prefix": "CVEN",
+    "number": "207",
+    "course_level": 200,
+    "credit_min": 2,
+    "credit_max": 2,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ENGL 103",
+      "ENGL 104"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/cven/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "CVEN 221",
+    "title": "Engineering Mechanics: Statics",
+    "credit_hours": 3,
+    "description": "General principles of mechanics; concurrent force systems; statics of particles; equivalent force/moment systems; centroids and center of gravity; equilibrium of rigid bodies; trusses, frames, and machines; internal forces in structural members; friction; second moments of areas.",
+    "prerequisites": "Prerequisites: Grade of C or better in MATH 251 or MATH 253 , or concurrent enrollment; grade of C or better in PHYS 206 and ENGR 216/PHYS 216 or PHYS 216/ENGR 216 ; admitted to major degree sequence in civil engineering.",
+    "department": "Civil Engineering",
+    "prefix": "CVEN",
+    "number": "221",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "MATH 251",
+      "MATH 253",
+      "PHYS 206",
+      "ENGR 216",
+      "PHYS 216"
+    ],
+    "restrictions": [
+      "Grade of C or better",
+      "grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/cven/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "CVEN 250",
+    "title": "Introduction to Graphics and Visualization Applications in Civil Engineering Design",
+    "credit_hours": 2,
+    "description": "Graphical communication in the civil engineering design process; introduction to industry standard software; construction documents and contract drawings in civil engineering applications; data analysis; introduction to project visualization.",
+    "prerequisites": "Prerequisites: Admitted to major degree sequence in civil engineering.",
+    "department": "Civil Engineering",
+    "prefix": "CVEN",
+    "number": "250",
+    "course_level": 200,
+    "credit_min": 2,
+    "credit_max": 2,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/cven/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "CVEN 289",
+    "title": "Special Topics in...",
+    "credit_hours": "1-4",
+    "description": "Selected topics in an identified area of civil engineering. May be repeated for credit.",
+    "prerequisites": "Prerequisite: Approval of department head.",
+    "department": "Civil Engineering",
+    "prefix": "CVEN",
+    "number": "289",
+    "course_level": 200,
+    "credit_min": 1,
+    "credit_max": 4,
+    "is_variable_credit": true,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": "May be repeated for credit.",
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Approval of department head"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/cven/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "CVEN 291",
+    "title": "Research",
+    "credit_hours": "0-4",
+    "description": "Research conducted under the direction of faculty member in civil engineering. May be taken four times for credit.",
+    "prerequisites": "Prerequisites: Freshman or sophomore classification or approval of instructor.",
+    "department": "Civil Engineering",
+    "prefix": "CVEN",
+    "number": "291",
+    "course_level": 200,
+    "credit_min": 0,
+    "credit_max": 4,
+    "is_variable_credit": true,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": "May be taken four times for credit.",
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Freshman or sophomore classification",
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/cven/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "CVEN 301",
+    "title": "Environmental Engineering",
+    "credit_hours": 3,
+    "description": "Water quality; material balances; chemical, physical and biological processes; water quality modeling; water and wastewater treatment; air quality; solid and hazardous waste management; global/national/local environmental challenges, issues and sustainability.",
+    "prerequisites": "Prerequisites: Grade of C or better in CHEM 107 or CHEM 120 ; grade of C or better in CVEN 302 and MATH 308 , or concurrent enrollment. Cross Listing: EVEN 301/CVEN 301 .",
+    "department": "Civil Engineering",
+    "prefix": "CVEN",
+    "number": "301",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "EVEN 301",
+      "CVEN 301"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "CHEM 107",
+      "CHEM 120",
+      "CVEN 302",
+      "MATH 308",
+      "EVEN 301",
+      "CVEN 301"
+    ],
+    "restrictions": [
+      "Grade of C or better",
+      "grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/cven/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "CVEN 302",
+    "title": "Computer Applications in Engineering and Construction",
+    "credit_hours": 3,
+    "description": "Application of computers to solution of civil engineering problems using various numerical methods; structured computer programming; mathematical modeling and error analysis; solution of algebraic and differential equations; numerical differentiation and integration; curve-fitting; root-finding.",
+    "prerequisites": "Prerequisites: Grade of C or better in ENGR 102 and PHYS 206 ; grade of C or better in MATH 308 or concurrent enrollment; admitted to major degree sequence in civil or environmental engineering.",
+    "department": "Civil Engineering",
+    "prefix": "CVEN",
+    "number": "302",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ENGR 102",
+      "PHYS 206",
+      "MATH 308"
+    ],
+    "restrictions": [
+      "Grade of C or better",
+      "grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/cven/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "CVEN 303",
+    "title": "Civil Engineering Measurement",
+    "credit_hours": 3,
+    "description": "Introduction to geodetic positions, datums, map projections; theory of civil engineering measurements and errors applied to horizontal and vertical control, curves, earthwork and mapping using state-of-the-art technology for data capture; processing and presentation of result.",
+    "prerequisites": "Prerequisite: Grade of C or better in MATH 151 ; admitted to major degree sequence in civil engineering.",
+    "department": "Civil Engineering",
+    "prefix": "CVEN",
+    "number": "303",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "MATH 151"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/cven/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "CVEN 304",
+    "title": "Environmental Engineering Lab",
+    "credit_hours": 1,
+    "description": "Environmental measurements on physical, chemical, biological and biotechnological parameters of water.",
+    "prerequisites": "Prerequisites: CVEN 301/EVEN 301 or EVEN 301/CVEN 301 , or concurrent enrollment; CVEN 311/EVEN 311 or concurrent enrollment; or approval of instructor. Cross Listing: EVEN 304/CVEN 304 .",
+    "department": "Civil Engineering",
+    "prefix": "CVEN",
+    "number": "304",
+    "course_level": 300,
+    "credit_min": 1,
+    "credit_max": 1,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "EVEN 304",
+      "CVEN 304"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "CVEN 301",
+      "EVEN 301",
+      "CVEN 311",
+      "EVEN 311",
+      "EVEN 304",
+      "CVEN 304"
+    ],
+    "restrictions": [
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/cven/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "CVEN 305",
+    "title": "Mechanics of Materials",
+    "credit_hours": 3,
+    "description": "Applications of stress/deformation relationships to structural members subjected to axial, torsional and bending loading for both determinate and indeterminate members. Applications include thin-walled pressure vessels, shear and moment diagrams in beams, beam design, deflection of members and members subjected to combined loadings. Stability of columns.",
+    "prerequisites": "Prerequisites: Grade of C or better in CVEN 221 , MEEN 221 , MEEN 225 , or AREN 221 ; also taught at Qatar campus.",
+    "department": "Civil Engineering",
+    "prefix": "CVEN",
+    "number": "305",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [
+      "Qatar"
+    ],
+    "prerequisite_courses": [
+      "CVEN 221",
+      "MEEN 221",
+      "MEEN 225",
+      "AREN 221"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/cven/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "CVEN 306",
+    "title": "Materials Engineering for Civil Engineers",
+    "credit_hours": 3,
+    "description": "Scientific concepts of civil engineering materials; relationship between macroscopic material properties and response and microscopic properties; physical, mechanical, surface, fracture, and rheological properties of civil engineering materials including metals, composites, and polymers.",
+    "prerequisites": "Prerequisites: Grade of C or better in CHEM 107 and CVEN 221 ; grade of C or better in PHYS 207 , and ENGR 217/PHYS 217 or PHYS 217/ENGR 217 ; grade of C or better in CVEN 305 and MATH 308 , or concurrent enrollment.",
+    "department": "Civil Engineering",
+    "prefix": "CVEN",
+    "number": "306",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "CHEM 107",
+      "CVEN 221",
+      "PHYS 207",
+      "ENGR 217",
+      "PHYS 217",
+      "CVEN 305",
+      "MATH 308"
+    ],
+    "restrictions": [
+      "Grade of C or better",
+      "grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/cven/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "CVEN 307",
+    "title": "Transportation Engineering",
+    "credit_hours": 3,
+    "description": "Fundamental principles and methods in planning, design, and operation of transportation systems; driver and vehicle performance capabilities; highway geometric and pavement design principles; traffic analysis and transportation planning.",
+    "prerequisites": "Prerequisites: Grade of C or better in PHYS 206 and STAT 211 .",
+    "department": "Civil Engineering",
+    "prefix": "CVEN",
+    "number": "307",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "PHYS 206",
+      "STAT 211"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/cven/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "CVEN 311",
+    "title": "Fluid Dynamics",
+    "credit_hours": 3,
+    "description": "Fluid properties; statics; kinematics; basic conservation principles of continuity, energy and momentum; similitude and hydraulic models; incompressible flow in pipes; fluid dynamic drag.",
+    "prerequisites": "Prerequisites: Grade of C or better in MATH 251 or MATH 253 ; grade of C or better in CVEN 221 ; grade of C or better in CVEN 302 , or concurrent enrollment; also taught at Galveston campus. Cross Listing: EVEN 311/CVEN 311 .",
+    "department": "Civil Engineering",
+    "prefix": "CVEN",
+    "number": "311",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "EVEN 311",
+      "CVEN 311"
+    ],
+    "repeatability": null,
+    "campuses": [
+      "Galveston"
+    ],
+    "prerequisite_courses": [
+      "MATH 251",
+      "MATH 253",
+      "CVEN 221",
+      "CVEN 302",
+      "EVEN 311",
+      "CVEN 311"
+    ],
+    "restrictions": [
+      "Grade of C or better",
+      "grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/cven/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "CVEN 314",
+    "title": "Sensor Technology in Civil Engineering",
+    "credit_hours": 2,
+    "description": "Fundamentals of sensor technology and its application in civil engineering; investigation of data acquisition systems and sensors used in the civil engineering field; examples and hands-on demonstrations relevant to the natural and built environment.",
+    "prerequisites": "Prerequisite: Grade of C or better in CVEN 302 , or approval of instructor.",
+    "department": "Civil Engineering",
+    "prefix": "CVEN",
+    "number": "314",
+    "course_level": 300,
+    "credit_min": 2,
+    "credit_max": 2,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "CVEN 302"
+    ],
+    "restrictions": [
+      "approval of instructor",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/cven/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "CVEN 315",
+    "title": "Sensor Technology for the Built Environment",
+    "credit_hours": 3,
+    "description": "Fundamentals of sensor technology including laboratory safety, error analysis, statistical analysis, electric circuits, data acquisition, signal conditioning, signal analysis, strain gages, laser technology, image acquisition and analysis, fiber optic sensors, wireless sensors; its applications in civil engineering; and hands-on demonstrations relevant to the natural and built environment.",
+    "prerequisites": "Prerequisites: Grade of C or better in CVEN 302 , junior or senior classification, or approval of instructor.",
+    "department": "Civil Engineering",
+    "prefix": "CVEN",
+    "number": "315",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "CVEN 302"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "approval of instructor",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/cven/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "CVEN 322",
+    "title": "Civil Engineering Systems",
+    "credit_hours": 3,
+    "description": "Fundamentals of engineering economics; economic analysis and evaluation of engineering projects; application of systems analysis to civil engineering problems; optimization modeling and solution techniques; introduction to sustainability; simulation and statistical methods.",
+    "prerequisites": "Prerequisites: Grade of C or better in ENGR 102 ; grade of C or better in MATH 251 or MATH 253 ; grade of C or better in STAT 211 or concurrent enrollment; admitted to major degree sequence in civil or environmental engineering or approval of instructor.",
+    "department": "Civil Engineering",
+    "prefix": "CVEN",
+    "number": "322",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ENGR 102",
+      "MATH 251",
+      "MATH 253",
+      "STAT 211"
+    ],
+    "restrictions": [
+      "approval of instructor",
+      "Grade of C or better",
+      "grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/cven/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "CVEN 336",
+    "title": "Fluid Dynamics Laboratory",
+    "credit_hours": 1,
+    "description": "Basic fluid mechanics instrumentation; flow visualization and measurements; experimental verification and reinforcement of the principles and concepts introduced in CVEN 311/EVEN 311 and EVEN 311/CVEN 311 .",
+    "prerequisites": "Prerequisites: Grade of C or better in CVEN 311/EVEN 311 or EVEN 311/CVEN 311 , or concurrent enrollment.",
+    "department": "Civil Engineering",
+    "prefix": "CVEN",
+    "number": "336",
+    "course_level": 300,
+    "credit_min": 1,
+    "credit_max": 1,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "CVEN 311",
+      "EVEN 311"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/cven/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "CVEN 339",
+    "title": "Water Resources Engineering",
+    "credit_hours": 3,
+    "description": "Quantitative hydrology, precipitation, hydrograph analysis, reservoir and stream routing; groundwater, Darcy equation, well equation, well design; probability concepts in design; dams; reservoirs; spillways; open channel and pipe network hydraulics; pumps; urban stormwater drainage; flood damage mitigation.",
+    "prerequisites": "Prerequisite: Grade of C or better in CVEN 311/EVEN 311 or EVEN 311/CVEN 311 . Cross Listing: EVEN 339/CVEN 339 .",
+    "department": "Civil Engineering",
+    "prefix": "CVEN",
+    "number": "339",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "EVEN 339",
+      "CVEN 339"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "CVEN 311",
+      "EVEN 311",
+      "EVEN 339",
+      "CVEN 339"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/cven/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "CVEN 342",
+    "title": "Materials of Construction",
+    "credit_hours": 3,
+    "description": "Physical, mechanical and rheological properties and behavior of components and composite construction materials including aggregates, Portland cement concrete, bituminous materials, wood and masonry; production processes, proportioning and durability of composite construction materials used in civil engineering.",
+    "prerequisites": "Prerequisites: Grade of C or better in CVEN 302 or concurrent enrollment; grade of C or better in CVEN 305 and CVEN 306 ; grade of C or better in CVEN 207 , ENGL 210 , or COMM 205 ; or approval of instructor.",
+    "department": "Civil Engineering",
+    "prefix": "CVEN",
+    "number": "342",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "CVEN 302",
+      "CVEN 305",
+      "CVEN 306",
+      "CVEN 207",
+      "ENGL 210",
+      "COMM 205"
+    ],
+    "restrictions": [
+      "approval of instructor",
+      "Grade of C or better",
+      "grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/cven/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "CVEN 343",
+    "title": "Portland Cement Concrete Materials for Civil Engineers",
+    "credit_hours": 3,
+    "description": "Physical and chemical characteristics of Portland cement concrete systems; constituent materials; mixture proportioning; fresh concrete characteristics; hardened concrete properties; durability characteristics; and concrete construction methods.",
+    "prerequisites": "Prerequisites: Grade of C or better in CVEN 302 or concurrent enrollment; grade of C or better in CVEN 305 and CVEN 306 ; grade C or better CVEN 207 , ENGL 210 , or COMM 205 ; or approval of instructor.",
+    "department": "Civil Engineering",
+    "prefix": "CVEN",
+    "number": "343",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "CVEN 302",
+      "CVEN 305",
+      "CVEN 306",
+      "CVEN 207",
+      "ENGL 210",
+      "COMM 205"
+    ],
+    "restrictions": [
+      "approval of instructor",
+      "Grade of C or better",
+      "grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/cven/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "CVEN 345",
+    "title": "Theory of Structures",
+    "credit_hours": 3,
+    "description": "Structural engineering--functions of structure, design loads, reactions and force systems; analysis of statically determinate structures including beams, trusses and arches; energy methods of determining deflections of structures; influence lines and criteria for moving loads; analysis of statically indeterminate structures including continuous beams and frames.",
+    "prerequisites": "Prerequisites: Grade of C or better in CVEN 221 and CVEN 305 ; grade of C or better in CVEN 302 or concurrent enrollment; also taught at Galveston campus.",
+    "department": "Civil Engineering",
+    "prefix": "CVEN",
+    "number": "345",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [
+      "Galveston"
+    ],
+    "prerequisite_courses": [
+      "CVEN 221",
+      "CVEN 305",
+      "CVEN 302"
+    ],
+    "restrictions": [
+      "Grade of C or better",
+      "grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/cven/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "CVEN 349",
+    "title": "Civil Engineering Project Management",
+    "credit_hours": 3,
+    "description": "Basic elements of management of civil engineering projects; roles of all participants in the process--owners, designers, contractors and suppliers; emphasis on contractual aspect of the process--project estimating, planning and controls.",
+    "prerequisites": "Prerequisites: Grade of C or better in CVEN 322 , or concurrent enrollment; or approval of instructor.",
+    "department": "Civil Engineering",
+    "prefix": "CVEN",
+    "number": "349",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "CVEN 322"
+    ],
+    "restrictions": [
+      "approval of instructor",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/cven/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "CVEN 363",
+    "title": "Engineering Mechanics: Dynamics",
+    "credit_hours": 3,
+    "description": "Application of first principles to model dynamic particles and rigid body systems with ordinary differential equations; solutions to models using analytical and numerical approaches; interpreting solutions/performance measures; linear vibrations; modeling of civil engineering systems and evaluating dynamic response to natural hazards.",
+    "prerequisites": "Prerequisites: Grade of C or better in CVEN 302 , CVEN 305 and MATH 308 .",
+    "department": "Civil Engineering",
+    "prefix": "CVEN",
+    "number": "363",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "CVEN 302",
+      "CVEN 305",
+      "MATH 308"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/cven/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "CVEN 365",
+    "title": "Introduction to Geotechnical Engineering",
+    "credit_hours": 3,
+    "description": "Physical properties of soils, classification systems, soil exploration, permeability, consolidation, compaction, and shear strength; laboratory tests conducted to determine the physical and engineering soil properties needed for application in geotechnical engineering design.",
+    "prerequisites": "Prerequisites: Grade of C or better in CVEN 302 or concurrent enrollment; grade of C or better in CVEN 305 ; grade of C or better in CVEN 207 , ENGL 210 , or COMM 205 .",
+    "department": "Civil Engineering",
+    "prefix": "CVEN",
+    "number": "365",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "CVEN 302",
+      "CVEN 305",
+      "CVEN 207",
+      "ENGL 210",
+      "COMM 205"
+    ],
+    "restrictions": [
+      "Grade of C or better",
+      "grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/cven/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "CVEN 399",
+    "title": "Mid-Curriculum Professional Development",
+    "credit_hours": 0,
+    "description": "No Credit. Participation in an approved high-impact learning practice; reflection on professional outcomes from civil engineering body of knowledge; documentation of experience appropriate to eventual professional licensure; self-assessment of learning at mid-curriculum point.",
+    "prerequisites": "Prerequisites: Grade of C or better in CVEN 207 , CVEN 250 , CVEN 303 , CVEN 306 , CVEN 311/EVEN 311 , CVEN 322 , CVEN 345 ; grade of C or better in CVEN 363 , CVEN 342 , CVEN 343 , or CVEN 365 .",
+    "department": "Civil Engineering",
+    "prefix": "CVEN",
+    "number": "399",
+    "course_level": 300,
+    "credit_min": 0,
+    "credit_max": 0,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "CVEN 207",
+      "CVEN 250",
+      "CVEN 303",
+      "CVEN 306",
+      "CVEN 311",
+      "EVEN 311",
+      "CVEN 322",
+      "CVEN 345",
+      "CVEN 363",
+      "CVEN 342",
+      "CVEN 343",
+      "CVEN 365"
+    ],
+    "restrictions": [
+      "Grade of C or better",
+      "grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/cven/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "CVEN 400",
+    "title": "Design Problems in Civil Engineering",
+    "credit_hours": 3,
+    "description": "Applications of civil engineering principles to the design and preparation of the plans and specifications of civil engineering projects.",
+    "prerequisites": "Prerequisite: Grade of C or better in CVEN 303 , CVEN 322 , CVEN 345 and CVEN 399 ; Grade of C or better in CVEN 304/EVEN 304 , CVEN 336 , CVEN 342 , CVEN 343 or CVEN 365 ; Grade of C or better in CVEN 402/EVEN 402 , CVEN 418 , CVEN 435 , CVEN 444 , CVEN 446 , CVEN 455 , CVEN 457 , CVEN 458/EVEN 458 , CVEN 462/EVEN 462 , CVEN 465 or CVEN 473 ; senior classification; or approval of instructor.",
+    "department": "Civil Engineering",
+    "prefix": "CVEN",
+    "number": "400",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "CVEN 303",
+      "CVEN 322",
+      "CVEN 345",
+      "CVEN 399",
+      "CVEN 304",
+      "EVEN 304",
+      "CVEN 336",
+      "CVEN 342",
+      "CVEN 343",
+      "CVEN 365",
+      "CVEN 402",
+      "EVEN 402",
+      "CVEN 418",
+      "CVEN 435",
+      "CVEN 444",
+      "CVEN 446",
+      "CVEN 455",
+      "CVEN 457",
+      "CVEN 458",
+      "EVEN 458",
+      "CVEN 462",
+      "EVEN 462",
+      "CVEN 465",
+      "CVEN 473"
+    ],
+    "restrictions": [
+      "senior classification",
+      "approval of instructor",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/cven/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "CVEN 402",
+    "title": "Engineered Environmental Systems",
+    "credit_hours": 3,
+    "description": "Unit operations and processes in environmental engineering; physical, chemical and biological treatment of water and wastewater; treatment system analysis and design.",
+    "prerequisites": "Prerequisite: Grade of C or better in CVEN 301/EVEN 301 or EVEN 301/CVEN 301 . Cross Listing: EVEN 402/CVEN 402 .",
+    "department": "Civil Engineering",
+    "prefix": "CVEN",
+    "number": "402",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "EVEN 402",
+      "CVEN 402"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "CVEN 301",
+      "EVEN 301",
+      "EVEN 402",
+      "CVEN 402"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/cven/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "CVEN 403",
+    "title": "Applied Civil Engineering Surveying",
+    "credit_hours": 2,
+    "description": "Application of land surveying principles; topographic surveying, boundary surveying, and construction staking through field exercises using state-of-the-art equipment and data capture/analysis techniques; preparation of topographic and boundary maps with related documents; presentation of results.",
+    "prerequisites": "Prerequisites: Grade of C or better in CVEN 303 ; junior or senior classification.",
+    "department": "Civil Engineering",
+    "prefix": "CVEN",
+    "number": "403",
+    "course_level": 400,
+    "credit_min": 2,
+    "credit_max": 2,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "CVEN 303"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/cven/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "CVEN 405",
+    "title": "Construction Management of Field Operations",
+    "credit_hours": 3,
+    "description": "Effects of industrialization on construction methods and resultant construction management problems.",
+    "prerequisites": "Prerequisite: Grade of C or better in CVEN 349 .",
+    "department": "Civil Engineering",
+    "prefix": "CVEN",
+    "number": "405",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "CVEN 349"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/cven/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "CVEN 406",
+    "title": "Environmental Protection and Public Health",
+    "credit_hours": 3,
+    "description": "Communicable and noncommunicable diseases; environmental risk assessment; environmental assessments; comprehensive environmental planning; small water and wastewater systems; solid waste management; hazardous spills and waste management; vector control; environmental administration.",
+    "prerequisites": "Prerequisite: Grade of C or better in CVEN 301/EVEN 301 or EVEN 301/CVEN 301 ; or approval of instructor. Cross Listing: EVEN 406/CVEN 406 .",
+    "department": "Civil Engineering",
+    "prefix": "CVEN",
+    "number": "406",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "EVEN 406",
+      "CVEN 406"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "CVEN 301",
+      "EVEN 301",
+      "EVEN 406",
+      "CVEN 406"
+    ],
+    "restrictions": [
+      "approval of instructor",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/cven/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "CVEN 412",
+    "title": "Fundamentals of Air Quality",
+    "credit_hours": 3,
+    "description": "Provide a comprehensive overview of air pollution. Topics covered include: chemistry and physics of atmospheric pollutants; sources, sinks and controls; atmospheric transport, transformation and models; health and environmental impacts; air quality standards, monitoring and management; climate change; indoor air pollution.",
+    "prerequisites": "Prerequisites: Grade of C or better in CVEN 301/EVEN 301 or EVEN 301/CVEN 301 ; grade of C or better in CVEN 302 , or concurrent enrollment. Cross Listing: EVEN 412/CVEN 412 .",
+    "department": "Civil Engineering",
+    "prefix": "CVEN",
+    "number": "412",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "EVEN 412",
+      "CVEN 412"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "CVEN 301",
+      "EVEN 301",
+      "CVEN 302",
+      "EVEN 412",
+      "CVEN 412"
+    ],
+    "restrictions": [
+      "Grade of C or better",
+      "grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/cven/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "CVEN 413",
+    "title": "Natural Environmental Systems",
+    "credit_hours": 3,
+    "description": "Water quality assessment of natural environmental systems; development and calibration of models to describe fate and transport of contaminants in aquatic systems; application of models to design of water quality control facilities.",
+    "prerequisites": "Prerequisite: Grade of C or better in EVEN 301/CVEN 301 or CVEN 301/EVEN 301 . Cross Listing: EVEN 413/CVEN 413 .",
+    "department": "Civil Engineering",
+    "prefix": "CVEN",
+    "number": "413",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "EVEN 413",
+      "CVEN 413"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "EVEN 301",
+      "CVEN 301",
+      "EVEN 413",
+      "CVEN 413"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/cven/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "CVEN 417",
+    "title": "Bituminous Materials",
+    "credit_hours": 3,
+    "description": "Origin, production, specifications and tests of bituminous materials and mixtures used in flexible pavements including mix design, construction, maintenance and quality assurance processes.",
+    "prerequisites": "Prerequisite: Senior classification in engineering; grade of C or better in CVEN 342 or CVEN 343 or approval of instructor.",
+    "department": "Civil Engineering",
+    "prefix": "CVEN",
+    "number": "417",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "CVEN 342",
+      "CVEN 343"
+    ],
+    "restrictions": [
+      "Senior classification",
+      "approval of instructor",
+      "grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/cven/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "CVEN 418",
+    "title": "Highway Materials and Pavement Design",
+    "credit_hours": 3,
+    "description": "Theory and practice in pavement design; pavement performance; structural design of pavement layers; types of materials used in pavement layers; characterization of pavement layer materials; introduction to pavement management concepts.",
+    "prerequisites": "Prerequisites: Grade of C or better in CVEN 307 ; grade of C or better in CVEN 342 or CVEN 343 .",
+    "department": "Civil Engineering",
+    "prefix": "CVEN",
+    "number": "418",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "CVEN 307",
+      "CVEN 342",
+      "CVEN 343"
+    ],
+    "restrictions": [
+      "Grade of C or better",
+      "grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/cven/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "CVEN 423",
+    "title": "Geomatics for Civil Engineering",
+    "credit_hours": 3,
+    "description": "Use of GIS, GPS, Survey and Remotely-sensed data integrated with predictive models for infrastructure management systems.",
+    "prerequisites": "Prerequisite: Grade of C or better in CVEN 303 or EVEN 339/CVEN 339 ; or approval of instructor.",
+    "department": "Civil Engineering",
+    "prefix": "CVEN",
+    "number": "423",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "CVEN 303",
+      "EVEN 339",
+      "CVEN 339"
+    ],
+    "restrictions": [
+      "approval of instructor",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/cven/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "CVEN 424",
+    "title": "Civil Engineering Professional Practice",
+    "credit_hours": 2,
+    "description": "Professional practice issues; current civil engineering issues that impact design, construction, and operation of the civil engineer facilities; developing engineering solutions that better serve society; business and public policy concerns; life-long learning; problem solving; professional licensure.",
+    "prerequisites": "Prerequisites: Grade of C or better in CVEN 322 ; satisfactory grade in CVEN 399 ; senior classification in civil engineering.",
+    "department": "Civil Engineering",
+    "prefix": "CVEN",
+    "number": "424",
+    "course_level": 400,
+    "credit_min": 2,
+    "credit_max": 2,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "CVEN 322",
+      "CVEN 399"
+    ],
+    "restrictions": [
+      "senior classification",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/cven/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "CVEN 435",
+    "title": "Geotechnical Engineering Design",
+    "credit_hours": 3,
+    "description": "A design course covering prediction of settlement, analysis of the stability of slopes, prediction of bearing capacity of shallow and deep foundations and determination of earth pressures acting on retaining structures; a general course in geotechnical engineering design for undergraduates and for graduate students not primarily interested in the geotechnical field, but desiring additional study beyond the introductory undergraduate level.",
+    "prerequisites": "Prerequisite: Grade of C or better in CVEN 365 .",
+    "department": "Civil Engineering",
+    "prefix": "CVEN",
+    "number": "435",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "CVEN 365"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/cven/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "CVEN 436",
+    "title": "Case Histories in Geotechnical Engineering",
+    "credit_hours": 3,
+    "description": "Examination of geotechnical problems through the use of case studies associated with foundations, waste disposal, slope stability, retaining structures, soil improvement and other civil engineering works.",
+    "prerequisites": "Prerequisite: Grade of C or better in CVEN 365 .",
+    "department": "Civil Engineering",
+    "prefix": "CVEN",
+    "number": "436",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "CVEN 365"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/cven/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "CVEN 444",
+    "title": "Structural Concrete Design",
+    "credit_hours": 3,
+    "description": "Behavior, design and detailing of reinforced concrete structural members according to the ACI Building Code Requirements; design for ultimate limit states (flexure, shear and axial loads) and serviceability requirements; applications include continuous beams and moment frames.",
+    "prerequisites": "Prerequisites: Grade of C or better in CVEN 345 ; grade of C or better in CVEN 342 or CVEN 343 , or concurrent enrollment.",
+    "department": "Civil Engineering",
+    "prefix": "CVEN",
+    "number": "444",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "CVEN 345",
+      "CVEN 342",
+      "CVEN 343"
+    ],
+    "restrictions": [
+      "Grade of C or better",
+      "grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/cven/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "CVEN 445",
+    "title": "Matrix Methods of Structural Analysis",
+    "credit_hours": 3,
+    "description": "Analysis of trusses, beams and frames using matrix structural analysis (direct stiffness method); matrix algebra and solution of linear algebraic equations; derivation of matrix stiffness relationships; coordinate transformations; topics related to use of commercial software for structural analysis; programming matrix methods to solve structures.",
+    "prerequisites": "Prerequisites: Grade of C or better in CVEN 345 and CVEN 363 .",
+    "department": "Civil Engineering",
+    "prefix": "CVEN",
+    "number": "445",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "CVEN 345",
+      "CVEN 363"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/cven/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "CVEN 446",
+    "title": "Structural Steel Design",
+    "credit_hours": 3,
+    "description": "Design of structural steel elements found in building structures, including tension members, compression members, beams, beam-columns and base plates; design of bolted and welded simple connections; design of bolted eccentric connections; design of bolted and welded partially and fully restrained connections.",
+    "prerequisites": "Prerequisite: Grade of C or better in CVEN 345 ; also taught at Galveston campus.",
+    "department": "Civil Engineering",
+    "prefix": "CVEN",
+    "number": "446",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [
+      "Galveston"
+    ],
+    "prerequisite_courses": [
+      "CVEN 345"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/cven/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "CVEN 449",
+    "title": "Visualization and Building Information Modeling in Structural Engineering Design",
+    "credit_hours": 1,
+    "description": "Graphical communication in the structural engineering design process; introduction to Building Information Modeling (BIM); construction documents and contract drawings in structural engineering applications, data analysis and project visualization.",
+    "prerequisites": "Prerequisites: Grade of C or better in CVEN 250 and CVEN 345 .",
+    "department": "Civil Engineering",
+    "prefix": "CVEN",
+    "number": "449",
+    "course_level": 400,
+    "credit_min": 1,
+    "credit_max": 1,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "CVEN 250",
+      "CVEN 345"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/cven/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "CVEN 450",
+    "title": "AutoCAD in Civil Engineering",
+    "credit_hours": 1,
+    "description": "Review and application of basic commands and operations in AutoCAD; overview of civil engineering design projects and land surveying; use of AutoCAD Civil 3D or proprietary packages for reduction of land surveying data.",
+    "prerequisites": "Prerequisites: Grade of C or better in CVEN 250 ; junior or senior classification.",
+    "department": "Civil Engineering",
+    "prefix": "CVEN",
+    "number": "450",
+    "course_level": 400,
+    "credit_min": 1,
+    "credit_max": 1,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "CVEN 250"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/cven/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "CVEN 451",
+    "title": "Public Works Engineering",
+    "credit_hours": 3,
+    "description": "Public works engineering; service demand estimates; infrastructure systems, such as water, wastewater, solid waste, urban drainage and transportation; code enforcement and public decision making.",
+    "prerequisites": "Prerequisites: Grade of C or better in CVEN 301/EVEN 301 or EVEN 301/CVEN 301 ; grade of C or better in CVEN 339/EVEN 339 or EVEN 339/CVEN 339 .",
+    "department": "Civil Engineering",
+    "prefix": "CVEN",
+    "number": "451",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "CVEN 301",
+      "EVEN 301",
+      "CVEN 339",
+      "EVEN 339"
+    ],
+    "restrictions": [
+      "Grade of C or better",
+      "grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/cven/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "CVEN 454",
+    "title": "Urban Planning for Engineers",
+    "credit_hours": 3,
+    "description": "Urban planning from an engineering point of view; civil engineering’s role in land development, planning data collection and analysis; location and design requirements for various land uses; and interrelationship of transportation and land use.",
+    "prerequisites": "Prerequisite: Grade of C or better in CVEN 307 .",
+    "department": "Civil Engineering",
+    "prefix": "CVEN",
+    "number": "454",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "CVEN 307"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/cven/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "CVEN 455",
+    "title": "Urban Stormwater Management",
+    "credit_hours": 3,
+    "description": "Hydrologic, hydraulic, and general civil engineering design and implementation of stormwater systems including drainage and detention storage facilities, floodplain regulation measures, and flood control structures; stormwater aspects of land development and public works engineering; flood hydrology and hydraulics; institutional aspects of urban stormwater management.",
+    "prerequisites": "Prerequisite: Grade of C or better in CVEN 339/EVEN 339 or approval of instructor.",
+    "department": "Civil Engineering",
+    "prefix": "CVEN",
+    "number": "455",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "CVEN 339",
+      "EVEN 339"
+    ],
+    "restrictions": [
+      "approval of instructor",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/cven/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "CVEN 456",
+    "title": "Highway Design",
+    "credit_hours": 3,
+    "description": "Theory and practice in highway design; highway classification and design criteria, location studies, design of vertical and horizontal alignment, cross section, pavement, intersections and highway drainage elements.",
+    "prerequisites": "Prerequisites: Grade of C or better in CVEN 307 ; satisfactory grade in CVEN 399 ; grade of C or better in CVEN 342 or CVEN 343 ; grade of C or better in CVEN 418 , CVEN 444 or CVEN 457 ; senior classification; or approval of instructor.",
+    "department": "Civil Engineering",
+    "prefix": "CVEN",
+    "number": "456",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "CVEN 307",
+      "CVEN 399",
+      "CVEN 342",
+      "CVEN 343",
+      "CVEN 418",
+      "CVEN 444",
+      "CVEN 457"
+    ],
+    "restrictions": [
+      "senior classification",
+      "approval of instructor",
+      "Grade of C or better",
+      "grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/cven/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "CVEN 457",
+    "title": "Urban Traffic Facilities",
+    "credit_hours": 3,
+    "description": "Driver, vehicle and roadway characteristics related to design and operation of traffic facilities; selection and design of traffic control devices and information systems for streets and highways; accident analysis and tort liability related to traffic engineering.",
+    "prerequisites": "Prerequisite: Grade of C or better in CVEN 307 .",
+    "department": "Civil Engineering",
+    "prefix": "CVEN",
+    "number": "457",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "CVEN 307"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/cven/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "CVEN 458",
+    "title": "Hydraulic Engineering of Water Distribution Systems",
+    "credit_hours": 3,
+    "description": "Pressure conduit hydraulics; design, modeling, and analysis of water conveyance and distribution systems including pipelines, pipe networks, and pumps.",
+    "prerequisites": "Prerequisite: Grade of C or better in CVEN 339/EVEN 339 or EVEN 339/CVEN 339 or approval of instructor. Cross Listing: EVEN 458/CVEN 458 .",
+    "department": "Civil Engineering",
+    "prefix": "CVEN",
+    "number": "458",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "EVEN 458",
+      "CVEN 458"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "CVEN 339",
+      "EVEN 339",
+      "EVEN 458",
+      "CVEN 458"
+    ],
+    "restrictions": [
+      "approval of instructor",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/cven/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "CVEN 462",
+    "title": "Engineering Hydrogeology",
+    "credit_hours": 3,
+    "description": "Groundwater in the hydrologic cycle; aquifer properties; well hydraulics, testing, and design; groundwater quality; and groundwater management and sustainability.",
+    "prerequisites": "Prerequisites: Grade of C or better in CVEN 339/EVEN 339 or EVEN 339/CVEN 339 ; junior or senior classification; or approval of instructor. Cross Listing: EVEN 462/CVEN 462 .",
+    "department": "Civil Engineering",
+    "prefix": "CVEN",
+    "number": "462",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "EVEN 462",
+      "CVEN 462"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "CVEN 339",
+      "EVEN 339",
+      "EVEN 462",
+      "CVEN 462"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "approval of instructor",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/cven/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "CVEN 463",
+    "title": "Engineering Hydrology",
+    "credit_hours": 3,
+    "description": "Occurrence, distribution and properties of natural waters of the earth; measurement and engineering analysis of hydrologic phenomena including precipitation, streamflow and groundwater, hydrologic design of water resources development and management projects.",
+    "prerequisites": "Prerequisite: Grade of C or better in CVEN 339/EVEN 339 or EVEN 339/CVEN 339 . Cross Listing: EVEN 463/CVEN 463 .",
+    "department": "Civil Engineering",
+    "prefix": "CVEN",
+    "number": "463",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "EVEN 463",
+      "CVEN 463"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "CVEN 339",
+      "EVEN 339",
+      "EVEN 463",
+      "CVEN 463"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/cven/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "CVEN 464",
+    "title": "Environmental Fluid Mechanics",
+    "credit_hours": 3,
+    "description": "Examination of fluid and mass transport in naturally occurring flows; includes Navier-Stokes equations; molecular and turbulent diffusion; advective, reacting transport equation; dispersion; river, lake, estuary and atmospheric mixing; dissolution boundary layers; wastewater outfalls; introduction to environmental quality numerical modeling.",
+    "prerequisites": "Prerequisites: Grade of C or better in CVEN 311/EVEN 311 , or approval of instructor.",
+    "department": "Civil Engineering",
+    "prefix": "CVEN",
+    "number": "464",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "CVEN 311",
+      "EVEN 311"
+    ],
+    "restrictions": [
+      "approval of instructor",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/cven/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "CVEN 465",
+    "title": "Coastal Resilience",
+    "credit_hours": 3,
+    "description": "Mechanics of wave motion, coastal water level fluctuations, wave transformation, coastal processes, wave forecasting, coastal structures, and coastal development and management, planning and design of coastal engineering projects.",
+    "prerequisites": "Prerequisites: Grade of C or better in CVEN 311/EVEN 311 or EVEN 311/CVEN 311 , or approval of instructor.",
+    "department": "Civil Engineering",
+    "prefix": "CVEN",
+    "number": "465",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "CVEN 311",
+      "EVEN 311"
+    ],
+    "restrictions": [
+      "approval of instructor",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/cven/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "CVEN 473",
+    "title": "Engineering Project Estimating and Planning",
+    "credit_hours": 3,
+    "description": "Application of cost estimating and planning techniques for civil engineering projects; introduction to labor, materials and equipment costing; productivity analysis; indirect and general overhead costs; preparation of approximate and definitive estimates; and integration of time/cost relationships through critical path method and resource leveling.",
+    "prerequisites": "Prerequisites: Grade of C or better in CVEN 349 ; senior classification.",
+    "department": "Civil Engineering",
+    "prefix": "CVEN",
+    "number": "473",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "CVEN 349"
+    ],
+    "restrictions": [
+      "senior classification",
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/cven/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "CVEN 483",
+    "title": "Analysis and Design of Structures",
+    "credit_hours": 3,
+    "description": "Overall procedure of analysis and design including functions, loads, layouts of force systems; analysis, specifications, cost comparisons, and maintenance as applied to typical building structures.",
+    "prerequisites": "Prerequisites: Grade of C or better in CVEN 365 or concurrent enrollment; satisfactory grade in CVEN 399 ; grade of C or better in CVEN 444 and CVEN 446 ; senior classification; or approval of instructor.",
+    "department": "Civil Engineering",
+    "prefix": "CVEN",
+    "number": "483",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "CVEN 365",
+      "CVEN 399",
+      "CVEN 444",
+      "CVEN 446"
+    ],
+    "restrictions": [
+      "senior classification",
+      "approval of instructor",
+      "Grade of C or better",
+      "grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/cven/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "CVEN 485",
+    "title": "Directed Studies",
+    "credit_hours": "0-3",
+    "description": "Research and design problems of limited scope approved on an individual basis intended to promote independent study; results of study presented in writing.",
+    "prerequisites": "Prerequisite: Approval of department head.",
+    "department": "Civil Engineering",
+    "prefix": "CVEN",
+    "number": "485",
+    "course_level": 400,
+    "credit_min": 0,
+    "credit_max": 3,
+    "is_variable_credit": true,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Approval of department head"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/cven/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "CVEN 489",
+    "title": "Special Topics in...",
+    "credit_hours": "1-4",
+    "description": "Selected topics in an identified area of civil engineering. May be repeated for credit.",
+    "prerequisites": "Prerequisite: Approval of department head.",
+    "department": "Civil Engineering",
+    "prefix": "CVEN",
+    "number": "489",
+    "course_level": 400,
+    "credit_min": 1,
+    "credit_max": 4,
+    "is_variable_credit": true,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": "May be repeated for credit.",
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Approval of department head"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/cven/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "CVEN 491",
+    "title": "Research",
+    "credit_hours": "0-4",
+    "description": "Research conducted under the direction of faculty members in civil engineering. May be taken three times for credit.",
+    "prerequisites": "Prerequisites: Junior or senior classification and approval of instructor.",
+    "department": "Civil Engineering",
+    "prefix": "CVEN",
+    "number": "491",
+    "course_level": 400,
+    "credit_min": 0,
+    "credit_max": 4,
+    "is_variable_credit": true,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [],
+    "repeatability": "May be taken three times for credit.",
+    "campuses": [],
+    "prerequisite_courses": [],
+    "restrictions": [
+      "Junior or senior classification",
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/cven/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  }
+]

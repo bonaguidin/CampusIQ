@@ -25,7 +25,18 @@ SAMPLE_PROFILE = {
 
 FIT_PAYLOAD = {
     "summary": "FIT summary.",
-    "data": {"role_matches": [], "overall_fit_summary": "Solid fit."},
+    "data": {
+        "role_matches": [
+            {
+                "role": "Software Engineering Intern",
+                "fit_level": "medium",
+                "rationale": "Confirmed Python and Git skills are relevant.",
+                "supporting_signals": ["Python", "Git"],
+                "missing_signals": ["Production experience"],
+            }
+        ],
+        "overall_fit_summary": "Solid fit.",
+    },
 }
 GAP_PAYLOAD = {
     "summary": "GAP summary.",

@@ -1,17 +1,36 @@
 import { useAuth } from '../auth/useAuth';
 import { analyzeFit } from '../api/analysis';
-import { analysisFailureMessage, useAnalysisRun } from '../hooks/useAnalysisRun';
-import type { FitAnalysisData, FitLevel, FitRoleMatch } from '../types/analysis';
+import { analysisFailureMessage, type AnalysisRunState } from '../hooks/useAnalysisRun';
+import { useCachedAnalysisRun } from '../hooks/useCachedAnalysisRun';
+import type { FeatureResult, FitAnalysisData, FitLevel, FitRoleMatch } from '../types/analysis';
 import { AnalysisPanel, type AnalysisPhase } from './AnalysisPanel';
+
+export interface FitAnalysisRun {
+  state: AnalysisRunState<FeatureResult<FitAnalysisData>>;
+  trigger: () => void;
+  /** From useCachedAnalysisRun -- see GapAnalysisRun. */
+  refreshing?: boolean;
+  refreshError?: string;
+}
+
+interface FitAnalysisPanelProps {
+  /**
+   * Lets a parent (the Career Snapshot sub-tab) share this exact run state
+   * instead of each holding its own. Omitted by every other caller, which
+   * keeps its own internal useAnalysisRun instance exactly as before.
+   */
+  run?: FitAnalysisRun;
+}
 
 // FIT role-fit panel — data shape is fit.py's output_contract (role_matches[],
 // overall_fit_summary). Confirmed against real (non-mocked) DeepSeek R1 output —
 // see frontend/src/types/analysis.ts.
-export function FitAnalysisPanel() {
+export function FitAnalysisPanel({ run: externalRun }: FitAnalysisPanelProps = {}) {
   const { slug, session } = useAuth();
-  const { state, trigger } = useAnalysisRun(() =>
+  const internalRun = useCachedAnalysisRun('fit', () =>
     analyzeFit({ slug, accessToken: session?.access_token ?? null }),
   );
+  const { state, trigger, refreshing, refreshError } = externalRun ?? internalRun;
 
   const phase: AnalysisPhase =
     state.phase === 'idle'
@@ -36,6 +55,8 @@ export function FitAnalysisPanel() {
       onRun={trigger}
       missingFields={missingFields}
       failureMessage={analysisFailureMessage(state)}
+      refreshing={refreshing}
+      refreshError={refreshError}
     >
       {state.phase === 'done' && state.result.status === 'success' && (
         <FitResult data={state.result.data} summary={state.result.summary} />

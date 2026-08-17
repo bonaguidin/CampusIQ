@@ -83,7 +83,8 @@ export function TranscriptUpload({ accessToken, onUploaded }: TranscriptUploadPr
           <h1 className="rv-headline">Add your transcript.</h1>
           <p className="rv-standfirst">
             Upload an academic transcript and we&rsquo;ll read the courses off it. Nothing is saved
-            to your record until you&rsquo;ve checked every line.
+            to your record until you&rsquo;ve checked every line. Direct Canvas &amp; Blackboard sync
+            is coming soon.
           </p>
         </header>
 

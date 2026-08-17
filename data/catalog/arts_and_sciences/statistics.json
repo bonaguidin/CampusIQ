@@ -928,5 +928,114 @@
     "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/stat/",
     "catalog_year": "2026-2027",
     "source_last_checked": "2026-06-20"
+  },
+  {
+    "code": "STAT 335",
+    "title": "Principles of Data Science",
+    "credit_hours": 3,
+    "description": "Theoretical foundations, algorithms and methods of deriving valuable insights from data; includes foundations in managing and analyzing data at scale, e.g. big data; data mining techniques and algorithms; exploratory data analysis; statistical methods and models; data visualization.",
+    "prerequisites": "Prerequisites: STAT 211 or ECEN 303 ; STAT 212 or CSCE 222/ECEN 222 ; MATH 304 . Cross Listing: CSCE 320/STAT 335 .",
+    "department": "Statistics",
+    "prefix": "STAT",
+    "number": "335",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "CSCE 320",
+      "STAT 335"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "STAT 211",
+      "ECEN 303",
+      "STAT 212",
+      "CSCE 222",
+      "ECEN 222",
+      "MATH 304",
+      "CSCE 320",
+      "STAT 335"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/stat/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "STAT 424",
+    "title": "Probability and Computing",
+    "credit_hours": 3,
+    "description": "Applications of modern probability in data science, with an emphasis on randomization and the role of probabilistic techniques in computing; discrete random variables and expectation; deviation inequalities and applications to randomized algorithms; probabilistic methods and satisfiability; Monte Carlo method; sample complexity; combinatorial dimension.",
+    "prerequisites": "Prerequisites: MATH 304 , MATH 309 , MATH 311 , or MATH 323 ; MATH 411 or STAT 414 . Cross Listing: MATH 424/STAT 424 .",
+    "department": "Statistics",
+    "prefix": "STAT",
+    "number": "424",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "MATH 424",
+      "STAT 424"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "MATH 304",
+      "MATH 309",
+      "MATH 311",
+      "MATH 323",
+      "MATH 411",
+      "STAT 414",
+      "MATH 424",
+      "STAT 424"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/stat/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "STAT 435",
+    "title": "Statistics for Risk Modeling",
+    "credit_hours": 3,
+    "description": "Modern statistical methods used in risk modeling with a focus on actuarial applications. Topics include regression, time series, decision trees and unsupervised learning techniques, along with model selection and validation, emphasizing their use in analyzing and forecasting data in actuarial and financial contexts.",
+    "prerequisites": "Prerequisites: MATH 148 , MATH 152 , MATH 172 , or equivalent; STAT 211 or MATH 411 ; junior or senior classification. Cross Listing: MATH 435/STAT 435 .",
+    "department": "Statistics",
+    "prefix": "STAT",
+    "number": "435",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "MATH 435",
+      "STAT 435"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "MATH 148",
+      "MATH 152",
+      "MATH 172",
+      "STAT 211",
+      "MATH 411",
+      "MATH 435",
+      "STAT 435"
+    ],
+    "restrictions": [
+      "junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/stat/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
   }
 ]

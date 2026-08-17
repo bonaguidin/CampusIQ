@@ -46,7 +46,7 @@ test('nothing opens a profile dialog, and the deep-link fallback survives', asyn
 test('analysis failures render one coherent recovery instruction', async () => {
   const [panel, api] = await Promise.all([
     readFile(new URL('../src/components/AnalysisPanel.tsx', import.meta.url), 'utf8'),
-    readFile(new URL('../src/api/analysis.ts', import.meta.url), 'utf8'),
+    readFile(new URL('../src/api/analysisApi.mjs', import.meta.url), 'utf8'),
   ])
 
   assert.doesNotMatch(panel, /analysis-failed-retry/)

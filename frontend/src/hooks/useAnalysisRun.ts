@@ -1,14 +1,21 @@
 import { useCallback, useState } from 'react';
-import type { FeatureResult } from '../types/analysis';
 
 // Distinguishes transport failures (network/HTTP — "AI call failed, try
-// again") from a successful call whose FeatureResult.status is "skipped"
-// (profile incomplete) or "failed" (AI ran but errored/parsed badly) —
-// the two panels render each of these differently.
-export type AnalysisRunState<T> =
+// again") from a successful call whose result.status is "skipped" (profile
+// incomplete) or "failed" (AI ran but errored/parsed badly) — panels render
+// each of these differently.
+//
+// TResult is the whole resolved value, not a payload nested inside it. Every
+// existing caller passes a function returning Promise<FeatureResult<X>>, so
+// TResult is inferred as FeatureResult<X> there and nothing about those call
+// sites changes. This exists so a result shape that is NOT a FeatureResult
+// (the Action Plan preview response has action_plan/dependency_order in
+// place of FeatureResult's data/errors/missing_fields) can use the same run
+// state machine without a parallel hook.
+export type AnalysisRunState<TResult> =
   | { phase: 'idle' }
   | { phase: 'loading' }
-  | { phase: 'done'; result: FeatureResult<T> }
+  | { phase: 'done'; result: TResult }
   | { phase: 'transport-error'; message: string };
 
 /**
@@ -26,15 +33,23 @@ export type AnalysisRunState<T> =
  *
  * Lives here rather than in each panel so the four of them cannot drift.
  */
-export function analysisFailureMessage<T>(state: AnalysisRunState<T>): string | undefined {
+interface FailableResult {
+  status: string;
+  summary: string;
+  errors?: string[];
+}
+
+export function analysisFailureMessage<TResult extends FailableResult>(
+  state: AnalysisRunState<TResult>,
+): string | undefined {
   if (state.phase === 'transport-error') return state.message;
   if (state.phase !== 'done' || state.result.status !== 'failed') return undefined;
   const errors = state.result.errors ?? [];
   return errors.length > 0 ? errors.join(' ') : state.result.summary || undefined;
 }
 
-export function useAnalysisRun<T>(run: () => Promise<FeatureResult<T>>) {
-  const [state, setState] = useState<AnalysisRunState<T>>({ phase: 'idle' });
+export function useAnalysisRun<TResult>(run: () => Promise<TResult>) {
+  const [state, setState] = useState<AnalysisRunState<TResult>>({ phase: 'idle' });
 
   const trigger = useCallback(() => {
     setState({ phase: 'loading' });

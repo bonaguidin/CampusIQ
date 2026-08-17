@@ -290,8 +290,8 @@ def test_analyze_gap_success(client, monkeypatch):
           "data": {
             "readiness_score": 7,
             "strengths": ["Excel"],
-            "must_have_gaps": ["SQL"],
-            "nice_to_have_gaps": ["dashboarding"],
+            "must_have_gaps": [{"gap":"SQL","why_it_matters":"Required.","how_to_close":"Build a project."}],
+            "nice_to_have_gaps": [{"gap":"dashboarding","why_it_helps":"Useful.","how_to_close":"Build a dashboard."}],
             "recommended_next_steps": ["Build a small SQL project"]
           }
         }
@@ -948,6 +948,39 @@ def test_chat_demo_slug_returns_a_reply(client, monkeypatch):
     # The student's own record is what grounds the reply.
     system_prompt = fake.calls[0]["messages"][0]["content"]
     assert "Jordan Reyes" in system_prompt
+
+
+def test_demo_live_chat_uses_and_releases_ai_concurrency(client, monkeypatch):
+    class TrackingGate:
+        active = False
+        entries = 0
+        exits = 0
+
+        @contextmanager
+        def slot(self):
+            self.entries += 1
+            self.active = True
+            try:
+                yield
+            finally:
+                self.active = False
+                self.exits += 1
+
+    gate = TrackingGate()
+    client.app.state.ai_concurrency = gate
+
+    class AssertInsideClient(FakeClient):
+        def complete(self, **kwargs):
+            assert gate.active is True
+            return super().complete(**kwargs)
+
+    monkeypatch.setattr(api, "build_client", lambda: AssertInsideClient("inside"))
+    response = client.post(
+        "/api/students/jordanReyes/chat", json={"message": "Hello", "history": []}
+    )
+
+    assert response.status_code == 200
+    assert (gate.entries, gate.exits, gate.active) == (1, 1, False)
 
 
 def test_chat_client_failure_returns_502(client, monkeypatch):

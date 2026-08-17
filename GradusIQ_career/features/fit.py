@@ -1,9 +1,17 @@
 """FIT career feature runner."""
 
+import json
 from typing import Any, Mapping
 
-from .base import CareerFeatureRunner
-from .market_data import get_market_requirements, get_shift_signals
+from pydantic import ValidationError
+
+from GradusIQ_career.ai.context import AgentContext, GroundingMetadata
+from GradusIQ_career.ai.contracts import FitOutput
+from GradusIQ_career.ai.runtime import AIRuntime
+from GradusIQ_career.student_intelligence_profile import StudentIntelligenceProfile
+
+from .base import CareerFeatureRunner, FeatureResult, load_prompt_template
+from .market_data import get_market_requirements, get_shift_signals, is_role_supported
 
 # Sentinel value used in the data for "not switching majors" (Decision (b) —
 # it stays in the data as-is; FIT resolves around it here in feature logic).
@@ -28,6 +36,8 @@ def _resolve_major(student: Mapping[str, Any]) -> tuple[str, str]:
 class FitRunner(CareerFeatureRunner):
     feature = "FIT"
     prompt_filename = "gradus_iq_prompt_FIT.md"
+    prompt_name = "fit"
+    prompt_version = "1.0"
     required_paths = (
         "student.major_intended",
         "career.target_roles",
@@ -46,6 +56,137 @@ class FitRunner(CareerFeatureRunner):
         ],
         "overall_fit_summary": "string",
     }
+
+    def __init__(self, *args, runtime_factory=AIRuntime, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.runtime_factory = runtime_factory
+        self.last_trace: dict[str, Any] | None = None
+
+    def additional_missing_fields(self, student_profile: Mapping[str, Any]) -> list[str]:
+        """FIT has no research-agent fallback (see build_student_context's
+        "Deliberately no research agent" note) -- an unmatched target role
+        goes straight into the prompt as an ungrounded block, and FIT still
+        produces a confident-looking fit judgement from pure model recall.
+        Gated here rather than left to silently degrade: required_paths
+        already guarantees career.target_roles is non-empty by the time this
+        runs, so an empty result means every listed role is unsupported, not
+        that none were chosen (that's the required_paths gate's job).
+        """
+        target_roles = student_profile.get("career", {}).get("target_roles") or []
+        if target_roles and not any(is_role_supported(role) for role in target_roles):
+            return ["career.target_roles"]
+        return []
+
+    def validate_data(self, data, student_profile):
+        """Use the same semantic contract as authenticated and cached FIT."""
+        try:
+            FitOutput.model_validate(data)
+        except ValidationError as exc:
+            return [
+                "FIT output contract violation at "
+                + ".".join(str(part) for part in error["loc"])
+                for error in exc.errors(include_url=False)
+            ]
+        return []
+
+    def run_canonical(
+        self,
+        canonical_profile: StudentIntelligenceProfile,
+        legacy_profile: Mapping[str, Any],
+    ) -> dict[str, Any]:
+        """Run authenticated FIT from canonical input through ``AIRuntime``.
+
+        ``legacy_profile`` is an in-memory compatibility projection used only
+        by the established FIT prompt builder. The AgentContext itself remains
+        canonical and retains confirmation/provenance boundaries.
+        """
+        missing = self._missing_result(legacy_profile)
+        if missing is not None:
+            return missing
+
+        try:
+            prompt_template = load_prompt_template(self.prompt_path)
+            fit_context = self.build_student_context(legacy_profile)
+        except (OSError, ValueError) as exc:
+            return FeatureResult(
+                feature=self.feature,
+                status="failed",
+                summary="FIT analysis failed.",
+                data={},
+                errors=[str(exc)],
+            ).to_dict()
+
+        context = AgentContext(
+            feature=self.feature,
+            canonical_profile=canonical_profile,
+            model_role=self.role,
+            prompt_name=self.prompt_name,
+            prompt_version=self.prompt_version,
+            grounding=GroundingMetadata(
+                source_types=("student_confirmed", "onet_static"),
+                trust_level="trusted_reference",
+                attributes={"tool_loop": False},
+            ),
+        )
+        messages = self._messages_for_context(prompt_template, fit_context)
+        result = self.runtime_factory(self.client).invoke(
+            context=context,
+            messages=messages,
+            output_model=FitOutput,
+        )
+        self.last_trace = result.trace.to_dict()
+        if result.output is None:
+            return FeatureResult(
+                feature=self.feature,
+                status="failed",
+                summary="FIT analysis failed.",
+                data={},
+                errors=result.errors,
+            ).to_dict()
+        data = result.output.model_dump(mode="json")
+        return FeatureResult(
+            feature=self.feature,
+            status="success",
+            summary=result.summary or self.default_summary(data),
+            data=data,
+            errors=[],
+        ).to_dict()
+
+    def _missing_result(self, profile: Mapping[str, Any]) -> dict[str, Any] | None:
+        # Reuse the established gate without making a provider call. A tiny
+        # sentinel client makes this branch explicit and keeps the skip shape
+        # authored by CareerFeatureRunner in one place.
+        from .base import find_missing_fields
+
+        missing = find_missing_fields(
+            profile, self.required_paths
+        ) or self.additional_missing_fields(profile)
+        if not missing:
+            return None
+        return super().run(profile)
+
+    def _messages_for_context(
+        self, prompt_template: str, student_context: Mapping[str, Any]
+    ) -> list[dict[str, str]]:
+        return [
+            {
+                "role": "system",
+                "content": (
+                    "You are Gradus IQ. Return valid JSON only. Do not wrap the response "
+                    "in Markdown. Follow the requested output contract exactly."
+                ),
+            },
+            {
+                "role": "user",
+                "content": (
+                    f"{prompt_template}\n\n"
+                    "Return JSON only using this feature result contract:\n"
+                    f"{json.dumps(self.feature_contract(), indent=2)}\n\n"
+                    "Relevant student profile context:\n"
+                    f"{json.dumps(student_context, indent=2, sort_keys=True)}"
+                ),
+            },
+        ]
 
     def build_student_context(self, student_profile):
         student = student_profile.get("student", {})

@@ -1,0 +1,237 @@
+"""Strict model-owned proposal and deterministic final-result contracts."""
+
+from typing import Literal
+
+from pydantic import Field, model_validator
+
+from .models import (
+    CareerSkillNeed,
+    CatalogInstitution,
+    CatalogProvenance,
+    CourseEligibilityResult,
+    CourseEligibilityStatus,
+    CourseSearchResult,
+    MatchKind,
+    PrerequisiteEvaluation,
+    PrerequisiteStatus,
+    StrictModel,
+    StudentCourseState,
+    canonical_course_code,
+)
+
+
+MAX_PROPOSALS = 10
+MAX_VERIFIED_RECOMMENDATIONS = 5
+MAX_PREREQUISITE_BLOCKED = 5
+ProposalParseCategory = Literal[
+    "VALID",
+    "INVALID_JSON",
+    "TRUNCATED_OUTPUT",
+    "EMPTY_OUTPUT",
+    "MISSING_REQUIRED_FIELD",
+    "EXTRA_FIELD",
+    "WRONG_ENUM",
+    "WRONG_TYPE",
+    "NULLABILITY",
+    "COURSE_CODE_SHAPE",
+    "NEED_LINK_SHAPE",
+    "TOO_MANY_ITEMS",
+    "OTHER",
+]
+
+
+class QualifiedCourseCandidate(StrictModel):
+    """One observed catalog result qualified by the trusted C1 service."""
+
+    search_result: CourseSearchResult
+    eligibility: CourseEligibilityResult
+
+
+class ProposedCourse(StrictModel):
+    course_code: str = Field(min_length=1, max_length=32)
+    matched_need_ids: list[str] = Field(min_length=1, max_length=8)
+    ranking_reason: str = Field(min_length=1, max_length=500)
+    skill_alignment_explanation: str = Field(min_length=1, max_length=800)
+
+    @model_validator(mode="after")
+    def exact_code_and_unique_needs(self):
+        normalized = canonical_course_code(self.course_code)
+        if normalized is None or normalized != self.course_code:
+            raise ValueError("course_code must be an exact normalized institutional code")
+        if len(self.matched_need_ids) != len(set(self.matched_need_ids)):
+            raise ValueError("matched_need_ids must be unique")
+        return self
+
+
+class CourseDiscoveryProposal(StrictModel):
+    proposals: list[ProposedCourse] = Field(default_factory=list, max_length=MAX_PROPOSALS)
+
+    @model_validator(mode="after")
+    def unique_courses(self):
+        codes = [item.course_code for item in self.proposals]
+        if len(codes) != len(set(codes)):
+            raise ValueError("course proposals must be unique")
+        return self
+
+
+class VerifiedCourseRecommendation(StrictModel):
+    institution: CatalogInstitution
+    course_code: str
+    title: str
+    description: str
+    credit_min: float
+    credit_max: float
+    matched_needs: list[CareerSkillNeed]
+    match_kinds: list[MatchKind]
+    matched_terms: list[str]
+    student_status: StudentCourseState
+    prerequisite_status: PrerequisiteStatus
+    # Deterministic, catalog- and student-state-derived evidence already
+    # computed by C1's evaluate_prerequisites() at verification time -- the
+    # same object `prerequisite_status` above is summarized from, not a
+    # second, independently derived prerequisite fact. None only for courses
+    # that never went through prerequisite evaluation at all (there is none
+    # today; kept optional so this stays a strictly additive field).
+    prerequisite_evaluation: PrerequisiteEvaluation | None = None
+    eligibility_status: Literal[CourseEligibilityStatus.ELIGIBLE]
+    provenance: CatalogProvenance
+    ranking_reason: str
+    skill_alignment_explanation: str
+    degree_applicability: Literal["UNKNOWN"] = "UNKNOWN"
+    offering_status: Literal["UNKNOWN"] = "UNKNOWN"
+
+
+class UnresolvedCourseCandidate(StrictModel):
+    institution: CatalogInstitution
+    course_code: str
+    title: str
+    matched_needs: list[CareerSkillNeed]
+    match_kinds: list[MatchKind]
+    eligibility_status: Literal[CourseEligibilityStatus.UNRESOLVED]
+    reasons: list[str]
+    # Same deterministic C1 evidence as VerifiedCourseRecommendation. This is
+    # where an actually-unresolved prerequisite (ambiguous catalog grammar,
+    # or an in-progress prerequisite course) becomes reviewable -- a
+    # VerifiedCourseRecommendation can only ever carry an ELIGIBLE
+    # prerequisite_evaluation.status, since eligibility_status ELIGIBLE
+    # requires it structurally (see service.py::check_eligibility).
+    prerequisite_evaluation: PrerequisiteEvaluation | None = None
+    provenance: CatalogProvenance
+
+
+class PrerequisiteBlockedCourse(StrictModel):
+    """A real, qualified catalog candidate that cannot currently be
+    recommended for exactly one deterministic reason: an unmet prerequisite.
+
+    Distinct from UnresolvedCourseCandidate on purpose. UNRESOLVED means C1
+    could not determine an eligibility verdict at all (ambiguous catalog
+    grammar, an in-progress prerequisite). This type means C1 reached a
+    definite verdict -- CourseEligibilityStatus.INELIGIBLE -- and that
+    verdict is known, structurally, to be caused only by prerequisites:
+    service.py::check_eligibility() has no other path to INELIGIBLE (every
+    other rejection reason -- already completed, already planned, wrong
+    institution, course not found -- returns a distinct status before
+    prerequisite evaluation even runs). prerequisite_evaluation is therefore
+    required here, not optional: this type only exists to carry it.
+    """
+
+    institution: CatalogInstitution
+    course_code: str
+    title: str
+    matched_needs: list[CareerSkillNeed]
+    match_kinds: list[MatchKind]
+    eligibility_status: Literal[CourseEligibilityStatus.INELIGIBLE]
+    prerequisite_status: PrerequisiteStatus
+    prerequisite_evaluation: PrerequisiteEvaluation
+    provenance: CatalogProvenance
+
+
+class CourseDiscoveryResult(StrictModel):
+    target_role: str
+    current_major: str | None = None
+    intended_major: str | None = None
+    career_needs: list[CareerSkillNeed]
+    verified_recommendations: list[VerifiedCourseRecommendation] = Field(
+        default_factory=list, max_length=MAX_VERIFIED_RECOMMENDATIONS
+    )
+    requires_verification: list[UnresolvedCourseCandidate] = Field(default_factory=list, max_length=5)
+    # Real, qualified catalog courses currently not actionable specifically
+    # because a deterministic prerequisite requirement is unmet -- not a new
+    # kind of recommendation and not "unresolved" evidence, just reviewable
+    # blocked-dependency information that previously vanished at this
+    # boundary (see agent.py's REJECT branch).
+    prerequisite_blocked: list[PrerequisiteBlockedCourse] = Field(
+        default_factory=list, max_length=MAX_PREREQUISITE_BLOCKED
+    )
+    summary: str
+    degree_applicability: Literal["UNKNOWN"] = "UNKNOWN"
+    offering_status: Literal["UNKNOWN"] = "UNKNOWN"
+
+
+class SafeToolTrace(StrictModel):
+    tool_name: str
+    duration_ms: int = Field(ge=0)
+    status: str
+    result_count: int = Field(ge=0)
+
+
+class CourseDiscoveryTrace(StrictModel):
+    request_id: str
+    feature: Literal["COURSE_DISCOVERY"] = "COURSE_DISCOVERY"
+    prompt_name: Literal["course_discovery"] = "course_discovery"
+    prompt_version: Literal["1.0", "1.1", "1.2", "1.3", "1.4", "1.5"] = "1.5"
+    model_role: Literal["course_discovery"] = "course_discovery"
+    resolved_model: str | None = None
+    tool_rounds: int = 0
+    tool_call_count: int = 0
+    tool_execution_count: int = 0
+    search_call_count: int = 0
+    seed_search_count: int = 0
+    seed_candidate_count: int = 0
+    seed_unique_candidate_count: int = 0
+    protected_seed_floor_count: int = 0
+    supplemental_search_required: bool = False
+    supplemental_candidate_count: int = 0
+    seed_only_candidate_count: int = 0
+    llm_only_candidate_count: int = 0
+    both_candidate_count: int = 0
+    lookup_count: int = 0
+    status_check_count: int = 0
+    eligibility_check_count: int = 0
+    deduplicated_call_count: int = 0
+    policy_rejected_call_count: int = 0
+    candidate_count: int = 0
+    qualified_candidate_count: int = 0
+    candidates_dropped_by_pool_limit: int = 0
+    qualification_batch_count: int = 0
+    eligible_candidate_count: int = 0
+    completed_candidate_count: int = 0
+    planned_candidate_count: int = 0
+    in_progress_candidate_count: int = 0
+    ineligible_candidate_count: int = 0
+    unresolved_candidate_count: int = 0
+    proposal_count: int = 0
+    verified_count: int = 0
+    unresolved_count: int = 0
+    prerequisite_blocked_count: int = 0
+    rejected_count: int = 0
+    provider_ms: int = 0
+    tool_ms: int = 0
+    verification_ms: int = 0
+    total_ms: int = 0
+    attempt_count: int = 0
+    repair_count: int = 0
+    first_attempt_parse_category: ProposalParseCategory | None = None
+    repair_parse_category: ProposalParseCategory | None = None
+    input_tokens: int | None = None
+    output_tokens: int | None = None
+    total_tokens: int | None = None
+    final_status: Literal["success", "failed"] = "failed"
+    error_class: str | None = None
+    tool_trace: list[SafeToolTrace] = Field(default_factory=list)
+
+
+class CourseDiscoveryAgentResult(StrictModel):
+    result: CourseDiscoveryResult | None = None
+    trace: CourseDiscoveryTrace
+    errors: list[str] = Field(default_factory=list)

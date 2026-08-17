@@ -6,9 +6,19 @@ import './GuidedTour.css';
 
 export type TourSection = 'overview' | 'academic' | 'career';
 
+/** A deep-link offered on the final step (e.g. "Add transcript"). Only the
+ *  authenticated dashboard supplies these; the demo dashboard leaves them off,
+ *  so its final step shows just the "Explore on my own" escape. */
+export interface TourAction {
+  label: string;
+  onClick: () => void;
+}
+
 interface TourStep {
   /** Dashboard tab this step walks the viewer to. */
   section: TourSection;
+  /** 'info' walks a tab; 'cta' is the closing action step. */
+  kind: 'info' | 'cta';
   /** Small mono eyebrow — the tab / context label. */
   eyebrow: string;
   /** Serif display headline. */
@@ -18,62 +28,79 @@ interface TourStep {
 }
 
 // ── Tour Script ──────────────────────────────────────────────────────────────
-// Weighted toward Career (FIT/GAP/SHIFT) — the core of the product — and ends
-// there so the demo lands on the strongest feature.
+// Written for a brand-new account whose Academic and Career tabs are still
+// empty: each step says what the tab is for AND how to populate it. Ends on a
+// call to action (add transcript / add resume) rather than a passive "Finish".
 
 const TOUR_STEPS: TourStep[] = [
   {
     section: 'overview',
+    kind: 'info',
     eyebrow: 'Welcome',
     title: 'Welcome to GradusIQ',
     body: (
       <>
-        Your AI career and academic companion. This quick tour walks through the
-        three main areas of a student profile. Take it now, or{' '}
-        <strong>skip</strong> and reopen it anytime from the{' '}
-        <strong>?</strong> button up top.
+        Your AI career and academic companion. This quick tour shows the three
+        areas of your profile and how to fill them in. Take it now, or{' '}
+        <strong>skip</strong> and reopen it anytime from the <strong>?</strong>{' '}
+        button up top.
       </>
     ),
   },
   {
     section: 'overview',
+    kind: 'info',
     eyebrow: 'Overview',
     title: 'Your snapshot at a glance',
     body: (
       <>
-        Name, GPA, major, university and expected graduation — plus{' '}
-        <strong>Feature Readiness</strong> and{' '}
-        <strong>Profile Completeness</strong> so you know what to fill in next.
-        At the top, chat with the assistant about your career and academic
-        details.
+        Your name, GPA, major and university, plus{' '}
+        <strong>Readiness</strong> and <strong>Profile Completeness</strong> so
+        you always know what to add next. At the top, chat with the assistant
+        about your academics and career.
       </>
     ),
   },
   {
     section: 'academic',
+    kind: 'info',
     eyebrow: 'Academic',
-    title: 'Your academic record',
+    title: 'Add your transcript',
     body: (
       <>
-        Grades in each class and your professors&rsquo; comments on your
-        coursework. <strong>AI Analysis</strong> reads the grades and comments
-        for patterns, and <strong>Exam Topics</strong> breaks performance down by
-        subject.
+        Your classes and grades live here. To populate them, upload your{' '}
+        <strong>transcript</strong> — we read the courses off it and you confirm
+        each line. Direct <strong>Canvas &amp; Blackboard sync is coming soon</strong>.
+        Once your record is in: AI analysis of your grades and professor
+        comments, plus an exam-topic breakdown.
       </>
     ),
   },
   {
     section: 'career',
+    kind: 'info',
     eyebrow: 'Career · the core',
-    title: 'GAP, FIT & SHIFT',
+    title: 'Add your resume to unlock GAP, FIT & SHIFT',
     body: (
       <>
-        The heart of GradusIQ. <strong>GAP</strong> is a readiness check against
-        your target roles — your score, what&rsquo;s missing, and what to do
-        next. <strong>FIT</strong> shows how well your profile matches each
-        role and why. <strong>SHIFT</strong> shows how those roles are evolving
-        and adjacent paths worth exploring. Below sits your own data —
-        experience, projects, certifications, interests and target roles.
+        The heart of GradusIQ. Add your <strong>resume</strong> and it fills in
+        your experience, projects and target roles — unlocking{' '}
+        <strong>GAP</strong> (a readiness check against your target roles),{' '}
+        <strong>FIT</strong> (how well you match each role and why), and{' '}
+        <strong>SHIFT</strong> (how those roles are evolving and adjacent paths
+        worth exploring).
+      </>
+    ),
+  },
+  {
+    section: 'overview',
+    kind: 'cta',
+    eyebrow: 'Get started',
+    title: "You're all set — first steps",
+    body: (
+      <>
+        Add your transcript and resume to bring your profile to life. You can
+        always do this later from the Overview tab.
       </>
     ),
   },
@@ -84,17 +111,20 @@ const TOUR_STEPS: TourStep[] = [
 interface GuidedTourProps {
   /** Switch the underlying dashboard tab as the tour advances. */
   onNavigate: (section: TourSection) => void;
-  /** Called when the tour ends. `completed` is true only on Finish. */
+  /** Called when the tour ends (any dismissal). `completed` is true when the
+   *  viewer reached the final step (Explore / a CTA), false on Skip/Escape. */
   onClose: (completed: boolean) => void;
+  /** Optional deep-links shown as buttons on the final step. */
+  endActions?: TourAction[];
 }
 
-export function GuidedTour({ onNavigate, onClose }: GuidedTourProps) {
+export function GuidedTour({ onNavigate, onClose, endActions }: GuidedTourProps) {
   const [index, setIndex] = useState(0);
   const cardRef = useRef<HTMLDivElement>(null);
 
   const step = TOUR_STEPS[index];
   const isFirst = index === 0;
-  const isLast = index === TOUR_STEPS.length - 1;
+  const isCta = step.kind === 'cta';
 
   // Drive the underlying tab whenever the step changes, and move focus to the
   // card so keyboard users follow along.
@@ -113,15 +143,17 @@ export function GuidedTour({ onNavigate, onClose }: GuidedTourProps) {
   }, [onClose]);
 
   function next() {
-    if (isLast) {
-      onClose(true);
-    } else {
-      setIndex((i) => i + 1);
-    }
+    setIndex((i) => Math.min(TOUR_STEPS.length - 1, i + 1));
   }
 
   function back() {
     setIndex((i) => Math.max(0, i - 1));
+  }
+
+  // A final-step deep-link: mark the tour done, then navigate away.
+  function runAction(action: TourAction) {
+    onClose(true);
+    action.onClick();
   }
 
   return (
@@ -143,6 +175,22 @@ export function GuidedTour({ onNavigate, onClose }: GuidedTourProps) {
           {step.body}
         </p>
 
+        {/* Final step: the call-to-action buttons (deep-links), stacked. */}
+        {isCta && endActions && endActions.length > 0 && (
+          <div className="tour-cta-actions">
+            {endActions.map((action) => (
+              <button
+                key={action.label}
+                type="button"
+                className="btn btn-primary btn-full"
+                onClick={() => runAction(action)}
+              >
+                {action.label}
+              </button>
+            ))}
+          </div>
+        )}
+
         <div className="tour-footer">
           {/* Progress dots */}
           <div className="tour-dots" aria-hidden="true">
@@ -155,29 +203,40 @@ export function GuidedTour({ onNavigate, onClose }: GuidedTourProps) {
           </div>
 
           <div className="tour-actions">
-            <button
-              type="button"
-              className="btn btn-ghost btn-sm tour-skip"
-              onClick={() => onClose(false)}
-            >
-              Skip tour
-            </button>
-            {!isFirst && (
-              <button
-                type="button"
-                className="btn btn-ghost btn-sm"
-                onClick={back}
-              >
-                Back
-              </button>
+            {isCta ? (
+              <>
+                {!isFirst && (
+                  <button type="button" className="btn btn-ghost btn-sm" onClick={back}>
+                    Back
+                  </button>
+                )}
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm tour-skip"
+                  onClick={() => onClose(true)}
+                >
+                  Explore on my own
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm tour-skip"
+                  onClick={() => onClose(false)}
+                >
+                  Skip tour
+                </button>
+                {!isFirst && (
+                  <button type="button" className="btn btn-ghost btn-sm" onClick={back}>
+                    Back
+                  </button>
+                )}
+                <button type="button" className="btn btn-primary btn-sm" onClick={next}>
+                  Next
+                </button>
+              </>
             )}
-            <button
-              type="button"
-              className="btn btn-primary btn-sm"
-              onClick={next}
-            >
-              {isLast ? 'Finish' : 'Next'}
-            </button>
           </div>
         </div>
 

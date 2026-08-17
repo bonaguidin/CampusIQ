@@ -6,13 +6,17 @@ space the slug-addressed routes structurally cannot reach.
 """
 
 import json
+from contextlib import contextmanager
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 from fastapi.testclient import TestClient
 
 from GradusIQ_career import api
+from GradusIQ_career.ai.errors import AIRequestError
 from GradusIQ_career.ai.types import AIResponse
+from GradusIQ_career.student_intelligence_profile import StudentIntelligenceProfile
 from GradusIQ_career.supabase_client import SupabaseConfigError
 
 
@@ -25,8 +29,10 @@ ME_ROUTES = [
     ("post", "/api/v2/student/me/analyze/gap", None),
     ("post", "/api/v2/student/me/chat", {"message": "hi", "history": []}),
     ("get", "/api/v2/student/me/profile", None),
+    ("post", "/api/v2/student/me/action-plan", None),
+    ("get", "/api/v2/student/me/career-role-options", None),
 ]
-ME_IDS = ["analyze", "chat", "profile"]
+ME_IDS = ["analyze", "chat", "profile", "action-plan", "role-options"]
 
 
 def make_test_config(**overrides):
@@ -61,7 +67,15 @@ FEATURE_JSON = json.dumps(
             "must_have_gaps": [],
             "nice_to_have_gaps": [],
             "recommended_next_steps": [],
-            "role_matches": [],
+            "role_matches": [
+                {
+                    "role": "SWE Intern",
+                    "fit_level": "medium",
+                    "rationale": "Python experience supports the role.",
+                    "supporting_signals": ["Python"],
+                    "missing_signals": ["Production experience"],
+                }
+            ],
             "overall_fit_summary": "ok",
             "role_evolution_summary": "ok",
             "task_shifts": [],
@@ -74,15 +88,50 @@ FEATURE_JSON = json.dumps(
     }
 )
 
+GAP_JSON = json.dumps(
+    {
+        "summary": "LIVE-RESULT",
+        "data": {
+            "readiness_score": 6,
+            "strengths": [],
+            "must_have_gaps": [],
+            "nice_to_have_gaps": [],
+            "recommended_next_steps": [],
+        },
+    }
+)
+
+SHIFT_JSON = json.dumps(
+    {
+        "summary": "LIVE-RESULT",
+        "data": {
+            "role_evolution_summary": "Roles are changing.",
+            "task_shifts": [],
+            "durable_skills": [],
+            "adjacent_paths": [],
+            "ai_fluency_guidance": [],
+        },
+    }
+)
+
 
 class FakeAI:
-    def __init__(self, text=FEATURE_JSON):
+    def __init__(self, text=None):
         self.text = text
         self.calls = []
 
     def complete(self, **kwargs):
         self.calls.append(kwargs)
-        return AIResponse(text=self.text, raw={"choices": []}, model="fake-model")
+        text = self.text
+        if text is None:
+            blob = " ".join(message.get("content", "") for message in kwargs.get("messages", []))
+            if '"feature": "GAP"' in blob:
+                text = GAP_JSON
+            elif '"feature": "SHIFT"' in blob:
+                text = SHIFT_JSON
+            else:
+                text = FEATURE_JSON
+        return AIResponse(text=text, raw={"choices": []}, model="fake-model")
 
 
 def _full_profile():
@@ -99,7 +148,7 @@ def _full_profile():
             "gpa_current": None,
         },
         "career": {
-            "target_roles": ["SWE Intern"],
+            "target_roles": ["Software Engineering Intern"],
             "interests": ["backend"],
             "career_goals": "Ship things.",
             "geographic_preference": "DFW",
@@ -114,6 +163,55 @@ def _full_profile():
             "projects": [],
         },
     }
+
+
+def _canonical_profile():
+    return StudentIntelligenceProfile.model_validate(
+        {
+            "identity": {
+                "student_id": STUDENT_UUID,
+                "name": "Real Student",
+                "classification": "Junior",
+                "expected_graduation": "2028-05",
+            },
+            "institution": {"name": "Texas A&M University"},
+            "academics": {
+                "summary": {
+                    "major_current": "Computer Science",
+                    "major_intended": "Computer Science",
+                    "confirmed_course_count": 1,
+                },
+                "terms": [],
+                "courses": [{
+                    "id": "course-1", "course_code": "CSCE 120", "title": "Program Design",
+                    "credit_hours": 4, "letter_grade": "A", "credit_type": "resident",
+                    "status": "completed", "source": "transcript_parse",
+                }],
+                "gpa": {"official": 4.0, "projected": 4.0, "computable": True},
+            },
+            "career": {
+                "confirmed": True,
+                "target_roles": ["Software Engineering Intern"], "interests": ["backend"],
+                "career_goals": "Ship things.", "geographic_preference": "DFW",
+                "ai_anxiety_level": "low",
+                "skills": {"technical": ["Python"], "soft": ["communication"], "ai_exposure": "some"},
+                "work_experience": [{"employer": "Acme", "role": "Intern"}],
+            },
+            "completeness": {
+                "career": {
+                    "confirmed_profile": True, "target_role_present": True, "skills_present": True,
+                    "certifications_present": False, "work_experience_present": True,
+                    "projects_present": False, "ready_for_career_features": True,
+                },
+                "academics": {
+                    "transcript_data_present": True, "terms_present": False,
+                    "gpa_computable": True, "ready_for_academic_features": False,
+                },
+                "overall": "partial",
+            },
+            "provenance": {},
+        }
+    )
 
 
 def _patch_session(monkeypatch, profile=None, student_rows=None):
@@ -143,15 +241,7 @@ def _patch_session(monkeypatch, profile=None, student_rows=None):
             "build_profile_from_supabase",
             lambda client, sid: type("R", (), {"profile": profile})(),
         )
-        monkeypatch.setattr(
-            api,
-            "build_student_intelligence_profile",
-            lambda client, sid: type(
-                "Canonical",
-                (),
-                {"model_dump": lambda self, mode=None: {"contract_version": "1.0"}},
-            )(),
-        )
+        monkeypatch.setattr(api, "build_student_intelligence_profile", lambda client, sid: _canonical_profile())
         monkeypatch.setattr(api, "canonical_to_legacy_profile", lambda canonical: profile)
     return rows
 
@@ -211,7 +301,7 @@ def test_me_profile_returns_the_profile(client, monkeypatch):
     body = response.json()
     assert body["student"]["id"] == STUDENT_UUID
     assert body["student"]["institution"] == "Texas A&M University"
-    assert body["career"]["target_roles"] == ["SWE Intern"]
+    assert body["career"]["target_roles"] == ["Software Engineering Intern"]
     assert body["intelligence_profile"]["contract_version"] == "1.0"
 
 
@@ -322,7 +412,25 @@ def test_profile_edit_rejects_invalid_values_before_writing(client, monkeypatch,
 @pytest.mark.parametrize("feature", ["gap", "fit", "shift", "professor-comments"])
 def test_me_analyze_returns_a_feature_result(feature, client, monkeypatch):
     _patch_session(monkeypatch, profile=_full_profile())
-    monkeypatch.setattr(api, "build_client", lambda: FakeAI())
+    fit_json = json.dumps(
+        {
+            "summary": "LIVE-RESULT",
+            "data": {
+                "role_matches": [
+                    {
+                        "role": "SWE Intern",
+                        "fit_level": "medium",
+                        "rationale": "Python experience supports the role.",
+                        "supporting_signals": ["Python"],
+                        "missing_signals": ["Production experience"],
+                    }
+                ],
+                "overall_fit_summary": "ok",
+            },
+        }
+    )
+    payload = {"fit": fit_json, "gap": GAP_JSON, "shift": SHIFT_JSON}.get(feature, FEATURE_JSON)
+    monkeypatch.setattr(api, "build_client", lambda: FakeAI(payload))
 
     response = _call(client, "post", f"/api/v2/student/me/analyze/{feature}", None)
 
@@ -348,6 +456,17 @@ def test_me_analyze_returns_a_feature_result(feature, client, monkeypatch):
         "shift": "success",
         "professor-comments": "skipped",
     }[feature]
+
+
+@pytest.mark.parametrize("feature", ["fit", "gap", "shift"])
+def test_authenticated_typed_features_remain_inside_ai_concurrency_gate(feature, monkeypatch):
+    _patch_session(monkeypatch, profile=_full_profile())
+    app = api.create_app(make_test_config(max_concurrent_ai_requests=0))
+    response = _call(
+        TestClient(app), "post", f"/api/v2/student/me/analyze/{feature}", None
+    )
+    assert response.status_code == 429
+    assert response.json()["detail"] == "AI service is busy; retry later."
 
 
 @pytest.mark.parametrize("feature", ["fit", "gap", "shift"])
@@ -432,21 +551,21 @@ def test_professor_comments_is_unreachable_for_a_real_student(client, monkeypatc
     assert ai.calls == []
 
 
-def test_chat_keeps_legacy_profile_path(client, monkeypatch):
+def test_chat_uses_canonical_profile_path(client, monkeypatch):
     _patch_session(monkeypatch, profile=_full_profile())
     monkeypatch.setattr(
         api,
-        "build_student_intelligence_profile",
-        lambda client, sid: pytest.fail("chat is outside Phase 3"),
+        "build_profile_from_supabase",
+        lambda client, sid: pytest.fail("legacy builder must not be authoritative for chat"),
     )
-    monkeypatch.setattr(api, "build_client", lambda: FakeAI("legacy chat"))
+    monkeypatch.setattr(api, "build_client", lambda: FakeAI("canonical chat"))
 
     response = _call(
         client, "post", "/api/v2/student/me/chat", {"message": "hi", "history": []}
     )
 
     assert response.status_code == 200
-    assert response.json()["reply"] == "legacy chat"
+    assert response.json()["reply"] == "canonical chat"
 
 
 @pytest.mark.parametrize("feature", ["fit", "gap", "shift"])
@@ -569,6 +688,288 @@ def test_me_chat_never_calls_load_analysis_bundle(client, monkeypatch):
     assert response.json()["reply"] == "ok"
 
 
+def test_me_chat_retries_inside_concurrency_slot_and_releases(client, monkeypatch):
+    _patch_session(monkeypatch, profile=_full_profile())
+
+    class TrackingGate:
+        active = False
+        entries = 0
+        exits = 0
+
+        @contextmanager
+        def slot(self):
+            self.entries += 1
+            self.active = True
+            try:
+                yield
+            finally:
+                self.active = False
+                self.exits += 1
+
+    gate = TrackingGate()
+    client.app.state.ai_concurrency = gate
+    attempts = 0
+
+    class RetryingAI:
+        def complete(self, **kwargs):
+            nonlocal attempts
+            attempts += 1
+            assert gate.active is True
+            if attempts < 3:
+                raise AIRequestError("temporary", transient=True)
+            return AIResponse(text="recovered", raw={"choices": []}, model="fake-model")
+
+    monkeypatch.setattr(api, "build_client", RetryingAI)
+    monkeypatch.setattr("GradusIQ_career.ai.runtime.time.sleep", lambda _: None)
+
+    response = _call(client, "post", "/api/v2/student/me/chat", {"message": "hi", "history": []})
+
+    assert response.status_code == 200
+    assert attempts == 3
+    assert (gate.entries, gate.exits, gate.active) == (1, 1, False)
+
+
+def test_me_chat_releases_concurrency_slot_after_retry_exhaustion(client, monkeypatch):
+    _patch_session(monkeypatch, profile=_full_profile())
+
+    class TrackingGate:
+        active = False
+        exits = 0
+
+        @contextmanager
+        def slot(self):
+            self.active = True
+            try:
+                yield
+            finally:
+                self.active = False
+                self.exits += 1
+
+    gate = TrackingGate()
+    client.app.state.ai_concurrency = gate
+
+    class FailingAI:
+        def complete(self, **kwargs):
+            assert gate.active is True
+            raise AIRequestError("temporary", transient=True)
+
+    monkeypatch.setattr(api, "build_client", FailingAI)
+    monkeypatch.setattr("GradusIQ_career.ai.runtime.time.sleep", lambda _: None)
+
+    response = _call(client, "post", "/api/v2/student/me/chat", {"message": "hi", "history": []})
+
+    assert response.status_code == 502
+    assert (gate.exits, gate.active) == (1, False)
+
+
+@pytest.mark.parametrize(
+    "path", ["/api/v2/student/me/analyze/course-discovery", "/api/v2/student/me/action-plan"],
+)
+def test_unsupported_target_role_skips_before_any_agent_run(path, client, monkeypatch):
+    """A confirmed, real target role that role_requirements.json has no
+    curated entry for must be distinguished from "no role chosen": the
+    student sees a typed skip explaining GradusIQ has no analysis coverage
+    for the role, not an empty-looking success. Regression test for the
+    exact live E2E finding: Course Discovery silently returned zero verified/
+    blocked/unresolved candidates for "Software Engineer", which reads
+    identically to "nothing relevant to recommend" -- the real reason was the
+    role itself, not the student's profile.
+    """
+    _patch_session(monkeypatch, profile=_full_profile())
+    # _patch_session hardcodes build_student_intelligence_profile to
+    # _canonical_profile(); course-discovery/action-plan resolve target_role
+    # from THAT canonical model, not the legacy profile dict, so the
+    # unsupported role has to be injected there.
+    unsupported_canonical = _canonical_profile().model_copy(
+        update={"career": _canonical_profile().career.model_copy(update={"target_roles": ["Software Engineer"]})}
+    )
+    monkeypatch.setattr(api, "build_student_intelligence_profile", lambda client, sid: unsupported_canonical)
+    monkeypatch.setattr(api, "list_planned", lambda client, sid: [])
+    monkeypatch.setattr(api, "CourseDiscoveryAgent", lambda *a, **k: pytest.fail("must skip before any agent run"))
+    monkeypatch.setattr(api, "build_client", lambda: pytest.fail("must skip before building an AI client"))
+
+    response = _call(client, "post", path, {"target_role": "Software Engineer"})
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["status"] == "skipped"
+    assert body["summary"] == "Career analysis isn't available for this target role yet."
+    assert body["missing_fields"][0]["path"] == "career.target_roles"
+    assert "supported target role" in body["missing_fields"][0]["label"].lower()
+    # Not a generic "add this" -- the role IS present, just unsupported.
+    assert "Software Engineer" not in body["missing_fields"][0]["label"]
+
+
+def test_supported_target_role_is_unaffected_by_the_new_gate(client, monkeypatch):
+    """The exact same request shape that already worked (curated role)
+    continues to reach the agent -- the new gate only intercepts unsupported
+    roles, it does not change resolution for supported ones."""
+    _patch_session(monkeypatch, profile=_full_profile())  # target_roles: ["Software Engineering Intern"]
+    monkeypatch.setattr(api, "list_planned", lambda client, sid: [])
+
+    class Result:
+        summary = "ok"
+
+        def model_dump(self, **kwargs):
+            return {"target_role": "Software Engineering Intern", "verified_recommendations": []}
+
+    class Agent:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def run(self, *, needs, target_role):
+            return SimpleNamespace(errors=[], result=Result())
+
+    monkeypatch.setattr(api, "CourseDiscoveryAgent", Agent)
+    monkeypatch.setattr(api, "build_client", lambda: object())
+
+    response = _call(
+        client, "post", "/api/v2/student/me/analyze/course-discovery",
+        {"target_role": "Software Engineering Intern"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["status"] == "success"
+
+
+def test_career_role_options_returns_the_curated_vocabulary(client, monkeypatch):
+    _patch_session(monkeypatch, profile=_full_profile())
+
+    response = _call(client, "get", "/api/v2/student/me/career-role-options", None)
+
+    assert response.status_code == 200
+    body = response.json()
+    assert set(body) == {"roles"}
+    assert "Software Engineering Intern" in body["roles"]
+    assert "Software Engineer" not in body["roles"]
+    assert body["roles"] == sorted(body["roles"])
+
+
+def test_course_discovery_uses_trusted_scope_and_ai_gate(client, monkeypatch):
+    _patch_session(monkeypatch, profile=_full_profile())
+    monkeypatch.setattr(api, "list_planned", lambda client, sid: [])
+
+    class Gate:
+        active = False
+        entries = exits = 0
+
+        @contextmanager
+        def slot(self):
+            self.entries += 1
+            self.active = True
+            try:
+                yield
+            finally:
+                self.active = False
+                self.exits += 1
+
+    gate = Gate()
+    client.app.state.ai_concurrency = gate
+
+    class Result:
+        summary = "No verified course matched."
+
+        def model_dump(self, **kwargs):
+            return {"target_role": "Software Engineering Intern", "verified_recommendations": []}
+
+    class Agent:
+        def __init__(self, service, provider):
+            assert service.context.student_id == STUDENT_UUID
+            assert service.context.institution.value == "tamu"
+
+        def run(self, *, needs, target_role):
+            assert gate.active is True
+            assert target_role == "Software Engineering Intern"
+            return SimpleNamespace(errors=[], result=Result())
+
+    monkeypatch.setattr(api, "CourseDiscoveryAgent", Agent)
+    # The handler builds a real AI client to hand the agent; with the agent
+    # mocked, that client is never used, but build_client() still runs and
+    # needs OPENROUTER_API_KEY. Stub it so the test exercises trusted scope and
+    # the gate without a live-key dependency (CI runs with no env). Same pattern
+    # as tests/test_api.py.
+    monkeypatch.setattr(api, "build_client", lambda: object())
+    response = _call(
+        client, "post", "/api/v2/student/me/analyze/course-discovery",
+        {"target_role": "Software Engineering Intern"},
+    )
+    assert response.status_code == 200
+    assert set(response.json()) == {"feature", "status", "summary", "data", "errors", "missing_fields"}
+    assert (gate.entries, gate.exits, gate.active) == (1, 1, False)
+
+
+def test_course_discovery_rejects_client_student_id_and_releases_gate_on_failure(client, monkeypatch):
+    _patch_session(monkeypatch, profile=_full_profile())
+    rejected = _call(
+        client, "post", "/api/v2/student/me/analyze/course-discovery",
+        {"target_role": "Software Engineering Intern", "student_id": "other-student"},
+    )
+    assert rejected.status_code == 422
+
+    monkeypatch.setattr(api, "list_planned", lambda client, sid: [])
+
+    class Gate:
+        active = False
+        exits = 0
+
+        @contextmanager
+        def slot(self):
+            self.active = True
+            try:
+                yield
+            finally:
+                self.active = False
+                self.exits += 1
+
+    gate = Gate()
+    client.app.state.ai_concurrency = gate
+
+    class Agent:
+        def __init__(self, *args):
+            pass
+
+        def run(self, **kwargs):
+            assert gate.active is True
+            raise RuntimeError("provider unavailable")
+
+    monkeypatch.setattr(api, "CourseDiscoveryAgent", Agent)
+    monkeypatch.setattr(api, "build_client", lambda: object())
+    response = _call(
+        client, "post", "/api/v2/student/me/analyze/course-discovery",
+        {"target_role": "Software Engineering Intern"},
+    )
+    assert response.status_code == 502
+    assert (gate.exits, gate.active) == (1, False)
+
+
+@pytest.mark.parametrize(
+    ("path", "body"),
+    [
+        ("/api/v2/student/me/analyze/course-discovery", {"target_role": "Software Engineering Intern"}),
+        ("/api/v2/student/me/action-plan", {"target_role": "Software Engineering Intern"}),
+    ],
+)
+def test_course_discovery_and_action_plan_gate_exhaustion_stays_429(path, body, monkeypatch):
+    """The concurrency gate's own HTTPException(429) must reach the caller
+    unchanged, not be relabeled 502 by _run_course_discovery_agent's except
+    Exception -- the same guarantee every other ai_concurrency.slot() call
+    site in this file already has (see the "must reach the caller unchanged"
+    comment on the chat/typed-feature/resume/transcript handlers). Regression
+    test for a real bug found during live E2E validation: with capacity=0 the
+    real AIConcurrencyGate.slot() raises HTTPException(429) on entry, which
+    _run_course_discovery_agent's bare `except Exception` was swallowing and
+    rewrapping as a misleading 502 "Course discovery is unavailable" --
+    masking a retryable "busy" state as a hard failure for both the
+    Course Discovery panel and the Action Plan preview it feeds.
+    """
+    _patch_session(monkeypatch, profile=_full_profile())
+    monkeypatch.setattr(api, "list_planned", lambda client, sid: [])
+    app = api.create_app(make_test_config(max_concurrent_ai_requests=0))
+    response = _call(TestClient(app), "post", path, body)
+    assert response.status_code == 429
+    assert response.json()["detail"] == "AI service is busy; retry later."
+
+
 # 8. SupabaseConfigError -> 503 on all three.
 @pytest.mark.parametrize(("method", "path", "body"), ME_ROUTES, ids=ME_IDS)
 def test_supabase_config_error_is_503(method, path, body, client, monkeypatch):
@@ -661,3 +1062,371 @@ def test_uuid_slug_is_rejected_by_isalnum_directly():
     assert len(STUDENT_UUID) <= 64  # length alone would have passed
     assert api.load_cached_feature_result(STUDENT_UUID, "GAP", STUDENT_UUID) is None
     assert api.load_analysis_bundle(STUDENT_UUID) == {}
+
+
+# --- POST /api/v2/student/me/action-plan (feat: expose read-only action-plan preview) ---
+# CourseDiscoveryAgent is mocked at the exact same boundary the existing
+# course-discovery tests above use (monkeypatch api.CourseDiscoveryAgent),
+# but returning a REAL CourseDiscoveryResult so build_action_plan()/
+# dependency_order() -- both unmodified, already-tested pure functions --
+# actually run for real inside the route.
+
+from GradusIQ_career.action_planning.models import (
+    DependencyOrderResult,
+    PlanFailure,
+    UnifiedActionPlan,
+)
+from GradusIQ_career.course_discovery.agent_models import (
+    CourseDiscoveryResult,
+    PrerequisiteBlockedCourse,
+    UnresolvedCourseCandidate,
+    VerifiedCourseRecommendation,
+)
+from GradusIQ_career.course_discovery.models import (
+    CareerSkillNeed,
+    CatalogInstitution,
+    CatalogProvenance,
+    CourseEligibilityStatus,
+    EvidenceState,
+    MatchKind,
+    PrerequisiteEvaluation,
+    PrerequisiteMode,
+    PrerequisiteRequirement,
+    PrerequisiteStatus,
+    StudentCourseState,
+)
+
+ACTION_PLAN_TARGET_ROLE = "Software Engineering Intern"  # matches _canonical_profile()'s confirmed target role
+
+
+def _ap_need(skill="Python"):
+    return CareerSkillNeed(
+        skill=skill, category="skills", target_role=ACTION_PLAN_TARGET_ROLE,
+        importance="required", evidence_state=EvidenceState.VERIFIED_LOCAL,
+        evidence_source="O*NET 15-1252.00 onet",
+    )
+
+
+def _ap_provenance(course_code):
+    return CatalogProvenance(
+        institution=CatalogInstitution.TAMU, course_code=course_code,
+        catalog_year="2026-2027",
+        source_url="https://catalog.tamu.edu/undergraduate/course-descriptions/",
+        source_last_checked="2026-06-20",
+    )
+
+
+def _ap_verified(course_code, need, *, prerequisite_evaluation=None, student_status=StudentCourseState.NOT_TAKEN):
+    evaluation = prerequisite_evaluation or PrerequisiteEvaluation(
+        status=PrerequisiteStatus.ELIGIBLE, requirement=PrerequisiteRequirement(mode=PrerequisiteMode.NONE),
+    )
+    return VerifiedCourseRecommendation(
+        institution=CatalogInstitution.TAMU, course_code=course_code, title=f"{course_code} title",
+        description="Course description.", credit_min=3.0, credit_max=3.0,
+        matched_needs=[need], match_kinds=[MatchKind.TITLE], matched_terms=["match"],
+        student_status=student_status, prerequisite_status=evaluation.status,
+        prerequisite_evaluation=evaluation, eligibility_status=CourseEligibilityStatus.ELIGIBLE,
+        provenance=_ap_provenance(course_code), ranking_reason="Direct match.",
+        skill_alignment_explanation="Covers the need directly.",
+    )
+
+
+def _ap_blocked(course_code, need, evaluation):
+    return PrerequisiteBlockedCourse(
+        institution=CatalogInstitution.TAMU, course_code=course_code, title=f"{course_code} title",
+        matched_needs=[need], match_kinds=[MatchKind.TITLE],
+        eligibility_status=CourseEligibilityStatus.INELIGIBLE,
+        prerequisite_status=evaluation.status, prerequisite_evaluation=evaluation,
+        provenance=_ap_provenance(course_code),
+    )
+
+
+def _ap_unresolved(course_code, need):
+    evaluation = PrerequisiteEvaluation(
+        status=PrerequisiteStatus.UNRESOLVED,
+        requirement=PrerequisiteRequirement(mode=PrerequisiteMode.UNRESOLVED, unresolved_reasons=["mixed grammar"]),
+    )
+    return UnresolvedCourseCandidate(
+        institution=CatalogInstitution.TAMU, course_code=course_code, title=f"{course_code} title",
+        matched_needs=[need], match_kinds=[MatchKind.TITLE],
+        eligibility_status=CourseEligibilityStatus.UNRESOLVED, reasons=["ambiguous restriction"],
+        prerequisite_evaluation=evaluation, provenance=_ap_provenance(course_code),
+    )
+
+
+def _ap_result(need, *, verified_recs=None, blocked_recs=None, unresolved_recs=None):
+    return CourseDiscoveryResult(
+        target_role=ACTION_PLAN_TARGET_ROLE, current_major="Computer Science",
+        intended_major="Computer Science", career_needs=[need],
+        verified_recommendations=verified_recs or [], requires_verification=unresolved_recs or [],
+        prerequisite_blocked=blocked_recs or [], summary="Test fixture.",
+    )
+
+
+def _stub_action_plan_agent(monkeypatch, client, need, result):
+    monkeypatch.setattr(api, "list_planned", lambda client, sid: [])
+    monkeypatch.setattr(api, "derive_career_skill_needs", lambda profile, role: [need])
+    monkeypatch.setattr(api, "build_client", lambda: object())
+
+    class Agent:
+        def __init__(self, service, provider):
+            pass
+
+        def run(self, *, needs, target_role):
+            assert needs == [need]
+            assert target_role == ACTION_PLAN_TARGET_ROLE
+            return SimpleNamespace(errors=[], result=result)
+
+    monkeypatch.setattr(api, "CourseDiscoveryAgent", Agent)
+
+
+def test_action_plan_simple_verified_recommendation_is_complete(client, monkeypatch):
+    _patch_session(monkeypatch, profile=_full_profile())
+    need = _ap_need()
+    result = _ap_result(need, verified_recs=[_ap_verified("CSCE 110", need)])
+    _stub_action_plan_agent(monkeypatch, client, need, result)
+
+    response = _call(client, "post", "/api/v2/student/me/action-plan", {"target_role": ACTION_PLAN_TARGET_ROLE})
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["feature"] == "ACTION_PLAN" and body["status"] == "success"
+    assert body["dependency_order"]["completeness"] == "COMPLETE"
+    assert body["dependency_order"]["status"] == "ORDERED"
+    assert len(body["action_plan"]["nodes"]) == 2  # skill_need + course
+    assert body["action_plan"]["edges"][0]["relation"] == "satisfies"
+
+
+def test_action_plan_all_mode_blocked_prerequisite_orders_prerequisite_before_dependent(client, monkeypatch):
+    _patch_session(monkeypatch, profile=_full_profile())
+    need = _ap_need()
+    evaluation = PrerequisiteEvaluation(
+        status=PrerequisiteStatus.INELIGIBLE,
+        requirement=PrerequisiteRequirement(mode=PrerequisiteMode.ALL, course_codes=["FINC 351"]),
+        missing_courses=["FINC 351"],
+    )
+    result = _ap_result(need, blocked_recs=[_ap_blocked("FINC 446", need, evaluation)])
+    _stub_action_plan_agent(monkeypatch, client, need, result)
+
+    response = _call(client, "post", "/api/v2/student/me/action-plan", {"target_role": ACTION_PLAN_TARGET_ROLE})
+
+    assert response.status_code == 200
+    body = response.json()
+    from GradusIQ_career.action_planning.builder import course_node_id
+    target_id = course_node_id(CatalogInstitution.TAMU, "FINC 446")
+    prereq_id = course_node_id(CatalogInstitution.TAMU, "FINC 351")
+    node_ids = {n["node_id"] for n in body["action_plan"]["nodes"]}
+    assert target_id in node_ids and prereq_id in node_ids
+    requires = [e for e in body["action_plan"]["edges"] if e["relation"] == "requires"]
+    assert requires == [{"from_node_id": target_id, "to_node_id": prereq_id, "relation": "requires"}]
+    ordered = body["dependency_order"]["ordered_node_ids"]
+    assert ordered.index(prereq_id) < ordered.index(target_id)
+    assert body["dependency_order"]["completeness"] == "COMPLETE"
+
+
+def test_action_plan_blocked_course_retains_satisfies_edge(client, monkeypatch):
+    _patch_session(monkeypatch, profile=_full_profile())
+    need = _ap_need()
+    evaluation = PrerequisiteEvaluation(
+        status=PrerequisiteStatus.INELIGIBLE,
+        requirement=PrerequisiteRequirement(mode=PrerequisiteMode.ALL, course_codes=["FINC 351"]),
+        missing_courses=["FINC 351"],
+    )
+    result = _ap_result(need, blocked_recs=[_ap_blocked("FINC 446", need, evaluation)])
+    _stub_action_plan_agent(monkeypatch, client, need, result)
+
+    response = _call(client, "post", "/api/v2/student/me/action-plan", {"target_role": ACTION_PLAN_TARGET_ROLE})
+
+    from GradusIQ_career.action_planning.builder import course_node_id, skill_need_node_id
+    target_id = course_node_id(CatalogInstitution.TAMU, "FINC 446")
+    satisfies = [e for e in response.json()["action_plan"]["edges"] if e["relation"] == "satisfies"]
+    assert satisfies == [{
+        "from_node_id": target_id, "to_node_id": skill_need_node_id(need.need_id), "relation": "satisfies",
+    }]
+
+
+def test_action_plan_any_mode_blocked_is_provisional_with_no_fake_edges(client, monkeypatch):
+    _patch_session(monkeypatch, profile=_full_profile())
+    need = _ap_need()
+    evaluation = PrerequisiteEvaluation(
+        status=PrerequisiteStatus.INELIGIBLE,
+        requirement=PrerequisiteRequirement(mode=PrerequisiteMode.ANY, course_codes=["ACCT 209", "ACCT 229"]),
+        missing_courses=["ACCT 209", "ACCT 229"],
+    )
+    result = _ap_result(need, blocked_recs=[_ap_blocked("ACCT 210", need, evaluation)])
+    _stub_action_plan_agent(monkeypatch, client, need, result)
+
+    response = _call(client, "post", "/api/v2/student/me/action-plan", {"target_role": ACTION_PLAN_TARGET_ROLE})
+
+    body = response.json()
+    assert response.status_code == 200  # PROVISIONAL is not an HTTP error
+    assert [e for e in body["action_plan"]["edges"] if e["relation"] == "requires"] == []
+    order = body["dependency_order"]
+    assert order["completeness"] == "PROVISIONAL"
+    assert order["status"] == "ORDERED"
+    assert len(order["limitations"]) == 1
+    assert order["limitations"][0]["reason_type"] == "ANY_PREREQUISITE"
+    assert set(order["limitations"][0]["course_codes"]) == {"ACCT 209", "ACCT 229"}
+
+
+def test_action_plan_unresolved_candidate_never_enters_the_plan_and_stays_complete(client, monkeypatch):
+    """UNRESOLVED-mode courses land in requires_verification, which
+    build_action_plan() never consumes -- confirms the trusted server path
+    doesn't leak that evidence into a fake node/edge/limitation."""
+    _patch_session(monkeypatch, profile=_full_profile())
+    need = _ap_need()
+    result = _ap_result(need, unresolved_recs=[_ap_unresolved("CSCE 221", need)])
+    _stub_action_plan_agent(monkeypatch, client, need, result)
+
+    response = _call(client, "post", "/api/v2/student/me/action-plan", {"target_role": ACTION_PLAN_TARGET_ROLE})
+
+    body = response.json()
+    # the skill_need node itself always exists (build_action_plan creates one
+    # per requested need, regardless of whether anything satisfies it yet);
+    # only the unresolved candidate's course node must be absent.
+    assert [n for n in body["action_plan"]["nodes"] if n["node_type"] == "course"] == []
+    assert body["dependency_order"]["completeness"] == "COMPLETE"
+    assert body["dependency_order"]["limitations"] == []
+
+
+def test_action_plan_any_verified_with_missing_unused_alternative_is_complete(client, monkeypatch):
+    _patch_session(monkeypatch, profile=_full_profile())
+    need = _ap_need()
+    evaluation = PrerequisiteEvaluation(
+        status=PrerequisiteStatus.ELIGIBLE,
+        requirement=PrerequisiteRequirement(mode=PrerequisiteMode.ANY, course_codes=["ACCT 209", "ACCT 229"]),
+        satisfied_courses=["ACCT 229"], missing_courses=["ACCT 209"],
+    )
+    result = _ap_result(need, verified_recs=[_ap_verified("ACCT 210", need, prerequisite_evaluation=evaluation)])
+    _stub_action_plan_agent(monkeypatch, client, need, result)
+
+    response = _call(client, "post", "/api/v2/student/me/action-plan", {"target_role": ACTION_PLAN_TARGET_ROLE})
+
+    body = response.json()
+    assert body["dependency_order"]["completeness"] == "COMPLETE"
+    assert body["dependency_order"]["limitations"] == []
+    assert [e for e in body["action_plan"]["edges"] if e["relation"] == "requires"] == []
+
+
+def test_action_plan_any_verified_with_unknown_unused_alternative_is_complete(client, monkeypatch):
+    _patch_session(monkeypatch, profile=_full_profile())
+    need = _ap_need()
+    evaluation = PrerequisiteEvaluation(
+        status=PrerequisiteStatus.ELIGIBLE,
+        requirement=PrerequisiteRequirement(mode=PrerequisiteMode.ANY, course_codes=["ACCT 209", "ACCT 229"]),
+        satisfied_courses=["ACCT 229"], unknown_courses=["ACCT 209"],
+    )
+    result = _ap_result(need, verified_recs=[_ap_verified("ACCT 210", need, prerequisite_evaluation=evaluation)])
+    _stub_action_plan_agent(monkeypatch, client, need, result)
+
+    response = _call(client, "post", "/api/v2/student/me/action-plan", {"target_role": ACTION_PLAN_TARGET_ROLE})
+
+    body = response.json()
+    assert body["dependency_order"]["completeness"] == "COMPLETE"
+    assert body["dependency_order"]["limitations"] == []
+    assert [e for e in body["action_plan"]["edges"] if e["relation"] == "requires"] == []
+
+
+def test_action_plan_completed_and_planned_targets_excluded(client, monkeypatch):
+    _patch_session(monkeypatch, profile=_full_profile())
+    need = _ap_need()
+    completed = _ap_verified("CSCE 206", need, student_status=StudentCourseState.COMPLETED)
+    planned_course = _ap_verified("CSCE 207", need, student_status=StudentCourseState.PLANNED)
+    result = _ap_result(need, verified_recs=[completed, planned_course])
+    _stub_action_plan_agent(monkeypatch, client, need, result)
+
+    response = _call(client, "post", "/api/v2/student/me/action-plan", {"target_role": ACTION_PLAN_TARGET_ROLE})
+
+    body = response.json()
+    course_nodes = [n for n in body["action_plan"]["nodes"] if n["node_type"] == "course"]
+    assert course_nodes == []
+
+
+def test_action_plan_request_rejects_client_supplied_course_discovery_result(client, monkeypatch):
+    """CourseDiscoveryRequest forbids extra fields -- a client cannot smuggle
+    a pre-made CourseDiscoveryResult into the trusted planning pipeline."""
+    _patch_session(monkeypatch, profile=_full_profile())
+    response = _call(
+        client, "post", "/api/v2/student/me/action-plan",
+        {"target_role": ACTION_PLAN_TARGET_ROLE, "course_discovery_result": {"fabricated": True}},
+    )
+    assert response.status_code == 422
+
+
+def test_action_plan_response_round_trips_through_domain_models(client, monkeypatch):
+    _patch_session(monkeypatch, profile=_full_profile())
+    need = _ap_need()
+    evaluation = PrerequisiteEvaluation(
+        status=PrerequisiteStatus.INELIGIBLE,
+        requirement=PrerequisiteRequirement(mode=PrerequisiteMode.ALL, course_codes=["FINC 351"]),
+        missing_courses=["FINC 351"],
+    )
+    result = _ap_result(need, blocked_recs=[_ap_blocked("FINC 446", need, evaluation)])
+    _stub_action_plan_agent(monkeypatch, client, need, result)
+
+    response = _call(client, "post", "/api/v2/student/me/action-plan", {"target_role": ACTION_PLAN_TARGET_ROLE})
+    body = response.json()
+
+    plan = UnifiedActionPlan.model_validate(body["action_plan"])
+    order = DependencyOrderResult.model_validate(body["dependency_order"])
+    assert plan.execution_status == "SUCCESS"
+    assert order.status == "ORDERED"
+
+
+def test_action_plan_uses_the_same_skill_need_ids_course_discovery_used(client, monkeypatch):
+    _patch_session(monkeypatch, profile=_full_profile())
+    need = _ap_need()
+    result = _ap_result(need, verified_recs=[_ap_verified("CSCE 110", need)])
+    _stub_action_plan_agent(monkeypatch, client, need, result)
+
+    response = _call(client, "post", "/api/v2/student/me/action-plan", {"target_role": ACTION_PLAN_TARGET_ROLE})
+
+    from GradusIQ_career.action_planning.builder import skill_need_node_id
+    node_ids = {n["node_id"] for n in response.json()["action_plan"]["nodes"]}
+    assert skill_need_node_id(need.need_id) in node_ids
+
+
+def test_action_plan_repeated_identical_requests_are_deterministic(client, monkeypatch):
+    _patch_session(monkeypatch, profile=_full_profile())
+    need = _ap_need()
+    evaluation = PrerequisiteEvaluation(
+        status=PrerequisiteStatus.INELIGIBLE,
+        requirement=PrerequisiteRequirement(mode=PrerequisiteMode.ALL, course_codes=["FINC 351"]),
+        missing_courses=["FINC 351"],
+    )
+    result = _ap_result(need, blocked_recs=[_ap_blocked("FINC 446", need, evaluation)])
+    _stub_action_plan_agent(monkeypatch, client, need, result)
+
+    first = _call(client, "post", "/api/v2/student/me/action-plan", {"target_role": ACTION_PLAN_TARGET_ROLE})
+    second = _call(client, "post", "/api/v2/student/me/action-plan", {"target_role": ACTION_PLAN_TARGET_ROLE})
+
+    assert first.json()["action_plan"] == second.json()["action_plan"]
+    assert first.json()["dependency_order"] == second.json()["dependency_order"]
+
+
+def test_action_plan_typed_error_is_preserved_when_assembly_fails(client, monkeypatch):
+    """Simulates build_action_plan() returning its own typed ERROR envelope
+    (e.g. a cycle) at the integration seam -- confirms the route surfaces the
+    typed PlanFailure as a handled failure, not a 500, and skips computing
+    dependency_order on unusable graph data."""
+    _patch_session(monkeypatch, profile=_full_profile())
+    need = _ap_need()
+    result = _ap_result(need, verified_recs=[_ap_verified("CSCE 110", need)])
+    _stub_action_plan_agent(monkeypatch, client, need, result)
+
+    error_plan = UnifiedActionPlan(
+        target_role=ACTION_PLAN_TARGET_ROLE, nodes=[], edges=[], conflicts=[],
+        execution_status="ERROR",
+        failure=PlanFailure(error_class="CycleDetected", safe_message="simulated for this test"),
+        summary="Graph assembly aborted.",
+    )
+    monkeypatch.setattr(api, "build_action_plan", lambda **kwargs: error_plan)
+
+    response = _call(client, "post", "/api/v2/student/me/action-plan", {"target_role": ACTION_PLAN_TARGET_ROLE})
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["status"] == "failed"
+    assert body["action_plan"]["execution_status"] == "ERROR"
+    assert body["action_plan"]["failure"]["error_class"] == "CycleDetected"
+    assert body["dependency_order"] is None

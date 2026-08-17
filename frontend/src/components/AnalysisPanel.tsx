@@ -43,6 +43,29 @@ interface AnalysisPanelProps {
    * off 'failed' changes. Absent it, the generic sentence still renders.
    */
   failureMessage?: string;
+  /**
+   * A control that must be set before running (e.g. Course Discovery's
+   * target-role picker, when a student has more than one confirmed role).
+   * Renders in the header, before the run button. Optional and additive --
+   * FIT/GAP/SHIFT/Professor Comments pass nothing and are unaffected.
+   */
+  headerExtra?: ReactNode;
+  /**
+   * True while a manual re-run is in flight AND a 'done' result is already
+   * showing (see useCachedAnalysisRun). When set, the previous `children`
+   * stay rendered as-is -- this does not switch to the phase === 'loading'
+   * full-panel view -- and a small spinner + label appear near the header
+   * instead. Optional and additive: callers that don't pass it (or pass
+   * `false`) render exactly as before.
+   */
+  refreshing?: boolean;
+  /**
+   * Set when a re-run triggered from an already-'done' panel fails. Rendered
+   * as a small inline notice alongside the existing (still-shown) content,
+   * not a replacement for it -- distinct from the phase === 'failed' view,
+   * which only applies when there is no prior result to fall back to.
+   */
+  refreshError?: string;
   children?: ReactNode;
 }
 
@@ -58,20 +81,32 @@ export function AnalysisPanel({
   onRun,
   missingFields = [],
   failureMessage,
+  headerExtra,
+  refreshing = false,
+  refreshError,
   children,
 }: AnalysisPanelProps) {
   const requestProfileField = useProfileFieldRequest();
   return (
     <div className="card analysis-panel">
       <div className="editable-section-header">
-        <h3 className="editable-section-title">{title}</h3>
+        <h3 className="editable-section-title">
+          {title}
+          {refreshing && (
+            <span className="analysis-refreshing" role="status" aria-live="polite">
+              <span className="spinner-small" aria-hidden="true" />
+              Re-running…
+            </span>
+          )}
+        </h3>
         <div className="editable-section-actions">
+          {headerExtra}
           <button
             type="button"
             className="btn btn-ghost btn-sm"
             onClick={onRun}
-            disabled={phase === 'loading'}
-            aria-busy={phase === 'loading'}
+            disabled={phase === 'loading' || refreshing}
+            aria-busy={phase === 'loading' || refreshing}
           >
             {phase === 'loading' ? (
               <span className="btn-loading">
@@ -128,6 +163,12 @@ export function AnalysisPanel({
       )}
 
       {phase === 'success' && children}
+
+      {refreshError && (
+        <div className="analysis-refresh-error">
+          <p>{refreshError}</p>
+        </div>
+      )}
     </div>
   );
 }

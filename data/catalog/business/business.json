@@ -6422,5 +6422,521 @@
     "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/scmt/",
     "catalog_year": "2026-2027",
     "source_last_checked": "2026-06-20"
+  },
+  {
+    "code": "MGMT 376",
+    "title": "Entrepreneurial Perspectives",
+    "credit_hours": 3,
+    "description": "Entrepreneurship as a career choice and its impact on society and economy; definitions of entrepreneurship; discovery of entrepreneurial opportunities and start-up funding; innovation and entrepreneurship theories for analyzing and predicting success of start-up and established entrepreneurial organizations.",
+    "prerequisites": "Prerequisite: Admission to upper division in Mays Business School. Cross Listing: SOCI 376/MGMT 376 .",
+    "department": "Management",
+    "prefix": "MGMT",
+    "number": "376",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "SOCI 376",
+      "MGMT 376"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "SOCI 376",
+      "MGMT 376"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/mgmt/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "MGMT 430",
+    "title": "Employment Discrimination Law",
+    "credit_hours": 3,
+    "description": "Legal issues surrounding employment discrimination, including disparate treatment and impact; intent; affirmative action; sexual harassment; pregnancy, sex, race, religious, salary, disability, age, and ethnic discrimination; policy issues and perspectives to aid human resource specialists and managers.",
+    "prerequisites": "Prerequisites: Admission to upper division in Mays Business School and senior classification. Cross Listing: WGST 430/MGMT 430 .",
+    "department": "Management",
+    "prefix": "MGMT",
+    "number": "430",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "WGST 430",
+      "MGMT 430"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "WGST 430",
+      "MGMT 430"
+    ],
+    "restrictions": [
+      "senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/mgmt/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "MGMT 450",
+    "title": "International Environment of Business",
+    "credit_hours": 3,
+    "description": "Broad survey of international business issues; analyzes the environment in which international businesses operate; examines international economic issues including trade theory, investment theory, foreign exchange and capital markets, and balance of payments; introduces multinational enterprises, global competition, international organizations, treaties and international law, national trade policies and the determinants of competitiveness of firms in international markets.",
+    "prerequisites": "Prerequisite: Admission to upper division in Mays Business School. Cross Listing: IBUS 450/MGMT 450 .",
+    "department": "Management",
+    "prefix": "MGMT",
+    "number": "450",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "IBUS 450",
+      "MGMT 450"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "IBUS 450",
+      "MGMT 450"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/mgmt/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "MGMT 452",
+    "title": "International Management",
+    "credit_hours": 3,
+    "description": "An overview of international management to include international dimensions of organizational behavior, theory, strategy and human resource management; application of theoretical ideas to real-world situations through case analyses, presentations, projects and interactive class discussion.",
+    "prerequisites": "Prerequisite: MGMT 450/IBUS 450 or IBUS 450/MGMT 450 , or concurrent enrollment. Cross Listing: IBUS 452/MGMT 452 .",
+    "department": "Management",
+    "prefix": "MGMT",
+    "number": "452",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "IBUS 452",
+      "MGMT 452"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "MGMT 450",
+      "IBUS 450",
+      "IBUS 452",
+      "MGMT 452"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/mgmt/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "MGMT 457",
+    "title": "Global Entrepreneurship",
+    "credit_hours": 3,
+    "description": "Practical issues associated with taking small- and medium-size business global; includes importing and exporting, developing global strategies, evaluating market opportunities, regional impact on economies and people.",
+    "prerequisites": "Prerequisite: Admission to upper division in Mays Business School. Cross Listing: IBUS 457/MGMT 457 .",
+    "department": "Management",
+    "prefix": "MGMT",
+    "number": "457",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "IBUS 457",
+      "MGMT 457"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "IBUS 457",
+      "MGMT 457"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/mgmt/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "MGMT 476",
+    "title": "Entrepreneurship Practice",
+    "credit_hours": 3,
+    "description": "Practical skills for creating new businesses; evaluating, planning and operational strategy, including assessing the technology; product and service markets, value creation model; financing strategies; legal, regulatory, socio-economic drivers, risks; leadership to develop management team, advisory board; go-to-market strategy; develop own entrepreneurial opportunities or those of faculty and entrepreneurs.",
+    "prerequisites": "Cross Listing: SOCI 476/MGMT 476 .",
+    "department": "Management",
+    "prefix": "MGMT",
+    "number": "476",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "SOCI 476",
+      "MGMT 476"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "SOCI 476",
+      "MGMT 476"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/mgmt/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "MGMT 479",
+    "title": "Technology Commercialization",
+    "credit_hours": 3,
+    "description": "Examination of the process of introducing to the marketplace new products or services based upon scientific and technological innovations; practical skills for assessing the technology, identifying potential products and services, and quantifying market demand; focuses on value creation, financing, intellectual property law, regulatory, and socio-economic drivers.",
+    "prerequisites": "Prerequisite: Junior or senior classification or admission to upper division in Mays Business School; SOCI 376/MGMT 376 or MGMT 376/SOCI 376 and SOCI 476/MGMT 476 or MGMT 476/SOCI 476 recommended. Cross Listing: SOCI 432/MGMT 479 .",
+    "department": "Management",
+    "prefix": "MGMT",
+    "number": "479",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "SOCI 432",
+      "MGMT 479"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "SOCI 376",
+      "MGMT 376",
+      "SOCI 476",
+      "MGMT 476",
+      "SOCI 432",
+      "MGMT 479"
+    ],
+    "restrictions": [
+      "Junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/mgmt/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "ACCT 430",
+    "title": "Global Immersion in Accounting",
+    "credit_hours": 3,
+    "description": "Combination of classroom work in the spring and a field trip to the selected country in summer; introduction to international opportunities within the public accounting firms; meet with former students to gain a local and corporate view of business in the selected country. May be taken two times for credit.",
+    "prerequisites": "Prerequisites: ACCT 327 and approval of instructor. Cross Listing: IBUS 430/ACCT 430 .",
+    "department": "Accounting",
+    "prefix": "ACCT",
+    "number": "430",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "IBUS 430",
+      "ACCT 430"
+    ],
+    "repeatability": "May be taken two times for credit.",
+    "campuses": [],
+    "prerequisite_courses": [
+      "ACCT 327",
+      "IBUS 430",
+      "ACCT 430"
+    ],
+    "restrictions": [
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/acct/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "ACCT 445",
+    "title": "International Accounting",
+    "credit_hours": 3,
+    "description": "Introduction and examination of accounting issues unique to multinational enterprises and international business activity; only ACCT 445/IBUS 445 sections count for the accounting coursework requirements for the CPA exam.",
+    "prerequisites": "Prerequisites: ACCT 315 or ACCT 327 ; FINC 341 . Cross Listing: IBUS 445/ACCT 445 .",
+    "department": "Accounting",
+    "prefix": "ACCT",
+    "number": "445",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "IBUS 445",
+      "ACCT 445"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ACCT 315",
+      "ACCT 327",
+      "FINC 341",
+      "IBUS 445",
+      "ACCT 445"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/acct/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "ACCT 447",
+    "title": "Financial Statement Analysis",
+    "credit_hours": 3,
+    "description": "Development of an analytical approach to financial statements, integrating relevant finance and accounting concepts and principles; current topics in financial analysis.",
+    "prerequisites": "Prerequisites: Grade of C or better in ACCT 327 and FINC 341 . Cross Listing: FINC 447/ACCT 447 .",
+    "department": "Accounting",
+    "prefix": "ACCT",
+    "number": "447",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "FINC 447",
+      "ACCT 447"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ACCT 327",
+      "FINC 341",
+      "FINC 447",
+      "ACCT 447"
+    ],
+    "restrictions": [
+      "Grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/acct/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "MKTG 401",
+    "title": "Global Marketing",
+    "credit_hours": 3,
+    "description": "Survey of the aspects involved in marketing goods and services in a global marketplace; social, political, legal and economic issues associated with conducting business globally.",
+    "prerequisites": "Prerequisite: MKTG 321 . Cross Listing: IBUS 401/MKTG 401 .",
+    "department": "Marketing",
+    "prefix": "MKTG",
+    "number": "401",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "IBUS 401",
+      "MKTG 401"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "MKTG 321",
+      "IBUS 401",
+      "MKTG 401"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/mktg/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "MKTG 402",
+    "title": "International Marketing: Study Abroad",
+    "credit_hours": 3,
+    "description": "Introduction to the facets of doing business in an international setting; provides exposure to a variety of foreign cultures; facilitates understanding of the international marketplace in which these students will function.",
+    "prerequisites": "Prerequisites: MKTG 321 or MKTG 409 ; junior classification; 2.5 GPR overall. Cross Listing: IBUS 402/MKTG 402 .",
+    "department": "Marketing",
+    "prefix": "MKTG",
+    "number": "402",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "IBUS 402",
+      "MKTG 402"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "MKTG 321",
+      "MKTG 409",
+      "IBUS 402",
+      "MKTG 402"
+    ],
+    "restrictions": [
+      "junior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/mktg/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "MKTG 403",
+    "title": "International Market Entry Strategies",
+    "credit_hours": 3,
+    "description": "A research-based course in which students prepare an analysis of a country, or region outside the U.S., and use it in the preparation of a marketing plan for a good or service to be introduced and marketed in that country.",
+    "prerequisites": "Prerequisites: MKTG 321 or MKTG 409 ; concurrent registration in IBUS 402/MKTG 402 or MKTG 402/IBUS 402 ; junior or senior classification. Cross Listing: IBUS 403/MKTG 403 .",
+    "department": "Marketing",
+    "prefix": "MKTG",
+    "number": "403",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "IBUS 403",
+      "MKTG 403"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "MKTG 321",
+      "MKTG 409",
+      "IBUS 402",
+      "MKTG 402",
+      "IBUS 403",
+      "MKTG 403"
+    ],
+    "restrictions": [
+      "junior or senior classification"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/mktg/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "MKTG 443",
+    "title": "The Business of Healthcare",
+    "credit_hours": 3,
+    "description": "Preparation for contributing to the healthcare system by gaining an understanding of selected business of healthcare topics such as the role of healthcare in the economy, the cost of healthcare, the patient experience, technology and ethics.",
+    "prerequisites": "Prerequisites: Business and Public Health majors; junior or senior classification; approval of instructor. Cross Listing: PHLT 426/MKTG 443 .",
+    "department": "Marketing",
+    "prefix": "MKTG",
+    "number": "443",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "PHLT 426",
+      "MKTG 443"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "PHLT 426",
+      "MKTG 443"
+    ],
+    "restrictions": [
+      "junior or senior classification",
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/mktg/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "SCMT 455",
+    "title": "Cybersecurity Management",
+    "credit_hours": 3,
+    "description": "Explores business, managerial and technological aspects of information and cybersecurity; analysis, design, implementation and management issues surrounding effective information security; includes risk management, business continuity planning, and security policy development.",
+    "prerequisites": "Prerequisite: ISTM 310 or SCMT 375 . Cross Listing: ISTM 455/SCMT 455 .",
+    "department": "Supply Chain Management",
+    "prefix": "SCMT",
+    "number": "455",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "ISTM 455",
+      "SCMT 455"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ISTM 310",
+      "SCMT 375",
+      "ISTM 455",
+      "SCMT 455"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/scmt/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "SCMT 473",
+    "title": "Energy Industry Transition",
+    "credit_hours": 3,
+    "description": "Fundamentals of the energy industry; value chain analysis of coal, oil, natural gas, nuclear, wind, solar, and hydropower options; forecast transition through supply, demand, geopolitics, economic growth, and sustainability; site visits to energy companies.",
+    "prerequisites": "Prerequisite: Admission to upper division in Mays Business School. Cross Listing: ISTM 473/SCMT 473 .",
+    "department": "Supply Chain Management",
+    "prefix": "SCMT",
+    "number": "473",
+    "course_level": 400,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "ISTM 473",
+      "SCMT 473"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ISTM 473",
+      "SCMT 473"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/scmt/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
   }
 ]

@@ -1519,5 +1519,35 @@
     "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/chem/",
     "catalog_year": "2026-2027",
     "source_last_checked": "2026-06-20"
+  },
+  {
+    "code": "CHEM 105",
+    "title": "Contemporary Issues in Science - The Environment",
+    "credit_hours": 3,
+    "description": "This team-taught, interdisciplinary course is designed to build scientific literacy by examining contemporary issues in science - current questions, discoveries and challenges that shape our understanding of the environment. Topics may include climate change, energy systems, plastics and pollution, agriculture, water and food safety, biodiversity, environmental health and chemicals and drugs (including vaccines). Students will learn to evaluate scientific claims and critically analyze how science is presented in the news, on television and on social media.",
+    "prerequisites": "Cross Listing: ARSC 105/CHEM 105 .",
+    "department": "Chemistry",
+    "prefix": "CHEM",
+    "number": "105",
+    "course_level": 100,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "ARSC 105",
+      "CHEM 105"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ARSC 105",
+      "CHEM 105"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/chem/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
   }
 ]

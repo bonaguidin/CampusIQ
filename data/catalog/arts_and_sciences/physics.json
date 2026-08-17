@@ -1202,5 +1202,147 @@
     "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/phys/",
     "catalog_year": "2026-2027",
     "source_last_checked": "2026-06-20"
+  },
+  {
+    "code": "PHYS 109",
+    "title": "Big Bang and Black Holes",
+    "credit_hours": 3,
+    "description": "Designed to give an intuitive understanding of the Big Bang and Black Holes, without mathematics, and de-mystify them for the non-scientist.",
+    "prerequisites": "Cross Listing: ASTR 109/PHYS 109 .",
+    "department": "Physics",
+    "prefix": "PHYS",
+    "number": "109",
+    "course_level": 100,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "ASTR 109",
+      "PHYS 109"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "ASTR 109",
+      "PHYS 109"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/phys/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "PHYS 119",
+    "title": "Big Bang and Black Holes: Laboratory Methods",
+    "credit_hours": 1,
+    "description": "Hands-on understanding of the concepts surrounding the Big Bang and Black Holes; emphasis on the evidence-based decision making process, methods and presentation; for non-scientists. Companion course for ASTR 109/PHYS 109 / PHYS 109/ASTR 109 .",
+    "prerequisites": "Prerequisite: ASTR/ PHYS 109/ASTR 109 or registration therein. Cross Listing: ASTR 119/PHYS 119 .",
+    "department": "Physics",
+    "prefix": "PHYS",
+    "number": "119",
+    "course_level": 100,
+    "credit_min": 1,
+    "credit_max": 1,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "ASTR 119",
+      "PHYS 119"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "PHYS 109",
+      "ASTR 109",
+      "ASTR 119",
+      "PHYS 119"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/phys/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "PHYS 216",
+    "title": "Experimental Physics and Engineering Lab II - Mechanics",
+    "credit_hours": 2,
+    "description": "Description and application of laws of physical motion to the solution of science and engineering problems; using sensing, control and actuation for experimental verification of physics concepts while solving engineering problems.",
+    "prerequisites": "Prerequisites: Grade of C or better in MATH 151 or MATH 171 or equivalent; grade of C or better in ENGR 102 ; grade of C or better in PHYS 206 or concurrent enrollment; also taught at Galveston campus. Cross Listing: ENGR 216/PHYS 216 .",
+    "department": "Physics",
+    "prefix": "PHYS",
+    "number": "216",
+    "course_level": 200,
+    "credit_min": 2,
+    "credit_max": 2,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "ENGR 216",
+      "PHYS 216"
+    ],
+    "repeatability": null,
+    "campuses": [
+      "Galveston"
+    ],
+    "prerequisite_courses": [
+      "MATH 151",
+      "MATH 171",
+      "ENGR 102",
+      "PHYS 206",
+      "ENGR 216",
+      "PHYS 216"
+    ],
+    "restrictions": [
+      "Grade of C or better",
+      "grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/phys/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "PHYS 217",
+    "title": "Experimental Physics and Engineering Lab III - Electricity and Magnetism",
+    "credit_hours": 2,
+    "description": "Electromagnetism and electromechanical systems; use of sensing, control and actuation to demonstrate key physical relationships through the transducer relationships linking pressure, temperature and other physical stimuli to changes in electric and magnetic fields.",
+    "prerequisites": "Prerequisites: Grade of C or better in MATH 152 , MATH 172 , or equivalent; grade of C or better in PHYS 206 or equivalent; grade of C or better in PHYS 216/ENGR 216 or ENGR 216/PHYS 216 ; grade of C or better in PHYS 207 , or concurrent enrollment; also taught at Galveston campus. Cross Listing: ENGR 217/PHYS 217 .",
+    "department": "Physics",
+    "prefix": "PHYS",
+    "number": "217",
+    "course_level": 200,
+    "credit_min": 2,
+    "credit_max": 2,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "ENGR 217",
+      "PHYS 217"
+    ],
+    "repeatability": null,
+    "campuses": [
+      "Galveston"
+    ],
+    "prerequisite_courses": [
+      "MATH 152",
+      "MATH 172",
+      "PHYS 206",
+      "PHYS 216",
+      "ENGR 216",
+      "PHYS 207",
+      "ENGR 217",
+      "PHYS 217"
+    ],
+    "restrictions": [
+      "Grade of C or better",
+      "grade of C or better"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/phys/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
   }
 ]

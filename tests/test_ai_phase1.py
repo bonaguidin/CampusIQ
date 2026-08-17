@@ -93,8 +93,23 @@ def test_network_failure_becomes_ai_request_error(monkeypatch):
     session = FakeSession(error=requests.Timeout("too slow"))
     client = OpenRouterClient(session=session)
 
-    with pytest.raises(AIRequestError, match="OpenRouter request failed"):
+    with pytest.raises(AIRequestError, match="OpenRouter request failed") as captured:
         client.complete(messages=[{"role": "user", "content": "hello"}], role="chat")
+    assert captured.value.transient is True
+
+
+@pytest.mark.parametrize(("status", "transient"), [(429, True), (503, True), (400, False), (401, False)])
+def test_http_failure_transience_is_classified(status, transient, monkeypatch):
+    monkeypatch.setenv("OPENROUTER_API_KEY", "test-key")
+    response = requests.Response()
+    response.status_code = status
+    error = requests.HTTPError(f"status {status}", response=response)
+    client = OpenRouterClient(session=FakeSession(error=error))
+
+    with pytest.raises(AIRequestError) as captured:
+        client.complete(messages=[{"role": "user", "content": "hello"}], role="chat")
+
+    assert captured.value.transient is transient
 
 
 def test_malformed_provider_response_becomes_parse_error(monkeypatch):
@@ -132,6 +147,20 @@ def test_complete_message_returns_raw_message_with_tool_calls_and_null_content(m
     assert message["content"] is None
     assert message["tool_calls"][0]["function"]["name"] == "web_search"
     assert len(session.calls) == 1
+
+
+def test_complete_message_metadata_exposes_safe_model_and_usage(monkeypatch):
+    monkeypatch.setenv("OPENROUTER_API_KEY", "test-key")
+    session = FakeSession(payload={
+        "choices": [{"message": {"content": None, "tool_calls": []}}],
+        "usage": {"prompt_tokens": 7, "completion_tokens": 3, "total_tokens": 10},
+    })
+    response = OpenRouterClient(session=session).complete_message_with_metadata(
+        messages=[{"role": "user", "content": "hello"}], model="test-model"
+    )
+    assert response.model == "test-model"
+    assert response.usage == {"prompt_tokens": 7, "completion_tokens": 3, "total_tokens": 10}
+    assert response.message["tool_calls"] == []
 
 
 def test_complete_message_still_raises_ai_request_error_on_network_failure(monkeypatch):
@@ -363,6 +392,7 @@ def test_roles_validated_at_startup_excludes_the_two_documented_roles():
         "role_research",
         "parsing",
         "chat",
+        "course_discovery",
     }
     # Deliberate exclusions -- see the comment above the frozenset. 'chat' was
     # a third exclusion until its "@preset/chat" hardcode was removed; it is

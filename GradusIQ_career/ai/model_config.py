@@ -39,6 +39,7 @@ MODEL_BY_ROLE: Mapping[AgentRole, str] = {
     "chat": OPENROUTER_DEEPSEEK_V4_FLASH,
     "report": OPENROUTER_GEMINI_2_5_PRO,
     "role_research": OPENROUTER_DEEPSEEK_V4_FLASH,
+    "course_discovery": OPENROUTER_DEEPSEEK_V4_FLASH,
 }
 
 
@@ -50,6 +51,7 @@ ENV_BY_ROLE: Mapping[AgentRole, str] = {
     "chat": "GRADUSIQ_MODEL_CHAT",
     "report": "GRADUSIQ_MODEL_REPORT",
     "role_research": "GRADUSIQ_MODEL_ROLE_RESEARCH",
+    "course_discovery": "GRADUSIQ_MODEL_COURSE_DISCOVERY",
 }
 
 
@@ -110,6 +112,7 @@ ROLES_VALIDATED_AT_STARTUP: frozenset[str] = frozenset(
         "role_research",
         "parsing",
         "chat",
+        "course_discovery",
     }
 )
 

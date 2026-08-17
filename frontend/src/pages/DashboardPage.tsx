@@ -254,13 +254,16 @@ export function DashboardPage() {
 }
 
 function DemoDashboardPage() {
-  const { profile, logout } = useAuth();
+  const { profile, logout, slug } = useAuth();
   const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState<NavSection>('overview');
   const [railOpen, setRailOpen] = useState(false);
-  // First-run tour: shown fresh on every profile open (demo behavior), and
-  // replayable on demand via the topbar "?" button.
-  const [tourOpen, setTourOpen] = useState(true);
+  // First-run tour: remembered per demo student (localStorage), so it auto-shows
+  // once and is replayable on demand via the topbar "?" button.
+  const tourSeenKey = slug ? `gradusiq_tour_seen_demo_${slug}` : null;
+  const [tourOpen, setTourOpen] = useState<boolean>(() =>
+    tourSeenKey ? localStorage.getItem(tourSeenKey) !== '1' : true,
+  );
 
   // RequireAuth guarantees profile is non-null here
   if (!profile) return null;
@@ -288,8 +291,8 @@ function DemoDashboardPage() {
 
   function handleTourClose(completed: boolean) {
     setTourOpen(false);
+    if (tourSeenKey) localStorage.setItem(tourSeenKey, '1');
     // If they bailed early, return to the top of the profile for a clean start.
-    // On Finish, leave them on the Career tab where the tour ends.
     if (!completed) setActiveSection('overview');
   }
 

@@ -18,6 +18,30 @@ class QueueClient:
 
 
 def feature_response(feature):
+    if feature == "FIT":
+        return """
+        {
+          "summary": "FIT completed",
+          "data": {
+            "role_matches": [{
+              "role": "Business Analyst Intern",
+              "fit_level": "medium",
+              "rationale": "Excel and communication are relevant.",
+              "supporting_signals": ["Excel"],
+              "missing_signals": ["SQL"]
+            }],
+            "overall_fit_summary": "A developing fit."
+          }
+        }
+        """
+    if feature == "GAP":
+        return """
+        {"summary":"GAP completed","data":{"readiness_score":6,"strengths":[],"must_have_gaps":[],"nice_to_have_gaps":[],"recommended_next_steps":[]}}
+        """
+    if feature == "SHIFT":
+        return """
+        {"summary":"SHIFT completed","data":{"role_evolution_summary":"Roles are changing.","task_shifts":[],"durable_skills":[],"adjacent_paths":[],"ai_fluency_guidance":[]}}
+        """
     return f"""
     {{
       "summary": "{feature} completed",
@@ -65,7 +89,7 @@ def test_run_single_fit():
 
     assert result["feature"] == "FIT"
     assert result["status"] == "success"
-    assert result["data"]["marker"] == "FIT"
+    assert result["data"]["role_matches"][0]["role"] == "Business Analyst Intern"
     assert client.calls[0]["role"] == "career"
 
 

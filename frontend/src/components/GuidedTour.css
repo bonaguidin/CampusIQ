@@ -78,6 +78,14 @@
   font-weight: 600;
 }
 
+/* Final-step call-to-action buttons (Add transcript / Add resume), stacked */
+.tour-cta-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-5);
+}
+
 .tour-footer {
   display: flex;
   align-items: center;

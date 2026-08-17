@@ -8,7 +8,7 @@ import requests
 
 from .errors import AIConfigError, AIRequestError, AIResponseParseError
 from .model_config import get_model_for_role
-from .types import AIMessage, AIResponse, AgentRole
+from .types import AIMessage, AIMessageResponse, AIResponse, AgentRole
 
 
 OPENROUTER_CHAT_COMPLETIONS_URL = "https://openrouter.ai/api/v1/chat/completions"
@@ -93,6 +93,31 @@ class OpenRouterClient:
             raise AIResponseParseError("OpenRouter response message must be an object.")
         return message
 
+    def complete_message_with_metadata(
+        self,
+        *,
+        messages: Sequence[AIMessage | Mapping[str, Any]],
+        role: AgentRole | str | None = None,
+        model: str | None = None,
+        max_tokens: int | None = None,
+        temperature: float | None = None,
+        extra_body: Mapping[str, Any] | None = None,
+        timeout: float | None = None,
+    ) -> AIMessageResponse:
+        """Tool-call response plus safe routing/usage metadata."""
+        raw, selected_model = self._send(
+            messages=messages, role=role, model=model, max_tokens=max_tokens,
+            temperature=temperature, extra_body=extra_body, timeout=timeout,
+        )
+        try:
+            message = raw["choices"][0]["message"]
+        except (KeyError, IndexError, TypeError) as exc:
+            raise AIResponseParseError("OpenRouter response is missing choices[0].message.") from exc
+        if not isinstance(message, Mapping):
+            raise AIResponseParseError("OpenRouter response message must be an object.")
+        usage = raw.get("usage") if isinstance(raw.get("usage"), Mapping) else {}
+        return AIMessageResponse(message=message, model=selected_model, usage=usage)
+
     def _send(
         self,
         *,
@@ -128,7 +153,13 @@ class OpenRouterClient:
             )
             response.raise_for_status()
         except requests.RequestException as exc:
-            raise AIRequestError(f"OpenRouter request failed: {exc}") from exc
+            status = exc.response.status_code if exc.response is not None else None
+            transient = isinstance(exc, (requests.ConnectionError, requests.Timeout)) or (
+                status == 429 or (status is not None and 500 <= status < 600)
+            )
+            raise AIRequestError(
+                f"OpenRouter request failed: {exc}", transient=transient
+            ) from exc
 
         raw = self._response_json(response)
         return raw, selected_model

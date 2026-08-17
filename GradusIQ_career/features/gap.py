@@ -5,8 +5,11 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any, Mapping
 
+from GradusIQ_career.ai.context import GroundingMetadata
+from GradusIQ_career.ai.contracts import GapOutput
+
 from . import role_research_agent
-from .base import CareerFeatureRunner
+from .base import TypedRuntimeFeatureRunner
 from .market_data import get_market_requirements
 
 # Static, hand-curated role-requirements lookup used in place of a live O*NET /
@@ -91,9 +94,12 @@ def _merge_requirements(
     return merged
 
 
-class GapRunner(CareerFeatureRunner):
+class GapRunner(TypedRuntimeFeatureRunner):
     feature = "GAP"
     prompt_filename = "gradus_iq_prompt_GAP.md"
+    prompt_name = "gap"
+    prompt_version = "1.0"
+    output_model = GapOutput
     required_paths = (
         "student.expected_graduation",
         "career.target_roles",
@@ -197,49 +203,34 @@ class GapRunner(CareerFeatureRunner):
             matched["_unmatched_roles"] = unmatched
         return matched
 
-    # The prompt asks for "Overall readiness: [X / 10]", and the dashboard
-    # renders the raw value. A live run produced 0.32 for a student whose roles
-    # mostly lacked O*NET data -- which passed every existing check, because
-    # api.py's _matches_contract only asks "is it a number".
-    _READINESS_MIN = 0
-    _READINESS_MAX = 10
+    def grounding_metadata(self, student_context: Mapping[str, Any]) -> GroundingMetadata:
+        market = student_context.get("market_requirements", {})
+        by_role = market.get("by_role", {}) if isinstance(market, Mapping) else {}
+        provenance_counts: dict[str, int] = {}
+        if isinstance(by_role, Mapping):
+            for entry in by_role.values():
+                if isinstance(entry, Mapping):
+                    source = str(entry.get("provenance") or "none")
+                    provenance_counts[source] = provenance_counts.get(source, 0) + 1
 
-    def validate_data(
-        self, data: Mapping[str, Any], student_profile: Mapping[str, Any]
-    ) -> list[str]:
-        """Range-check readiness_score. See base.CareerFeatureRunner.
-
-        `student_profile` is accepted and unused. The parameter exists because
-        the hook is shared with academic.py, whose citation check needs the
-        student's own data to decide whether a cited course is real. This guard
-        needs nothing but the score, and takes the parameter rather than
-        diverging the signature -- base.py calls every override the same way.
-
-        Ported from the guard written against the older one-argument hook,
-        which returned a single message or None. Only the shape changed:
-        one message becomes a one-element list, None becomes an empty list.
-        What is checked is unchanged.
-        """
-        # Absence is deliberately NOT an error here. A missing score renders as
-        # nothing; a wrong score renders as a confident falsehood, and only the
-        # second is what this guard exists to stop. Presence is a shape concern,
-        # already enforced by api.py's _matches_contract on the cached path.
-        if "readiness_score" not in data:
-            return []
-        score = data["readiness_score"]
-        if isinstance(score, bool) or not isinstance(score, (int, float)):
-            return [f"readiness_score must be a number, got {score!r}."]
-        if not float(score).is_integer():
-            return [
-                f"readiness_score must be a whole number on a "
-                f"{self._READINESS_MIN}-{self._READINESS_MAX} scale, got {score!r}."
-            ]
-        if not self._READINESS_MIN <= score <= self._READINESS_MAX:
-            return [
-                f"readiness_score must be between {self._READINESS_MIN} and "
-                f"{self._READINESS_MAX}, got {score!r}."
-            ]
-        return []
+        requirements = student_context.get("role_requirements", {})
+        research_used = any(
+            isinstance(entry, Mapping) and entry.get("requirements_source") == "agent"
+            for role, entry in requirements.items()
+            if role != "_unmatched_roles"
+        ) if isinstance(requirements, Mapping) else False
+        sources = ["student_confirmed", "onet_static"]
+        if research_used:
+            sources.append("role_research_web")
+        return GroundingMetadata(
+            source_types=tuple(sources),
+            trust_level="untrusted_external" if research_used else "trusted_reference",
+            attributes={
+                "research_used": research_used,
+                "role_resolution_sources": provenance_counts,
+                "confirmed_course_count": len(student_context.get("courses", [])),
+            },
+        )
 
     def default_summary(self, data):
         score = data.get("readiness_score")

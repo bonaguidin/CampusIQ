@@ -104,8 +104,8 @@ def test_gap_success_with_mocked_ai_json():
           "data": {
             "readiness_score": 6,
             "strengths": ["Excel", "presentation"],
-            "must_have_gaps": ["SQL"],
-            "nice_to_have_gaps": ["dashboarding"],
+            "must_have_gaps": [{"gap":"SQL","why_it_matters":"Required for analysis.","how_to_close":"Build a SQL project."}],
+            "nice_to_have_gaps": [{"gap":"dashboarding","why_it_helps":"Makes findings visible.","how_to_close":"Build a dashboard."}],
             "recommended_next_steps": ["Build a small SQL project"]
           }
         }
@@ -127,8 +127,8 @@ _GAP_SUCCESS_JSON = """
   "data": {
     "readiness_score": 6,
     "strengths": ["Excel", "presentation"],
-    "must_have_gaps": ["SQL"],
-    "nice_to_have_gaps": ["dashboarding"],
+    "must_have_gaps": [{"gap":"SQL","why_it_matters":"Required for analysis.","how_to_close":"Build a SQL project."}],
+    "nice_to_have_gaps": [{"gap":"dashboarding","why_it_helps":"Makes findings visible.","how_to_close":"Build a dashboard."}],
     "recommended_next_steps": ["Build a small SQL project"]
   }
 }
@@ -302,9 +302,9 @@ def test_shift_success_with_mocked_ai_json():
           "summary": "Your target roles are shifting toward AI-assisted analysis.",
           "data": {
             "role_evolution_summary": "Business roles increasingly expect AI-assisted analysis.",
-            "task_shifts": ["first-pass spreadsheet analysis"],
-            "durable_skills": ["judgment", "communication"],
-            "adjacent_paths": ["operations analytics"],
+            "task_shifts": [{"task":"first-pass spreadsheet analysis","changing":"AI drafts it.","meaning":"Review matters more."}],
+            "durable_skills": [{"task":"judgment","reason":"Context remains human."}],
+            "adjacent_paths": [{"path":"operations analytics","relevance":"Uses current skills.","driver":"More automation."}],
             "ai_fluency_guidance": ["Describe how you use AI to check assumptions"]
           }
         }
@@ -315,7 +315,7 @@ def test_shift_success_with_mocked_ai_json():
 
     assert result["feature"] == "SHIFT"
     assert result["status"] == "success"
-    assert result["data"]["durable_skills"] == ["judgment", "communication"]
+    assert result["data"]["durable_skills"][0]["task"] == "judgment"
     assert client.calls[0]["role"] == "career"
     assert "SHIFT Prompt" in client.calls[0]["messages"][1]["content"]
 
@@ -331,7 +331,7 @@ def test_shift_runs_without_ai_anxiety_level():
     """
     student = sample_student()
     student["career"].pop("ai_anxiety_level")
-    client = FakeClient('{"summary": "ok", "data": {"role_evolution_summary": "ok"}}')
+    client = FakeClient('{"summary":"ok","data":{"role_evolution_summary":"ok","task_shifts":[],"durable_skills":[],"adjacent_paths":[],"ai_fluency_guidance":[]}}')
 
     result = ShiftRunner(client=client).run(student)
 
@@ -415,6 +415,91 @@ def test_every_gated_path_has_a_human_label():
     assert gated <= set(FIELD_LABELS), f"unlabelled gated paths: {gated - set(FIELD_LABELS)}"
 
 
+# ---------------------------------------------------- unsupported target role
+# FIT has no research-agent fallback (unlike GAP/SHIFT below), so an unmatched
+# role used to go straight into the prompt and produce a confident-looking
+# judgement from pure model recall. additional_missing_fields() catches it
+# before any provider call, the same way a genuinely empty target_roles list
+# already does.
+
+
+def test_fit_skips_when_every_target_role_is_unsupported():
+    student = sample_student()
+    student["career"]["target_roles"] = ["Software Engineer"]  # not in role_requirements.json
+    client = FakeClient('{"data": {}}')
+
+    result = FitRunner(client=client).run(student)
+
+    assert result["status"] == "skipped"
+    assert {"path": "career.target_roles", "label": "Target roles"} in result["missing_fields"]
+    assert client.calls == []
+
+
+_FIT_SUCCESS_JSON = """
+{
+  "summary": "You have two realistic role directions.",
+  "data": {
+    "role_matches": [
+      {
+        "role": "Business Analyst Intern",
+        "fit_level": "medium",
+        "rationale": "Excel and business coursework align.",
+        "supporting_signals": ["Excel", "business case project"],
+        "missing_signals": ["SQL"]
+      }
+    ],
+    "overall_fit_summary": "Business analyst is a moderate fit."
+  }
+}
+"""
+
+
+def test_fit_runs_when_at_least_one_target_role_is_supported():
+    student = sample_student()
+    # One curated role alongside one that is not -- FIT should not block on
+    # the mix; only "every role unsupported" is the gated condition.
+    student["career"]["target_roles"] = ["Software Engineer", "Business Analyst Intern"]
+    client = FakeClient(_FIT_SUCCESS_JSON)
+
+    result = FitRunner(client=client).run(student)
+
+    assert result["status"] == "success"
+    assert len(client.calls) == 1
+
+
+def test_fit_still_runs_normally_for_fully_supported_target_roles():
+    """Existing supported-role behavior is unchanged by the new gate."""
+    result = FitRunner(client=FakeClient(_FIT_SUCCESS_JSON)).run(sample_student())
+
+    assert result["status"] == "success"
+
+
+# GAP and SHIFT are deliberately NOT gated the same way: both already have a
+# working fallback for an unmatched role (role_research_agent, exercised
+# elsewhere in this file), so a hard skip here would remove real, tested
+# functionality rather than fix a silent-failure mode. These two tests lock in
+# that current behavior is unchanged by this task's FIT/Course-Discovery gate.
+def test_gap_does_not_skip_for_an_unsupported_target_role(monkeypatch):
+    student = sample_student()
+    student["career"]["target_roles"] = ["Software Engineer"]
+    monkeypatch.setattr(gap_module.role_research_agent, "get_role_requirements", lambda role: None)
+    client = FakeClient(_GAP_SUCCESS_JSON)
+
+    result = GapRunner(client=client).run(student)
+
+    assert result["status"] != "skipped"
+
+
+def test_shift_does_not_skip_for_an_unsupported_target_role():
+    student = sample_student()
+    student["career"]["target_roles"] = ["Software Engineer"]
+    client = FakeClient('{"data": {"role_evolution_summary": "", "task_shifts": [], "durable_skills": [], "adjacent_paths": [], "ai_fluency_guidance": []}}')
+
+    result = ShiftRunner(client=client).run(student)
+
+    assert result["status"] != "skipped"
+
+
 def test_skipped_result_reports_label_and_path_together():
     student = sample_student()
     student["career"].pop("target_roles")
@@ -468,7 +553,14 @@ def test_missing_prompt_file_is_handled_clearly(tmp_path):
     ],
 )
 def test_run_career_feature_helper(feature_name, expected_runner):
-    client = FakeClient('{"summary": "done", "data": {}}')
+    payload = '{"summary": "done", "data": {}}'
+    if expected_runner == "FIT":
+        payload = '''{"summary":"done","data":{"role_matches":[{"role":"Business Analyst Intern","fit_level":"medium","rationale":"Relevant foundation.","supporting_signals":[],"missing_signals":[]}],"overall_fit_summary":"A developing fit."}}'''
+    elif expected_runner == "GAP":
+        payload = _GAP_SUCCESS_JSON
+    elif expected_runner == "SHIFT":
+        payload = '''{"summary":"done","data":{"role_evolution_summary":"Roles are changing.","task_shifts":[],"durable_skills":[],"adjacent_paths":[],"ai_fluency_guidance":[]}}'''
+    client = FakeClient(payload)
 
     result = run_career_feature(feature_name, sample_student(), client)
 
@@ -658,9 +750,7 @@ def test_gap_rejects_out_of_scale_readiness_score(score):
     # A live run returned readiness_score 0.32 for a student whose roles mostly
     # lacked O*NET data. It passed every check that existed, because
     # api.py's _matches_contract only asks whether the value is a number.
-    client = FakeClient(
-        '{"summary": "s", "data": {"readiness_score": ' + score + ', "strengths": []}}'
-    )
+    client = FakeClient('{"summary":"s","data":{"readiness_score":' + score + ',"strengths":[],"must_have_gaps":[],"nice_to_have_gaps":[],"recommended_next_steps":[]}}')
 
     result = GapRunner(client=client).run(sample_student())
 
@@ -670,19 +760,16 @@ def test_gap_rejects_out_of_scale_readiness_score(score):
 
 @pytest.mark.parametrize("score", ["0", "7", "10"])
 def test_gap_accepts_whole_numbers_on_the_zero_to_ten_scale(score):
-    client = FakeClient(
-        '{"summary": "s", "data": {"readiness_score": ' + score + ', "strengths": []}}'
-    )
+    client = FakeClient('{"summary":"s","data":{"readiness_score":' + score + ',"strengths":[],"must_have_gaps":[],"nice_to_have_gaps":[],"recommended_next_steps":[]}}')
 
     assert GapRunner(client=client).run(sample_student())["status"] == "success"
 
 
-def test_gap_tolerates_a_missing_readiness_score():
-    # Absence renders as nothing; a wrong value renders as a confident
-    # falsehood. Only the second is what the guard exists to stop.
-    client = FakeClient('{"summary": "s", "data": {"strengths": []}}')
-
-    assert GapRunner(client=client).run(sample_student())["status"] == "success"
+def test_gap_rejects_a_missing_readiness_score_under_strict_contract():
+    client = FakeClient('{"summary":"s","data":{"strengths":[],"must_have_gaps":[],"nice_to_have_gaps":[],"recommended_next_steps":[]}}')
+    result = GapRunner(client=client).run(sample_student())
+    assert result["status"] == "failed"
+    assert "readiness_score" in result["errors"][0]
 
 
 # ----------------------------------------------------------- FIT grounding
@@ -844,3 +931,50 @@ def test_a_failed_onet_read_is_not_cached(monkeypatch, tmp_path):
     _reset_onet_cache()
     assert market_data._load_onet(), "the real catalog still loads afterwards"
     _reset_onet_cache()
+
+
+# --------------------------------------------- target-role support boundary
+# is_role_supported()/supported_target_roles() are the one shared place that
+# answers "does the curated vocabulary recognize this exact role string" --
+# the same exact-match lookup resolve_soc() already enforces, just exposed as
+# a plain bool/list for callers (Course Discovery's skip check, FIT's
+# additional_missing_fields, the /career-role-options endpoint) that don't
+# need the SOC code itself.
+
+
+def test_is_role_supported_true_for_a_curated_role():
+    from GradusIQ_career.features.market_data import is_role_supported
+
+    assert is_role_supported("Software Engineering Intern") is True
+
+
+def test_is_role_supported_false_for_a_realistic_unsupported_role():
+    from GradusIQ_career.features.market_data import is_role_supported
+
+    assert is_role_supported("Software Engineer") is False
+
+
+def test_is_role_supported_does_no_fuzzy_or_case_normalization():
+    """Exact match only -- a same-looking title in different casing must not
+    resolve. resolve_soc() already documents this; this pins the boolean
+    wrapper inherits the same exact-match behavior rather than adding its
+    own normalization on top."""
+    from GradusIQ_career.features.market_data import is_role_supported
+
+    assert is_role_supported("software engineering intern") is False
+    assert is_role_supported(" Software Engineering Intern") is False
+    assert is_role_supported("Software Engineering Interns") is False
+
+
+def test_supported_target_roles_returns_the_curated_fourteen_sorted():
+    from GradusIQ_career.features.market_data import supported_target_roles
+
+    roles = supported_target_roles()
+
+    assert len(roles) == 14
+    assert roles == sorted(roles)
+    assert "_notes" not in roles
+    assert "Software Engineering Intern" in roles
+    assert "Business Analyst Intern" in roles
+    # Not a supported role -- the exact case this task exists to catch.
+    assert "Software Engineer" not in roles

@@ -3023,5 +3023,447 @@
     "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/pbsi/",
     "catalog_year": "2026-2027",
     "source_last_checked": "2026-06-20"
+  },
+  {
+    "code": "PBSI 206",
+    "title": "Black Psychology",
+    "credit_hours": 3,
+    "description": "Explore psychological science through the lens of African-descended peoples across the African Diaspora. Examine core psychological concepts, theories and methods from perspectives rooted in the Black experience. Analyze cultural assumptions in mainstream psychology, compare Afrocentric and Eurocentric frameworks and engage with Black epistemologies. Strengthen critical thinking, deepen cultural awareness and expand understanding of diverse psychological worldviews. Course content is selected to align with the course description and the current state of scholarship in the field. Instructors who teach this class may assign different readings and/or course topics that fit within the course description and meet the learning objectives.",
+    "prerequisites": "Cross Listing: AFST 206/PBSI 206 .",
+    "department": "Psychological and Brain Sciences",
+    "prefix": "PBSI",
+    "number": "206",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "AFST 206",
+      "PBSI 206"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "AFST 206",
+      "PBSI 206"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/pbsi/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "PBSI 209",
+    "title": "Psychology of Culture and Diversity",
+    "credit_hours": 3,
+    "description": "Explore how culture shapes psychological processes and how psychology explains cultural variation. Analyze cultural influences on cognition, emotion, motivation, identity and mental health. Examine the development and scientific study of culture and discuss how cultural contact and acculturation affect adaptation and intergroup relations. Apply psychological frameworks to understand global diversity and the dynamic relationship between individuals and their cultural environments.",
+    "prerequisites": "Prerequisites: PBSI 107 . Cross Listing: AFST 209/PBSI 209 .",
+    "department": "Psychological and Brain Sciences",
+    "prefix": "PBSI",
+    "number": "209",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "AFST 209",
+      "PBSI 209"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "PBSI 107",
+      "AFST 209",
+      "PBSI 209"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/pbsi/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "PBSI 210",
+    "title": "Psychological Aspects of Human Sexuality",
+    "credit_hours": 3,
+    "description": "Examine human sexuality through biological, psychological, social, relational and cultural lenses. Analyze reproductive anatomy, gender roles, sexual identity, sexual orientation and sexual behavior across the lifespan. Explore topics including love, attraction, sexual health, sexual victimization, diversity and sexuality as a commodity. Apply the bio-psycho-social-cultural model to understand how various factors shape sexual experiences and attitudes. Develop skills to assess sexual health, promote well-being and articulate what healthy sexuality means.",
+    "prerequisites": "Prerequisite: PBSI 107 . Cross Listing: WGST 210/PBSI 210 .",
+    "department": "Psychological and Brain Sciences",
+    "prefix": "PBSI",
+    "number": "210",
+    "course_level": 200,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "WGST 210",
+      "PBSI 210"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "PBSI 107",
+      "WGST 210",
+      "PBSI 210"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/pbsi/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "PBSI 300",
+    "title": "Psychology of Women",
+    "credit_hours": 3,
+    "description": "Examine the psychological experiences of women across the lifespan through feminist, developmental and intersectional frameworks. Analyze how social, cultural, biological and psychological factors shape women’s roles and identities in diverse contexts. Explore key topics including gender development, media representation, sexual and reproductive health, cognitive and emotional functioning, work-family dynamics and mental and physical health. Investigate how intersecting identities—such as race, class, and disability—impact access, opportunity and psychological well-being. Strengthen critical thinking and apply evidence-based insights to real-world issues affecting women.",
+    "prerequisites": "Prerequisite: PBSI 107 . Cross Listing: WGST 300/PBSI 300 .",
+    "department": "Psychological and Brain Sciences",
+    "prefix": "PBSI",
+    "number": "300",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "WGST 300",
+      "PBSI 300"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "PBSI 107",
+      "WGST 300",
+      "PBSI 300"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/pbsi/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "PBSI 316",
+    "title": "Media Psychology",
+    "credit_hours": 3,
+    "description": "Examine the role of media and its impact on human behavior, emotions and thoughts; topics include mass media, social media and how they influence individual and societal functioning across a range of important psychological topics; e.g., self-image, sexual behavior, mental health, violence.",
+    "prerequisites": "Prerequisites: PBSI 107 . Cross Listing: COMM 316/PBSI 316 .",
+    "department": "Psychological and Brain Sciences",
+    "prefix": "PBSI",
+    "number": "316",
+    "course_level": 300,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "COMM 316",
+      "PBSI 316"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "PBSI 107",
+      "COMM 316",
+      "PBSI 316"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/pbsi/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "PBSI 606",
+    "title": "Learning",
+    "credit_hours": 3,
+    "description": "Explore the foundations and mechanisms of learning through behavioral, neurobiological and functional perspectives. Examine classical and instrumental conditioning using simplified experimental models to uncover how and when learning occurs. Analyze philosophical roots, historical developments and contemporary research in learning science. Apply core concepts to diverse domains such as clinical psychology, workplace behavior and computational modeling. Emphasize analytic techniques and critical evaluation of original and review literature. Designed to be accessible across disciplines, including neuroscience, philosophy and bioengineering, the course highlights the relevance of learning theory to broader scientific and practical contexts.",
+    "prerequisites": "Prerequisite: Graduate classification or approval of instructor. Cross Listing: NRSC 606/PBSI 606 .",
+    "department": "Psychological and Brain Sciences",
+    "prefix": "PBSI",
+    "number": "606",
+    "course_level": null,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "NRSC 606",
+      "PBSI 606"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "NRSC 606",
+      "PBSI 606"
+    ],
+    "restrictions": [
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/pbsi/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "PBSI 609",
+    "title": "Physiological Psychology",
+    "credit_hours": 3,
+    "description": "Current research and methodological procedures on physiological bases of sensation-perception, memory and learning, arousal-sleep-attention, emotions and motivation.",
+    "prerequisites": "Prerequisite: Graduate classification or approval of instructor. Cross Listing: NRSC 609/PBSI 609 .",
+    "department": "Psychological and Brain Sciences",
+    "prefix": "PBSI",
+    "number": "609",
+    "course_level": null,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "NRSC 609",
+      "PBSI 609"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "NRSC 609",
+      "PBSI 609"
+    ],
+    "restrictions": [
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/pbsi/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "PBSI 615",
+    "title": "Perceptual Processes",
+    "credit_hours": 3,
+    "description": "Complex sensory and perceptual phenomena with emphasis on the relationship between perception and motivation, cognition, creativity and instinctive/ethological; learning/experiential factors in higher level perceptual processes.",
+    "prerequisites": "Prerequisite: Graduate classification or approval of instructor. Cross Listing: NRSC 615/PBSI 615 .",
+    "department": "Psychological and Brain Sciences",
+    "prefix": "PBSI",
+    "number": "615",
+    "course_level": null,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "NRSC 615",
+      "PBSI 615"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "NRSC 615",
+      "PBSI 615"
+    ],
+    "restrictions": [
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/pbsi/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "PBSI 642",
+    "title": "Neuroimaging Data Analysis",
+    "credit_hours": 3,
+    "description": "Physics of magnetic resonance imaging; experimental design for fMRI; linear and nonlinear image registration; data denoising; data filtering and smoothing; volume and surface methods; General Linear Models and multivariate approaches to subject-level data; mixed effects modeling, random effects modeling, permutation methods for linear models; functional connectivity.",
+    "prerequisites": "Prerequisite: Graduate classification or approval of instructor; coursework in regression models recommended. Cross Listing: NRSC 642/PBSI 642 .",
+    "department": "Psychological and Brain Sciences",
+    "prefix": "PBSI",
+    "number": "642",
+    "course_level": null,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "NRSC 642",
+      "PBSI 642"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "NRSC 642",
+      "PBSI 642"
+    ],
+    "restrictions": [
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/pbsi/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "PBSI 649",
+    "title": "Seminar in Behavioral Neuroscience",
+    "credit_hours": 3,
+    "description": "Engage deeply with advanced and emerging topics in behavioral and cellular neuroscience through a thematic seminar that varies each semester. Explore areas such as learning and memory, motivated behavior, behavioral flexibility, addiction and anxiety; the roles of specific brain systems such as amygdala, hippocampus, prefrontal cortex and basal ganglia; and the methods and techniques used to investigate them. Critically analyze primary literature to uncover theoretical and empirical insights, identify gaps in current research and generate innovative questions. Emphasis is placed on animal models and the neurobiological mechanisms that contribute to adaptive and maladaptive behaviors. Foster critical thinking and analysis of current research in behavioral neuroscience to develop a deeper understanding of the neural bases of behavior. May be taken four times for credit.",
+    "prerequisites": "Prerequisite: Graduate classification or approval of instructor. Cross Listing: NRSC 649/PBSI 649 .",
+    "department": "Psychological and Brain Sciences",
+    "prefix": "PBSI",
+    "number": "649",
+    "course_level": null,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "NRSC 649",
+      "PBSI 649"
+    ],
+    "repeatability": "May be taken four times for credit.",
+    "campuses": [],
+    "prerequisite_courses": [
+      "NRSC 649",
+      "PBSI 649"
+    ],
+    "restrictions": [
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/pbsi/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "PBSI 651",
+    "title": "Cultural Psychology",
+    "credit_hours": 3,
+    "description": "Surveys key readings in the field of cultural psychology; discussion and examination of relationship between psychological processes (e.g., motivation, memory, self perception, prejudice) and sociocultural contexts.",
+    "prerequisites": "Prerequisites: Enrollment in a graduate program or approval of instructor. Cross Listing: AFST 651/PBSI 651 .",
+    "department": "Psychological and Brain Sciences",
+    "prefix": "PBSI",
+    "number": "651",
+    "course_level": null,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "AFST 651",
+      "PBSI 651"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "AFST 651",
+      "PBSI 651"
+    ],
+    "restrictions": [
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/pbsi/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "PBSI 655",
+    "title": "Foundations in Cognitive Neuroscience",
+    "credit_hours": 3,
+    "description": "Experimental design in cognitive neuroscience; basics of cognitive neuroscience methods; perception versus imagery; attention; motor control; short-term and long-term memory; volition and consciousness; executive function; decision making; affect and psychopathology; social cognition.",
+    "prerequisites": "Prerequisite: Graduate classification or approval of instructor. Cross Listing: NRSC 655/PBSI 655 .",
+    "department": "Psychological and Brain Sciences",
+    "prefix": "PBSI",
+    "number": "655",
+    "course_level": null,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "NRSC 655",
+      "PBSI 655"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "NRSC 655",
+      "PBSI 655"
+    ],
+    "restrictions": [
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/pbsi/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "PBSI 671",
+    "title": "Methods and Statistics in Psychological Science II",
+    "credit_hours": 3,
+    "description": "Examine the conceptual foundations and practical applications of linear regression in psychological research. Focus on understanding the rationale behind regression-based approaches and develop proficiency in selecting, applying and interpreting appropriate models for behavioral data. Gain hands-on experience with psychological datasets and enhance analytical thinking through guided practice. Emphasize the integration of statistical reasoning with empirical inquiry to support sound research conclusions.",
+    "prerequisites": "Prerequisites: Graduate classification or approval of instructor. Cross Listing: NRSC 671/PBSI 671 .",
+    "department": "Psychological and Brain Sciences",
+    "prefix": "PBSI",
+    "number": "671",
+    "course_level": null,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "NRSC 671",
+      "PBSI 671"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "NRSC 671",
+      "PBSI 671"
+    ],
+    "restrictions": [
+      "approval of instructor"
+    ],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/pbsi/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
+  },
+  {
+    "code": "PBSI 678",
+    "title": "Couples Therapy",
+    "credit_hours": 3,
+    "description": "Theory and practice of marital therapy emphasizing systems and communication approaches; effective strategies and techniques; therapy with specific marital problems and obstacles to effective therapy.",
+    "prerequisites": "Prerequisite: PBSI 637 , CPSY 631 , or equivalent. Cross Listing: CPSY 678/PBSI 678 .",
+    "department": "Psychological and Brain Sciences",
+    "prefix": "PBSI",
+    "number": "678",
+    "course_level": null,
+    "credit_min": 3,
+    "credit_max": 3,
+    "is_variable_credit": false,
+    "ucc_attributes": [],
+    "tccns": [],
+    "cross_listings": [
+      "CPSY 678",
+      "PBSI 678"
+    ],
+    "repeatability": null,
+    "campuses": [],
+    "prerequisite_courses": [
+      "PBSI 637",
+      "CPSY 631",
+      "CPSY 678",
+      "PBSI 678"
+    ],
+    "restrictions": [],
+    "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/pbsi/",
+    "catalog_year": "2026-2027",
+    "source_last_checked": "2026-08-13"
   }
 ]

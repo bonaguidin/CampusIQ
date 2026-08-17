@@ -1,8 +1,13 @@
 import { useCallback, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/useAuth';
+import { analyzeFit, analyzeGap, analyzeShift } from '../api/analysis';
+import { useCachedAnalysisRun } from '../hooks/useCachedAnalysisRun';
 import { ChatPanel } from '../components/ChatPanel';
+import { GuidedTour } from '../components/GuidedTour';
 import { DashboardSuccessNotice } from '../components/DashboardSuccessNotice';
+import { CareerSnapshotPanel } from '../components/CareerSnapshotPanel';
+import { CourseDiscoveryPanel } from '../components/CourseDiscoveryPanel';
 import { FitAnalysisPanel } from '../components/FitAnalysisPanel';
 import { GapAnalysisPanel } from '../components/GapAnalysisPanel';
 import { ShiftAnalysisPanel } from '../components/ShiftAnalysisPanel';
@@ -21,17 +26,47 @@ const NAV_ITEMS: Array<{ key: NavSection; label: string }> = [
   { key: 'career', label: 'Career' },
 ];
 
+type CareerSubTab = 'snapshot' | 'gap' | 'fit' | 'shift' | 'profile';
+
+const CAREER_SUB_TABS: Array<{ key: CareerSubTab; label: string }> = [
+  { key: 'snapshot', label: 'Snapshot' },
+  { key: 'gap', label: 'Readiness' },
+  { key: 'fit', label: 'Role Fit' },
+  { key: 'shift', label: 'Trend Guidance' },
+  { key: 'profile', label: 'Profile' },
+];
+
+// First-run tour is remembered per user (localStorage), so it auto-shows once
+// and the "?" button replays it on demand. A profile field could hold this
+// later; localStorage keeps it demo-simple with no migration.
+const TOUR_SEEN_PREFIX = 'gradusiq_tour_seen_';
+
 export function AuthenticatedDashboard() {
-  const { studentAccount, signOutSession, session, reloadStudentProfile } = useAuth();
+  const { studentAccount, signOutSession, session, slug, reloadStudentProfile } = useAuth();
+  const tourSeenKey = session?.user?.id ? `${TOUR_SEEN_PREFIX}${session.user.id}` : null;
+  const [tourOpen, setTourOpen] = useState<boolean>(() =>
+    tourSeenKey ? localStorage.getItem(tourSeenKey) !== '1' : false,
+  );
   // The term view reads planned_courses and the catalog through the session
   // bearer token. Absent one, the section falls back to the flat course list
   // below rather than rendering an empty planner.
   const accessToken = session?.access_token ?? null;
   const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState<NavSection>('overview');
+  const [careerSubTab, setCareerSubTab] = useState<CareerSubTab>('snapshot');
   const [railOpen, setRailOpen] = useState(false);
   const [fieldFocus, setFieldFocus] = useState<CareerFieldFocus | null>(null);
   const [profileSaved, setProfileSaved] = useState(false);
+  // Lifted out of GapAnalysisPanel/FitAnalysisPanel/ShiftAnalysisPanel (each
+  // still owns its own internal useCachedAnalysisRun by default) so the
+  // Snapshot sub-tab can read the exact same run state its full-panel sibling
+  // shows — one run, reflected in both places, instead of a second
+  // independent fetch. useCachedAnalysisRun (not the older useAnalysisRun)
+  // so this shared instance also gets cache-hit-on-mount for real students
+  // and cache-first auto-trigger for demo, matching each panel's own default.
+  const gapRun = useCachedAnalysisRun('gap', () => analyzeGap({ slug, accessToken }));
+  const fitRun = useCachedAnalysisRun('fit', () => analyzeFit({ slug, accessToken }));
+  const shiftRun = useCachedAnalysisRun('shift', () => analyzeShift({ slug, accessToken }));
   const canonical = studentAccount.profile?.intelligence_profile;
   const dashboard = useMemo(
     () => (canonical ? buildDashboardViewModel(canonical) : null),
@@ -56,6 +91,11 @@ export function AuthenticatedDashboard() {
    */
   const requestField = useCallback((request: ProfileFieldRequest) => {
     setActiveSection('career');
+    // The field only renders inside CareerProfile, which now lives on the
+    // Profile sub-tab rather than directly on the Career section — so a
+    // skipped-analysis "Add this" link has to land the student there too,
+    // not just on whichever Career sub-tab happened to be open.
+    setCareerSubTab('profile');
     setRailOpen(false);
     // A new object every time, so asking twice for the same field works.
     setFieldFocus({ path: request.path, nonce: Date.now() });
@@ -77,8 +117,28 @@ export function AuthenticatedDashboard() {
     setRailOpen(false);
   }
 
+  function handleTourClose() {
+    setTourOpen(false);
+    if (tourSeenKey) localStorage.setItem(tourSeenKey, '1');
+  }
+
+  // The tour ends on these; each marks the tour seen (via onClose) then routes.
+  const tourEndActions = [
+    { label: 'Add transcript', onClick: () => { void navigate('/transcript'); } },
+    { label: 'Add resume', onClick: () => { void navigate('/resume'); } },
+  ];
+
   return (
     <ProfileCompletionContext.Provider value={requestField}><div className="shell" data-dashboard-source="authenticated">
+      {/* First-run onboarding tour — carousel that walks the tabs and ends on
+          the transcript/resume upload CTAs. */}
+      {tourOpen && (
+        <GuidedTour
+          onNavigate={setActiveSection}
+          onClose={handleTourClose}
+          endActions={tourEndActions}
+        />
+      )}
       {railOpen && <div className="rail-overlay" onClick={() => setRailOpen(false)} aria-hidden="true" />}
       <aside className={`rail${railOpen ? ' rail--open' : ''}`} aria-label="Dashboard navigation">
         <div className="rail-identity">
@@ -131,6 +191,15 @@ export function AuthenticatedDashboard() {
             <span className="topbar-menu-icon" aria-hidden="true"><span /></span>
           </button>
           <h2 className="topbar-title">{NAV_ITEMS.find((item) => item.key === activeSection)?.label}</h2>
+          <button
+            type="button"
+            className="topbar-help"
+            onClick={() => setTourOpen(true)}
+            aria-label="Replay the new-user tour"
+            title="Take the tour"
+          >
+            ?
+          </button>
         </header>
         <main className="stage-main">
           <div className="stage-inner">
@@ -217,69 +286,138 @@ export function AuthenticatedDashboard() {
                   </>
                 ) : (
                   <>
-                    {/* Analyses first, profile second -- matching the demo
-                        dashboard's Career tab, which already orders it this
-                        way. The three panels are unchanged.
-
-                        An earlier revision put the profile on top so the tab
-                        would not open on three bare "Run analysis" buttons.
-                        Each panel now carries its own title ("Readiness Check
-                        (GAP)" and so on), so the tab still says what it is
-                        without a section heading standing in for them.
-
-                        "Career Profile" travels DOWN with the profile rather
-                        than staying at the top: it describes the record, not
-                        the analyses, and CareerSummary deliberately renders no
-                        heading of its own on the grounds that this <h2> labels
-                        it. Leaving it above the panels broke that. Its
-                        existing border-bottom also supplies the division
-                        between the two halves, which is why
-                        .career-profile-block draws no rule of its own. */}
-                    {/* Above the analyses, because it is the answer to the
-                        question they ask. Sticky rather than fixed: it settles
-                        at the top of the scroll container and covers nothing,
-                        which is the whole difference between it and the modal
-                        it replaces. */}
+                    {/* Above the sub-tab row, because it is the answer to the
+                        question the analyses ask, and it applies regardless of
+                        which sub-tab is open. Sticky rather than fixed: it
+                        settles at the top of the scroll container and covers
+                        nothing, which is the whole difference between it and
+                        the modal it replaces. */}
                     <ProfileChecklist
                       missing={missingDetails}
                       onJump={(field, trigger) => { requestField({ path: field.path, trigger }); }}
                     />
-                    <GapAnalysisPanel />
-                    <FitAnalysisPanel />
-                    <ShiftAnalysisPanel />
-                    <div className="career-profile-block">
-                      <h2 className="career-section-heading">Career Profile</h2>
-                      {/* Graduation and the majors are academic record, not
-                          career record, so they arrive as props rather than
-                          being dug out of the profile by the career component.
-                          All three were already on the view model and simply
-                          unread -- nothing new is fetched to render them. */}
-                      <CareerProfile
-                        career={dashboard.career}
-                        details={{
+
+                    {/* Second-level tab row, same pattern as AcademicSnapshot's
+                        .academic-tabs (useState + role="tablist" + underline
+                        indicator) -- kept as a sibling set of CSS classes
+                        rather than sharing AcademicSnapshot's, since Academic
+                        and Career are independent sections that happen to
+                        agree on a visual language, not one shared component. */}
+                    <div className="career-tabs" role="tablist" aria-label="Career views">
+                      {CAREER_SUB_TABS.map(({ key, label }) => (
+                        <button
+                          key={key}
+                          type="button"
+                          role="tab"
+                          id={`career-tab-${key}`}
+                          aria-selected={careerSubTab === key}
+                          aria-controls={`career-panel-${key}`}
+                          className={`career-tab${careerSubTab === key ? ' career-tab--active' : ''}`}
+                          onClick={() => setCareerSubTab(key)}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Every sub-tab's content stays mounted at all times and
+                        is hidden with CSS rather than conditional JSX. GAP/
+                        FIT/SHIFT each hold their run result in local state
+                        (useAnalysisRun, lifted here for GAP/FIT/SHIFT so
+                        Snapshot can share it) -- unmounting on tab switch
+                        would throw that state away and force a re-run. */}
+                    <div
+                      role="tabpanel"
+                      id="career-panel-snapshot"
+                      aria-labelledby="career-tab-snapshot"
+                      className={`career-subtab-panel${careerSubTab === 'snapshot' ? '' : ' career-subtab-panel--hidden'}`}
+                    >
+                      <CareerSnapshotPanel
+                        gap={gapRun}
+                        fit={fitRun}
+                        shift={shiftRun}
+                        headline={{
+                          targetRoles: dashboard.career.target_roles,
                           expectedGraduation: dashboard.expectedGraduation,
                           majorCurrent: dashboard.majorCurrent,
-                          majorIntended: dashboard.majorIntended,
                         }}
-                        // Each field PATCHes only its own keys and then
-                        // reloads, so the page re-renders from the server's
-                        // answer rather than from what the editor hoped it
-                        // wrote. Without a token there is nothing to save
-                        // with, so the profile stays read-only rather than
-                        // growing buttons that cannot work.
-                        editing={
-                          accessToken
-                            ? {
-                                accessToken,
-                                onSaved: async () => {
-                                  await reloadStudentProfile();
-                                  setProfileSaved(true);
-                                },
-                              }
-                            : null
-                        }
-                        focus={fieldFocus}
+                        onViewFull={setCareerSubTab}
                       />
+                    </div>
+
+                    <div
+                      role="tabpanel"
+                      id="career-panel-gap"
+                      aria-labelledby="career-tab-gap"
+                      className={`career-subtab-panel${careerSubTab === 'gap' ? '' : ' career-subtab-panel--hidden'}`}
+                    >
+                      <GapAnalysisPanel run={gapRun} />
+                    </div>
+
+                    <div
+                      role="tabpanel"
+                      id="career-panel-fit"
+                      aria-labelledby="career-tab-fit"
+                      className={`career-subtab-panel${careerSubTab === 'fit' ? '' : ' career-subtab-panel--hidden'}`}
+                    >
+                      <FitAnalysisPanel run={fitRun} />
+                    </div>
+
+                    <div
+                      role="tabpanel"
+                      id="career-panel-shift"
+                      aria-labelledby="career-tab-shift"
+                      className={`career-subtab-panel${careerSubTab === 'shift' ? '' : ' career-subtab-panel--hidden'}`}
+                    >
+                      <ShiftAnalysisPanel run={shiftRun} />
+                    </div>
+
+                    <div
+                      role="tabpanel"
+                      id="career-panel-profile"
+                      aria-labelledby="career-tab-profile"
+                      className={`career-subtab-panel${careerSubTab === 'profile' ? '' : ' career-subtab-panel--hidden'}`}
+                    >
+                      {/* Natural next action after fit/gaps/trends: given what
+                          the student now understands about the role, which
+                          actual courses at their school build toward it. Kept
+                          grouped with CareerProfile on the Profile sub-tab, as
+                          it was on the single-page layout. */}
+                      <CourseDiscoveryPanel targetRoles={dashboard.career.target_roles} />
+                      <div className="career-profile-block">
+                        <h2 className="career-section-heading">Career Profile</h2>
+                        {/* Graduation and the majors are academic record, not
+                            career record, so they arrive as props rather than
+                            being dug out of the profile by the career component.
+                            All three were already on the view model and simply
+                            unread -- nothing new is fetched to render them. */}
+                        <CareerProfile
+                          career={dashboard.career}
+                          details={{
+                            expectedGraduation: dashboard.expectedGraduation,
+                            majorCurrent: dashboard.majorCurrent,
+                            majorIntended: dashboard.majorIntended,
+                          }}
+                          // Each field PATCHes only its own keys and then
+                          // reloads, so the page re-renders from the server's
+                          // answer rather than from what the editor hoped it
+                          // wrote. Without a token there is nothing to save
+                          // with, so the profile stays read-only rather than
+                          // growing buttons that cannot work.
+                          editing={
+                            accessToken
+                              ? {
+                                  accessToken,
+                                  onSaved: async () => {
+                                    await reloadStudentProfile();
+                                    setProfileSaved(true);
+                                  },
+                                }
+                              : null
+                          }
+                          focus={fieldFocus}
+                        />
+                      </div>
                     </div>
                   </>
                 )}

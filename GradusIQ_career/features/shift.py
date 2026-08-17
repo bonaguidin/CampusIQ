@@ -2,14 +2,20 @@
 
 from typing import Any, Mapping
 
+from GradusIQ_career.ai.context import GroundingMetadata
+from GradusIQ_career.ai.contracts import ShiftOutput
+
 from . import role_research_agent
-from .base import CareerFeatureRunner
+from .base import TypedRuntimeFeatureRunner
 from .market_data import get_shift_signals
 
 
-class ShiftRunner(CareerFeatureRunner):
+class ShiftRunner(TypedRuntimeFeatureRunner):
     feature = "SHIFT"
     prompt_filename = "gradus_iq_prompt_SHIFT.md"
+    prompt_name = "shift"
+    prompt_version = "1.0"
+    output_model = ShiftOutput
     # ai_anxiety_level is deliberately NOT gated on. It calibrates SHIFT's tone
     # -- how much reassurance to offer about AI -- and everything the feature
     # actually reasons over (target roles, skills, O*NET signals, live trends)
@@ -97,6 +103,27 @@ class ShiftRunner(CareerFeatureRunner):
         if unresearched:
             trends["_unresearched_roles"] = unresearched
         return trends
+
+    def grounding_metadata(self, student_context: Mapping[str, Any]) -> GroundingMetadata:
+        trends = student_context.get("role_trends", {})
+        successful = sum(
+            1 for role, result in trends.items()
+            if role != "_unresearched_roles" and isinstance(result, Mapping)
+        ) if isinstance(trends, Mapping) else 0
+        research_used = successful > 0
+        sources = ["student_confirmed", "onet_static"]
+        if research_used:
+            sources.append("role_trends_web")
+        return GroundingMetadata(
+            source_types=tuple(sources),
+            trust_level="untrusted_external" if research_used else "trusted_reference",
+            attributes={
+                "trend_research_used": research_used,
+                "successful_search_count": successful,
+                "unresearched_role_count": len(trends.get("_unresearched_roles", []))
+                if isinstance(trends, Mapping) else 0,
+            },
+        )
 
     def default_summary(self, data):
         return data.get("role_evolution_summary", "SHIFT analysis completed.")
