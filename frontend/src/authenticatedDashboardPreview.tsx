@@ -6,6 +6,7 @@ import { AuthContext, type AuthContextValue } from './auth/AuthContext';
 import { StudentAccountProblem } from './auth/AccountStateScreens';
 import { AuthenticatedDashboard } from './pages/AuthenticatedDashboard';
 import { ProfileCompletionPage } from './pages/ProfileCompletionPage';
+import { applyInstitutionTheme, fetchInstitutionThemeByName } from './lib/institutionTheme';
 import type { StudentIntelligenceProfile } from './types/studentIntelligenceProfile';
 import './index.css';
 
@@ -189,5 +190,16 @@ const app = mode === 'error'
       </AuthContext.Provider>
     )
     : <AuthContext.Provider value={context}><MemoryRouter><AuthenticatedDashboard /></MemoryRouter></AuthContext.Provider>;
+
+// This harness substitutes AuthContext.Provider directly instead of
+// rendering the real AuthProvider, so AuthProvider's own institution-theming
+// effect (AuthContext.tsx's institutionId effect, ~lines 312-329) never runs
+// here -- ?institution= previously had no visible effect on the page's
+// accent color. Driven explicitly here, by name rather than id: this
+// harness's profile.institution.id ('institution-real') is a placeholder,
+// not a real institutions.id foreign key, so fetchInstitutionThemeById would
+// always miss -- fetchInstitutionThemeByName is the same fallback
+// AuthContext itself uses for name-only demo fixtures.
+void fetchInstitutionThemeByName(institution).then(applyInstitutionTheme);
 
 ReactDOM.createRoot(document.getElementById('root')!).render(<React.StrictMode>{app}</React.StrictMode>);
