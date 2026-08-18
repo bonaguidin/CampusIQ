@@ -44,6 +44,26 @@ _Running list: bugs, gaps, and feature ideas. Update as items close._
 - [ ] **Quota math requires cache-first architecture** — Adzuna ~1,000 calls/mo (~33/day), JSearch free tier ~200/mo. Must fetch-on-schedule + cache, never call live per student request.
 - [ ] **No TTL primitive exists anywhere in the codebase.** The one cache that exists (`role_research_cache.json`) has no timestamp field — would need to be built from scratch for posting data, which goes stale in days not years.
 - [ ] **Cache architecture won't scale as-is even once built.** Flat single-file read-modify-write, no locking under `WEB_CONCURRENCY > 1`. Fine at 15 roles; wrong shape for one-to-many posting data.
+- [x] ~~Pre-Health Clinical Volunteer job-posting coverage~~ — resolved as an **accepted
+  known gap**, cross-vendor confirmed 2026-08-17. Adzuna returned 0 (exact phrase) / 23
+  (broad "clinical volunteer", DFW) across every keyword phrasing tested. JSearch/
+  OpenWebNinja (once subscription was active) returned 0 for the identical query/location.
+  Two independent vendors agreeing on near-zero volume rules out keyword phrasing as the
+  cause — read as a real market-coverage gap (clinical volunteer roles are largely posted
+  through hospital/nonprofit portals directly, not aggregated by either platform), not a
+  bug to keep chasing. No further keyword tuning planned. The job-postings fetch pipeline
+  needs to handle this role's thin/zero results gracefully rather than treating it as a
+  fetch failure — same "never cache failures ≠ never have thin results" distinction
+  already established for O*NET.
+- [ ] **JSearch's role narrowed from original plan.** Originally scoped as gap-filler for
+  Adzuna-thin roles + LinkedIn-source confirmation. Gap-fill use case is now closed (see
+  above — JSearch is equally thin for the one role that needed it). LinkedIn-source
+  confirmation remains untested — the one live call spent on this investigation returned
+  zero results, so there's no response body to inspect for `job_publisher`/source fields
+  yet. Worth one more cheap live call (a high-volume role like "software engineering",
+  not a thin one) if/when LinkedIn-sourcing actually matters for a feature — not urgent.
+  Adzuna is confirmed as the sole primary vendor for job-posting data going forward;
+  JSearch's remaining justified use is narrow, not a general secondary source.
 
 ## 🟢 Academic Record — term structure (Phase 1 audited and built, not yet merged)
 
