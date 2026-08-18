@@ -1038,3 +1038,77 @@ def test_student_without_a_home_institution_gets_409(client, db, monkeypatch):
 
     assert response.status_code == 409
     assert "home institution" in response.json()["detail"].lower()
+
+
+# ── 12. institution-specific grading schema ─────────────────────────────────
+# GET /me/grading-schema is the single canonical source the current-grade and
+# final-grade selectors (and, at compute time, resolve_grade/academics/gpa.py)
+# must agree on -- see GradusIQ_career/planning/lifecycle.py's edit/finalize
+# routes. These tests pin the exact TAMU vocabulary against a regression to a
+# hard-coded generic plus/minus list, and confirm SMU's own scale stays
+# independent rather than being flattened to match TAMU's.
+
+GRADING_SCHEMA = "/api/v2/student/me/grading-schema"
+
+
+def test_grading_schema_tamu_is_exactly_five_gpa_letters_plus_w_and_i(client, db, monkeypatch):
+    patch_session(monkeypatch, db, STUDENT_A)  # STUDENT_A's home institution is TAMU
+
+    response = client.get(GRADING_SCHEMA, headers=HEADERS)
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["institution_id"] == TAMU
+    assert body["uses_plus_minus"] is False
+    assert [g["letter"] for g in body["grades"]] == ["A", "B", "C", "D", "F", "I", "W"]
+
+
+def test_grading_schema_tamu_gpa_bearing_points_are_4_3_2_1_0(client, db, monkeypatch):
+    patch_session(monkeypatch, db, STUDENT_A)
+
+    response = client.get(GRADING_SCHEMA, headers=HEADERS)
+
+    gpa_bearing = {
+        g["letter"]: g["points"] for g in response.json()["grades"] if g["counts_toward_gpa"]
+    }
+    assert gpa_bearing == {"A": 4.0, "B": 3.0, "C": 2.0, "D": 1.0, "F": 0.0}
+    non_gpa = {g["letter"] for g in response.json()["grades"] if not g["counts_toward_gpa"]}
+    assert non_gpa == {"W", "I"}
+
+
+def test_grading_schema_tamu_never_exposes_plus_minus_letters(client, db, monkeypatch):
+    patch_session(monkeypatch, db, STUDENT_A)
+
+    response = client.get(GRADING_SCHEMA, headers=HEADERS)
+
+    letters = {g["letter"] for g in response.json()["grades"]}
+    for bad in ("A-", "B+", "B-", "C+", "C-", "D+", "D-", "A+"):
+        assert bad not in letters
+
+
+def test_grading_schema_smu_keeps_its_own_independent_plus_minus_scale(client, db, monkeypatch):
+    smu_student = "smu-student-0001"
+    db.add_student(smu_student, SMU)
+    monkeypatch.setattr(api, "build_client_for_token", lambda token: FakeSupabase(db, smu_student))
+
+    response = client.get(GRADING_SCHEMA, headers=HEADERS)
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["institution_id"] == SMU
+    assert body["uses_plus_minus"] is True
+    letters = {g["letter"] for g in body["grades"]}
+    # SMU's scale, not TAMU's -- plus/minus letters and P are present, and
+    # this must hold independently of whatever TAMU's own schema looks like.
+    assert {"A", "A-", "B+", "B", "F", "P"} <= letters
+
+
+def test_grading_schema_requires_a_home_institution(client, db, monkeypatch):
+    db.tables["students"].append({"id": "orphan-grades", "name": "Orphan"})
+    monkeypatch.setattr(
+        api, "build_client_for_token", lambda token: FakeSupabase(db, "orphan-grades")
+    )
+
+    response = client.get(GRADING_SCHEMA, headers=HEADERS)
+
+    assert response.status_code == 409

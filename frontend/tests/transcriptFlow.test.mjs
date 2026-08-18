@@ -119,11 +119,14 @@ test('transcript flow covers upload, recovery, edits, repeats, failures, confirm
   // CASE T6: and the newly confirmed course is on screen, not the pre-confirm
   // empty state -- which is what a stale profile would have rendered.
   //
-  // The Academic tab now opens on the UPCOMING term (Fall 2026), so the
-  // confirmed Fall 2025 course is one dropdown selection away rather than
-  // immediately visible. The assertion's point is unchanged -- the row exists
-  // and the empty state is gone -- so it selects the course's own term first.
+  // The Academic top-level item opens on Academic Overview; the term view is
+  // one level down, under GPA Calculator. It now opens on the UPCOMING term
+  // (Fall 2026), so the confirmed Fall 2025 course is one dropdown selection
+  // away rather than immediately visible. The assertion's point is unchanged
+  // -- the row exists and the empty state is gone -- so it selects the
+  // course's own term first.
   await page.getByRole('button', { name: 'Academic' }).click()
+  await page.getByRole('button', { name: 'GPA Calculator' }).click()
   await page.locator('#term-select').waitFor()
   assert.equal(await page.locator('#term-select').inputValue(), '2026-Fall')
   await page.locator('#term-select').selectOption('2025-Fall')

@@ -431,6 +431,44 @@ a {
   background: var(--rail-active);
 }
 
+/* Nested children under Academic and Career -- indentation + smaller text reads as
+   subordinate to the parent rather than a second row of top-level tabs. */
+.rail-subnav {
+  display: flex;
+  flex-direction: column;
+  padding: var(--sp-1) 0 var(--sp-2);
+}
+
+.rail-subitem {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: var(--sp-2) var(--sp-5) var(--sp-2) calc(var(--sp-5) + var(--sp-4));
+  background: none;
+  border: none;
+  border-left: 2px solid transparent;
+  color: var(--rail-muted);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+  min-height: 36px;
+  letter-spacing: 0.01em;
+}
+
+.rail-subitem:hover {
+  background: var(--rail-hover);
+  color: var(--rail-text);
+}
+
+.rail-subitem--active {
+  border-left-color: var(--rail-indicator);
+  color: var(--rail-text);
+  background: var(--rail-active);
+}
+
 /* ─── READINESS RAIL (Signature element) ─────────────────────────────────── */
 .readiness-rail {
   padding: var(--sp-5);
@@ -998,51 +1036,95 @@ a {
   border-bottom: 1px solid var(--line);
 }
 
-/* Second-level tab row for the Career section's Snapshot/Readiness/Role Fit/
-   Trend Guidance/Profile sub-tabs. Same underline pattern as .academic-tabs,
-   kept as its own class set since the two sections are independent and only
-   happen to agree on a visual language. */
-.career-tabs {
+.career-overview-target {
   display: flex;
-  gap: 0;
+  flex-direction: column;
+  gap: var(--sp-1);
+  margin: var(--sp-6) 0;
+}
+
+.career-overview-target span,
+.career-intelligence-role {
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+
+.career-overview-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border-top: 1px solid var(--line);
+}
+
+.career-overview-summary {
+  padding: var(--sp-5) var(--sp-5) var(--sp-5) 0;
   border-bottom: 1px solid var(--line);
+}
+
+.career-overview-summary + .career-overview-summary {
+  padding-left: var(--sp-5);
+  border-left: 1px solid var(--line);
+}
+
+.career-overview-summary h3 {
+  margin-bottom: var(--sp-2);
+}
+
+.career-overview-summary p {
+  color: var(--muted);
+}
+
+.career-intelligence-role {
+  margin: calc(-1 * var(--sp-3)) 0 var(--sp-6);
+}
+
+.career-intelligence-section + .career-intelligence-section {
+  margin-top: var(--sp-6);
+}
+
+/* These panels form one information page, so their outer shells are flat;
+   result content, controls, and each feature's independent state are intact. */
+.career-subtab-panel .career-intelligence-section > .analysis-panel {
+  box-shadow: none;
+  border: 1px solid var(--line);
+}
+
+.job-search-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  align-items: end;
+  gap: var(--sp-4);
   margin-bottom: var(--sp-6);
 }
 
-.career-tab {
-  background: none;
-  border: none;
-  border-bottom: 2px solid transparent;
-  margin-bottom: -1px;
-  padding: var(--sp-2) var(--sp-4);
-  font-family: var(--font-ui);
-  font-size: var(--text-sm);
-  font-weight: 500;
+.job-search-shell label {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
   color: var(--muted);
-  cursor: pointer;
-  transition: color 0.12s ease, border-color 0.12s ease;
-  white-space: nowrap;
-  letter-spacing: 0.01em;
+  font-size: var(--text-sm);
 }
 
-.career-tab:first-child {
-  padding-left: 0;
-}
-
-.career-tab:hover {
+.job-search-shell select,
+.job-search-shell input {
+  min-height: 42px;
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-chip);
+  background: var(--surface);
   color: var(--ink);
+  font: inherit;
 }
 
-.career-tab--active {
-  color: var(--accent);
-  border-bottom-color: var(--accent);
-  font-weight: 600;
-}
+@media (max-width: 760px) {
+  .career-overview-grid,
+  .job-search-shell {
+    grid-template-columns: 1fr;
+  }
 
-/* Sub-tab content stays mounted at all times (so GAP/FIT/SHIFT run state
-   survives switching away and back); only visibility toggles. */
-.career-subtab-panel--hidden {
-  display: none;
+  .career-overview-summary + .career-overview-summary {
+    padding-left: 0;
+    border-left: 0;
+  }
 }
 
 .career-snapshot {
@@ -1219,7 +1301,7 @@ a {
    fill alone read fine against Skills' --paper backdrop but nearly
    disappeared against a project card's --surface-elevated white, which is
    what --gold-fill-border exists to fix everywhere at once. */
-.career-subtab-panel .cp-chip {
+.career-profile-block .cp-chip {
   border: 1px solid var(--gold-fill-border);
   border-radius: var(--radius-chip);
   background: var(--gold-tint);
@@ -1228,14 +1310,14 @@ a {
 
 /* Project tool chips (ProjectCard's "quiet" variant) previously fell back to
    a transparent, borderless, muted-text style -- but every project card sits
-   on the elevated white surface, and the .career-subtab-panel .cp-chip rule
+   on the elevated white surface, and the .career-profile-block .cp-chip rule
    above outranks .cp-chip--quiet on specificity, so the quiet background was
    silently overridden by the gold fill anyway while the border stayed off.
    Made deliberate here rather than left as a specificity accident: quiet
    chips keep their smaller, monospace, muted-text treatment (they carry a
    tool name, not a confirmed skill) but share the same fill+hairline as
    every other gold chip in the tab. */
-.career-subtab-panel .cp-chip--quiet {
+.career-profile-block .cp-chip--quiet {
   border-color: var(--gold-fill-border);
   background: var(--gold-tint);
 }
@@ -5065,6 +5147,164 @@ a {
   }
 
   .term-search-result {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+}
+
+/* Course lifecycle: status badges, current/final grade entry, drop, and the
+   prior-term grade-request prompt. Same flat/monochrome language as the rest
+   of the term planner -- badges are outlined text, not filled color. */
+
+.course-status-badge {
+  display: inline-block;
+  width: fit-content;
+  font-size: 0.625rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 0.05rem var(--sp-2);
+  margin-bottom: var(--sp-1);
+}
+
+.course-status-badge--in-progress {
+  border-color: var(--ink);
+  color: var(--ink);
+}
+
+.real-course-row--in-progress {
+  border-left: 2px solid var(--ink);
+  padding-left: var(--sp-3);
+}
+
+.real-course-row--dropped {
+  border-left: 2px solid var(--line);
+  padding-left: var(--sp-3);
+  opacity: 0.6;
+}
+
+.current-grade-cell {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+}
+
+.current-grade-label {
+  font-size: 0.6875rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.current-grade-select {
+  font-family: var(--font-ui);
+  font-size: 0.875rem;
+  padding: 0.2rem var(--sp-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.term-search-hint--activation {
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-left-width: 3px;
+  padding: var(--sp-2) var(--sp-3);
+  margin: var(--sp-3) 0;
+}
+
+.gpa-projection-note {
+  color: var(--muted);
+  font-size: 0.8125rem;
+  margin: calc(-1 * var(--sp-4)) 0 0;
+}
+
+.grade-request-banner {
+  border: 1px solid var(--line);
+  border-left-width: 3px;
+  border-left-color: var(--ink);
+  padding: var(--sp-4) var(--sp-5);
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.academic-overview-current {
+  margin-top: var(--sp-4);
+}
+
+.academic-overview-term-label {
+  font-size: 0.8125rem;
+  color: var(--muted);
+  margin: 0 0 var(--sp-2);
+}
+
+.academic-overview-status {
+  color: var(--muted);
+  font-size: 0.8125rem;
+  margin: var(--sp-4) 0 0;
+}
+
+.academic-overview-course-discovery {
+  margin-top: var(--sp-4);
+}
+
+.academic-overview-cd-role {
+  font-size: 0.8125rem;
+  color: var(--ink);
+  margin: 0 0 var(--sp-1);
+}
+
+.academic-overview-cd-count {
+  font-size: 0.8125rem;
+  color: var(--muted);
+  margin: 0 0 var(--sp-2);
+}
+
+.academic-overview-cd-list {
+  list-style: none;
+  margin: 0 0 var(--sp-3);
+  padding: 0;
+  display: grid;
+  gap: var(--sp-1);
+  font-size: 0.8125rem;
+}
+
+.grade-request-heading {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.grade-request-copy {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+.grade-request-list {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.grade-request-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.grade-request-row strong {
+  display: block;
+}
+
+.grade-request-row small {
+  color: var(--muted);
+}
+
+@media (max-width: 640px) {
+  .grade-request-row {
     grid-template-columns: minmax(0, 1fr) auto;
   }
 }

@@ -1,6 +1,65 @@
 export const TERMS_URL = '/api/v2/student/me/terms'
 export const PLANNED_COURSES_URL = '/api/v2/student/me/planned-courses'
 export const CATALOG_SEARCH_URL = '/api/v2/student/me/catalog/search'
+export const COURSE_RECORDS_URL = '/api/v2/student/me/course-records'
+export const PENDING_FINAL_GRADES_URL = '/api/v2/student/me/course-records/pending-final-grades'
+export const GRADING_SCHEMA_URL = '/api/v2/student/me/grading-schema'
+
+/**
+ * Mirrors lifecycle.ACTIVATION_WINDOW_DAYS (GradusIQ_career/planning/lifecycle.py).
+ * Used only to preview, ahead of submitting, whether a term the student is
+ * about to plan a course for will be treated as current -- the backend is
+ * still the one that decides at write time, against its own clock.
+ */
+export const ACTIVATION_WINDOW_DAYS = 30
+
+/**
+ * Letter-grade options for the current-grade and final-grade selectors,
+ * derived from the student's own institution's grade_point_map -- NOT a
+ * hard-coded list. A TAMU student (uses_plus_minus=false) sees exactly TAMU's
+ * letters; an institution configured with plus/minus grading sees its own
+ * full scale. This is the same map resolve_grade() (academics/gpa.py)
+ * authoritatively checks a letter against at GPA-computation time, fetched
+ * once via GET /me/grading-schema rather than duplicated as a second,
+ * independently-maintained list.
+ *
+ * currentGradeOptions is narrower than finalGradeOptions on purpose: a
+ * current (non-final) grade exists only to project GPA performance, so a
+ * grade the institution does not count toward GPA (W, I, SMU's P) would not
+ * mean anything there. Final grade may legitimately be any of the
+ * institution's recognized outcomes, GPA-bearing or not.
+ */
+export function currentGradeOptions(schema) {
+  const grades = Array.isArray(schema?.grades) ? schema.grades : []
+  return grades.filter((grade) => grade.counts_toward_gpa).map((grade) => grade.letter)
+}
+
+export function finalGradeOptions(schema) {
+  const grades = Array.isArray(schema?.grades) ? schema.grades : []
+  return grades.map((grade) => grade.letter)
+}
+
+export function normalizeGradingSchemaPayload(status, body) {
+  if (status !== 200 || !body || typeof body !== 'object') {
+    return { ok: false, schema: null }
+  }
+  return {
+    ok: true,
+    schema: {
+      institutionId: body.institution_id ?? null,
+      usesPlusMinus: Boolean(body.uses_plus_minus),
+      grades: Array.isArray(body.grades) ? body.grades : [],
+    },
+  }
+}
+
+export function courseRecordUrl(id) {
+  return `${COURSE_RECORDS_URL}/${encodeURIComponent(id)}`
+}
+
+export function finalizeCourseUrl(id) {
+  return `${COURSE_RECORDS_URL}/${encodeURIComponent(id)}/finalize`
+}
 
 /**
  * Season ordinals, mirroring SEASON_ORDER in
@@ -112,6 +171,19 @@ export function termStatus(term, today) {
   if (day < start) return 'upcoming'
   if (day > end) return 'past'
   return 'in_progress'
+}
+
+/**
+ * Whether `term` is already inside its pre-term activation window, i.e.
+ * whether a course planned for it right now would be created as IN_PROGRESS
+ * rather than PLANNED. Preview only -- see ACTIVATION_WINDOW_DAYS above.
+ */
+export function isTermActivated(term, today) {
+  const start = parseDate(term?.start_date)
+  if (!start) return false
+  const activation = new Date(start)
+  activation.setDate(activation.getDate() - ACTIVATION_WINDOW_DAYS)
+  return startOfDay(today) >= startOfDay(activation)
 }
 
 export const TERM_STATUS_LABELS = {
@@ -236,4 +308,14 @@ export function normalizeSearchPayload(status, body) {
     return { ok: false, results: [] }
   }
   return { ok: true, results: Array.isArray(body.results) ? body.results : [] }
+}
+
+export function normalizePendingFinalGradesPayload(status, body) {
+  if (status !== 200 || !body || typeof body !== 'object') {
+    return { ok: false, pendingFinalGrades: [] }
+  }
+  return {
+    ok: true,
+    pendingFinalGrades: Array.isArray(body.pending_final_grades) ? body.pending_final_grades : [],
+  }
 }

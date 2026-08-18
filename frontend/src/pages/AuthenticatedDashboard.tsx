@@ -1,12 +1,12 @@
 import { useCallback, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/useAuth';
-import { analyzeFit, analyzeGap, analyzeShift } from '../api/analysis';
+import { analyzeCourseDiscovery, analyzeFit, analyzeGap, analyzeShift } from '../api/analysis';
+import { useAnalysisRun } from '../hooks/useAnalysisRun';
 import { useCachedAnalysisRun } from '../hooks/useCachedAnalysisRun';
 import { ChatPanel } from '../components/ChatPanel';
 import { GuidedTour } from '../components/GuidedTour';
 import { DashboardSuccessNotice } from '../components/DashboardSuccessNotice';
-import { CareerSnapshotPanel } from '../components/CareerSnapshotPanel';
 import { CourseDiscoveryPanel } from '../components/CourseDiscoveryPanel';
 import { FitAnalysisPanel } from '../components/FitAnalysisPanel';
 import { GapAnalysisPanel } from '../components/GapAnalysisPanel';
@@ -26,14 +26,22 @@ const NAV_ITEMS: Array<{ key: NavSection; label: string }> = [
   { key: 'career', label: 'Career' },
 ];
 
-type CareerSubTab = 'snapshot' | 'gap' | 'fit' | 'shift' | 'profile';
+type CareerSubTab = 'overview' | 'intelligence' | 'job-search' | 'profile';
 
 const CAREER_SUB_TABS: Array<{ key: CareerSubTab; label: string }> = [
-  { key: 'snapshot', label: 'Snapshot' },
-  { key: 'gap', label: 'Readiness' },
-  { key: 'fit', label: 'Role Fit' },
-  { key: 'shift', label: 'Trend Guidance' },
-  { key: 'profile', label: 'Profile' },
+  { key: 'intelligence', label: 'Career Intelligence' },
+  { key: 'job-search', label: 'Job Search' },
+  { key: 'profile', label: 'Career Profile' },
+];
+
+// 'overview' is Academic's own default view -- what the top-level Academic
+// nav item itself renders -- not a visible child tab. Only these two appear
+// as nested nav items under Academic.
+type AcademicSubTab = 'overview' | 'gpa-calculator' | 'course-discovery';
+
+const ACADEMIC_SUB_TABS: Array<{ key: AcademicSubTab; label: string }> = [
+  { key: 'gpa-calculator', label: 'GPA Calculator' },
+  { key: 'course-discovery', label: 'Course Discovery' },
 ];
 
 // First-run tour is remembered per user (localStorage), so it auto-shows once
@@ -53,17 +61,15 @@ export function AuthenticatedDashboard() {
   const accessToken = session?.access_token ?? null;
   const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState<NavSection>('overview');
-  const [careerSubTab, setCareerSubTab] = useState<CareerSubTab>('snapshot');
+  const [careerSubTab, setCareerSubTab] = useState<CareerSubTab>('overview');
+  const [academicSubTab, setAcademicSubTab] = useState<AcademicSubTab>('overview');
   const [railOpen, setRailOpen] = useState(false);
   const [fieldFocus, setFieldFocus] = useState<CareerFieldFocus | null>(null);
   const [profileSaved, setProfileSaved] = useState(false);
   // Lifted out of GapAnalysisPanel/FitAnalysisPanel/ShiftAnalysisPanel (each
-  // still owns its own internal useCachedAnalysisRun by default) so the
-  // Snapshot sub-tab can read the exact same run state its full-panel sibling
-  // shows — one run, reflected in both places, instead of a second
-  // independent fetch. useCachedAnalysisRun (not the older useAnalysisRun)
-  // so this shared instance also gets cache-hit-on-mount for real students
-  // and cache-first auto-trigger for demo, matching each panel's own default.
+  // still owns its own internal useCachedAnalysisRun by default) so Career
+  // Overview and Career Intelligence read the same independent run states.
+  // useCachedAnalysisRun keeps the existing cache behavior for each feature.
   const gapRun = useCachedAnalysisRun('gap', () => analyzeGap({ slug, accessToken }));
   const fitRun = useCachedAnalysisRun('fit', () => analyzeFit({ slug, accessToken }));
   const shiftRun = useCachedAnalysisRun('shift', () => analyzeShift({ slug, accessToken }));
@@ -72,6 +78,31 @@ export function AuthenticatedDashboard() {
     () => (canonical ? buildDashboardViewModel(canonical) : null),
     [canonical],
   );
+  // Lifted out of CourseDiscoveryPanel (which still owns its own internal
+  // useAnalysisRun by default) so Academic Overview's compact summary can
+  // read the exact same run/result the full Course Discovery view shows --
+  // one run, reflected in both places, instead of a second independent
+  // fetch or a duplicate result store. No caching hook (unlike GAP/FIT/
+  // SHIFT): course_discovery is not in the server-side analysis cache, so
+  // this stays a plain useAnalysisRun exactly as CourseDiscoveryPanel used
+  // internally before.
+  const [courseDiscoverySelectedRole, setCourseDiscoverySelectedRole] = useState(
+    () => canonical?.career.target_roles[0] ?? '',
+  );
+  const courseDiscoveryRun = useAnalysisRun(() =>
+    analyzeCourseDiscovery(
+      { slug, accessToken },
+      (canonical?.career.target_roles.length ?? 0) > 1 ? courseDiscoverySelectedRole : null,
+    ),
+  );
+  const courseDiscoveryState = courseDiscoveryRun.state;
+  const courseDiscoverySuccess = useMemo(
+    () =>
+      courseDiscoveryState.phase === 'done' && courseDiscoveryState.result.status === 'success'
+        ? courseDiscoveryState.result.data
+        : null,
+    [courseDiscoveryState],
+  );
   // Computed from the profile in hand, not from a skipped analysis: the
   // checklist has to be right before anything has been run, which is the whole
   // reason it is not built out of the panels' own missing_fields.
@@ -79,6 +110,23 @@ export function AuthenticatedDashboard() {
     () => (canonical ? missingChecklistFields(canonical) : []),
     [canonical],
   );
+  // Academic Overview's "what am I taking right now" -- in-progress course
+  // records already on the profile, with the term(s) they belong to. No
+  // separate fetch: term dates/status (and planned coursework) are GPA
+  // Calculator's concern via TermPlanner, not Overview's.
+  const academicOverviewCurrentCourses = useMemo(
+    () => (dashboard ? dashboard.courses.filter((course) => course.status === 'in_progress') : []),
+    [dashboard],
+  );
+  const academicOverviewCurrentTermLabel = useMemo(() => {
+    if (!dashboard) return null;
+    const termIds = new Set(academicOverviewCurrentCourses.map((course) => course.term_id).filter(Boolean));
+    const label = dashboard.terms
+      .filter((term) => termIds.has(term.id))
+      .map((term) => term.label)
+      .join(', ');
+    return label || null;
+  }, [dashboard, academicOverviewCurrentCourses]);
 
   /**
    * Send the student to the field, wherever they asked from.
@@ -92,7 +140,7 @@ export function AuthenticatedDashboard() {
   const requestField = useCallback((request: ProfileFieldRequest) => {
     setActiveSection('career');
     // The field only renders inside CareerProfile, which now lives on the
-    // Profile sub-tab rather than directly on the Career section — so a
+    // Career Profile child rather than directly on the Career overview — so a
     // skipped-analysis "Add this" link has to land the student there too,
     // not just on whichever Career sub-tab happened to be open.
     setCareerSubTab('profile');
@@ -114,6 +162,23 @@ export function AuthenticatedDashboard() {
 
   function navigateTo(section: NavSection) {
     setActiveSection(section);
+    // The top-level Academic item IS the overview -- clicking it, whether
+    // arriving fresh or returning from a child, always resets to it rather
+    // than leaving whichever child was last open.
+    if (section === 'academic') setAcademicSubTab('overview');
+    if (section === 'career') setCareerSubTab('overview');
+    setRailOpen(false);
+  }
+
+  function navigateToAcademicSubTab(tab: AcademicSubTab) {
+    setActiveSection('academic');
+    setAcademicSubTab(tab);
+    setRailOpen(false);
+  }
+
+  function navigateToCareerSubTab(tab: CareerSubTab) {
+    setActiveSection('career');
+    setCareerSubTab(tab);
     setRailOpen(false);
   }
 
@@ -152,15 +217,48 @@ export function AuthenticatedDashboard() {
         </div>
         <nav className="rail-nav" aria-label="Dashboard sections">
           {NAV_ITEMS.map(({ key, label }) => (
-            <button
-              key={key}
-              type="button"
-              className={`rail-item${activeSection === key ? ' rail-item--active' : ''}`}
-              onClick={() => navigateTo(key)}
-              aria-current={activeSection === key ? 'page' : undefined}
-            >
-              {label}
-            </button>
+            <div key={key} className="rail-nav-group">
+              <button
+                type="button"
+                className={`rail-item${activeSection === key ? ' rail-item--active' : ''}`}
+                onClick={() => navigateTo(key)}
+                aria-current={activeSection === key ? 'page' : undefined}
+              >
+                {label}
+              </button>
+              {/* Parent clicks render their internal overview; only the
+                  user-facing destinations appear as nested children. */}
+              {key === 'academic' && activeSection === 'academic' && (
+                <div className="rail-subnav" role="group" aria-label="Academic sections">
+                  {ACADEMIC_SUB_TABS.map((sub) => (
+                    <button
+                      key={sub.key}
+                      type="button"
+                      className={`rail-subitem${academicSubTab === sub.key ? ' rail-subitem--active' : ''}`}
+                      onClick={() => navigateToAcademicSubTab(sub.key)}
+                      aria-current={academicSubTab === sub.key ? 'page' : undefined}
+                    >
+                      {sub.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+              {key === 'career' && activeSection === 'career' && (
+                <div className="rail-subnav" role="group" aria-label="Career sections">
+                  {CAREER_SUB_TABS.map((sub) => (
+                    <button
+                      key={sub.key}
+                      type="button"
+                      className={`rail-subitem${careerSubTab === sub.key ? ' rail-subitem--active' : ''}`}
+                      onClick={() => navigateToCareerSubTab(sub.key)}
+                      aria-current={careerSubTab === sub.key ? 'page' : undefined}
+                    >
+                      {sub.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           ))}
         </nav>
         <div className="readiness-rail real-readiness">
@@ -240,9 +338,9 @@ export function AuthenticatedDashboard() {
               </div>
             )}
 
-            {activeSection === 'academic' && (
+            {activeSection === 'academic' && academicSubTab === 'overview' && (
               <div className="stage-section">
-                <h2 className="academic-section-heading">Academic Record</h2>
+                <h2 className="academic-section-heading">Academic Overview</h2>
                 {!dashboard.courses.length ? (
                   <div className="real-empty"><h3>Add your academic history</h3><p>Upload and confirm your transcript to see courses and GPA here.</p><Link to="/transcript" className="btn btn-primary btn-sm">Upload transcript</Link></div>
                 ) : (
@@ -252,6 +350,108 @@ export function AuthenticatedDashboard() {
                       <div className="overview-stat"><span className="overview-stat-value">{dashboard.projectedGpa?.toFixed(2) ?? '—'}</span><span className="overview-stat-label">Projected GPA</span></div>
                       <div className="overview-stat"><span className="overview-stat-value">{dashboard.earnedHours}</span><span className="overview-stat-label">Earned Hours</span></div>
                     </div>
+                    {/* Same note as the GPA Calculator's, pointing there rather
+                        than repeating its grade-entry controls on what is meant
+                        to stay a simple snapshot. */}
+                    <p className="gpa-projection-note">
+                      {dashboard.inProgressWithCurrentGradeCount > 0
+                        ? `Based on current grades in ${dashboard.inProgressWithCurrentGradeCount} in-progress course${dashboard.inProgressWithCurrentGradeCount === 1 ? '' : 's'}.`
+                        : 'Enter current grades in GPA Calculator to see your projected GPA.'}
+                    </p>
+                    {/* "What does my academic situation look like right now" --
+                        current (in-progress) coursework only, not the full term
+                        planner. Planning and grade entry live one level down,
+                        in GPA Calculator. */}
+                    <section className="academic-overview-current">
+                      <h3 className="term-courses-heading">Current coursework</h3>
+                      {academicOverviewCurrentCourses.length === 0 ? (
+                        <p className="empty-state">No in-progress coursework on record.</p>
+                      ) : (
+                        <>
+                          {academicOverviewCurrentTermLabel && (
+                            <p className="academic-overview-term-label">{academicOverviewCurrentTermLabel}</p>
+                          )}
+                          <div className="real-course-table" role="table" aria-label="Current coursework">
+                            {academicOverviewCurrentCourses.map((course) => (
+                              <div className="real-course-row" role="row" key={course.id}>
+                                <span role="cell"><strong>{course.course_code}</strong><small>{course.title ?? 'Untitled course'}</small></span>
+                                <span role="cell">{course.credit_hours} credits</span>
+                                <span role="cell">{course.letter_grade ?? 'In progress'}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </>
+                      )}
+                    </section>
+                    {/* Compact reflection of the same run Course Discovery
+                        itself shows (courseDiscoveryRun, lifted above) -- not
+                        a second analysis or a second result store. */}
+                    <section className="academic-overview-course-discovery">
+                      <h3 className="term-courses-heading">Course Discovery</h3>
+                      {courseDiscoverySuccess ? (
+                        <>
+                          <p className="academic-overview-cd-role">For: {courseDiscoverySuccess.target_role}</p>
+                          <p className="academic-overview-cd-count">
+                            {courseDiscoverySuccess.verified_recommendations.length} recommended course
+                            {courseDiscoverySuccess.verified_recommendations.length === 1 ? '' : 's'}
+                          </p>
+                          {courseDiscoverySuccess.verified_recommendations.length > 0 && (
+                            <ul className="academic-overview-cd-list">
+                              {courseDiscoverySuccess.verified_recommendations.slice(0, 3).map((course) => (
+                                <li key={`${course.institution}:${course.course_code}`}>
+                                  <strong>{course.course_code}</strong> {course.title}
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                          <button
+                            type="button"
+                            className="btn btn-ghost btn-sm"
+                            onClick={() => navigateToAcademicSubTab('course-discovery')}
+                          >
+                            View Course Discovery →
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          type="button"
+                          className="btn btn-ghost btn-sm"
+                          onClick={() => navigateToAcademicSubTab('course-discovery')}
+                        >
+                          Discover courses that support your career goals →
+                        </button>
+                      )}
+                    </section>
+                    <p className="academic-overview-status">
+                      Academic status: {dashboard.completeness.academics.ready_for_academic_features ? 'Ready' : 'Incomplete'}
+                    </p>
+                  </>
+                )}
+              </div>
+            )}
+
+            {activeSection === 'academic' && academicSubTab === 'gpa-calculator' && (
+              <div className="stage-section">
+                <h2 className="academic-section-heading">GPA Calculator</h2>
+                {!dashboard.courses.length ? (
+                  <div className="real-empty"><h3>Add your academic history</h3><p>Upload and confirm your transcript to see courses and GPA here.</p><Link to="/transcript" className="btn btn-primary btn-sm">Upload transcript</Link></div>
+                ) : (
+                  <>
+                    <div className="overview-stats">
+                      <div className="overview-stat"><span className="overview-stat-value">{dashboard.officialGpa?.toFixed(2) ?? '—'}</span><span className="overview-stat-label">Official GPA</span></div>
+                      <div className="overview-stat"><span className="overview-stat-value">{dashboard.projectedGpa?.toFixed(2) ?? '—'}</span><span className="overview-stat-label">Projected GPA</span></div>
+                      <div className="overview-stat"><span className="overview-stat-value">{dashboard.earnedHours}</span><span className="overview-stat-label">Earned Hours</span></div>
+                    </div>
+                    {/* Projected GPA only differs from Official once a current
+                        grade has been entered on an in-progress course -- see
+                        gpa.py's official/projected scopes. This line explains
+                        the gap (or its absence) rather than leaving the two
+                        numbers to speak for themselves. */}
+                    <p className="gpa-projection-note">
+                      {dashboard.inProgressWithCurrentGradeCount > 0
+                        ? `Based on current grades in ${dashboard.inProgressWithCurrentGradeCount} in-progress course${dashboard.inProgressWithCurrentGradeCount === 1 ? '' : 's'}.`
+                        : 'Enter current grades to see your projected GPA.'}
+                    </p>
                     {/* The flat all-courses list is replaced by the term view:
                         one term at a time, chosen from a dropdown that opens on
                         the upcoming term. The GPA/hours stats above stay
@@ -259,7 +459,13 @@ export function AuthenticatedDashboard() {
                         and scoping them to one term would quietly change what
                         "Official GPA" means. */}
                     {accessToken
-                      ? <TermPlanner accessToken={accessToken} courses={dashboard.courses} />
+                      ? (
+                        <TermPlanner
+                          accessToken={accessToken}
+                          courses={dashboard.courses}
+                          onCourseRecordsChanged={() => { void reloadStudentProfile(); }}
+                        />
+                      )
                       : (
                         <div className="real-course-table" role="table" aria-label="Confirmed courses">
                           {dashboard.courses.map((course) => (
@@ -277,7 +483,21 @@ export function AuthenticatedDashboard() {
               </div>
             )}
 
-            {activeSection === 'career' && (
+            {activeSection === 'academic' && academicSubTab === 'course-discovery' && (
+              <div className="stage-section">
+                {/* CourseDiscoveryPanel renders its own "Course Discovery"
+                    heading (via AnalysisPanel's title), so no page-level
+                    heading is added here -- that would just duplicate it. */}
+                <CourseDiscoveryPanel
+                  targetRoles={dashboard.career.target_roles}
+                  run={courseDiscoveryRun}
+                  selectedRole={courseDiscoverySelectedRole}
+                  onSelectedRoleChange={setCourseDiscoverySelectedRole}
+                />
+              </div>
+            )}
+
+            {activeSection === 'career' && careerSubTab === 'overview' && (
               <div className="stage-section">
                 {!dashboard.career.confirmed ? (
                   <>
@@ -286,104 +506,64 @@ export function AuthenticatedDashboard() {
                   </>
                 ) : (
                   <>
-                    {/* Above the sub-tab row, because it is the answer to the
-                        question the analyses ask, and it applies regardless of
-                        which sub-tab is open. Sticky rather than fixed: it
-                        settles at the top of the scroll container and covers
-                        nothing, which is the whole difference between it and
-                        the modal it replaces. */}
+                    <h2 className="career-section-heading">Career Overview</h2>
                     <ProfileChecklist
                       missing={missingDetails}
                       onJump={(field, trigger) => { requestField({ path: field.path, trigger }); }}
                     />
-
-                    {/* Second-level tab row, same pattern as AcademicSnapshot's
-                        .academic-tabs (useState + role="tablist" + underline
-                        indicator) -- kept as a sibling set of CSS classes
-                        rather than sharing AcademicSnapshot's, since Academic
-                        and Career are independent sections that happen to
-                        agree on a visual language, not one shared component. */}
-                    <div className="career-tabs" role="tablist" aria-label="Career views">
-                      {CAREER_SUB_TABS.map(({ key, label }) => (
-                        <button
-                          key={key}
-                          type="button"
-                          role="tab"
-                          id={`career-tab-${key}`}
-                          aria-selected={careerSubTab === key}
-                          aria-controls={`career-panel-${key}`}
-                          className={`career-tab${careerSubTab === key ? ' career-tab--active' : ''}`}
-                          onClick={() => setCareerSubTab(key)}
-                        >
-                          {label}
-                        </button>
+                    <div className="career-overview-target">
+                      <span>Primary target role</span>
+                      <strong>{dashboard.career.target_roles[0] ?? 'Not provided'}</strong>
+                    </div>
+                    <div className="career-overview-grid">
+                      {([
+                        ['Role Fit', fitRun.state],
+                        ['Readiness', gapRun.state],
+                        ['Trend Guidance', shiftRun.state],
+                      ] as const).map(([label, state]) => (
+                        <section className="career-overview-summary" key={label}>
+                          <h3>{label}</h3>
+                          <p>{state.phase === 'done' ? state.result.summary : state.phase === 'loading' ? 'Analysis in progress.' : state.phase === 'transport-error' ? 'Analysis unavailable.' : 'No analysis has been run yet.'}</p>
+                        </section>
                       ))}
                     </div>
+                  </>
+                )}
+              </div>
+            )}
 
-                    {/* Every sub-tab's content stays mounted at all times and
-                        is hidden with CSS rather than conditional JSX. GAP/
-                        FIT/SHIFT each hold their run result in local state
-                        (useAnalysisRun, lifted here for GAP/FIT/SHIFT so
-                        Snapshot can share it) -- unmounting on tab switch
-                        would throw that state away and force a re-run. */}
-                    <div
-                      role="tabpanel"
-                      id="career-panel-snapshot"
-                      aria-labelledby="career-tab-snapshot"
-                      className={`career-subtab-panel${careerSubTab === 'snapshot' ? '' : ' career-subtab-panel--hidden'}`}
-                    >
-                      <CareerSnapshotPanel
-                        gap={gapRun}
-                        fit={fitRun}
-                        shift={shiftRun}
-                        headline={{
-                          targetRoles: dashboard.career.target_roles,
-                          expectedGraduation: dashboard.expectedGraduation,
-                          majorCurrent: dashboard.majorCurrent,
-                        }}
-                        onViewFull={setCareerSubTab}
+            {activeSection === 'career' && careerSubTab === 'intelligence' && (
+              <div className="stage-section career-subtab-panel career-intelligence">
+                <h2 className="career-section-heading">Career Intelligence</h2>
+                <p className="career-intelligence-role">Target role: <strong>{dashboard.career.target_roles[0] ?? 'Not provided'}</strong></p>
+                <section className="career-intelligence-section"><FitAnalysisPanel run={fitRun} /></section>
+                <section className="career-intelligence-section"><GapAnalysisPanel run={gapRun} /></section>
+                <section className="career-intelligence-section"><ShiftAnalysisPanel run={shiftRun} /></section>
+              </div>
+            )}
+
+            {activeSection === 'career' && careerSubTab === 'job-search' && (
+              <div className="stage-section">
+                <h2 className="career-section-heading">Job Search</h2>
+                <div className="job-search-shell">
+                  <label>Target role<select defaultValue={dashboard.career.target_roles[0] ?? ''} disabled={dashboard.career.target_roles.length === 0}>{dashboard.career.target_roles.length === 0 && <option value="">No target role provided</option>}{dashboard.career.target_roles.map((role) => <option key={role}>{role}</option>)}</select></label>
+                  <label>Location<input value={dashboard.career.geographic_preference ?? ''} placeholder="No location preference provided" readOnly /></label>
+                  <button type="button" className="btn btn-primary" disabled>Search Jobs</button>
+                </div>
+                <div className="real-empty"><h3>Live job search is not connected yet</h3><p>Your target role and location are ready, but this repository does not yet expose a production job-search service.</p></div>
+              </div>
+            )}
+
+            {activeSection === 'career' && careerSubTab === 'profile' && (
+              <div className="stage-section career-subtab-panel">
+                {!dashboard.career.confirmed ? (
+                  <><h2 className="career-section-heading">Career Profile</h2><div className="real-empty"><h3>Build your career profile</h3><p>Upload and confirm your resume before career facts appear here.</p><Link to="/resume" className="btn btn-primary btn-sm">Upload resume</Link></div></>
+                ) : (
+                      <>
+                      <ProfileChecklist
+                        missing={missingDetails}
+                        onJump={(field, trigger) => { requestField({ path: field.path, trigger }); }}
                       />
-                    </div>
-
-                    <div
-                      role="tabpanel"
-                      id="career-panel-gap"
-                      aria-labelledby="career-tab-gap"
-                      className={`career-subtab-panel${careerSubTab === 'gap' ? '' : ' career-subtab-panel--hidden'}`}
-                    >
-                      <GapAnalysisPanel run={gapRun} />
-                    </div>
-
-                    <div
-                      role="tabpanel"
-                      id="career-panel-fit"
-                      aria-labelledby="career-tab-fit"
-                      className={`career-subtab-panel${careerSubTab === 'fit' ? '' : ' career-subtab-panel--hidden'}`}
-                    >
-                      <FitAnalysisPanel run={fitRun} />
-                    </div>
-
-                    <div
-                      role="tabpanel"
-                      id="career-panel-shift"
-                      aria-labelledby="career-tab-shift"
-                      className={`career-subtab-panel${careerSubTab === 'shift' ? '' : ' career-subtab-panel--hidden'}`}
-                    >
-                      <ShiftAnalysisPanel run={shiftRun} />
-                    </div>
-
-                    <div
-                      role="tabpanel"
-                      id="career-panel-profile"
-                      aria-labelledby="career-tab-profile"
-                      className={`career-subtab-panel${careerSubTab === 'profile' ? '' : ' career-subtab-panel--hidden'}`}
-                    >
-                      {/* Natural next action after fit/gaps/trends: given what
-                          the student now understands about the role, which
-                          actual courses at their school build toward it. Kept
-                          grouped with CareerProfile on the Profile sub-tab, as
-                          it was on the single-page layout. */}
-                      <CourseDiscoveryPanel targetRoles={dashboard.career.target_roles} />
                       <div className="career-profile-block">
                         <h2 className="career-section-heading">Career Profile</h2>
                         {/* Graduation and the majors are academic record, not
@@ -418,8 +598,7 @@ export function AuthenticatedDashboard() {
                           focus={fieldFocus}
                         />
                       </div>
-                    </div>
-                  </>
+                      </>
                 )}
               </div>
             )}

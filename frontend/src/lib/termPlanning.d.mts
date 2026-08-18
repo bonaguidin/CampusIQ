@@ -22,6 +22,44 @@ export interface PlannedCourse {
   kind: 'planned';
 }
 
+/** Returned from POST /planned-courses when the term was already inside its
+ * activation window -- written straight into course_records, never through
+ * planned_courses. */
+export interface InProgressCourseResult {
+  id: string;
+  term_id: string | null;
+  course_code: string;
+  title: string | null;
+  credit_hours: number | null;
+  letter_grade: string | null;
+  status: 'in_progress';
+  kind: 'in_progress';
+}
+
+export type AddedCourseResult = PlannedCourse | InProgressCourseResult;
+
+export interface PendingFinalGrade {
+  id: string;
+  term_id: string;
+  term_label: string | null;
+  course_code: string;
+  title: string | null;
+  credit_hours: number | null;
+}
+
+export interface GradingSchemaGrade {
+  letter: string;
+  points: number | null;
+  counts_toward_gpa: boolean;
+  counts_toward_credit: boolean;
+}
+
+export interface GradingSchema {
+  institutionId: string | null;
+  usesPlusMinus: boolean;
+  grades: GradingSchemaGrade[];
+}
+
 export interface CatalogSearchResult {
   id: string;
   code: string;
@@ -51,6 +89,17 @@ export declare const UNKNOWN_SEASON_ORDINAL: number;
 export declare const MIN_SEARCH_LENGTH: number;
 export declare const SEARCH_DEBOUNCE_MS: number;
 export declare const TERM_STATUS_LABELS: Record<TermStatus, string>;
+export declare const COURSE_RECORDS_URL: string;
+export declare const PENDING_FINAL_GRADES_URL: string;
+export declare const ACTIVATION_WINDOW_DAYS: number;
+export declare const GRADING_SCHEMA_URL: string;
+
+export declare function currentGradeOptions(schema: GradingSchema | null | undefined): string[];
+export declare function finalGradeOptions(schema: GradingSchema | null | undefined): string[];
+
+export declare function courseRecordUrl(id: string): string;
+export declare function finalizeCourseUrl(id: string): string;
+export declare function isTermActivated(term: PlanningTerm | null | undefined, today: Date): boolean;
 
 export declare function seasonOrdinal(season: string): number;
 export declare function plannedRemoveUrl(id: string): string;
@@ -71,3 +120,13 @@ export declare function formatCredits(min: number | null, max: number | null): s
 export declare function normalizeTermsPayload(status: number, body: unknown): NormalizedTerms;
 export declare function normalizePlannedPayload(status: number, body: unknown): NormalizedPlanned;
 export declare function normalizeSearchPayload(status: number, body: unknown): NormalizedSearch;
+export interface NormalizedPendingFinalGrades { ok: boolean; pendingFinalGrades: PendingFinalGrade[] }
+export declare function normalizePendingFinalGradesPayload(
+  status: number,
+  body: unknown,
+): NormalizedPendingFinalGrades;
+export interface NormalizedGradingSchema { ok: boolean; schema: GradingSchema | null }
+export declare function normalizeGradingSchemaPayload(
+  status: number,
+  body: unknown,
+): NormalizedGradingSchema;

@@ -20,6 +20,7 @@ export interface AuthenticatedDashboardViewModel {
   majorIntended: string | null;
   officialGpa: number | null;
   projectedGpa: number | null;
+  inProgressWithCurrentGradeCount: number;
   completedHours: number;
   inProgressHours: number;
   earnedHours: number;
@@ -55,6 +56,7 @@ export function buildDashboardViewModel(
     majorIntended: profile.academics.summary.major_intended,
     officialGpa: profile.academics.gpa.official,
     projectedGpa: profile.academics.gpa.projected,
+    inProgressWithCurrentGradeCount: profile.academics.gpa.in_progress_with_current_grade_count,
     completedHours: profile.academics.summary.completed_hours,
     inProgressHours: profile.academics.summary.in_progress_hours,
     earnedHours: profile.academics.summary.earned_hours,

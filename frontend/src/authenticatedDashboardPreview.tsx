@@ -6,6 +6,7 @@ import { AuthContext, type AuthContextValue } from './auth/AuthContext';
 import { StudentAccountProblem } from './auth/AccountStateScreens';
 import { AuthenticatedDashboard } from './pages/AuthenticatedDashboard';
 import { ProfileCompletionPage } from './pages/ProfileCompletionPage';
+import { applyInstitutionTheme, fetchInstitutionThemeByName } from './lib/institutionTheme';
 import type { StudentIntelligenceProfile } from './types/studentIntelligenceProfile';
 import './index.css';
 
@@ -22,7 +23,7 @@ const base: StudentIntelligenceProfile = {
     summary: { major_current: 'Computer Science', major_intended: 'N/A', confirmed_course_count: 1, completed_hours: 3, in_progress_hours: 0, earned_hours: 3 },
     terms: [{ id: 'term-1', institution_id: 'institution-real', label: 'Fall 2025', year: 2025, season: 'fall', sequence: 1 }],
     courses: [{ id: 'course-1', term_id: 'term-1', institution_id: 'institution-real', course_code: 'CS 101', title: 'Introduction to Computing', credit_hours: 3, letter_grade: 'A', credit_type: 'resident', status: 'completed', source: 'transcript_parse' }],
-    gpa: { official: 4, projected: 4, computable: true, source: 'gpa_service' },
+    gpa: { official: 4, projected: 4, computable: true, in_progress_with_current_grade_count: 0, source: 'gpa_service' },
     repeat_exclusions: [],
   },
   career: {
@@ -44,7 +45,7 @@ const profile = structuredClone(base);
 if (mode === 'career' || mode === 'minimal') {
   profile.academics.courses = [];
   profile.academics.terms = [];
-  profile.academics.gpa = { official: null, projected: null, computable: false, source: 'gpa_service' };
+  profile.academics.gpa = { official: null, projected: null, computable: false, in_progress_with_current_grade_count: 0, source: 'gpa_service' };
   profile.academics.summary.confirmed_course_count = 0;
   profile.completeness.academics = { transcript_data_present: false, terms_present: false, gpa_computable: false, ready_for_academic_features: false };
 }
@@ -168,7 +169,7 @@ const session = { access_token: 'real-access-token' } as Session;
 const context = {
   profile: null, slug: null, loading: false, profileLoading: false, sessionLoading: false,
   login: async () => {}, logout: () => {}, updateCareer: async () => {}, resetCareer: async () => {},
-  session, user: null, signInWithPassword: async () => {}, signUpWithPassword: async () => 'authenticated', signOutSession: async () => {},
+  session, user: null, isPasswordRecovery: false, signInWithPassword: async () => {}, requestPasswordReset: async () => {}, confirmPasswordReset: async () => {}, signUpWithPassword: async () => 'authenticated', signOutSession: async () => {},
   studentAccount: { status: 'ready', profile: { student: { id: 'student-real', name: profile.identity.name, institution: profile.institution.name }, career: null, intelligence_profile: profile }, message: null },
   refreshStudentAccount: () => {},
   reloadStudentProfile: async () => { document.body.dataset.profileReloaded = 'yes'; },
@@ -189,5 +190,16 @@ const app = mode === 'error'
       </AuthContext.Provider>
     )
     : <AuthContext.Provider value={context}><MemoryRouter><AuthenticatedDashboard /></MemoryRouter></AuthContext.Provider>;
+
+// This harness substitutes AuthContext.Provider directly instead of
+// rendering the real AuthProvider, so AuthProvider's own institution-theming
+// effect (AuthContext.tsx's institutionId effect, ~lines 312-329) never runs
+// here -- ?institution= previously had no visible effect on the page's
+// accent color. Driven explicitly here, by name rather than id: this
+// harness's profile.institution.id ('institution-real') is a placeholder,
+// not a real institutions.id foreign key, so fetchInstitutionThemeById would
+// always miss -- fetchInstitutionThemeByName is the same fallback
+// AuthContext itself uses for name-only demo fixtures.
+void fetchInstitutionThemeByName(institution).then(applyInstitutionTheme);
 
 ReactDOM.createRoot(document.getElementById('root')!).render(<React.StrictMode>{app}</React.StrictMode>);

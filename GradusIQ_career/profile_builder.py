@@ -322,6 +322,11 @@ def build_student_intelligence_profile(
         official=both.official.gpa if both else None,
         projected=both.projected.gpa if both else None,
         computable=bool(both and (both.official.gpa is not None or both.projected.gpa is not None)),
+        in_progress_with_current_grade_count=sum(
+            1
+            for row in confirmed_courses
+            if row.get("status") == "in_progress" and row.get("letter_grade")
+        ),
     )
     academics = Academics(
         summary=AcademicSummary(

@@ -30,6 +30,9 @@ Never refer to the student in the third person (no "the student," "they," or "th
     they are NOT switching — do not tell them they are changing majors.
   - When `major_status` is `switching`, they are moving from `major_current`
     toward `effective_major`; reason about the intended major.
+  - When `major_status` is `declare`, the student has no major on file yet and
+    `effective_major` is their first declared major — present it as their
+    major, not as a switch away from anything.
 - **Classification:** `classification`
 - **Interests:** `interests`
 - **Technical skills:** `skills_self_reported.technical`

@@ -86,6 +86,28 @@ test('authenticated dashboard covers canonical states, routing, themes, errors, 
   await page.getByText('Official GPA').first().waitFor()
   await page.getByRole('button', { name: 'Academic' }).click()
 
+  // The top-level Academic item is itself the overview -- clicking it lands
+  // on Academic Overview, expands exactly two nested children, and neither
+  // child is named "Overview" (that state is internal, not a visible tab).
+  await page.getByRole('heading', { name: 'Academic Overview' }).waitFor()
+  assert.deepEqual(
+    await page.locator('.rail-subitem').allTextContents(),
+    ['GPA Calculator', 'Course Discovery'],
+  )
+  assert.equal(await page.locator('.rail-subitem', { hasText: 'Overview' }).count(), 0)
+  await page.getByText('Official GPA').first().waitFor()
+  await page.getByText('Projected GPA').first().waitFor()
+  await page.getByText('Earned Hours').first().waitFor()
+
+  // GPA Calculator: Academic stays the active parent while the child becomes
+  // active, and the existing GPA/term machinery renders exactly as before.
+  await page.getByRole('button', { name: 'GPA Calculator' }).click()
+  assert.equal(
+    await page.getByRole('button', { name: 'Academic', exact: true }).getAttribute('aria-current'),
+    'page',
+  )
+  await page.getByRole('heading', { name: 'GPA Calculator' }).waitFor()
+
   // The term view opens on the UPCOMING term, not on the term holding the
   // student's coursework -- planning happens in the term that has not started.
   await page.locator('#term-select').waitFor()
@@ -150,15 +172,58 @@ test('authenticated dashboard covers canonical states, routing, themes, errors, 
   await page.locator('.real-course-row--planned').waitFor({ state: 'detached' })
   assert.equal(planning.state.planned.length, 0)
 
+  // Clicking the Academic parent again -- while a child was active -- returns
+  // to Academic Overview rather than leaving GPA Calculator open.
+  await page.getByRole('button', { name: 'Academic', exact: true }).click()
+  await page.getByRole('heading', { name: 'Academic Overview' }).waitFor()
+
+  // Course Discovery now lives under Academic, not Career -- and Academic
+  // still stays the active parent while it is the active child.
+  await page.getByRole('button', { name: 'Course Discovery' }).click()
+  await page.getByRole('heading', { name: 'Course Discovery' }).waitFor()
+  assert.equal(
+    await page.getByRole('button', { name: 'Academic', exact: true }).getAttribute('aria-current'),
+    'page',
+  )
+  await page.getByText('Find courses at your school that build the skills your target role needs.').waitFor()
+
   await page.getByRole('button', { name: 'Career' }).click()
-  // CareerProfile now lives on the Career tab's Profile sub-tab.
-  await page.getByRole('tab', { name: 'Profile' }).click()
+  await page.getByRole('heading', { name: 'Career Overview' }).waitFor()
+  assert.deepEqual(
+    await page.getByRole('group', { name: 'Career sections' }).getByRole('button').allTextContents(),
+    ['Career Intelligence', 'Job Search', 'Career Profile'],
+  )
+  assert.equal(await page.getByRole('tab').count(), 0, 'old horizontal Career tabs remain')
+  // CareerProfile now lives under the Career Profile sidebar child.
+  await page.getByRole('button', { name: 'Career Profile' }).click()
   // Target roles now appear twice by design -- once as the Career summary
   // headline, once in the Career direction list -- so both are named rather
   // than matched loosely.
   await page.locator('.cp-summary-roles').getByText('Software Engineer').waitFor()
   await page.locator('.cp-roles li').getByText('Software Engineer').waitFor()
   await page.getByText('Cloud Fundamentals').waitFor()
+  // Course Discovery no longer renders inside Career's Profile sub-tab.
+  assert.equal(await page.getByRole('heading', { name: 'Course Discovery' }).count(), 0)
+
+  // Career Intelligence is one page containing the three independent runs.
+  await page.getByRole('button', { name: 'Career Intelligence' }).click()
+  await page.getByRole('heading', { name: 'Career Intelligence' }).waitFor()
+  await page.getByRole('heading', { name: /GAP/ }).waitFor()
+  await page.getByRole('heading', { name: /FIT/ }).waitFor()
+  await page.getByRole('heading', { name: /SHIFT/ }).waitFor()
+  await page.getByRole('button', { name: 'Academic', exact: true }).click()
+  await page.getByRole('heading', { name: 'Academic Overview' }).waitFor()
+  await page.getByRole('button', { name: 'GPA Calculator' }).click()
+  await page.locator('#term-select').waitFor()
+  await page.getByRole('button', { name: 'Career' }).click()
+  // Clicking the parent always returns to its internal overview.
+  await page.getByRole('heading', { name: 'Career Overview' }).waitFor()
+
+  // Job Search is intentionally honest until a production service exists.
+  await page.getByRole('button', { name: 'Job Search' }).click()
+  await page.getByRole('heading', { name: 'Job Search', exact: true }).waitFor()
+  await page.getByText('Live job search is not connected yet').waitFor()
+  assert.equal(await page.getByRole('button', { name: 'Search Jobs' }).isDisabled(), true)
 
   // CASE 2: career only renders academic onboarding.
   await page.goto(`${origin}/authenticated-dashboard-preview.html?mode=career`)
@@ -189,6 +254,7 @@ test('authenticated dashboard covers canonical states, routing, themes, errors, 
 
   // CASE 8: authenticated analysis uses /me and forwards the bearer token.
   await page.getByRole('button', { name: 'Career' }).click()
+  await page.getByRole('button', { name: 'Career Intelligence' }).click()
   for (const title of ['Readiness Check (GAP)', 'Role Fit (FIT)', 'Trend Guidance (SHIFT)']) {
     await page.locator('.analysis-panel').filter({ hasText: title }).getByRole('button', { name: 'Run analysis' }).click()
   }
@@ -233,10 +299,9 @@ test('authenticated dashboard covers canonical states, routing, themes, errors, 
   // FIT routes through the same handler, and asking a SECOND time for a field
   // already visited still moves -- the request is keyed on a nonce, not on the
   // path, or the second click would be indistinguishable from no click.
-  // Back to Snapshot, where FIT's skipped state (unchanged since the earlier
-  // run -- GAP/FIT/SHIFT state is lifted and shared with the Snapshot cards)
-  // is visible again; the AI-comfort jump above moved to Profile.
-  await page.getByRole('tab', { name: 'Snapshot' }).click()
+  // Return to Career Intelligence, where FIT's independent skipped state is
+  // unchanged; the AI-comfort jump above moved to Career Profile.
+  await page.getByRole('button', { name: 'Career Intelligence' }).click()
   const fitSkipped = page.locator('.analysis-panel').filter({ hasText: 'Role Fit (FIT)' }).locator('.analysis-skipped')
   await fitSkipped.getByRole('button', { name: 'Add this' }).first().click()
   await page.waitForFunction(() =>

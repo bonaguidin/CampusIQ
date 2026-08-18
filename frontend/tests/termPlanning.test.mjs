@@ -5,8 +5,11 @@ import {
   MIN_SEARCH_LENGTH,
   SEASON_ORDER,
   catalogSearchUrl,
+  currentGradeOptions,
+  finalGradeOptions,
   formatCredits,
   formatTermDates,
+  normalizeGradingSchemaPayload,
   normalizePlannedPayload,
   normalizeSearchPayload,
   normalizeTermsPayload,
@@ -234,4 +237,84 @@ test('a valid terms payload comes back sorted', () => {
 test('a missing planned_courses array normalizes to empty, not undefined', () => {
   assert.deepEqual(normalizePlannedPayload(200, {}).plannedCourses, [])
   assert.deepEqual(normalizeSearchPayload(200, {}).results, [])
+})
+
+// ── institution-specific grading schema ─────────────────────────────────────
+
+const TAMU_SCHEMA = {
+  institutionId: 'tamu',
+  usesPlusMinus: false,
+  grades: [
+    { letter: 'A', points: 4.0, counts_toward_gpa: true, counts_toward_credit: true },
+    { letter: 'B', points: 3.0, counts_toward_gpa: true, counts_toward_credit: true },
+    { letter: 'C', points: 2.0, counts_toward_gpa: true, counts_toward_credit: true },
+    { letter: 'D', points: 1.0, counts_toward_gpa: true, counts_toward_credit: true },
+    { letter: 'F', points: 0.0, counts_toward_gpa: true, counts_toward_credit: true },
+    { letter: 'W', points: null, counts_toward_gpa: false, counts_toward_credit: false },
+    { letter: 'I', points: null, counts_toward_gpa: false, counts_toward_credit: false },
+  ],
+}
+
+const SMU_SCHEMA = {
+  institutionId: 'smu',
+  usesPlusMinus: true,
+  grades: [
+    { letter: 'A', points: 4.0, counts_toward_gpa: true, counts_toward_credit: true },
+    { letter: 'A-', points: 3.7, counts_toward_gpa: true, counts_toward_credit: true },
+    { letter: 'B+', points: 3.3, counts_toward_gpa: true, counts_toward_credit: true },
+    { letter: 'B', points: 3.0, counts_toward_gpa: true, counts_toward_credit: true },
+    { letter: 'F', points: 0.0, counts_toward_gpa: true, counts_toward_credit: true },
+    { letter: 'P', points: null, counts_toward_gpa: false, counts_toward_credit: true },
+  ],
+}
+
+test('TAMU current-grade options are exactly A-F, no plus/minus', () => {
+  assert.deepEqual(currentGradeOptions(TAMU_SCHEMA), ['A', 'B', 'C', 'D', 'F'])
+})
+
+test('TAMU current-grade options never include A-, B+, B-, C+', () => {
+  const options = currentGradeOptions(TAMU_SCHEMA)
+  for (const letter of ['A-', 'B+', 'B-', 'C+', 'C-', 'D+', 'D-']) {
+    assert.equal(options.includes(letter), false)
+  }
+})
+
+test('TAMU final-grade options additionally include non-GPA-bearing W and I', () => {
+  assert.deepEqual(finalGradeOptions(TAMU_SCHEMA), ['A', 'B', 'C', 'D', 'F', 'W', 'I'])
+})
+
+test('an institution configured with plus/minus grading keeps its own scale independently', () => {
+  assert.deepEqual(currentGradeOptions(SMU_SCHEMA), ['A', 'A-', 'B+', 'B', 'F'])
+  assert.deepEqual(finalGradeOptions(SMU_SCHEMA), ['A', 'A-', 'B+', 'B', 'F', 'P'])
+})
+
+test('current-grade options exclude grades the institution does not count toward GPA', () => {
+  // SMU's P is credit-bearing but not GPA-bearing -- it must not appear as a
+  // *current* grade (which exists only to project GPA), but must still
+  // appear as a *final* grade (a legitimate final outcome).
+  assert.equal(currentGradeOptions(SMU_SCHEMA).includes('P'), false)
+  assert.equal(finalGradeOptions(SMU_SCHEMA).includes('P'), true)
+})
+
+test('a null or missing schema yields no grade options rather than throwing', () => {
+  assert.deepEqual(currentGradeOptions(null), [])
+  assert.deepEqual(finalGradeOptions(undefined), [])
+  assert.deepEqual(currentGradeOptions({}), [])
+})
+
+test('normalizeGradingSchemaPayload reads uses_plus_minus and grades off a 200', () => {
+  const result = normalizeGradingSchemaPayload(200, {
+    institution_id: 'tamu',
+    uses_plus_minus: false,
+    grades: TAMU_SCHEMA.grades,
+  })
+  assert.equal(result.ok, true)
+  assert.equal(result.schema.usesPlusMinus, false)
+  assert.equal(result.schema.institutionId, 'tamu')
+  assert.deepEqual(result.schema.grades, TAMU_SCHEMA.grades)
+})
+
+test('normalizeGradingSchemaPayload rejects non-200 and malformed bodies without throwing', () => {
+  assert.deepEqual(normalizeGradingSchemaPayload(502, null), { ok: false, schema: null })
+  assert.deepEqual(normalizeGradingSchemaPayload(200, undefined), { ok: false, schema: null })
 })

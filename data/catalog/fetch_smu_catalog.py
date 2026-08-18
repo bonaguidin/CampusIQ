@@ -62,7 +62,7 @@ REQUEST_HEADERS = {
     "x-requested-with": "catalog",
     "Referer": f"{CATALOG_SITE}/",
     "Origin": CATALOG_SITE,
-    "User-Agent": "CampusIQ-catalog-fetch/1.0 (academic-research)",
+    "User-Agent": "GradusIQ-catalog-fetch/1.0 (academic-research)",
 }
 
 # The filter the catalog UI itself submits: active, catalog-printable courses.

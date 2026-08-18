@@ -23,12 +23,19 @@ def _resolve_major(student: Mapping[str, Any]) -> tuple[str, str]:
 
     Returns (effective_major, major_status). Use major_intended when it is a
     real major; fall back to major_current when major_intended is "N/A", empty,
-    or missing. major_status is "switching" when a distinct intended major is
-    declared, else "staying"."""
+    or missing. major_status is "declare" when there is no current major to
+    switch FROM (an intended major here is a first-time declaration, never a
+    switch, regardless of any switching-major checkbox state upstream);
+    "switching" when a distinct intended major is declared against a real
+    current major; else "staying"."""
     current = (student.get("major_current") or student.get("major") or "").strip()
     intended = (student.get("major_intended") or "").strip()
+    has_intended = bool(intended) and intended.upper() != _NO_INTENDED_MAJOR
 
-    if intended and intended.upper() != _NO_INTENDED_MAJOR and intended != current:
+    if not current:
+        return (intended, "declare") if has_intended else (current, "staying")
+
+    if has_intended and intended != current:
         return intended, "switching"
     return current, "staying"
 

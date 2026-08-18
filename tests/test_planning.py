@@ -370,11 +370,20 @@ def test_remove_planned_is_scoped_to_the_owner():
 
 
 def test_planning_never_reads_or_writes_course_records():
-    """The isolation this whole phase rests on, asserted rather than assumed.
+    """The isolation Phase 1 (planned_courses CRUD) rests on, asserted rather
+    than assumed. planned.py, term_view.py and search.py must not touch
+    course_records or the GPA path -- checked against source text so a future
+    edit that adds a course_records write to one of THOSE modules fails here
+    rather than in a GPA that quietly changes.
 
-    Phase 1 must not touch course_records or the GPA path. Checked against the
-    source text of every module in the package, so a future edit that adds a
-    course_records write fails here rather than in a GPA that quietly changes.
+    lifecycle.py is EXEMPT and deliberately so. It is Phase 2: the module
+    whose entire job is moving a row from planned_courses into course_records
+    once a term activates (promote_due_planned_courses), and reading/writing
+    course_records directly for the in-progress edit and finalize surfaces.
+    That is not a violation of the isolation the other three modules keep --
+    it is the one module allowed to cross it, on purpose, so it is checked by
+    its own tests (test_lifecycle.py) instead of by this invariant.
+
     course_records may still be NAMED in a comment explaining why it is not
     used, so only executable references are examined.
     """
@@ -385,6 +394,8 @@ def test_planning_never_reads_or_writes_course_records():
     offenders = []
 
     for path in sorted(package_dir.glob("*.py")):
+        if path.name == "lifecycle.py":
+            continue
         tree = ast.parse(path.read_text(encoding="utf-8"))
         for node in ast.walk(tree):
             # .table("course_records") in any form.

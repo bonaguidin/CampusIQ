@@ -3,8 +3,11 @@ import {
   MIN_SEARCH_LENGTH,
   SEARCH_DEBOUNCE_MS,
   TERM_STATUS_LABELS,
+  currentGradeOptions,
+  finalGradeOptions,
   formatCredits,
   formatTermDates,
+  isTermActivated,
   pickDefaultTermKey,
   plannedCodes,
   termCourseGroups,
@@ -12,13 +15,19 @@ import {
 } from '../lib/termPlanning.mjs';
 import type {
   CatalogSearchResult,
+  GradingSchema,
+  PendingFinalGrade,
   PlannedCourse,
   PlanningTerm,
 } from '../lib/termPlanning.mjs';
 import {
   addPlannedCourse,
+  editInProgressCourse,
+  fetchGradingSchema,
+  fetchPendingFinalGrades,
   fetchPlannedCourses,
   fetchTerms,
+  finalizeCourseGrade,
   removePlannedCourse,
   searchCatalog,
 } from '../api/planning';
@@ -60,10 +69,19 @@ interface TermPlannerProps {
     credit_hours: number | string;
     letter_grade: string | null;
     term_id: string | null;
+    status: string;
   }>;
+  /**
+   * Course-records were changed by an action this component owns (finalizing
+   * a grade, editing/dropping an in-progress course, or a planned course
+   * activating straight to in-progress on add). None of those are reflected
+   * in `courses` until the dashboard's own profile fetch runs again -- this
+   * is how that gets triggered.
+   */
+  onCourseRecordsChanged: () => void;
 }
 
-export function TermPlanner({ accessToken, courses }: TermPlannerProps) {
+export function TermPlanner({ accessToken, courses, onCourseRecordsChanged }: TermPlannerProps) {
   const [terms, setTerms] = useState<PlanningTerm[]>([]);
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [planned, setPlanned] = useState<PlannedCourse[]>([]);
@@ -73,6 +91,11 @@ export function TermPlanner({ accessToken, courses }: TermPlannerProps) {
   const [searching, setSearching] = useState(false);
   const [busyCode, setBusyCode] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [gradingSchema, setGradingSchema] = useState<GradingSchema | null>(null);
+  const [pendingGrades, setPendingGrades] = useState<PendingFinalGrade[]>([]);
+  const [finalizeDrafts, setFinalizeDrafts] = useState<Record<string, string>>({});
+  const [finalizeBusyId, setFinalizeBusyId] = useState<string | null>(null);
+  const [courseBusyId, setCourseBusyId] = useState<string | null>(null);
 
   // `today` is captured once per mount rather than read at each comparison, so
   // a term cannot change status midway through a render pass.
@@ -102,6 +125,81 @@ export function TermPlanner({ accessToken, courses }: TermPlannerProps) {
 
   useEffect(() => { void loadPlanned(); }, [loadPlanned]);
 
+  // The student's own institution's grade vocabulary -- see
+  // lib/termPlanning.mjs's currentGradeOptions/finalGradeOptions. Fetched
+  // once; it does not change within a session, and every current-grade and
+  // final-grade selector on this page reads from this same state so there is
+  // exactly one list, not one per selector.
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      const result = await fetchGradingSchema(accessToken);
+      if (!cancelled) setGradingSchema(result.schema);
+    })();
+    return () => { cancelled = true; };
+  }, [accessToken]);
+
+  const currentGradeLetters = useMemo(() => currentGradeOptions(gradingSchema), [gradingSchema]);
+  const finalGradeLetters = useMemo(() => finalGradeOptions(gradingSchema), [gradingSchema]);
+
+  // "How did last semester go?" -- confirmed courses from an ended term still
+  // sitting at in_progress. Loaded once on mount alongside planned courses;
+  // reconciliation on the backend (get_me_terms/get_me_planned_courses/
+  // get_me_profile) already promoted anything due, so this list only shrinks
+  // as the student finalizes grades below, never needs polling.
+  const loadPendingGrades = useCallback(async () => {
+    const result = await fetchPendingFinalGrades(accessToken);
+    setPendingGrades(result.pendingFinalGrades);
+  }, [accessToken]);
+
+  useEffect(() => { void loadPendingGrades(); }, [loadPendingGrades]);
+
+  async function handleFinalize(courseId: string) {
+    const grade = (finalizeDrafts[courseId] ?? '').trim();
+    if (!grade) return;
+    setFinalizeBusyId(courseId);
+    setError(null);
+    const response = await finalizeCourseGrade(accessToken, courseId, grade);
+    setFinalizeBusyId(null);
+    if (!response.ok) {
+      setError(response.message);
+      return;
+    }
+    setPendingGrades((current) => current.filter((row) => row.id !== courseId));
+    setFinalizeDrafts((current) => {
+      const next = { ...current };
+      delete next[courseId];
+      return next;
+    });
+    onCourseRecordsChanged();
+  }
+
+  async function handleCurrentGradeChange(courseId: string, grade: string) {
+    setCourseBusyId(courseId);
+    setError(null);
+    const response = await editInProgressCourse(accessToken, courseId, {
+      letter_grade: grade || null,
+    });
+    setCourseBusyId(null);
+    if (!response.ok) {
+      setError(response.message);
+      return;
+    }
+    onCourseRecordsChanged();
+  }
+
+  async function handleDrop(courseId: string) {
+    setCourseBusyId(courseId);
+    setError(null);
+    const response = await editInProgressCourse(accessToken, courseId, { status: 'dropped' });
+    setCourseBusyId(null);
+    if (!response.ok) {
+      setError(response.message);
+      return;
+    }
+    onCourseRecordsChanged();
+  }
+
   const selectedTerm = useMemo(
     () => terms.find((term) => term.key === selectedKey) ?? null,
     [terms, selectedKey],
@@ -119,6 +217,77 @@ export function TermPlanner({ accessToken, courses }: TermPlannerProps) {
   );
 
   const alreadyPlanned = useMemo(() => plannedCodes(plannedForTerm), [plannedForTerm]);
+
+  // Preview only -- see isTermActivated. The backend still decides at write
+  // time, against its own clock; this just tells the student ahead of
+  // clicking Add what will happen.
+  const willActivateOnAdd = selectedTerm ? isTermActivated(selectedTerm, today) : false;
+
+  const renderConfirmedRow = (course: (typeof courses)[number]) => {
+    const busy = courseBusyId === course.id;
+    if (course.status === 'dropped') {
+      return (
+        <div className="real-course-row real-course-row--dropped" role="row" key={course.id}>
+          <span role="cell">
+            <span className="course-status-badge course-status-badge--dropped">Dropped</span>
+            <strong>{course.course_code}</strong>
+            <small>{course.title ?? 'Untitled course'}</small>
+          </span>
+          <span role="cell">{course.credit_hours} credits</span>
+          <span role="cell">—</span>
+        </div>
+      );
+    }
+    if (course.status === 'in_progress') {
+      return (
+        <div className="real-course-row real-course-row--in-progress" role="row" key={course.id}>
+          <span role="cell">
+            <span className="course-status-badge course-status-badge--in-progress">In progress</span>
+            <strong>{course.course_code}</strong>
+            <small>{course.title ?? 'Untitled course'}</small>
+          </span>
+          <span role="cell">{course.credit_hours} credits</span>
+          <span role="cell" className="current-grade-cell">
+            <label className="current-grade-label" htmlFor={`current-grade-${course.id}`}>
+              Current grade
+            </label>
+            <select
+              id={`current-grade-${course.id}`}
+              className="current-grade-select"
+              value={course.letter_grade ?? ''}
+              disabled={busy}
+              onChange={(event) => { void handleCurrentGradeChange(course.id, event.target.value); }}
+            >
+              <option value="">Not entered</option>
+              {currentGradeLetters.map((letter) => (
+                <option key={letter} value={letter}>{letter}</option>
+              ))}
+            </select>
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm"
+              disabled={busy}
+              onClick={() => { void handleDrop(course.id); }}
+            >
+              Drop
+            </button>
+          </span>
+        </div>
+      );
+    }
+    // Completed (or any status this build does not otherwise special-case):
+    // finalized history, no destructive controls.
+    return (
+      <div className="real-course-row" role="row" key={course.id}>
+        <span role="cell">
+          <strong>{course.course_code}</strong>
+          <small>{course.title ?? 'Untitled course'}</small>
+        </span>
+        <span role="cell">{course.credit_hours} credits</span>
+        <span role="cell">{course.letter_grade ?? '—'}</span>
+      </div>
+    );
+  };
 
   // Server's flag, not a client-side re-derivation: term_view.py compares
   // against the server's date, and two clocks disagreeing about which term is
@@ -196,14 +365,22 @@ export function TermPlanner({ accessToken, courses }: TermPlannerProps) {
       catalog_course_id: result.id,
     });
     setBusyCode(null);
-    if (!response.ok) {
+    if (!response.ok || !response.course) {
       setError(response.message);
       return;
     }
     // Refetch rather than pushing the returned row: adding a course to a term
     // the student had never enrolled in creates its academic_terms row, so the
     // term list itself may now have an id it did not have a moment ago.
-    await loadPlanned();
+    if (response.course.kind === 'planned') {
+      await loadPlanned();
+    } else {
+      // The term was already inside its activation window: the course was
+      // written straight into course_records as in_progress. It never
+      // touched planned_courses, so the dashboard's own profile fetch is what
+      // needs to run again, not loadPlanned.
+      onCourseRecordsChanged();
+    }
     if (selectedTerm.id === null) {
       const refreshed = await fetchTerms(accessToken);
       setTerms(refreshed.terms);
@@ -236,6 +413,50 @@ export function TermPlanner({ accessToken, courses }: TermPlannerProps) {
 
   return (
     <div className="term-planner">
+      {pendingGrades.length > 0 && (
+        <section className="grade-request-banner" role="region" aria-label="Final grades needed">
+          <h3 className="grade-request-heading">How did last semester go?</h3>
+          <p className="grade-request-copy">
+            We need your final grade{pendingGrades.length > 1 ? 's' : ''} for{' '}
+            {pendingGrades[0].term_label ?? 'last term'} to update your academic record.
+          </p>
+          <div className="grade-request-list">
+            {pendingGrades.map((course) => (
+              <div className="grade-request-row" key={course.id}>
+                <span>
+                  <strong>{course.course_code}</strong>
+                  <small>{course.title ?? 'Untitled course'}</small>
+                </span>
+                <label className="sr-only" htmlFor={`final-grade-${course.id}`}>
+                  Final grade for {course.course_code}
+                </label>
+                <select
+                  id={`final-grade-${course.id}`}
+                  className="current-grade-select"
+                  value={finalizeDrafts[course.id] ?? ''}
+                  onChange={(event) =>
+                    setFinalizeDrafts((current) => ({ ...current, [course.id]: event.target.value }))
+                  }
+                >
+                  <option value="">Select…</option>
+                  {finalGradeLetters.map((letter) => (
+                    <option key={letter} value={letter}>{letter}</option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  className="btn btn-primary btn-sm"
+                  disabled={!finalizeDrafts[course.id] || finalizeBusyId === course.id}
+                  onClick={() => { void handleFinalize(course.id); }}
+                >
+                  {finalizeBusyId === course.id ? 'Saving…' : 'Save'}
+                </button>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
       <div className="term-planner-header">
         <label className="term-select-label" htmlFor="term-select">Term</label>
         <select
@@ -278,16 +499,7 @@ export function TermPlanner({ accessToken, courses }: TermPlannerProps) {
           <p className="empty-state">No confirmed coursework in this term.</p>
         ) : (
           <div className="real-course-table" role="table" aria-label="Coursework in this term">
-            {records.map((course) => (
-              <div className="real-course-row" role="row" key={course.id}>
-                <span role="cell">
-                  <strong>{course.course_code}</strong>
-                  <small>{course.title ?? 'Untitled course'}</small>
-                </span>
-                <span role="cell">{course.credit_hours} credits</span>
-                <span role="cell">{course.letter_grade ?? 'In progress'}</span>
-              </div>
-            ))}
+            {records.map(renderConfirmedRow)}
             {inlinePlanned.map(renderPlannedRow)}
           </div>
         )}
@@ -320,6 +532,12 @@ export function TermPlanner({ accessToken, courses }: TermPlannerProps) {
             onChange={(event) => setQuery(event.target.value)}
             autoComplete="off"
           />
+          {willActivateOnAdd && (
+            <p className="term-search-hint term-search-hint--activation">
+              {selectedTerm?.label} starts soon &mdash; courses you add here will be treated as
+              current (in progress), not planned.
+            </p>
+          )}
           {query.trim().length > 0 && query.trim().length < MIN_SEARCH_LENGTH && (
             <p className="term-search-hint">Keep typing…</p>
           )}

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../auth/useAuth';
 
 const DEMO_STUDENTS = [
@@ -13,6 +13,10 @@ const DEMO_STUDENTS = [
 export function LoginPage() {
   const { login, loading, profile, signInWithPassword } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const passwordResetSuccess = Boolean(
+    (location.state as { passwordResetSuccess?: boolean } | null)?.passwordResetSuccess,
+  );
 
   const [selectedSlug, setSelectedSlug] = useState<string>(DEMO_STUDENTS[0].slug);
   const [error, setError] = useState<string | null>(null);
@@ -62,6 +66,12 @@ export function LoginPage() {
           <p className="login-subtitle">Sign in to your student account</p>
         </div>
 
+        {passwordResetSuccess && (
+          <p className="login-note" role="status">
+            Password updated. Sign in with your new password.
+          </p>
+        )}
+
         <form
           onSubmit={(e) => { void handleCredentialSubmit(e); }}
           className="login-form"
@@ -97,6 +107,10 @@ export function LoginPage() {
               required
             />
           </div>
+
+          <p className="login-note">
+            <Link to="/reset-password">Forgot password?</Link>
+          </p>
 
           {credError && (
             <p className="login-error" role="alert">
