@@ -1,4 +1,4 @@
-"""Transcript ingestion utilities for Campus IQ.
+"""Transcript ingestion utilities for Gradus IQ.
 
 Stages 1 and 2: extraction, parsing, term resolution, catalog matching,
 storage, confirmation, and review. The frontend is Stage 3.

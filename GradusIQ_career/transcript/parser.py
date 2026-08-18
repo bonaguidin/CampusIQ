@@ -202,7 +202,7 @@ def build_messages(transcript_text: str, prompt_template: str) -> list[dict[str,
         {
             "role": "system",
             "content": (
-                "You are Campus IQ. Return valid JSON only. Do not wrap the response "
+                "You are Gradus IQ. Return valid JSON only. Do not wrap the response "
                 "in Markdown. Follow the requested output contract exactly."
             ),
         },
