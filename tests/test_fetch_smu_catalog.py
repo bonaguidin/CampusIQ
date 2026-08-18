@@ -112,3 +112,52 @@ def test_no_false_positive_on_unrelated_use_of_permission():
     description, prerequisites = smu.split_description(text)
     assert description == text
     assert prerequisites is None
+
+
+# ── build_course(): courseGroupId capture ───────────────────────────────────
+#
+# Coursedog's internal course-group ID (e.g. "0045691"), confirmed in the SMU
+# requirement-ID resolution audit to be what catalog.smu.edu's degree-
+# requirements payload references its required courses by. Present on every
+# raw courses/search record already; this only checks it now reaches
+# build_course()'s output instead of being dropped by the COLUMNS projection.
+
+
+def _raw_record(**overrides):
+    base = {
+        "code": "CS1341",
+        "subjectCode": "CS",
+        "courseNumber": "1341",
+        "name": "Computer Science I",
+        "longName": "Computer Science I",
+        "description": "Introduction to computer science and programming.",
+        "departments": ["Computer Science"],
+        "college": "SEAS - Lyle School of Engineering",
+        "career": "Undergraduate",
+        "credits": {"creditHours": {"min": 3, "max": 3}},
+        "requisites": {},
+        "status": "Active",
+        "courseGroupId": "0045691",
+    }
+    base.update(overrides)
+    return base
+
+
+def test_columns_requests_course_group_id_from_coursedog():
+    # Without this, courseGroupId never reaches build_course() at all --
+    # Coursedog's default projection is 87 fields, and COLUMNS is what
+    # narrows the request down.
+    assert "courseGroupId" in smu.COLUMNS.split(",")
+
+
+def test_build_course_captures_coursedog_group_id():
+    course, warnings = smu.build_course(_raw_record(), source_last_checked="2026-08-17")
+    assert warnings == []
+    assert course["coursedog_group_id"] == "0045691"
+
+
+def test_build_course_coursedog_group_id_none_when_absent():
+    record = _raw_record()
+    del record["courseGroupId"]
+    course, _ = smu.build_course(record, source_last_checked="2026-08-17")
+    assert course["coursedog_group_id"] is None

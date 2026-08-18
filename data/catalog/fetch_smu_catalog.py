@@ -97,8 +97,16 @@ REQUEST_BODY = {
     ],
 }
 
-# Only the fields the 22-field target shape needs. The server's default
-# projection is 87 fields per course, most of them SIS workflow metadata.
+# Only the fields the target shape needs. The server's default projection is
+# 87 fields per course, most of them SIS workflow metadata.
+#
+# courseGroupId: the internal Coursedog ID the CS-BS degree-requirements
+# payload references its required courses by (e.g. "0045691" -> CS 1341),
+# confirmed by direct cross-check in the SMU requirement-ID resolution audit.
+# It was in every raw record all along; requesting it here is what makes it
+# reach build_course() below instead of being silently dropped by the column
+# projection. Column-in-storage lands in the same commit; the ID->course-code
+# join itself is a separate, later change.
 COLUMNS = ",".join(
     [
         "code",
@@ -113,6 +121,7 @@ COLUMNS = ",".join(
         "credits",
         "requisites",
         "status",
+        "courseGroupId",
     ]
 )
 
@@ -327,6 +336,11 @@ def build_course(record: dict[str, Any], source_last_checked: str) -> tuple[dict
         "source_url": f"{CATALOG_SITE}/departments/{prefix}/courses" if prefix else None,
         "catalog_year": CATALOG_YEAR,
         "source_last_checked": source_last_checked,
+        # Coursedog's internal course-group ID, e.g. "0045691". Null only if
+        # the source record itself omits it -- not expected in practice, but
+        # not assumed either. See the COLUMNS comment above for what this is
+        # for.
+        "coursedog_group_id": record.get("courseGroupId") or None,
     }
     return course, warnings
 
