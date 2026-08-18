@@ -1,7 +1,13 @@
 import {
   TERMS_URL,
   PLANNED_COURSES_URL,
+  PENDING_FINAL_GRADES_URL,
+  GRADING_SCHEMA_URL,
   catalogSearchUrl,
+  courseRecordUrl,
+  finalizeCourseUrl,
+  normalizeGradingSchemaPayload,
+  normalizePendingFinalGradesPayload,
   normalizePlannedPayload,
   normalizeSearchPayload,
   normalizeTermsPayload,
@@ -9,10 +15,12 @@ import {
   plannedRemoveUrl,
 } from '../lib/termPlanning.mjs';
 import type {
+  AddedCourseResult,
+  NormalizedGradingSchema,
+  NormalizedPendingFinalGrades,
   NormalizedPlanned,
   NormalizedSearch,
   NormalizedTerms,
-  PlannedCourse,
 } from '../lib/termPlanning.mjs';
 
 /**
@@ -60,10 +68,18 @@ export interface AddPlannedCourseInput {
   catalog_course_id?: string | null;
 }
 
+/**
+ * The response's `planned_course` key is either a planned_courses row
+ * (kind: 'planned') or, when the term is already inside its activation
+ * window, a course_records row written directly as in-progress
+ * (kind: 'in_progress') -- see lifecycle.add_course_respecting_activation.
+ * The key name stays 'planned_course' on the wire (the route is still "plan a
+ * course"); only the payload shape branches on `kind`.
+ */
 export async function addPlannedCourse(
   token: string,
   input: AddPlannedCourseInput,
-): Promise<{ ok: boolean; plannedCourse: PlannedCourse | null; message: string | null }> {
+): Promise<{ ok: boolean; course: AddedCourseResult | null; message: string | null }> {
   const { status, body } = await send(PLANNED_COURSES_URL, {
     method: 'POST',
     headers: { ...auth(token), 'Content-Type': 'application/json' },
@@ -72,7 +88,7 @@ export async function addPlannedCourse(
   if (status === 200 && body && typeof body === 'object' && 'planned_course' in body) {
     return {
       ok: true,
-      plannedCourse: (body as { planned_course: PlannedCourse }).planned_course,
+      course: (body as { planned_course: AddedCourseResult }).planned_course,
       message: null,
     };
   }
@@ -80,7 +96,7 @@ export async function addPlannedCourse(
     body && typeof body === 'object' && 'detail' in body
       ? String((body as { detail: unknown }).detail)
       : 'Could not add that course to your plan.';
-  return { ok: false, plannedCourse: null, message: detail };
+  return { ok: false, course: null, message: detail };
 }
 
 export async function removePlannedCourse(token: string, id: string): Promise<{ ok: boolean }> {
@@ -96,4 +112,62 @@ export async function searchCatalog(token: string, query: string): Promise<Norma
     headers: auth(token),
   });
   return normalizeSearchPayload(status, body);
+}
+
+export async function fetchGradingSchema(token: string): Promise<NormalizedGradingSchema> {
+  const { status, body } = await send(GRADING_SCHEMA_URL, { method: 'GET', headers: auth(token) });
+  return normalizeGradingSchemaPayload(status, body);
+}
+
+export async function fetchPendingFinalGrades(token: string): Promise<NormalizedPendingFinalGrades> {
+  const { status, body } = await send(PENDING_FINAL_GRADES_URL, {
+    method: 'GET',
+    headers: auth(token),
+  });
+  return normalizePendingFinalGradesPayload(status, body);
+}
+
+export async function finalizeCourseGrade(
+  token: string,
+  courseId: string,
+  letterGrade: string,
+): Promise<{ ok: boolean; message: string | null }> {
+  const { status, body } = await send(finalizeCourseUrl(courseId), {
+    method: 'POST',
+    headers: { ...auth(token), 'Content-Type': 'application/json' },
+    body: JSON.stringify({ letter_grade: letterGrade }),
+  });
+  if (status === 200) return { ok: true, message: null };
+  const detail =
+    body && typeof body === 'object' && 'detail' in body
+      ? String((body as { detail: unknown }).detail)
+      : 'Could not save that grade.';
+  return { ok: false, message: detail };
+}
+
+export interface EditInProgressCourseInput {
+  course_code?: string;
+  title?: string | null;
+  term_id?: string | null;
+  credit_hours?: number | null;
+  letter_grade?: string | null;
+  status?: 'dropped';
+}
+
+export async function editInProgressCourse(
+  token: string,
+  courseId: string,
+  input: EditInProgressCourseInput,
+): Promise<{ ok: boolean; message: string | null }> {
+  const { status, body } = await send(courseRecordUrl(courseId), {
+    method: 'PATCH',
+    headers: { ...auth(token), 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
+  });
+  if (status === 200) return { ok: true, message: null };
+  const detail =
+    body && typeof body === 'object' && 'detail' in body
+      ? String((body as { detail: unknown }).detail)
+      : 'Could not update that course.';
+  return { ok: false, message: detail };
 }

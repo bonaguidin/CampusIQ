@@ -22,7 +22,7 @@ const base: StudentIntelligenceProfile = {
     summary: { major_current: 'Computer Science', major_intended: 'N/A', confirmed_course_count: 1, completed_hours: 3, in_progress_hours: 0, earned_hours: 3 },
     terms: [{ id: 'term-1', institution_id: 'institution-real', label: 'Fall 2025', year: 2025, season: 'fall', sequence: 1 }],
     courses: [{ id: 'course-1', term_id: 'term-1', institution_id: 'institution-real', course_code: 'CS 101', title: 'Introduction to Computing', credit_hours: 3, letter_grade: 'A', credit_type: 'resident', status: 'completed', source: 'transcript_parse' }],
-    gpa: { official: 4, projected: 4, computable: true, source: 'gpa_service' },
+    gpa: { official: 4, projected: 4, computable: true, in_progress_with_current_grade_count: 0, source: 'gpa_service' },
     repeat_exclusions: [],
   },
   career: {
@@ -44,7 +44,7 @@ const profile = structuredClone(base);
 if (mode === 'career' || mode === 'minimal') {
   profile.academics.courses = [];
   profile.academics.terms = [];
-  profile.academics.gpa = { official: null, projected: null, computable: false, source: 'gpa_service' };
+  profile.academics.gpa = { official: null, projected: null, computable: false, in_progress_with_current_grade_count: 0, source: 'gpa_service' };
   profile.academics.summary.confirmed_course_count = 0;
   profile.completeness.academics = { transcript_data_present: false, terms_present: false, gpa_computable: false, ready_for_academic_features: false };
 }

@@ -27,6 +27,7 @@ export interface StudentIntelligenceProfile {
       official: number | null;
       projected: number | null;
       computable: boolean;
+      in_progress_with_current_grade_count: number;
       source: 'gpa_service';
     };
     repeat_exclusions: RepeatExclusion[];

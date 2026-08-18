@@ -12,6 +12,7 @@ Student identity here is the dashboard "slug" (e.g. "jordanReyes"), matching the
 
 import hmac
 import json
+import logging
 import os
 import re
 import threading
@@ -57,6 +58,15 @@ from GradusIQ_career.planning.planned import (
 )
 from GradusIQ_career.planning.search import CatalogSearchError, search_catalog
 from GradusIQ_career.planning.term_view import fetch_terms_view
+from GradusIQ_career.planning.lifecycle import (
+    CourseNotEditable,
+    LifecycleError,
+    add_course_respecting_activation,
+    edit_in_progress_course,
+    finalize_course_grade,
+    promote_due_planned_courses,
+    unresolved_prior_courses,
+)
 from GradusIQ_career.action_planning import build_action_plan, dependency_order
 from GradusIQ_career.course_discovery.agent import CourseDiscoveryAgent
 from GradusIQ_career.course_discovery.models import (
@@ -324,6 +334,7 @@ def authorize_student_access(request: Request, student_slug: str) -> None:
     )
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 
 def _session_client(request: Request):
@@ -1326,6 +1337,7 @@ def chat_me(request: Request, body: ChatRequest) -> dict:
 def get_me_profile(request: Request) -> dict:
     client = _session_client(request)
     student_id = _resolve_session_student_id(client)
+    _reconcile_course_lifecycle(client, student_id)
     # Additive evolution: retain the runner/dashboard compatibility keys while
     # exposing the validated domain contract under an explicit versioned key.
     canonical = build_student_intelligence_profile(client, student_id)
@@ -1708,6 +1720,25 @@ def _home_institution_id(client, student_id: str) -> str:
     return home_rows[0]["institution_id"]
 
 
+def _reconcile_course_lifecycle(client, student_id: str) -> None:
+    """Promote due planned courses before serving academic data.
+
+    Called from every route whose response promotion could change (terms,
+    planned-courses, profile). Deliberately never fatal: a reconciliation
+    failure must not break a page load that does not otherwise depend on it --
+    the same posture repeats.reconcile_repeats takes after confirm. A student
+    with no home institution yet (pre-onboarding) has no planned courses
+    either, so a missing institution is treated as "nothing to reconcile".
+    """
+    try:
+        institution_id = _home_institution_id(client, student_id)
+        promote_due_planned_courses(client, student_id, institution_id)
+    except Exception:  # noqa: BLE001 -- reconciliation must not break the read
+        logger.exception(
+            "course lifecycle reconciliation failed for student %s", student_id
+        )
+
+
 @router.post(
     "/api/v2/student/me/transcript/upload",
     dependencies=[Depends(authorize_proxy_request)],
@@ -1940,6 +1971,7 @@ def get_me_terms(request: Request) -> dict:
     client = _session_client(request)
     student_id = _resolve_session_student_id(client)
     institution_id = _home_institution_id(client, student_id)
+    _reconcile_course_lifecycle(client, student_id)
 
     try:
         view = fetch_terms_view(client, student_id, institution_id)
@@ -1956,6 +1988,7 @@ def get_me_terms(request: Request) -> dict:
 def get_me_planned_courses(request: Request, term_id: str | None = None) -> dict:
     client = _session_client(request)
     student_id = _resolve_session_student_id(client)
+    _reconcile_course_lifecycle(client, student_id)
 
     try:
         planned = list_planned(client, student_id, term_id=term_id)
@@ -1970,11 +2003,18 @@ def get_me_planned_courses(request: Request, term_id: str | None = None) -> dict
     dependencies=[Depends(authorize_proxy_request)],
 )
 def post_me_planned_course(request: Request, body: PlannedCourseRequest) -> dict:
+    """Add a course to a term -- as PLANNED, or straight into course_records
+    as IN_PROGRESS if the term is already inside its activation window.
+
+    See lifecycle.add_course_respecting_activation: a course added to a term
+    that has already activated must never pass through a brief "planned"
+    state, so this route decides which table to write to before writing
+    anything.
+    """
     client = _session_client(request)
     student_id = _resolve_session_student_id(client)
     institution_id = _home_institution_id(client, student_id)
 
-    term_id: str | None = None
     try:
         if body.year is not None and body.season is not None:
             term_id = ensure_term_row(
@@ -1985,24 +2025,38 @@ def post_me_planned_course(request: Request, body: PlannedCourseRequest) -> dict
                 body.season,
                 label=body.term_label,
             )
-        planned = add_planned(
-            client,
-            student_id,
-            institution_id,
-            course_code=body.course_code,
-            term_id=term_id,
-            title=body.title,
-            credit_hours=body.credit_hours,
-            catalog_course_id=body.catalog_course_id,
-        )
-    except PlannedCourseError as exc:
+            result = add_course_respecting_activation(
+                client,
+                student_id,
+                institution_id,
+                term_id=term_id,
+                year=body.year,
+                season=body.season,
+                course_code=body.course_code,
+                title=body.title,
+                credit_hours=body.credit_hours,
+                catalog_course_id=body.catalog_course_id,
+            )
+        else:
+            planned = add_planned(
+                client,
+                student_id,
+                institution_id,
+                course_code=body.course_code,
+                term_id=None,
+                title=body.title,
+                credit_hours=body.credit_hours,
+                catalog_course_id=body.catalog_course_id,
+            )
+            result = planned.to_dict()
+    except (PlannedCourseError, LifecycleError) as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     except HTTPException:
         raise
     except Exception as exc:  # noqa: BLE001 -- RLS denial or transport
         raise HTTPException(status_code=502, detail="Could not save the planned course.") from exc
 
-    return {"planned_course": planned.to_dict()}
+    return {"planned_course": result}
 
 
 @router.delete(
@@ -2041,6 +2095,162 @@ def get_me_catalog_search(request: Request, q: str = "", limit: int = 20) -> dic
         raise HTTPException(status_code=502, detail=str(exc)) from exc
 
     return {"results": [row.to_dict() for row in results], "query": q}
+
+
+@router.get(
+    "/api/v2/student/me/grading-schema",
+    dependencies=[Depends(authorize_proxy_request)],
+)
+def get_me_grading_schema(request: Request) -> dict:
+    """The caller's home institution's grade vocabulary: uses_plus_minus plus
+    every grade_point_map row (letter, points, counts_toward_gpa,
+    counts_toward_credit).
+
+    This is the ONE canonical source both the current-grade/final-grade
+    selectors and GPA computation must agree on -- reusing grade_map_for
+    (transcript/store.py), the same institution-scoped read resolve_grade()
+    (academics/gpa.py) is built from. Nothing here recomputes, filters, or
+    duplicates that mapping; a TAMU student gets exactly TAMU's five
+    GPA-bearing letters plus W/I because that is what grade_point_map holds
+    for TAMU, not because of any institution-name check in this route.
+    """
+    client = _session_client(request)
+    student_id = _resolve_session_student_id(client)
+    institution_id = _home_institution_id(client, student_id)
+
+    try:
+        institution_rows = (
+            client.table("institutions")
+            .select("id,uses_plus_minus")
+            .eq("id", institution_id)
+            .execute()
+            .data
+            or []
+        )
+        grade_map = grade_map_for(client, institution_id)
+    except Exception as exc:  # noqa: BLE001 -- RLS denial or transport
+        raise HTTPException(status_code=502, detail="Could not load the grading schema.") from exc
+
+    uses_plus_minus = bool(institution_rows[0]["uses_plus_minus"]) if institution_rows else True
+
+    def _sort_key(row: dict) -> tuple:
+        # GPA-bearing letters first, ordered by descending points (A before
+        # F); non-GPA-bearing letters (W, I, ...) after, alphabetically. Not a
+        # judgment about which grades "matter more" -- it is the order every
+        # institution's own scale is conventionally listed in.
+        points = row.get("points")
+        if points is not None:
+            return (0, -float(points))
+        return (1, str(row.get("letter") or ""))
+
+    grades = [
+        {
+            "letter": row["letter"],
+            "points": float(row["points"]) if row.get("points") is not None else None,
+            "counts_toward_gpa": bool(row.get("counts_toward_gpa")),
+            "counts_toward_credit": bool(row.get("counts_toward_credit")),
+        }
+        for row in sorted(grade_map.values(), key=_sort_key)
+    ]
+
+    return {
+        "institution_id": institution_id,
+        "uses_plus_minus": uses_plus_minus,
+        "grades": grades,
+    }
+
+
+class FinalizeCourseGradeRequest(BaseModel):
+    letter_grade: str
+
+
+class EditInProgressCourseRequest(BaseModel):
+    """Every field optional -- clean_edit_fields-equivalent logic in
+    lifecycle.edit_in_progress_course accepts whatever subset is present and
+    422s if the body carries none of them."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    course_code: str | None = None
+    title: str | None = None
+    term_id: str | None = None
+    credit_hours: float | None = None
+    letter_grade: str | None = None
+    status: str | None = None
+
+    def to_fields(self) -> dict:
+        """Only the keys the client actually sent, values included as-is --
+        so an explicit `"title": null` still reaches lifecycle.py as a real
+        edit, while an omitted field is left alone rather than nulled out."""
+        return {k: v for k, v in self.model_dump().items() if k in self.model_fields_set}
+
+
+@router.get(
+    "/api/v2/student/me/course-records/pending-final-grades",
+    dependencies=[Depends(authorize_proxy_request)],
+)
+def get_me_pending_final_grades(request: Request) -> dict:
+    """Confirmed courses from an ended term still sitting at IN_PROGRESS --
+    the "How did last semester go?" prompt's data source. Read-only; never
+    mutates a course_records row."""
+    client = _session_client(request)
+    student_id = _resolve_session_student_id(client)
+    institution_id = _home_institution_id(client, student_id)
+
+    try:
+        pending = unresolved_prior_courses(client, student_id, institution_id)
+    except Exception as exc:  # noqa: BLE001 -- RLS denial or transport
+        raise HTTPException(status_code=502, detail="Could not load pending grades.") from exc
+
+    return {"pending_final_grades": pending}
+
+
+@router.post(
+    "/api/v2/student/me/course-records/{course_id}/finalize",
+    dependencies=[Depends(authorize_proxy_request)],
+)
+def post_me_finalize_course_grade(
+    request: Request, course_id: str, body: FinalizeCourseGradeRequest
+) -> dict:
+    client = _session_client(request)
+    student_id = _resolve_session_student_id(client)
+
+    try:
+        result = finalize_course_grade(client, student_id, course_id, body.letter_grade)
+    except LifecycleError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except CourseNotEditable as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except Exception as exc:  # noqa: BLE001 -- RLS denial or transport
+        raise HTTPException(status_code=502, detail="Could not finalize the course grade.") from exc
+
+    return result
+
+
+@router.patch(
+    "/api/v2/student/me/course-records/{course_id}",
+    dependencies=[Depends(authorize_proxy_request)],
+)
+def patch_me_course_record(
+    request: Request, course_id: str, body: EditInProgressCourseRequest
+) -> dict:
+    """Edit a confirmed, still-in-progress course: course, term, credits, its
+    current (non-final) grade, or an explicit drop. Completed and dropped
+    history is untouched by this route -- see
+    lifecycle.edit_in_progress_course."""
+    client = _session_client(request)
+    student_id = _resolve_session_student_id(client)
+
+    try:
+        updated = edit_in_progress_course(client, student_id, course_id, body.to_fields())
+    except LifecycleError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except CourseNotEditable as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except Exception as exc:  # noqa: BLE001 -- RLS denial or transport
+        raise HTTPException(status_code=502, detail="Could not update the course record.") from exc
+
+    return {"course_record": updated}
 
 
 def create_app(config: APIConfig | None = None) -> FastAPI:

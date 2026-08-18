@@ -5068,6 +5068,123 @@ a {
     grid-template-columns: minmax(0, 1fr) auto;
   }
 }
+
+/* Course lifecycle: status badges, current/final grade entry, drop, and the
+   prior-term grade-request prompt. Same flat/monochrome language as the rest
+   of the term planner -- badges are outlined text, not filled color. */
+
+.course-status-badge {
+  display: inline-block;
+  width: fit-content;
+  font-size: 0.625rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 0.05rem var(--sp-2);
+  margin-bottom: var(--sp-1);
+}
+
+.course-status-badge--in-progress {
+  border-color: var(--ink);
+  color: var(--ink);
+}
+
+.real-course-row--in-progress {
+  border-left: 2px solid var(--ink);
+  padding-left: var(--sp-3);
+}
+
+.real-course-row--dropped {
+  border-left: 2px solid var(--line);
+  padding-left: var(--sp-3);
+  opacity: 0.6;
+}
+
+.current-grade-cell {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+}
+
+.current-grade-label {
+  font-size: 0.6875rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.current-grade-select {
+  font-family: var(--font-ui);
+  font-size: 0.875rem;
+  padding: 0.2rem var(--sp-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.term-search-hint--activation {
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-left-width: 3px;
+  padding: var(--sp-2) var(--sp-3);
+  margin: var(--sp-3) 0;
+}
+
+.gpa-projection-note {
+  color: var(--muted);
+  font-size: 0.8125rem;
+  margin: calc(-1 * var(--sp-4)) 0 0;
+}
+
+.grade-request-banner {
+  border: 1px solid var(--line);
+  border-left-width: 3px;
+  border-left-color: var(--ink);
+  padding: var(--sp-4) var(--sp-5);
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.grade-request-heading {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.grade-request-copy {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+.grade-request-list {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.grade-request-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.grade-request-row strong {
+  display: block;
+}
+
+.grade-request-row small {
+  color: var(--muted);
+}
+
+@media (max-width: 640px) {
+  .grade-request-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+}
 .profile-page { min-height: 100vh; padding: var(--sp-8) var(--sp-4); background: var(--neutral-surface); }
 .profile-card, .profile-modal { background: var(--surface); color: var(--ink); border-radius: var(--radius); box-shadow: 0 18px 60px var(--shadow-ink); }
 .profile-card { max-width: 48rem; margin: 0 auto; padding: var(--sp-7); }

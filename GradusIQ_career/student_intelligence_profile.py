@@ -62,6 +62,12 @@ class GpaProfile(ContractModel):
     official: float | None = None
     projected: float | None = None
     computable: bool = False
+    # Confirmed, in-progress courses that carry a current (non-final) letter
+    # grade -- the only records that make projected differ from official.
+    # Drives the dashboard's "Based on current grades in N in-progress
+    # courses." / "Enter current grades to see your projected GPA." copy
+    # without the frontend re-deriving it from the course list.
+    in_progress_with_current_grade_count: int = 0
     source: Literal["gpa_service"] = "gpa_service"
 
 
