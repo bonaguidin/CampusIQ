@@ -8,6 +8,8 @@ during the prior SMU prerequisite-coverage audit.
 
 from __future__ import annotations
 
+import pytest
+
 from data.catalog import fetch_smu_catalog as smu
 
 
@@ -49,21 +51,134 @@ def test_instructor_permission_required_sentence_becomes_prerequisite():
     assert description.startswith("Independent study for undergraduate majors")
 
 
-def test_deans_office_approved_sentence_becomes_prerequisite():
-    # ENGR 3390/4390-family. Source text uses a curly apostrophe (U+2019) in
-    # "Dean’s", not a straight one -- the regex must match either.
+def test_deans_office_approved_single_sentence_stays_description_only():
+    # ENGR 3390/4390-family (live: ENGR 3192, 3390, 3391, 3392, all four
+    # sharing this exact description). Source text uses a curly apostrophe
+    # (U+2019) in "Dean's", not a straight one -- the regex must match
+    # either.
+    #
+    # The whole course description is a single sentence and it's entirely an
+    # eligibility gate, so body is empty. Regression for the duplication bug:
+    # description must keep the original text (a course with nothing else to
+    # say still needs a NOT-NULL description), but prerequisites must be
+    # None, not a byte-for-byte copy of the same text -- there is no other
+    # content here for "moving" the sentence to clean up, unlike the
+    # multi-sentence cases above.
     text = (
         "A proficient-level, multidisciplinary study of a specialized topic "
         "beyond regular course offerings, conducted with guidance from a "
         "Dean’s Office-approved faculty member."
     )
     description, prerequisites = smu.split_description(text)
-    # The whole course description is a single sentence and it's entirely an
-    # eligibility gate, so body is empty and split_description() falls back
-    # to preserving the original text in description (documented behavior
-    # for courses that are nothing but their prerequisite sentence).
-    assert prerequisites == text
     assert description == text
+    assert prerequisites is None
+
+
+@pytest.mark.parametrize("code", ["ENGR 3192", "ENGR 3390", "ENGR 3391", "ENGR 3392"])
+def test_engr_independent_study_family_no_duplication(code):
+    # Confirms the fix against all four live-affected codes, not just the
+    # one representative string above -- these four rows were the actual
+    # ones found duplicated during the full-catalog live diff.
+    text = (
+        "A proficient-level, multidisciplinary study of a specialized topic "
+        "beyond regular course offerings, conducted with guidance from a "
+        "Dean’s Office-approved faculty member."
+    )
+    description, prerequisites = smu.split_description(text)
+    assert description == text
+    assert prerequisites is None
+
+
+# ── split_description(): "B.A." abbreviation false sentence-boundary ───────
+# split_sentences() (data/catalog/normalize_catalog.py) was splitting right
+# after "B.A." as if it ended the sentence, breaking the continuation
+# ("in corporate communication and public affairs...") off as its own bogus
+# fragment. Once the leading permission sentence correctly moves to
+# prerequisites, that fragment became the ENTIRE description -- a broken,
+# lowercase-starting string. Confirmed live against CCPA 5315/5320/5325's
+# actual source text (5315 has no space after "B.A." in its second
+# occurrence -- "B.A.in public relations" -- a real typo in SMU's own
+# catalog text, included here rather than normalized away).
+#
+# Per the split_description() edge-case decision above: both sentences here
+# match is_requisite_sentence ("written permission" and "Prerequisites:"),
+# so body is empty and description keeps the whole original text, with
+# prerequisites None -- same outcome as the ENGR family, and the correct one
+# here too, since neither sentence is independent course-content prose.
+
+
+@pytest.mark.parametrize(
+    ("code", "text"),
+    [
+        (
+            "CCPA 5315",
+            "The student must secure written permission from the supervising "
+            "instructor and return a completed directed studies form to the "
+            "Division of Corporate Communication and Public Affairs before "
+            "the drop/add date in the term during which the study is to be "
+            "undertaken. Prerequisites: Permission of instructor and "
+            "division chair and enrollment in the B.A. in corporate "
+            "communication and public affairs, B.A.in public relations and "
+            "strategic communication, or minor in corporate communication "
+            "and public affairs program.",
+        ),
+        (
+            "CCPA 5320",
+            "The student must secure written permission from the supervising "
+            "instructor and return a completed directed studies form to the "
+            "Division of Corporate Communication and Public Affairs before "
+            "the drop/add date in the term during which the study is to be "
+            "undertaken. Prerequisites: Permission of instructor and "
+            "division chair and enrollment in the B.A. in corporate "
+            "communication and public affairs, B.A. in public relations and "
+            "strategic communication, or minor in corporate communication "
+            "and public affairs program.",
+        ),
+        (
+            "CCPA 5325",
+            "The student must secure written permission from the supervising "
+            "instructor and return a completed directed studies form to the "
+            "Division of Corporate Communication and Public Affairs before "
+            "the drop/add date in the term during which the study is to be "
+            "undertaken. Prerequisites: Permission of instructor and "
+            "division chair and enrollment in the B.A. in corporate "
+            "communication and public affairs, B.A. in public relations and "
+            "strategic communication, or minor in corporate communication "
+            "and public affairs program.",
+        ),
+    ],
+)
+def test_ba_abbreviation_does_not_break_description_mid_phrase(code, text):
+    description, prerequisites = smu.split_description(text)
+    assert description == text
+    assert prerequisites is None
+    # The regression this guards against: description used to start with
+    # the orphaned lowercase continuation ("in corporate communication...")
+    # once the leading sentence moved to prerequisites.
+    assert description[0].isupper()
+
+
+def test_us_abbreviation_at_genuine_sentence_boundary_still_splits():
+    # SPAN 3356 (live). The lowercase-continuation-only guard on the
+    # abbreviation fix above must NOT suppress this split: "U.S." here ends
+    # a real sentence, and "Prerequisite: C- or better in SPAN 3359." is a
+    # genuine, separate, uppercase-starting next sentence. An earlier,
+    # unconditional version of the abbreviation fix regressed this exact
+    # case -- confirmed live during the post-fix re-diff -- by merging both
+    # into one sentence and losing the prerequisite entirely.
+    text = (
+        "An advanced course intended primarily for bilingual students whose "
+        "home language is Spanish but whose dominant intellectual language "
+        "is English. Because of its emphasis on cultural readings and "
+        "communication skills, the course if suitable for native speakers "
+        "who would like to broaden their knowledge of the language, "
+        "Hispanic culture, and the major Hispanic groups in the U.S. "
+        "Prerequisite: C- or better in SPAN 3359. Not for non-native "
+        "speakers of Spanish; non-native speakers should take SPAN 3355."
+    )
+    description, prerequisites = smu.split_description(text)
+    assert prerequisites == "Prerequisite: C- or better in SPAN 3359."
+    assert "Prerequisite:" not in description
 
 
 # ── split_description(): regression against the pre-existing patterns ──────

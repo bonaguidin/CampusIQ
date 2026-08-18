@@ -224,9 +224,25 @@ def split_description(text: Any) -> tuple[str, str | None]:
     reqs = [s for s in sentences if is_requisite_sentence(s)]
     description = " ".join(body).strip()
     # description is NOT NULL downstream. If a course is nothing but its
-    # prerequisite sentence, keep the original rather than emitting "".
+    # prerequisite/permission sentence(s) -- body is empty because every
+    # sentence matched is_requisite_sentence() -- keep the original text as
+    # description rather than emitting "".
+    #
+    # EDGE CASE DECISION: in that same situation, prerequisites is set to
+    # None, not reqs. When body still has content, "moving" the requisite
+    # sentence(s) out genuinely cleans up description into standalone
+    # course-content prose (the common case: an independent-study
+    # boilerplate sentence plus a separate permission clause). When body is
+    # empty, there is no other content to clean up -- the requisite
+    # sentence(s) ARE the whole description, so "moving" them would just
+    # duplicate the same text into both fields rather than producing a
+    # cleaner description the way it does in the multi-sentence case.
+    # Confirmed live: ENGR 3192/3390/3391/3392, whose entire description is
+    # one "Dean's Office-approved" sentence -- description alone, unsplit,
+    # is the correct output, not a duplicate copy in prerequisites too.
     if not description:
         description = " ".join(" ".join(text.split()).split()).strip()
+        return description, None
     return description, (" ".join(reqs).strip() or None)
 
 
