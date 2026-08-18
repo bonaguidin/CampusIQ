@@ -1,6 +1,8 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { LoginPage } from './pages/LoginPage';
 import { SignUpPage } from './pages/SignUpPage';
+import { ResetPasswordRequestPage } from './pages/ResetPasswordRequestPage';
+import { ResetPasswordConfirmPage } from './pages/ResetPasswordConfirmPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { ResumePage } from './pages/ResumePage';
 import { TranscriptPage } from './pages/TranscriptPage';
@@ -13,6 +15,8 @@ export default function App() {
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/signup" element={<SignUpPage />} />
+      <Route path="/reset-password" element={<ResetPasswordRequestPage />} />
+      <Route path="/reset-password/confirm" element={<ResetPasswordConfirmPage />} />
       {/* RequireAuth admits either a demo profile or a ready student account;
           DashboardPage keeps their data paths separate. */}
       <Route

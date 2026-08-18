@@ -47,7 +47,16 @@ export interface AuthContextValue {
   resetCareer(): Promise<void>;
   session: Session | null;
   user: User | null;
+  /** True only while the current `session` arrived via onAuthStateChange's
+   *  PASSWORD_RECOVERY event -- i.e. the student actually opened a reset-
+   *  password link, as opposed to any other reason a session might exist
+   *  (ordinary sign-in, token refresh, an unrelated already-open tab). Reset
+   *  to false on every other event type, including a refresh of the same
+   *  recovery session. Gates ResetPasswordConfirmPage's form. */
+  isPasswordRecovery: boolean;
   signInWithPassword(email: string, password: string): Promise<void>;
+  requestPasswordReset(email: string): Promise<void>;
+  confirmPasswordReset(newPassword: string): Promise<void>;
   /** Resolves to whether a session was issued, so the caller can branch
    *  between the authenticated flow and the confirm-your-email screen. */
   signUpWithPassword(
@@ -101,6 +110,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [sessionLoading, setSessionLoading] = useState<boolean>(true);
+  const [isPasswordRecovery, setIsPasswordRecovery] = useState<boolean>(false);
 
   const [studentAccount, setStudentAccount] = useState<StudentAccountState>(NO_SESSION_STATE);
   const [accountRetry, setAccountRetry] = useState<number>(0);
@@ -179,6 +189,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       );
       setSession(newSession);
       setUser(newSession?.user ?? null);
+      // Only ever true for the event that actually means "a reset-password
+      // link was just opened" -- every other event, including a refresh of
+      // this same recovery session, drops it back to false.
+      setIsPasswordRecovery(_event === 'PASSWORD_RECOVERY');
     });
 
     return () => {
@@ -395,6 +409,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (error) throw error;
   }, []);
 
+  // Mirrors signInWithPassword's shape exactly: Promise<void>, raw Supabase
+  // error thrown on failure. The redirect target is the confirm page, which
+  // reads the recovery session Supabase establishes from the link itself
+  // (see ResetPasswordConfirmPage) -- nothing here needs to encode a token.
+  const requestPasswordReset = useCallback(async (email: string): Promise<void> => {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password/confirm`,
+    });
+    if (error) throw error;
+  }, []);
+
+  // Same shape again. Callable only once a recovery session exists (the
+  // link's onAuthStateChange event already turned into `session` by the time
+  // ResetPasswordConfirmPage lets the student submit this).
+  const confirmPasswordReset = useCallback(async (newPassword: string): Promise<void> => {
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    if (error) throw error;
+  }, []);
+
   // Whether signUp() issues a session depends entirely on the project's
   // "Confirm email" setting, which this code does not control and must not
   // assume: with confirmation ON a user comes back with `session: null`, with
@@ -457,7 +490,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     resetCareer,
     session,
     user,
+    isPasswordRecovery,
     signInWithPassword,
+    requestPasswordReset,
+    confirmPasswordReset,
     signUpWithPassword,
     signOutSession,
     studentAccount,
