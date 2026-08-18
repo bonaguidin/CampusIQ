@@ -153,6 +153,29 @@ REQUISITE_SENTENCE = re.compile(
     re.IGNORECASE,
 )
 
+# Permission/approval phrasing that gates enrollment the same way
+# "Restricted to..." does, but doesn't start the sentence the way
+# REQUISITE_SENTENCE's patterns do -- e.g. "An opportunity for the advanced
+# undergraduate student to undertake independent investigation, design, or
+# development. Written permission of the supervising faculty member is
+# required before registration." The second sentence is entirely an
+# eligibility gate, but "Written" isn't one of REQUISITE_SENTENCE's anchors.
+# Confirmed against 48 live SMU rows this missed (prior audit): CS 41xx-49xx
+# independent-study sections ("Written permission ... is required before
+# registration"), ARHS 4302 ("Instructor permission required."), and the
+# ENGR 3390/4390 family ("...guidance from a Dean's Office-approved faculty
+# member."). `dean.s` rather than `dean's` because the source text uses a
+# curly apostrophe (U+2019), not a straight one.
+PERMISSION_PHRASE = re.compile(
+    r"permission required|instructor permission|written permission|"
+    r"dean.s office[- ]approved",
+    re.IGNORECASE,
+)
+
+
+def is_requisite_sentence(sentence: str) -> bool:
+    return bool(REQUISITE_SENTENCE.match(sentence) or PERMISSION_PHRASE.search(sentence))
+
 # college string -> directory slug. SMU's `college` arrives as "COX - Cox
 # School of Business"; the leading token is the stable part.
 # Codes confirmed against the live undergraduate result set, not guessed.
@@ -188,8 +211,8 @@ def split_description(text: Any) -> tuple[str, str | None]:
     if not isinstance(text, str) or not text.strip():
         return "", None
     sentences = nc.split_sentences(text)
-    body = [s for s in sentences if not REQUISITE_SENTENCE.match(s)]
-    reqs = [s for s in sentences if REQUISITE_SENTENCE.match(s)]
+    body = [s for s in sentences if not is_requisite_sentence(s)]
+    reqs = [s for s in sentences if is_requisite_sentence(s)]
     description = " ".join(body).strip()
     # description is NOT NULL downstream. If a course is nothing but its
     # prerequisite sentence, keep the original rather than emitting "".
