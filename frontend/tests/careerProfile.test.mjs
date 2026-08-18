@@ -27,13 +27,11 @@ async function startServer(t, plugins = []) {
   return `http://127.0.0.1:${String(address.port)}`
 }
 
-/** Opens the dashboard on the Career tab's Profile sub-tab for a given fixture. */
+/** Opens the dashboard on the Career Profile child for a given fixture. */
 async function openCareer(page, origin, query) {
   await page.goto(`${origin}/authenticated-dashboard-preview.html?${query}`)
   await page.getByRole('button', { name: 'Career' }).click()
-  // CareerProfile now lives on the Career tab's Profile sub-tab, not directly
-  // on the tab body -- the sub-tab row defaults to Snapshot.
-  await page.getByRole('tab', { name: 'Profile' }).click()
+  await page.getByRole('button', { name: 'Career Profile' }).click()
   await page.locator('.cp').waitFor()
 }
 
@@ -802,8 +800,11 @@ test('career profile: Course Discovery role selector marks unsupported roles ins
   const page = await browser.newPage({ viewport: { width: 1280, height: 1000 } })
   // career=rich has three confirmed roles: AI Engineer, ML Engineer, Robotics
   // Engineer -- only the last is in the mocked supported list, so this
-  // exercises a genuinely mixed selector.
-  await openCareer(page, origin, 'mode=complete&career=rich')
+  // exercises a genuinely mixed selector. Course Discovery lives under
+  // Academic's own "Course Discovery" child nav item, not inside Career.
+  await page.goto(`${origin}/authenticated-dashboard-preview.html?mode=complete&career=rich`)
+  await page.getByRole('button', { name: 'Academic' }).click()
+  await page.getByRole('button', { name: 'Course Discovery' }).click()
 
   const cdPanel = page.locator('.card.analysis-panel', { has: page.getByRole('heading', { name: 'Course Discovery' }) })
   const roleSelect = cdPanel.locator('#course-discovery-target-role')

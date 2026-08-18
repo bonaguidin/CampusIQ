@@ -132,8 +132,8 @@ test('resume page recovers persisted review across load, error, confirmation, an
   // CASE R6: the newly confirmed career data is on screen, not the pre-confirm
   // empty state -- which is what a stale profile would have rendered.
   await page.getByRole('button', { name: 'Career' }).click()
-  // CareerProfile now lives on the Career tab's Profile sub-tab.
-  await page.getByRole('tab', { name: 'Profile' }).click()
+  // CareerProfile now lives under the Career Profile sidebar child.
+  await page.getByRole('button', { name: 'Career Profile' }).click()
   // The redesigned Career section shows a target role in both the summary and
   // the direction list, so this names the one it means.
   await page.locator('.cp-roles li').getByText('Software Engineer').waitFor()

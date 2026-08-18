@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../auth/useAuth';
 import { analyzeActionPlan, analyzeCourseDiscovery, type AnalysisIdentity } from '../api/analysis';
-import { analysisFailureMessage, useAnalysisRun } from '../hooks/useAnalysisRun';
+import { analysisFailureMessage, useAnalysisRun, type AnalysisRunState } from '../hooks/useAnalysisRun';
 import { useSupportedTargetRoles } from '../hooks/useSupportedTargetRoles';
 import type {
   CourseDiscoveryData,
+  FeatureResult,
   VerifiedCourseRecommendation,
   PrerequisiteBlockedCourse,
   UnresolvedCourseCandidate,
@@ -16,6 +17,26 @@ import type {
   DependencyOrderLimitation,
 } from '../types/analysis';
 import { AnalysisPanel, type AnalysisPhase } from './AnalysisPanel';
+
+export interface CourseDiscoveryRun {
+  state: AnalysisRunState<FeatureResult<CourseDiscoveryData>>;
+  trigger: () => void;
+}
+
+interface CourseDiscoveryPanelProps {
+  targetRoles: string[];
+  /**
+   * Lets a parent (Academic Overview's compact summary) read this exact run
+   * instead of holding a second one -- so the summary always reflects the
+   * same result this panel shows, with no duplicate fetch. Same pattern as
+   * GapAnalysisPanel's externally-shared run. Omitted by every other caller,
+   * which keeps its own internal useAnalysisRun instance exactly as before.
+   */
+  run?: CourseDiscoveryRun;
+  /** Paired with `run`: the role that run's next trigger will request. */
+  selectedRole?: string;
+  onSelectedRoleChange?: (role: string) => void;
+}
 
 // Course Discovery panel — data shape is course_discovery/agent_models.py's
 // CourseDiscoveryResult, mirrored in ../types/analysis.ts. Three typed
@@ -29,16 +50,24 @@ import { AnalysisPanel, type AnalysisPhase } from './AnalysisPanel';
 // selectedRole and the successful CourseDiscoveryData are already
 // authoritative in this scope; lifting them elsewhere would just create a
 // second copy of state this component already owns.
-export function CourseDiscoveryPanel({ targetRoles }: { targetRoles: string[] }) {
+export function CourseDiscoveryPanel({
+  targetRoles,
+  run: externalRun,
+  selectedRole: externalSelectedRole,
+  onSelectedRoleChange,
+}: CourseDiscoveryPanelProps) {
   const { slug, session } = useAuth();
-  const [selectedRole, setSelectedRole] = useState(targetRoles[0] ?? '');
+  const [internalSelectedRole, setInternalSelectedRole] = useState(targetRoles[0] ?? '');
+  const selectedRole = externalSelectedRole ?? internalSelectedRole;
+  const setSelectedRole = onSelectedRoleChange ?? setInternalSelectedRole;
   const supportedRoles = useSupportedTargetRoles();
-  const { state, trigger } = useAnalysisRun(() =>
+  const internalRun = useAnalysisRun(() =>
     analyzeCourseDiscovery(
       { slug, accessToken: session?.access_token ?? null },
       targetRoles.length > 1 ? selectedRole : null,
     ),
   );
+  const { state, trigger } = externalRun ?? internalRun;
 
   const successData = state.phase === 'done' && state.result.status === 'success' ? state.result.data : null;
 
