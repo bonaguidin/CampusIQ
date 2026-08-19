@@ -127,6 +127,96 @@ def test_completed_at_least_x_of_missing_restriction_is_a_warning_not_a_crash():
     assert "restriction" in warnings[0]
 
 
+# ── normalize_rule(): completedAnyOf ────────────────────────────────────────
+# "Advanced/Domain Specific Use/Design of AI" -- the literal rule object
+# confirmed live this session (Phase 3a dry-run's unhandled-condition audit).
+# Structurally identical to completedAtLeastXOf's shape, but with no
+# `restriction` field -- the condition itself fixes n_required at 1.
+
+
+def test_completed_any_of_becomes_enumerated_at_least_n_with_n_required_one():
+    rule = {
+        "condition": "completedAnyOf",
+        "value": {
+            "condition": "courses",
+            "values": [
+                {"value": ["0275631"], "logic": "and"},
+                {"value": ["0278621"], "logic": "and"},
+                {"value": ["0225131"], "logic": "and"},
+                {"value": ["0225761"], "logic": "and"},
+                {"value": ["0046401"], "logic": "and"},
+                {"value": ["0275611"], "logic": "and"},
+                {"value": ["0258761"], "logic": "and"},
+                {"value": ["0268171"], "logic": "and"},
+                {"value": ["0283371"], "logic": "and"},
+                {"value": ["0278081"], "logic": "and"},
+                {"value": ["0237421"], "logic": "and"},
+            ],
+            "id": "g5IoOfGH",
+            "subSelections": [],
+        },
+        "id": "zivoTpLT",
+        "name": "Advanced/Domain Specific Use/Design of AI",
+        "description": (
+            "<p>Students will fulfill this requirement by taking one of the "
+            "courses listed below as part of their major requirements. The "
+            "credit hours for this requirement are included in the major "
+            "requirements and not the EDGE requirements.</p>"
+        ),
+    }
+    groups, warnings = reqs.normalize_rule(rule, parent_coursedog_rule_id=None)
+    assert warnings == []
+    group = groups[0]
+    assert group["group_type"] == "enumerated_at_least_n"
+    assert group["n_required"] == 1
+    assert len(group["options"]) == 11
+    all_ids = [cid for option in group["options"] for cid in option["coursedog_group_ids"]]
+    assert all_ids == [
+        "0275631", "0278621", "0225131", "0225761", "0046401",
+        "0275611", "0258761", "0268171", "0283371", "0278081", "0237421",
+    ]
+
+
+# ── normalize_rule(): completeVariableCoursesAndVariableCredits ────────────
+# "Content Area 4, Physics" -- the literal rule object confirmed live this
+# session, including the lecture+lab paired-ID ("and" logic) options already
+# exercised by test_enumerated_all_and_pair_is_one_co_requisite_option above.
+# minCredits/maxCredits sit directly on the rule; only minCredits is kept.
+
+
+def test_complete_variable_courses_and_variable_credits_becomes_enumerated_all():
+    rule = {
+        "condition": "completeVariableCoursesAndVariableCredits",
+        "value": {
+            "condition": "courses",
+            "values": [
+                {"value": ["0139911", "0139861"], "logic": "and"},
+                {"value": ["0139921", "0139871"], "logic": "and"},
+                {"value": ["0140111"], "logic": "and"},
+            ],
+            "id": "HwIQ10H6",
+            "subSelections": [],
+        },
+        "id": "T6z1BLsv",
+        "minCredits": 7,
+        "maxCredits": 8,
+        "name": "Content Area 4, Physics",
+    }
+    groups, warnings = reqs.normalize_rule(rule, parent_coursedog_rule_id=None)
+    assert warnings == []
+    group = groups[0]
+    assert group["group_type"] == "enumerated_all"
+    assert group["n_required"] is None
+    # minCredits kept, maxCredits intentionally discarded (see the code
+    # comment on this branch in normalize_rule()).
+    assert group["credit_hours_required"] == 7
+    assert len(group["options"]) == 3
+    assert group["options"][0]["coursedog_group_ids"] == ["0139911", "0139861"]
+    assert group["options"][0]["logic"] == "and"
+    assert group["options"][1]["coursedog_group_ids"] == ["0139921", "0139871"]
+    assert group["options"][2]["coursedog_group_ids"] == ["0140111"]
+
+
 # ── normalize_rule(): freeform ──────────────────────────────────────────────
 # Technical Electives (9 Credit Hours) -- the literal rule object confirmed
 # live this session. This is the central finding of the filter-rule-shape

@@ -114,6 +114,21 @@ TARGET_REQUIREMENT_LEVEL = "programRequirements"
 CONDITION_TO_GROUP_TYPE = {
     "completedAllOf": "enumerated_all",
     "completedAtLeastXOf": "enumerated_at_least_n",
+    # "Choose any one of these" -- structurally identical to
+    # completedAtLeastXOf (same value.condition="courses" / value.values[]
+    # shape, no extra fields), just without a `restriction` field, since the
+    # condition name itself already fixes n_required at 1. Confirmed live:
+    # "Advanced/Domain Specific Use/Design of AI", "Leadership and
+    # Mentoring", "Experiential Learning" (CS-BS).
+    "completedAnyOf": "enumerated_at_least_n",
+    # A fixed set of options (lecture+lab pairs, a single course, etc.) where
+    # completing the applicable option satisfies the requirement -- same
+    # shape as completedAllOf's enumerated_all, not a choose-N case. The
+    # variable part is credit hours, not which/how-many options: Coursedog
+    # gives that directly via minCredits/maxCredits on the rule rather than
+    # a "(N Credit Hours)" name suffix -- see the minCredits handling below.
+    # Confirmed live, one occurrence: "Content Area 4, Physics" (CS-BS).
+    "completeVariableCoursesAndVariableCredits": "enumerated_all",
     "allOf": "compound_all",
     "anyOf": "compound_any",
     "freeformText": "freeform",
@@ -167,18 +182,38 @@ def normalize_rule(
         "options": [],
     }
 
+    # completeVariableCoursesAndVariableCredits provides credit hours
+    # directly on the rule (minCredits/maxCredits) rather than via the
+    # "(N Credit Hours)" name suffix credit_hours_from_name() parses.
+    # Only minCredits is captured -- credit_hours_required is a single int
+    # column (§8.2), not a range, and there's exactly one live example to
+    # generalize from (Content Area 4, Physics: minCredits=7, maxCredits=8).
+    # maxCredits is intentionally discarded for v1, not an oversight:
+    # revisit if the scheduler ever needs to represent a credit range rather
+    # than one required value.
+    if condition == "completeVariableCoursesAndVariableCredits":
+        min_credits = rule.get("minCredits")
+        if isinstance(min_credits, int):
+            base["credit_hours_required"] = min_credits
+
     groups = [base]
 
     if group_type == "enumerated_at_least_n":
-        restriction = rule.get("restriction")
-        if not isinstance(restriction, int) or restriction < 1:
-            warnings.append(
-                f"rule id={coursedog_rule_id!r} name={name!r} is "
-                f"completedAtLeastXOf but restriction is {restriction!r} "
-                f"(expected a positive int) -- skipping this rule"
-            )
-            return [], warnings
-        base["n_required"] = restriction
+        if condition == "completedAnyOf":
+            # No `restriction` field on these rules -- the condition name
+            # itself fixes n_required at 1, unlike completedAtLeastXOf which
+            # carries the count explicitly.
+            base["n_required"] = 1
+        else:
+            restriction = rule.get("restriction")
+            if not isinstance(restriction, int) or restriction < 1:
+                warnings.append(
+                    f"rule id={coursedog_rule_id!r} name={name!r} is "
+                    f"completedAtLeastXOf but restriction is {restriction!r} "
+                    f"(expected a positive int) -- skipping this rule"
+                )
+                return [], warnings
+            base["n_required"] = restriction
 
     if group_type in ("enumerated_all", "enumerated_at_least_n"):
         value = rule.get("value") or {}
