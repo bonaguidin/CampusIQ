@@ -54,6 +54,20 @@
 --    fired against a real posting). 90 days covers a realistic iteration
 --    loop; `not null` forever was unbounded growth with no eviction path.
 --
+-- 6. `location_kind` added, adopted from the ats-puller-draft skeleton's
+--    sql/draft_tables.sql. It records WHY is_dfw came out the way it did.
+--    Whether a fully-remote role open to DFW residents counts as DFW is a
+--    product question, not a string-matching one, and a bare boolean stores
+--    the verdict while throwing away the reasoning. Re-deriving that reasoning
+--    months later means re-running a classifier that has since changed, so the
+--    decision would not actually be revisitable. With this column it is one
+--    statement:
+--
+--      update job_postings set is_dfw = true
+--       where location_kind in ('remote_us', 'remote_anywhere');
+--
+--    Cost is one text column. Drop it only once the remote call is settled.
+--
 -- Adds job_postings (fetched listings, deduped per vendor) and
 -- job_posting_fetch_log (one row per fetch attempt, for quota accounting and
 -- staleness detection) -- the schema outstanding-fixes.md's "Job posting
@@ -150,6 +164,10 @@ create table job_postings (
   location text,
   url text,                        -- AMENDED -- see note 2 in the header
   is_dfw boolean,                  -- AMENDED -- see note 3
+  location_kind text check (location_kind is null or location_kind in (
+    'dfw_metro', 'multi_includes_dfw', 'hybrid_dfw',
+    'texas_non_dfw', 'remote_us', 'remote_anywhere', 'non_dfw', 'unknown'
+  )),                              -- AMENDED -- see note 6
   posting_identity uuid,           -- AMENDED -- see note 4; FK added below
   target_role text not null,
   skills_extracted jsonb not null default '[]'::jsonb,
@@ -208,8 +226,16 @@ comment on column job_postings.url is
 comment on column job_postings.is_dfw is
   'Whether this posting is in the DFW metro, derived from location at '
   'ingest. Cluster matching uses this rather than the raw location string, '
-  'which syndicators rewrite freely. Null means undetermined -- handle '
-  'remote/hybrid/multi-location explicitly rather than defaulting to false.';
+  'which syndicators rewrite freely. Always a definite verdict where a '
+  'location was given -- location_kind carries the reasoning, so a contested '
+  'call can be reversed later without re-deriving anything.';
+
+comment on column job_postings.location_kind is
+  'Why is_dfw is what it is. dfw_metro / multi_includes_dfw / hybrid_dfw are '
+  'the true cases; texas_non_dfw / remote_us / remote_anywhere / non_dfw are '
+  'the false ones; unknown means no usable location was given. The remote '
+  'cases are the point: they are false today, and flipping that is an UPDATE '
+  'on this column rather than a re-pull.';
 
 comment on column job_postings.posting_identity is
   'Which cluster of cross-source duplicates this row belongs to. Mutable by '

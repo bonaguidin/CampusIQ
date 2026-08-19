@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import re
 import unicodedata
+from enum import Enum
 from urllib.parse import urlsplit
 
 # ---------------------------------------------------------------------------
@@ -213,31 +214,79 @@ _DFW_LOCALITIES = frozenset({
 })
 
 _REMOTE = re.compile(r"\b(?:remote|work from home|wfh|anywhere|virtual)\b", re.IGNORECASE)
+_HYBRID = re.compile(r"\bhybrid\b", re.IGNORECASE)
+_TEXAS = re.compile(r"\b(?:tx|texas)\b", re.IGNORECASE)
+_US_SCOPED = re.compile(r"\b(?:us|usa|u\.s\.?|united states|nationwide)\b", re.IGNORECASE)
+
+# Multi-location strings separate with a semicolon or pipe far more reliably
+# than with a comma, which is doing city/state duty inside each entry.
+_LOCATION_SPLIT = re.compile(r"[;|]|\band\b", re.IGNORECASE)
 
 
-def is_dfw(location: str | None) -> bool | None:
-    """True / False / None, where None means undetermined -- a real state.
+class LocationKind(str, Enum):
+    """Why a posting was or was not called DFW. Stored as a column.
 
-    README §3 requires remote, hybrid and multi-location be handled explicitly
-    rather than defaulting. A DFW locality anywhere in the string wins, which
-    is what makes multi-location postings work: the real corpus contains
-    "Dallas, TX; New York, NY", and that posting is genuinely a DFW posting.
+    Adopted from the ats-puller-draft skeleton, which argued the case well: a
+    bare is_dfw boolean records the verdict and throws away the reasoning, and
+    the remote call is contested enough that it will be revisited. Re-deriving
+    the reason months later means re-running a classifier that has since
+    changed, so without this the decision is not actually revisitable. With it,
+    reclassifying is one UPDATE.
+    """
 
-    Remote-only with no named locality returns None rather than True or False.
-    Whether a remote role open to DFW residents counts as DFW is a product
-    call, not a string-matching one, and encoding a guess here would bury it.
+    DFW_METRO = "dfw_metro"
+    MULTI_INCLUDES_DFW = "multi_includes_dfw"
+    HYBRID_DFW = "hybrid_dfw"
+    TEXAS_NON_DFW = "texas_non_dfw"
+    REMOTE_US = "remote_us"
+    REMOTE_ANYWHERE = "remote_anywhere"
+    NON_DFW = "non_dfw"
+    UNKNOWN = "unknown"
+
+
+def classify_location(location: str | None) -> tuple[bool, LocationKind]:
+    """Return (is_dfw, kind). The verdict is always definite; kind says why.
+
+    Presence wins over absence -- "Dallas, TX; New York, NY" is a real DFW
+    opportunity and the corpus actually contains that shape. Hybrid is a
+    schedule rather than a geography, so a hybrid DFW role still requires
+    living here and stays true.
+
+    Remote with no DFW anchor is FALSE today, not undetermined. That is a
+    deliberate call rather than a dodge: the kind records that it was remote,
+    so flipping it later is a query rather than a re-pull.
     """
     if not location or not location.strip():
-        return None
-    folded = _PUNCT.sub(" ", _fold(location))
-    folded = _WHITESPACE.sub(" ", folded).strip()
+        return False, LocationKind.UNKNOWN
+
+    folded = _WHITESPACE.sub(" ", _PUNCT.sub(" ", _fold(location))).strip()
     padded = f" {folded} "
-    for locality in _DFW_LOCALITIES:
-        if f" {locality} " in padded:
-            return True
+    has_dfw = any(f" {locality} " in padded for locality in _DFW_LOCALITIES)
+
+    if has_dfw:
+        if _HYBRID.search(location):
+            return True, LocationKind.HYBRID_DFW
+        parts = [p for p in _LOCATION_SPLIT.split(location) if p.strip()]
+        if len(parts) > 1:
+            return True, LocationKind.MULTI_INCLUDES_DFW
+        return True, LocationKind.DFW_METRO
+
     if _REMOTE.search(location):
-        return None
-    return False
+        if _US_SCOPED.search(location):
+            return False, LocationKind.REMOTE_US
+        return False, LocationKind.REMOTE_ANYWHERE
+
+    if _TEXAS.search(location):
+        return False, LocationKind.TEXAS_NON_DFW
+
+    return False, LocationKind.NON_DFW
+
+
+def is_dfw(location: str | None) -> bool:
+    """Just the verdict. Callers that persist a row want classify_location(),
+    so the reasoning reaches the location_kind column."""
+    verdict, _ = classify_location(location)
+    return verdict
 
 
 # ---------------------------------------------------------------------------

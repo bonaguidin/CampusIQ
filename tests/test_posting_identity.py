@@ -18,6 +18,8 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "scripts" / "job_postings"))
 
 from identity import (  # noqa: E402
+    LocationKind,
+    classify_location,
     exact_key,
     fuzzy_key,
     identity_keys,
@@ -191,11 +193,11 @@ def test_normalize_title_preserves_meaningful_parentheticals_mid_string():
         ("Dallas, TX; New York, NY", True),      # real shape from the corpus
         ("New York, New York", False),
         ("Seoul, South Korea", False),
-        ("Remote", None),
-        ("Remote - US", None),
-        ("Work from home", None),
-        ("", None),
-        (None, None),
+        ("Remote", False),
+        ("Remote - US", False),
+        ("Work from home", False),
+        ("", False),
+        (None, False),
     ],
 )
 def test_is_dfw(location, expected):
@@ -203,8 +205,49 @@ def test_is_dfw(location, expected):
 
 
 def test_is_dfw_named_locality_beats_remote():
-    """'Remote (Dallas, TX)' is a DFW posting, not an undetermined one."""
+    """'Remote (Dallas, TX)' is a DFW posting."""
     assert is_dfw("Remote (Dallas, TX)") is True
+
+
+@pytest.mark.parametrize(
+    "location, verdict, kind",
+    [
+        ("Dallas, TX", True, LocationKind.DFW_METRO),
+        ("Plano, TX", True, LocationKind.DFW_METRO),
+        ("Dallas, TX; New York, NY", True, LocationKind.MULTI_INCLUDES_DFW),
+        ("Hybrid - Dallas, TX", True, LocationKind.HYBRID_DFW),
+        ("Austin, TX", False, LocationKind.TEXAS_NON_DFW),
+        ("Houston, Texas", False, LocationKind.TEXAS_NON_DFW),
+        ("Remote - US", False, LocationKind.REMOTE_US),
+        ("Remote (Nationwide)", False, LocationKind.REMOTE_US),
+        ("Remote", False, LocationKind.REMOTE_ANYWHERE),
+        ("Work from home", False, LocationKind.REMOTE_ANYWHERE),
+        ("Seoul, South Korea", False, LocationKind.NON_DFW),
+        ("", False, LocationKind.UNKNOWN),
+        (None, False, LocationKind.UNKNOWN),
+    ],
+)
+def test_classify_location(location, verdict, kind):
+    assert classify_location(location) == (verdict, kind)
+
+
+def test_classify_location_verdict_agrees_with_is_dfw():
+    """is_dfw is a thin wrapper; the two must never disagree."""
+    for location in ["Dallas, TX", "Austin, TX", "Remote", "", None, "Hybrid - Plano"]:
+        assert classify_location(location)[0] is is_dfw(location)
+
+
+def test_remote_is_false_but_recoverable():
+    """The whole reason location_kind exists: the remote call is reversible.
+
+    Remote roles are excluded today, and if that decision flips, the kind is
+    what makes it a query instead of a re-pull.
+    """
+    remote_kinds = {LocationKind.REMOTE_US, LocationKind.REMOTE_ANYWHERE}
+    for location in ["Remote", "Remote - US", "Fully remote, USA"]:
+        verdict, kind = classify_location(location)
+        assert verdict is False
+        assert kind in remote_kinds
 
 
 def test_is_dfw_does_not_match_substrings_of_other_words():
@@ -271,9 +314,13 @@ def test_every_real_posting_url_recovers_its_stored_external_id():
 
 @pytest.mark.skipif(not CORPUS.exists(), reason="postings.csv is gitignored output")
 def test_real_corpus_locations_all_classify():
-    """No real location should come back undetermined in this corpus -- none of
-    the 153 are remote, so a None here means the locality list has a gap."""
+    """Every real posting carries a usable location, so none should land in
+    UNKNOWN. One that does means the string shape is unhandled, not that the
+    posting is genuinely locationless."""
     with CORPUS.open(encoding="utf-8", newline="") as f:
         rows = list(csv.DictReader(f))
-    undetermined = {r["location"] for r in rows if is_dfw(r["location"]) is None}
-    assert not undetermined, f"unclassified locations: {sorted(undetermined)[:10]}"
+    unknown = {
+        r["location"] for r in rows
+        if classify_location(r["location"])[1] is LocationKind.UNKNOWN
+    }
+    assert not unknown, f"unclassified locations: {sorted(unknown)[:10]}"

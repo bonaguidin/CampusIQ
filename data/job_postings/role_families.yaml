@@ -1,0 +1,182 @@
+# Role family rules — spec §5
+#
+# ============================================================================
+# THESE RULES ARE MEANT TO BE WRONG AT FIRST AND REWRITTEN.
+#
+# §5: "The rules are cheap to change — wrong rules get rewritten and tonight's
+# pull re-run." That is the design, not a caveat. The unmapped bin tells you
+# what to fix; run `tools/verify_sample.py --unmapped` after the first pull and
+# edit this file.
+# ============================================================================
+#
+# role_family is the join key for skill_frequency, so a title in the wrong
+# bucket contaminates that family's percentages. Two failure modes, and they
+# are not equally visible:
+#   - Unmapped   → shows up in the unmapped bin. Loud. Fixable.
+#   - Mis-mapped → shows up as a plausible wrong percentage. Silent.
+# Prefer leaving a title unmapped over guessing it into a family.
+#
+# ---
+#
+# MATCHING (§5): longest phrase first, globally across all families — same
+# precedence machinery as §4's JavaScript-beats-Java rule. "Business Analyst"
+# is claimed before a bare "Analyst" rule gets a turn.
+#
+# `exclude_phrases` beats any match. It exists to override one.
+#
+# NO MATCH → role_family: NULL. The posting is still written. NEVER dropped.
+#
+# Seniority is NOT part of the family (§6). "Financial Analyst I" and "Sr.
+# Financial Analyst" are the same family; the level lives in `seniority` and
+# gets filtered at read time.
+
+families:
+
+  - family: financial_analyst
+    match_phrases:
+      - financial planning and analysis
+      - financial planning & analysis
+      - financial analyst
+      - fp&a analyst
+      - fp&a
+      # NOTE: no "senior financial analyst" phrase. normalize_title() in
+      # roles.py collapses Sr./Senior before matching, so a phrase containing
+      # a seniority word can never fire — it would be dead config. §6 keeps
+      # level out of the family entirely.
+      - corporate finance analyst
+      - finance analyst
+      - budget analyst
+      - treasury analyst
+    exclude_phrases:
+      - financial advisor
+      - financial services representative
+      # Advisory/sales roles, not analyst roles. Different skill mix entirely.
+
+  - family: accountant
+    match_phrases:
+      - staff accountant
+      - general ledger accountant
+      - accountant
+      - accounting associate
+      - accounts payable
+      - accounts receivable
+      - auditor
+      - tax associate
+      - tax analyst
+
+  - family: business_analyst
+    match_phrases:
+      - business systems analyst
+      - business analyst
+      - business intelligence analyst
+      - bi analyst
+      - operations analyst
+      - process analyst
+      - revenue operations analyst
+    # NOTE: §5 names "Business Analyst — Revenue Operations" as a real example.
+    # It matches "business analyst" here, which is the intended outcome.
+
+  - family: data_analyst
+    match_phrases:
+      - data analyst
+      - reporting analyst
+      - analytics analyst
+      - marketing analyst
+      - insights analyst
+      - quantitative analyst
+
+  - family: data_engineer
+    match_phrases:
+      - data engineer
+      - analytics engineer
+      - etl developer
+      - data warehouse engineer
+
+  - family: software_engineer
+    match_phrases:
+      - software development engineer
+      - software engineer
+      - software developer
+      - backend engineer
+      - back-end engineer
+      - frontend engineer
+      - front-end engineer
+      - full stack engineer
+      - full-stack engineer
+      - application developer
+      - web developer
+      - programmer
+    exclude_phrases:
+      - sales engineer
+      - solutions engineer
+      # Customer-facing roles. Both carry "engineer" and neither has an
+      # engineering skill profile.
+
+  - family: it_support
+    match_phrases:
+      - help desk
+      - helpdesk
+      - it support
+      - desktop support
+      - technical support
+      - service desk
+      - systems administrator
+      - network administrator
+
+  - family: marketing
+    match_phrases:
+      - marketing coordinator
+      - marketing specialist
+      - digital marketing
+      - content marketing
+      - social media
+      - marketing associate
+      - seo
+    # NOTE: "marketing analyst" is NOT excluded here.
+    #
+    # An earlier draft listed it, reasoning that it belongs to data_analyst.
+    # That was a bug: exclusions are evaluated globally and beat any match, so
+    # "Marketing Analyst" would have been excluded outright and landed in the
+    # unmapped bin instead of data_analyst. Longest-phrase-first already does
+    # the right thing — "marketing analyst" (17) beats "marketing" (9).
+    #
+    # Rule of thumb: use exclude_phrases to send a title to NULL, never to
+    # redirect it to another family. Length ordering handles redirection.
+
+  - family: human_resources
+    match_phrases:
+      - human resources
+      - hr generalist
+      - hr coordinator
+      - talent acquisition
+      - recruiter
+      - recruiting coordinator
+      - people operations
+
+  - family: supply_chain
+    match_phrases:
+      - supply chain analyst
+      - supply chain
+      - logistics coordinator
+      - logistics analyst
+      - procurement analyst
+      - inventory analyst
+      - operations coordinator
+
+# ============================================================================
+# KNOWN GAPS — decide these against the unmapped bin, not from a desk
+#
+# 1. Bare "Analyst". §5's own example "Analyst, Corporate Finance" maps only
+#    because "corporate finance analyst" is listed — the comma form is a
+#    different string. Normalization in roles.py handles separators, but a
+#    title that is JUST "Analyst" with the domain elsewhere in the posting
+#    stays unmapped. Correct for now: guessing would mis-map silently.
+#
+# 2. "Associate, Financial Planning" (also §5's example) does NOT match
+#    "financial planning and analysis". Whether to add "financial planning" as
+#    its own phrase is a real call — it would also catch financial-advisor
+#    roles the exclusion above is trying to keep out.
+#
+# 3. Ten families is the spec's "~10 DFW families". Whether these are the right
+#    ten is Kash's domain judgment, not something this file can settle.
+# ============================================================================
