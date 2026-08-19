@@ -57,6 +57,8 @@ That makes this field set the ceiling on everything GAP can ever say. Bytes are 
 | `date_posted` | Employer's posting date where available |
 | `date_pulled` | This run's date |
 
+> **Cross-source note.** `(source_ats, external_id)` dedups *within* a source only. Once job search APIs run alongside these feeds, the same job arrives under several ids and needs a second identity layer above this key — see `DEDUP.md`.
+
 ### Derived — computed at ingest
 
 | Field | Notes |
