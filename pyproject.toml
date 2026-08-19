@@ -13,11 +13,6 @@ dependencies = [
     "python-docx>=1.2.0",
     "python-dotenv>=1.2.2",
     "python-multipart>=0.0.20",
-    # Reads the hand-edited ingest config under data/job_postings/. Already
-    # present in the local venv as a transitive dependency, which is exactly
-    # why it needs declaring: relying on that is how a module works locally
-    # and fails on a fresh install.
-    "pyyaml>=6.0.3",
     "requests>=2.32.5",
     "supabase>=2.31.0",
     "tavily-python>=0.7.26",

@@ -14,6 +14,20 @@ hand-built work and were the only things in it at risk of being lost.
 The skeleton implements `GradusIQ_ATS_Puller_Spec.md`; section references in
 the comments inside each file point at that spec.
 
+## Before anything reads these
+
+Nothing in the repo parses them yet. Whoever wires that up has to do two
+things together, not one:
+
+1. Add `pyyaml` to `pyproject.toml`.
+2. Run `uv lock` to regenerate `uv.lock`.
+
+PyYAML is currently in the local venv only as a transitive dependency, so a
+module that imports it will pass locally and fail on a fresh install. And the
+CI workflow runs `uv sync --frozen`, which refuses a lockfile that does not
+match `pyproject.toml` — so declaring the dependency without relocking breaks
+the nightly run instead of fixing anything.
+
 ## The files
 
 | File | What it is | Trust level |

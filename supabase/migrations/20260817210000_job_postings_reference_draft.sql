@@ -146,12 +146,22 @@
 -- state fetch_log's results_count=0 + status='success' represents
 -- explicitly, that job_postings alone cannot represent as a row).
 
--- AMENDED: the source vocabulary. Two vendors plus the five ATS platforms
--- data/ats_fetcher/fetch_postings.py normalizes. Note that of those five only
--- greenhouse and lever have ever actually been run (PMG 70 postings, Match
--- Group 83, on 2026-08-05); ashby, smartrecruiters and recruitee are written
--- but unexercised. They are admitted here because the adapters exist, not
--- because they are proven.
+-- AMENDED: the source vocabulary. Two vendors plus five ATS platforms, but
+-- the platforms are at three different maturity levels and the constraint
+-- deliberately admits all of them anyway, so that adding a fetcher never
+-- requires a migration:
+--
+--   greenhouse, lever          Run for real -- PMG 70 postings, Match Group
+--                              83, on 2026-08-05.
+--   ashby, smartrecruiters     Adapters written in fetch_postings.py, never
+--                              executed against a live board.
+--   recruitee                  NO adapter in fetch_postings.py at all. Only
+--                              the ats-puller-draft skeleton has a recruitee
+--                              module, and that module is a stub. Nothing can
+--                              currently write a row with this source.
+--
+-- Recorded because it is easy to get wrong: the ats-fetcher commit message
+-- claims five platforms are normalized, and the ADAPTERS map has four.
 create table job_postings (
   id uuid primary key default gen_random_uuid(),
   source text not null check (source in (
