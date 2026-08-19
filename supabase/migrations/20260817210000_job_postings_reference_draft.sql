@@ -516,12 +516,35 @@ create table employers (
   ats_platform text check (ats_platform is null or ats_platform in (
     'greenhouse', 'lever', 'ashby', 'smartrecruiters', 'recruitee'
   )),
+  priority integer,
+  checked_date date,
+  notes text,
   target_role_families jsonb not null default '[]'::jsonb,
   confirmed_roles jsonb not null default '[]'::jsonb,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   unique (name)
 );
+
+comment on column employers.priority is
+  'Research tier from the source CSV, 1-5. Work-ordering for slug lookup, not '
+  'a ranking of the employer.';
+
+comment on column employers.checked_date is
+  'When someone last confirmed this employer''s ATS board actually exists and '
+  'is on the platform claimed. Null for every row in the initial load -- see '
+  'the note on slug below.';
+
+comment on column employers.notes is
+  'Free text from the source CSV. Mostly hypotheses about which ATS an '
+  'employer is likely on ("Enterprise HCM likely -- check for '
+  'myworkdayjobs.com"), which is research to be done rather than fact.';
+
+comment on column employers.slug is
+  'The identifier in the employer''s own careers URL, and the thing the ATS '
+  'fetcher cannot work without. NULL for all 44 rows of the initial load: '
+  'that column was never filled in. So this table currently describes who to '
+  'target, not who can be fetched.';
 
 comment on column employers.ats_platform is
   'Nullable on purpose: the source CSV has this column only partly filled, '

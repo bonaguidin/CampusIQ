@@ -92,11 +92,41 @@ this one is small, curated and alias-based; that one is large, generated and
 frequency-filtered. Someone should decide which survives rather than letting
 both drift.
 
-## employers.example.yaml is a template
+## dfw_employers_ats.csv — the real list, arrived 2026-08-19
 
-The real list — `employers.yaml` — does not exist. It was Noah's deliverable
-and was never handed over; the skeleton repo's `.gitignore` carries the line
-`# Noah's real employer list. Only employers.example.yaml is tracked.` The
-entries here are `Example Co` placeholders, and the file's own comment warns
-that an unverified slug pointing at the wrong company produces real postings
-attributed to the wrong employer.
+44 hand-researched DFW employers plus one example row the loader skips.
+Columns: priority, employer, sector, dfw_location, domain,
+target_role_families, ats, slug, checked_date, notes.
+
+**It does not make any employer fetchable.** The ATS fetcher needs `{ats,
+slug}` per employer. This file has `ats` for **1 of 44** (Match Group, lever)
+and `slug` for **0 of 44** — that column was never filled in. A slug is the
+identifier in an employer's own careers URL and has to be looked up by hand,
+per employer. Until that happens the table describes who to target, not who
+can be reached.
+
+`scripts/job_postings/load_employers.py` loads it and reports that gap in its
+own output rather than leaving it to be discovered later. A test pins the
+current state, so the first slug someone fills in will make that test fail —
+which is the intended signal, not a regression.
+
+Two other things to know:
+
+- `notes` is mostly hypotheses — "Enterprise HCM likely — check for
+  myworkdayjobs.com". That is the research still outstanding, written down. A
+  guess about an employer's ATS is not a fact about it, and a slug pointing at
+  the wrong company produces real postings attributed to the wrong employer.
+- `target_role_families` uses the **mid-career taxonomy**, same as
+  `role_families.yaml` and for the same reason. "Financial analyst; client
+  service associate; risk/compliance" are not among the fourteen student roles
+  in `data/role_requirements.json`. Loaded verbatim; remapping is the same
+  outstanding decision described above.
+
+PMG is not in this list, despite being one of the two employers actually
+fetched in the 2026-08-05 run. Match Group is.
+
+## employers.example.yaml
+
+A shape template for the ats-puller-draft skeleton's own config format
+(`{ats, slug, employer_name}` in YAML). Superseded by the CSV above for
+content, kept because the skeleton's loader still refers to it.
