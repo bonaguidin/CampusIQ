@@ -1,6 +1,7 @@
 # Postings grounding — handoff
 
-Branch: `feat/postings-grounding` (off `dev`) · 9 commits · 532 tests passing
+Branch: `feat/postings-grounding` (off `dev`) · 12 commits · 544 tests passing
+PR: https://github.com/bonaguidin/GradusIQ/pull/49
 Owner going forward: **Deepak**
 Written 2026-08-19
 
@@ -117,12 +118,28 @@ Python entrypoint.
   tenant and file postings under the wrong board. One lookup each.
 - **23 employers are on platforms with no adapter.** iCIMS (4) and Oracle
   Cloud (4) are the next-biggest buckets if this is worth extending.
-- **`role_families.yaml` and the CSV's `target_role_families` use a
-  mid-career taxonomy**, not the 14 student roles. Both are fossils of the
-  pre-pivot Career OS concept. Kasheia owns the remap.
-- **Two competing skill vocabularies** — `skill_aliases.yaml` (39 curated) and
-  `skill_terms_review.csv` (8,708 generated, 121 ever fired). Someone should
-  pick one.
+- **`role_families.yaml` is remapped** to the 14 student roles and matches
+  `role_requirements.json` exactly. First pass, unreviewed — the boundaries
+  worth a second look are Computer Engineering vs. Embedded Systems, and Lab
+  Assistant vs. Research Assistant.
+
+  **Expect ~99% NULL from employer boards, and expect that to be right.** Of
+  153 real postings, 2 are student-shaped — 1.3%. Atmos returns "Sr
+  Applications Developer", "Service Technician", "Mgr Safety". That is what an
+  employer's own board is, and it splits the sources by purpose:
+  employer-direct for breadth, vendors for student roles. Anyone reading a low
+  mapped-count as broken rules will loosen phrases until general postings match
+  student families, which is worse than mapping nothing.
+- **The CSV's `target_role_families` still uses the mid-career taxonomy**,
+  deliberately. It records what the research assumed, and rewriting it inside a
+  loader would bury a decision.
+- **The vocabulary question is settled.** `skill_aliases.yaml` (now 46 skills)
+  is the vocabulary; `skill_terms_review.csv` is retired as a source and kept
+  as the rejection record — do not delete it. Its own frequency data decided
+  it: of 8,725 terms only 121 fired, and the hardest-firing are Training,
+  IMPACT, Testing, Experian, Client, Shape, MAGIC. Experian is a PMG client,
+  not a skill. Fire count measures collision, not relevance. Seven genuine
+  skills were harvested; 46 is still under §4's 60–120 target.
 - **Not built**: the retrieval layer FIT/GAP/SHIFT would call, and the
   GAP/SHIFT prompt updates. FIT was deliberately closed — it stays out of
   naming employers, and its prompt already forbids it.
