@@ -265,7 +265,7 @@
       "coursedog_rule_id": "T6z1BLsv",
       "parent_group_id": "4d4fd494-f958-454f-9d0f-c448c73c9010",
       "name": "Content Area 4, Physics",
-      "group_type": "enumerated_all",
+      "group_type": "enumerated_credit_threshold",
       "n_required": null,
       "credit_hours_required": 7,
       "notes_html": null,

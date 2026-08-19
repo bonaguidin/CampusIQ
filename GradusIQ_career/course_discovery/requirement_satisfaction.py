@@ -13,29 +13,27 @@ this module's evaluator honors that boundary; only the sibling fetch
 module in GradusIQ_career/ touches a Client, same placement rationale
 profile_builder.py already documents for itself.
 
-INTERPRETATION NOTE -- leaf-group IN_PROGRESS, flagged for spec review:
-§9's IN_PROGRESS bullet enumerates compound_all/compound_any/credit-
-threshold explicitly and its leaf-groups parenthetical says a leaf is
-"SATISFIED or NOT_STARTED" only. Taken fully literally that contradicts
-§9's own NOT_STARTED definition ("no matched course anywhere in the
-subtree") for a multi-option leaf with partial matches -- e.g. Computer
-Science Core, which for Ethan Brooks has 3 of 11 options matched: it has
-matched courses, so it cannot be NOT_STARTED under that definition, yet
-isn't SATISFIED either. Resolved here by applying the general three-
-state rule uniformly (leaf groups CAN be IN_PROGRESS); the leaf-
-parenthetical is read as describing single-course leaves specifically,
-where SATISFIED/NOT_STARTED is the only reachable pair since there is no
-partial state possible for one course. Flagged in the build-task report
-for confirmation rather than silently resolved.
+LEAF-GROUP STATUS: applies the unified three-state model (SATISFIED /
+IN_PROGRESS / NOT_STARTED) to every leaf group uniformly, including
+multi-option ones -- e.g. Computer Science Core, which for Ethan Brooks
+has 3 of 11 options matched, correctly shows IN_PROGRESS rather than
+being forced into a binary SATISFIED/NOT_STARTED choice. §9's leaf-
+groups parenthetical, read fully literally, restricts leaves to
+SATISFIED/NOT_STARTED only -- inconsistent with §9's own NOT_STARTED
+definition ("no matched course anywhere in the subtree") for a
+partially-matched multi-option leaf. This implementation resolves that
+by applying the general three-state rule uniformly; §9's text itself has
+not been edited to match -- see the requirement-satisfaction build
+task's report for the full reasoning, still pending a spec-text pass.
 
-CREDIT-THRESHOLD DETECTION -- also flagged: the schema (§8.4) has no
-column distinguishing a completeVariableCoursesAndVariableCredits-
-derived group (Content Area 4 Physics) from an ordinary enumerated_all
-group with the same group_type -- this is the same "still unresolved at
-the schema level" gap §8.4/§9 already document. Handled here via an
-explicit, documented coursedog_rule_id allowlist rather than inferring
-it structurally (no structural signal exists to infer from -- see
-_CREDIT_THRESHOLD_RULE_IDS below).
+CREDIT-THRESHOLD DETECTION: keyed directly off
+group_type == "enumerated_credit_threshold"
+(supabase/migrations/20260819160000_requirement_groups_credit_threshold_
+group_type.sql), Coursedog's completeVariableCoursesAndVariableCredits
+condition mapped to this group_type by fetch_smu_requirements.py's
+CONDITION_TO_GROUP_TYPE. No coursedog_rule_id allowlist or other
+ID-based special-casing -- the schema itself now carries the
+distinction §8.4 originally flagged as unresolved.
 """
 
 from __future__ import annotations
@@ -47,14 +45,6 @@ from typing import Any
 from pydantic import Field
 
 from .models import StrictModel
-
-# Content Area 4, Physics -- the sole known completeVariableCoursesAndVariable
-# Credits-derived group in the live SMU CS-BS tree (coursedog_rule_id
-# "T6z1BLsv", confirmed live 2026-08-19). Passed as a default rather than
-# hardcoded inline so a caller can extend/override it without editing this
-# module, and so tests can exercise the mechanism against a synthetic rule id
-# without depending on the real one.
-CREDIT_THRESHOLD_RULE_IDS: frozenset[str] = frozenset({"T6z1BLsv"})
 
 
 class RequirementGroupStatus(str, Enum):
@@ -161,8 +151,6 @@ def evaluate_requirement_tree(
     option_courses: list[dict[str, Any]],
     course_records: list[dict[str, Any]],
     catalog_by_gid: dict[str, str],
-    *,
-    credit_threshold_rule_ids: frozenset[str] = CREDIT_THRESHOLD_RULE_IDS,
 ) -> list[RequirementGroupResult]:
     """Walk a program's requirement_groups tree and return each top-level
     group's (and its descendants') RequirementGroupResult per §9's
@@ -190,7 +178,7 @@ def evaluate_requirement_tree(
         group_id = group["id"]
         opts = options_by_group.get(group_id, [])
 
-        if group["coursedog_rule_id"] in credit_threshold_rule_ids:
+        if group["group_type"] == "enumerated_credit_threshold":
             all_codes: set[str] = set()
             for option in opts:
                 for code in _resolve_option_codes(

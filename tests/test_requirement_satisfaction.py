@@ -170,9 +170,15 @@ def test_ethan_brooks_full_tree():
 # 2. Credit-threshold: Content Area 4, Physics (real structure)
 # ---------------------------------------------------------------------------
 
-_PHYSICS_GID = "T6z1BLsv"
-
-_PHYSICS_GROUPS = [_group("phys", "Content Area 4, Physics", "enumerated_all", credit_hours_required=7, coursedog_rule_id=_PHYSICS_GID)]
+_PHYSICS_GROUPS = [
+    _group(
+        "phys",
+        "Content Area 4, Physics",
+        "enumerated_credit_threshold",
+        credit_hours_required=7,
+        coursedog_rule_id="T6z1BLsv",
+    )
+]
 _PHYSICS_OPTIONS = [
     _option("opt-1303-1105", "phys", 0, logic="and"),
     _option("opt-1304-1106", "phys", 1, logic="and"),
