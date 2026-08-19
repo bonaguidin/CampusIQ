@@ -63,6 +63,15 @@ record already ingested from that ATS — no fuzzy matching, no threshold, no fa
 positives. It should catch the large majority of syndicated duplicates, which is most
 of the problem.
 
+**Verified 2026-08-19.** Across all 153 postings in the pulled corpus, parsing the URL
+recovers exactly the `external_id` the fetcher stored — 153 of 153, both Greenhouse and
+Lever, zero mismatches. The recovery mechanism holds; what remains unproven is only how
+often the vendors actually hand back an ATS link rather than their own redirect, which
+cannot be measured until a vendor fetch runs. See §6.
+
+Implemented in `scripts/job_postings/identity.py` (branch `feat/postings-grounding`),
+with the regression test in `tests/test_posting_identity.py`.
+
 Normalize before parsing: lowercase host, strip query string and fragment (tracking
 params are how syndicators mark their referrals), strip trailing slash. Keep the raw
 URL as well — it is the audit trail for "why did these two get merged."
@@ -79,12 +88,24 @@ supported ATS), cluster on:
 (normalized_employer, normalized_title, dfw_bucket)
 ```
 
-- `normalized_employer` — casefold, strip legal suffixes (Inc, LLC, Corp, Ltd), strip
-  punctuation. Maintain an explicit alias map for the known employer list rather than
-  relying on string distance; the employer set is small and curated.
-- `normalized_title` — casefold; strip the seniority markers already parsed into the
-  `seniority` field, so "Sr. Data Analyst" and "Data Analyst" collapse; strip req
-  numbers and parenthetical location suffixes.
+- `normalized_employer` — casefold, strip **legal-form** suffixes (Inc, LLC, Corp, Ltd),
+  strip punctuation. Maintain an explicit alias map for the known employer list rather
+  than relying on string distance; the employer set is small and curated.
+
+  Corrected 2026-08-19: "Group" and "Holdings" are **not** legal suffixes and must not be
+  stripped. They are part of the trading name — dropping them turns "Match Group" into
+  "match", which then collides with any real company called Match. Over-normalizing
+  merges two distinct employers, and a wrongly merged employer is a worse error than a
+  missed duplicate.
+- `normalized_title` — casefold; **canonicalize** seniority renderings; strip req numbers
+  and trailing parenthetical asides.
+
+  Corrected 2026-08-19: an earlier version of this line said to *strip* seniority markers
+  so that "Sr. Data Analyst" and "Data Analyst" collapse. That is wrong. At a single
+  employer those are plausibly two separate openings, and merging them undercounts a real
+  job. What actually needs to collapse is one job spelled two ways — "Sr." and "Senior" —
+  which is a rendering difference a syndicator introduces. Map those to a canonical token
+  and different levels stay properly distinct.
 - `dfw_bucket` — the `is_dfw` boolean, not the raw location string. Syndicators rewrite
   location text freely ("Dallas, TX" / "Dallas-Fort Worth" / "Dallas Metroplex"), so
   matching on raw text splits clusters that should merge.
