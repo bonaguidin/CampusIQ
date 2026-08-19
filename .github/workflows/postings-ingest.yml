@@ -61,7 +61,33 @@ jobs:
       - name: Sync dependencies
         run: uv sync --frozen
 
+      # Merging this file enables the schedule immediately, but the credentials
+      # and the tables land later and on someone else's clock. Without this
+      # check every night would go red for a reason nobody needs telling twice,
+      # and a workflow that always fails is one nobody reads when it fails for
+      # a real reason. Not configured is a skip; configured and broken is a
+      # failure.
+      - name: Check configuration
+        id: config
+        env:
+          ADZUNA_APP_ID: ${{ secrets.ADZUNA_APP_ID }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+        run: |
+          set -euo pipefail
+          missing=""
+          [ -z "${ADZUNA_APP_ID:-}" ]       && missing="$missing ADZUNA_APP_ID"
+          [ -z "${SUPABASE_URL:-}" ]        && missing="$missing SUPABASE_URL"
+          [ -z "${SUPABASE_SECRET_KEY:-}" ] && missing="$missing SUPABASE_SECRET_KEY"
+          if [ -n "$missing" ]; then
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Postings ingest skipped -- missing secrets:$missing"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Ingest
+        if: steps.config.outputs.ready == 'true'
         env:
           ADZUNA_APP_ID: ${{ secrets.ADZUNA_APP_ID }}
           ADZUNA_APP_KEY: ${{ secrets.ADZUNA_APP_KEY }}
@@ -84,7 +110,7 @@ jobs:
       - name: Age out raw payloads
         # Only after a write actually happened, and never on a dry run --
         # there is nothing to expire and the credentials may not be present.
-        if: github.event_name == 'schedule'
+        if: github.event_name == 'schedule' && steps.config.outputs.ready == 'true'
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
