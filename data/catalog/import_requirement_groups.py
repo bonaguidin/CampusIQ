@@ -66,8 +66,15 @@ VALID_GROUP_TYPES = (
     "compound_all",
     "compound_any",
     "freeform",
+    "enumerated_credit_threshold",
 )
-ENUMERATED_GROUP_TYPES = ("enumerated_all", "enumerated_at_least_n")
+# Group types that carry options (requirement_group_options +
+# requirement_group_option_courses) rather than children --
+# enumerated_credit_threshold uses the identical value.values[] shape as
+# enumerated_all (see fetch_smu_requirements.py's CONDITION_TO_GROUP_TYPE
+# comment for completeVariableCoursesAndVariableCredits), it just differs
+# in how the satisfaction engine reads those options, not in ingestion.
+ENUMERATED_GROUP_TYPES = ("enumerated_all", "enumerated_at_least_n", "enumerated_credit_threshold")
 
 # v1 is SMU-only -- see fetch_smu_requirements.py and spec §6 step 4. Not a
 # general multi-institution selector the way import_catalog.py's

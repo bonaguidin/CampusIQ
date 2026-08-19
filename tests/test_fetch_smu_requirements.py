@@ -182,9 +182,15 @@ def test_completed_any_of_becomes_enumerated_at_least_n_with_n_required_one():
 # session, including the lecture+lab paired-ID ("and" logic) options already
 # exercised by test_enumerated_all_and_pair_is_one_co_requisite_option above.
 # minCredits/maxCredits sit directly on the rule; only minCredits is kept.
+# group_type is enumerated_credit_threshold, not enumerated_all -- distinct
+# satisfaction semantics (accumulate minCredits worth of options, not
+# complete every option), added by supabase/migrations/20260819160000_
+# requirement_groups_credit_threshold_group_type.sql after the requirement-
+# satisfaction engine build surfaced the schema needed a 6th group_type to
+# express this without a hardcoded coursedog_rule_id allowlist.
 
 
-def test_complete_variable_courses_and_variable_credits_becomes_enumerated_all():
+def test_complete_variable_courses_and_variable_credits_becomes_credit_threshold():
     rule = {
         "condition": "completeVariableCoursesAndVariableCredits",
         "value": {
@@ -205,7 +211,7 @@ def test_complete_variable_courses_and_variable_credits_becomes_enumerated_all()
     groups, warnings = reqs.normalize_rule(rule, parent_coursedog_rule_id=None)
     assert warnings == []
     group = groups[0]
-    assert group["group_type"] == "enumerated_all"
+    assert group["group_type"] == "enumerated_credit_threshold"
     assert group["n_required"] is None
     # minCredits kept, maxCredits intentionally discarded (see the code
     # comment on this branch in normalize_rule()).

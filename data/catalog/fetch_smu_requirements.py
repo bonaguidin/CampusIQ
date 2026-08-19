@@ -121,14 +121,19 @@ CONDITION_TO_GROUP_TYPE = {
     # "Advanced/Domain Specific Use/Design of AI", "Leadership and
     # Mentoring", "Experiential Learning" (CS-BS).
     "completedAnyOf": "enumerated_at_least_n",
-    # A fixed set of options (lecture+lab pairs, a single course, etc.) where
-    # completing the applicable option satisfies the requirement -- same
-    # shape as completedAllOf's enumerated_all, not a choose-N case. The
-    # variable part is credit hours, not which/how-many options: Coursedog
-    # gives that directly via minCredits/maxCredits on the rule rather than
-    # a "(N Credit Hours)" name suffix -- see the minCredits handling below.
-    # Confirmed live, one occurrence: "Content Area 4, Physics" (CS-BS).
-    "completeVariableCoursesAndVariableCredits": "enumerated_all",
+    # A fixed set of options (lecture+lab pairs, a single course, etc.)
+    # where the requirement is satisfied by accumulating minCredits worth
+    # of completed options, not by completing every option -- genuinely
+    # different satisfaction semantics from completedAllOf's enumerated_all
+    # (confirmed the hard way: the requirement-satisfaction engine
+    # originally mapped this to enumerated_all too and had to special-case
+    # it via a hardcoded coursedog_rule_id allowlist before this group_type
+    # existed -- supabase/migrations/20260819160000_requirement_groups_
+    # credit_threshold_group_type.sql). Credit hours come directly off the
+    # rule (minCredits/maxCredits) rather than a "(N Credit Hours)" name
+    # suffix -- see the minCredits handling below. Confirmed live, one
+    # occurrence: "Content Area 4, Physics" (CS-BS).
+    "completeVariableCoursesAndVariableCredits": "enumerated_credit_threshold",
     "allOf": "compound_all",
     "anyOf": "compound_any",
     "freeformText": "freeform",
@@ -215,7 +220,7 @@ def normalize_rule(
                 return [], warnings
             base["n_required"] = restriction
 
-    if group_type in ("enumerated_all", "enumerated_at_least_n"):
+    if group_type in ("enumerated_all", "enumerated_at_least_n", "enumerated_credit_threshold"):
         value = rule.get("value") or {}
         if value.get("condition") != "courses" or not isinstance(
             value.get("values"), list
