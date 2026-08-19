@@ -117,7 +117,7 @@ TAMU requirement-skeleton ingestion remains a parallel/later track (§3.2), pick
 1. **Regex extension (small, immediate)** — extend `split_description()`'s `REQUISITE_SENTENCE` pattern to catch permission/approval phrasing per §5. ~48-row fix, no schema change, no new data source. **Landed:** branch `smu-catalog-prereq-and-group-id`, commit `6a3ad7a`, 14 new tests, full suite (1396 tests) passing.
 2. **SMU requirement-ID resolution — complete.** `courseGroupId` flows from Coursedog's `courses/search` response through `build_course()` → `import_catalog.py`'s `to_row()` → stored as `course_catalog.coursedog_group_id` (migration `20260817230000_course_catalog_coursedog_group_id.sql`). The ID→course-code join and requirement-skeleton ingestion logic are now written too: the schema (§8.2) and the fetch/import scripts that join against this column are implemented, tested (49 new tests passed, full suite 1445 passed, 0 regressions), and committed (`7abb0e6`, `0f548c4`) on branch `smu-catalog-prereq-and-group-id`. Not yet applied/run live — see §8.2's status note.
 3. **Prerequisite parser — implemented.** `structured_prerequisite()` (commit `1716847`) is a richer AND/OR/grade-minimum/corequisite/restriction parser, added alongside — not replacing — the existing conservative `prerequisite_requirement()`/`evaluate_prerequisites()`. Tested against real prerequisite text pulled from `data/catalog/engineering/*.json` and `data/catalog/smu/lyle.json`.
-4. **Requirement-skeleton ingestion (SMU CS-BS) — complete, live in production.** `fetch_smu_requirements.py --write` and `import_requirement_groups.py --write` both ran successfully. Live state: 1 program row, 17 requirement_groups (including 2 group_types added after the initial migration — `enumerated_at_least_n` for `completedAnyOf`, and a `minCredits`-based variant of `enumerated_all` for `completeVariableCoursesAndVariableCredits` — both mapped without schema changes), 58 requirement_group_options, 67 requirement_group_option_courses (65 resolved against `course_catalog.coursedog_group_id`, 2 flagged via `unresolved_course_ref` per the §8.3 decision, not dropped). Post-write verification confirmed every row against the pre-write dry-run prediction, RLS intact, zero side effects on `course_catalog`/`institutions`. Commits spanning this work: `6a3ad7a` through `f4e8fbf`, branch `smu-catalog-prereq-and-group-id`, not yet merged or pushed.
+4. **Requirement-skeleton ingestion (SMU CS-BS) — complete, live in production.** `fetch_smu_requirements.py --write` and `import_requirement_groups.py --write` both ran successfully. Live state (current, post-restructure): 1 program row, **23** requirement_groups (17 at initial ingestion — including 2 group_types added after the initial migration, `enumerated_at_least_n` for `completedAnyOf` and a `minCredits`-based variant of `enumerated_all` for `completeVariableCoursesAndVariableCredits`, both mapped without schema changes — later restructured to 23 via commit `cba3dd4`'s Mathematics and Science alternative-path fix, §8.4), 58 requirement_group_options, 67 requirement_group_option_courses (65 resolved against `course_catalog.coursedog_group_id`, 2 flagged via `unresolved_course_ref` per the §8.3 decision, not dropped — option/course counts unchanged by the restructure). Post-write verification confirmed every row against the pre-write dry-run prediction, RLS intact, zero side effects on `course_catalog`/`institutions`. Commits spanning this work: `6a3ad7a` through `cba3dd4`, branch `smu-catalog-prereq-and-group-id`, not yet merged or pushed.
 
    **Known v1 simplification, not an oversight:** for `completeVariableCoursesAndVariableCredits` rules, only `minCredits` is captured into `credit_hours_required` — `maxCredits` is intentionally discarded (single-int column, one live example to generalize from: Content Area 4, Physics, `minCredits=7`/`maxCredits=8`). Revisit if the scheduler ever needs to represent a credit range rather than one required value.
 5. **Requirement-satisfaction engine** — deterministic, rule-based (not LLM): map transcript against requirement buckets, produce a gap list of what's unsatisfied.
@@ -218,6 +218,127 @@ Resolved during initial scoping of the requirement-satisfaction engine (the next
 
 **Key mechanical finding, not yet a decision — flagging for the build task:** `course_records.catalog_course_id` (the FK meant to link a transcript row to `course_catalog`) is 0% populated across all demo data. The satisfaction engine must join on `course_records.course_code` (text) against `course_catalog.code` instead, then pivot to `course_catalog.coursedog_group_id` to reach `requirement_group_option_courses`. This works for SMU (code format matches) but can never work for TAMU, since TAMU has no `coursedog_group_id` populated anywhere — a TAMU transcript structurally cannot exercise this join path, which is part of why an SMU demo student is required, not just convenient.
 
-**New open question, surfaced during Ethan Brooks fixture design — flagged for the satisfaction engine, not resolved here.** SMU CS-BS's live requirement data contains `enumerated_all` groups that appear to encode alternative single-course paths as if every option were independently required — e.g. "Mathematics and Science" lists both MATH 1337+1338 (standard Calc I+II) AND MATH 1340 (Consolidated Calculus, a one-course alternative to the same material) as if a student needed all three. This is very likely how SMU's own Coursedog payload encodes "pick your path," not a parser error on this project's side — but the requirement-satisfaction engine will need explicit logic to distinguish true "all required" groups from "redundant alternative paths listed together" before it can correctly mark such groups satisfied. Not resolved as of this session; the Ethan Brooks demo transcript was deliberately built to avoid exercising this ambiguity rather than resolve it by assumption.
+**Resolved: full completeness audit of the original 17 SMU CS-BS requirement groups against real credit-hour arithmetic.** 2 groups needed genuine engine-level special-case satisfaction logic, not flat enumerated_all/enumerated_at_least_n semantics — the other 15 checked out cleanly (exact credit-sum matches, correctly-modeled choose-N structures, or catalog-prose-confirmed all-required sequences):
 
-**Decided: Ethan Brooks conversion — Sophomore, transcript approved.** Classification: Sophomore (not Freshman) — enables a completed+in_progress mix, the only demo student across all 5 with any 'completed' course_records rows once built. expected_graduation stays 'Spring 2029' — unchanged, still narratively consistent under a Fall 2025 SMU start. catalog_year = '2026-2027' (matches the only ingested CS-BS requirement version). Proposed 8-course transcript (4 completed, 4 in_progress, touching 5 of 17 requirement groups with realistic partial signal) approved as drafted. career_profiles narrative rewrite (career_goals, target_roles, interests, skills_technical, geographic_preference) still pending — full current field values need to be pulled before drafting replacements, to avoid overwriting content that isn't actually stale.
+1. **Content Area 4, Physics** — credit-threshold-range semantics. The 3 options (PHYS 1303+1105, PHYS 1304+1106, PHYS 3305) don't fit "all required" (sums to 11, not 7) or "pick exactly one" (max single option is 4 credits, well under the 7-8 required) — the actual rule is "accumulate credits from chosen options until within minCredits/maxCredits (7-8)," confirmed by both the raw Coursedog condition (completeVariableCoursesAndVariableCredits, already captured with minCredits=7 per §8.4's earlier maxCredits-discarded note) and the public catalog page's own prose ("Complete course(s) and earn 7 - 8 credit(s) from the following"). The satisfaction engine needs to be aware of this condition type and sum credits across a student's chosen/completed options rather than checking flat all-or-nothing completion. **Still unresolved at the schema level** — Ethan Brooks hasn't touched this group, so §9's hand-trace could only pose it as a hypothetical; exact gap-list display format ("not satisfied" vs. "4 of 7-8 credits" vs. something else) remains an open decision, see §9.
+
+2. **Mathematics and Science** — alternative-path OR logic. MATH 1337+1338 (Calc I+II) and MATH 1340 (Consolidated Calculus) are alternatives to each other, not 3 independently-required courses — confirmed via a free-text `notes` field in the raw Coursedog payload ("(Math 1337 & Math 1338) or Math 1340"), the only source with this signal anywhere. **Now fixed at the data level** (commit `cba3dd4`, superseding the "has NOT been fixed" language this paragraph originally carried): the flat `enumerated_all` group was restructured into a `compound_any` "Calculus Sequence" group with two `enumerated_all` children — "Calculus I & II" (MATH 1337+1338) and "Consolidated Calculus" (MATH 1340) — `rule_source = 'manual'` on both, since the split has no single Coursedog rule ID backing it. Live-verified against Ethan Brooks' transcript in §9: his MATH 1337 (completed) + MATH 1338 (in_progress) resolve onto the same "Calculus I & II" option, correctly satisfying that one child without touching the Consolidated Calculus alternative. This is the reason the live group count moved from 17 to 23 (Mathematics and Science's restructure added 6 rows in place of the original 1: the group itself plus Calculus Sequence, its 2 children, Linear Algebra, Discrete Computational Structures, and Statistical Methods, each broken out as its own row). Since the `notes`-field signal was confirmed non-generalizable (13 of the original 17 groups had no notes field at all), this was a one-off manual fix for this one group, not a mechanism applied elsewhere.
+
+All other 15 of the original 17 groups (including the 2 originally-suspected-and-now-cleared cases, Interdisciplinary Projects and the Biology/Chemistry sequences) are correctly modeled as-is — no manual annotation table needed for them.
+
+**Separately, a smaller, non-blocking data-accuracy gap** (same root-cause class as Physics's minCredits/maxCredits truncation, not a satisfaction-logic bug — these groups are still correctly marked satisfied either way): Leadership and Mentoring and Experiential Learning both store `credit_hours_required` as a flat 1 (parsed from a name-suffix range, "1-3 Credit Hours"), which understates earned credit when a student satisfies the requirement via the 3-credit option rather than the 1-credit one. Worth fixing alongside Physics's min/max handling later; not a blocker for satisfaction-engine design.
+
+**Decided: Ethan Brooks conversion — Sophomore, transcript approved.** Classification: Sophomore (not Freshman) — enables a completed+in_progress mix, the only demo student across all 5 with any 'completed' course_records rows once built. expected_graduation stays 'Spring 2029' — unchanged, still narratively consistent under a Fall 2025 SMU start. catalog_year = '2026-2027' (matches the only ingested CS-BS requirement version). Proposed 8-course transcript (4 completed, 4 in_progress, touching 5 of the (then-)17 requirement groups with realistic partial signal) approved as drafted. career_profiles narrative rewrite (career_goals, target_roles, interests, skills_technical, geographic_preference) still pending — full current field values need to be pulled before drafting replacements, to avoid overwriting content that isn't actually stale.
+
+---
+
+## 9. Requirement-satisfaction engine — design decisions
+
+Resolved via a hand-trace against Ethan Brooks' real transcript and the
+live 23-group tree (all 8 of his course_records rows join cleanly:
+course_records.course_code → course_catalog.code → coursedog_group_id →
+requirement_group_option_courses, confirmed end to end, zero unmatched).
+
+**Unified three-state status model, applied to every group in the tree
+(leaf and compound alike):**
+- `SATISFIED` — leaf: a matching course exists in course_records
+  (completed or in_progress, per §8.4's in-progress-counts decision) and
+  counts_toward_credit = true (see below). compound_all: every child
+  SATISFIED. compound_any: at least one child SATISFIED. Credit-threshold
+  groups (completeVariableCoursesAndVariableCredits-derived, e.g. Content
+  Area 4 Physics): accumulated credits from matched courses ≥
+  minCredits.
+- `IN_PROGRESS` — compound_all/compound_any: at least one child has any
+  matched course but the group isn't SATISFIED. Credit-threshold: 0 <
+  accumulated credits < minCredits. (Leaf groups have no IN_PROGRESS
+  state of their own — a leaf is SATISFIED or NOT_STARTED; the
+  in-progress/completed distinction at the course level is already
+  collapsed into "satisfied" per §8.4.)
+- `NOT_STARTED` — no matched course anywhere in the subtree.
+- `MANUAL_REVIEW` — groups with requires_manual_definition = true
+  (Technical Electives, Advanced Major Electives). No structured course
+  list exists to check against; matches this column's own documented
+  intent ("surface to student as 'ask your adviser'"). Never computed as
+  SATISFIED/IN_PROGRESS/NOT_STARTED.
+
+Credit-threshold and compound groups also carry an optional detail
+string for display (e.g. "4 of 7 credits", "2 of 6 children satisfied")
+— not yet specified in exact format, left to the build task.
+
+**course_records field usage, confirmed:** counts_toward_credit must be
+checked before crediting a course toward any requirement — a course
+explicitly marked false shouldn't satisfy a group. counts_toward_gpa and
+excluded_from_gpa_by are GPA-calculation concerns only and are NOT
+consulted by the satisfaction engine — flagging explicitly since both
+sets of fields live on the same table and could otherwise be conflated.
+
+**Known limitations, accepted, not fixed:**
+- Engineering Leadership's 2 unresolved_course_ref entries (raw
+  Coursedog IDs 0220321/0248931, no course_code) can never be matched
+  against a transcript — this group can show at most 4/6 available
+  options until/unless those IDs are manually resolved. Documented
+  limitation per the ingestion migration's own comment, not a blocker.
+- Mathematics and Science's stored credit_hours_required (24) still
+  doesn't reconcile against its children's actual credits — a
+  pre-existing, separately-flagged gap (§8.4), not addressed by this
+  design.
+
+**Not yet designed:** the actual query/algorithm structure that computes
+this tree bottom-up for a given student, and the API/output shape a
+future scheduler or UI would consume. This section defines the
+semantics; implementation is the next task.
+
+---
+
+## 9.1 Requirement-satisfaction engine — architecture
+
+Investigated and proposed against real conventions already in this
+codebase (course_discovery/ module shape, build_student_intelligence_
+profile's flat-fetch-then-Python-tree pattern, StrictModel/Enum output
+convention, fixture-based pure-function testing). Full proposal on
+branch smu-catalog-prereq-and-group-id session notes; summary below.
+
+**Module placement:** GradusIQ_career/course_discovery/, following the
+existing models.py / prerequisites.py / service.py split. Named
+"requirement-satisfaction" or "degree-audit" — explicitly NOT "gap" or
+"fit," both already taken by unrelated AI-feature runners
+(features/gap.py, features/fit.py).
+
+**Query strategy:** flat fetch (requirement_groups, requirement_group_
+options, requirement_group_option_courses, course_records — 4-5 queries,
+no recursion at the DB level), tree assembled in Python via parent_
+group_id, mirroring build_student_intelligence_profile's exact pattern.
+Justified by data size (23 groups / 58 options / 67 course refs for one
+program) and by avoiding rpc()-based raw SQL, which would break this
+codebase's RLS-scoped-client convention.
+
+**Output shape:** RequirementGroupStatus enum (SATISFIED/IN_PROGRESS/
+NOT_STARTED/MANUAL_REVIEW, per §9's semantics) and a recursive
+RequirementGroupResult StrictModel (id, coursedog_rule_id, name,
+group_type, status, detail, matched_course_codes, children), wrapped in
+RequirementSatisfactionResult (student_id, program_id, top-level groups
+only). matched_course_codes is populated on LEAF groups only — compound
+nodes (compound_all/compound_any) leave it empty and rely on consumers
+walking into children for traceability, never aggregating child course
+codes upward. This is an explicit rule, not an implementation detail
+left to chance.
+
+**Split for testability:** a pure evaluate_requirement_tree() function
+(no Client parameter, hand-built dict fixtures, zero I/O) does all real
+logic; a thin fetch_requirement_tree(client, ...) stays untested-by-unit-
+test, same treatment as profile_builder.py's raw fetches.
+
+**Required test coverage before this ships (explicitly called out, not
+just "add tests"):**
+1. Ethan Brooks' real hand-traced tree (§9's audit) as a ground-truth
+   integration-style fixture — the evaluator must reproduce every status
+   in that trace exactly.
+2. A hand-built credit-threshold case (Content Area 4 Physics or
+   equivalent) — this group is untouched in all real demo data, so its
+   SATISFIED/IN_PROGRESS/NOT_STARTED boundary logic has never been
+   exercised against anything, real or hypothetical, until this test
+   exists.
+3. A hand-built option-level `or`-logic case (Statistical Methods'
+   CS 4340 | STAT 4340 | OREM 3340 cross-listing, or equivalent) —
+   confirms matching any one of an "or" option's course IDs satisfies
+   that option, not all of them.
