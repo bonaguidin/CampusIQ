@@ -428,6 +428,40 @@ alter table posting_clusters
   on delete set null;
 
 -- ---------------------------------------------------------------------------
+-- posting_identity_keys -- how a cluster is found again
+-- ---------------------------------------------------------------------------
+--
+-- Every identity key a cluster is known by, exact and fuzzy alike, pointing at
+-- the cluster it resolved to. One row per key.
+--
+-- This exists because the alternative does not work. Recovering a cluster by
+-- searching job_postings.url for a substring of the key fails two ways: an ATS
+-- job id can appear inside a longer id or a query parameter and match the wrong
+-- row, and a fuzzy key (employer/title/dfw) corresponds to no URL at all, so
+-- the entire fallback path would silently create a new cluster every time and
+-- dedup nothing. A keyed table makes both lookups exact and, unlike an
+-- in-process cache, makes them survive to tomorrow night's run.
+--
+-- The key format is owned by scripts/job_postings/identity.py:
+--   ats:<board>:<external_id>          exact, recovered from an apply URL
+--   fuzzy:<employer>:<title>:<bucket>  inferred
+
+create table posting_identity_keys (
+  key text primary key,
+  cluster_id uuid not null references posting_clusters (id) on delete cascade,
+  created_at timestamptz not null default now()
+);
+
+comment on table posting_identity_keys is
+  'Identity key -> cluster. Primary key on `key` is what makes a lookup exact '
+  'rather than a substring search, and what stops two clusters from claiming '
+  'the same key. See data/ats_fetcher/DEDUP.md.';
+
+create index posting_identity_keys_cluster_idx
+  on posting_identity_keys (cluster_id);
+
+
+-- ---------------------------------------------------------------------------
 -- posting_cluster_merges -- why two clusters became one
 -- ---------------------------------------------------------------------------
 --
@@ -522,14 +556,18 @@ create policy employers_read_public
 
 revoke insert, update, delete, truncate on employers from anon;
 
--- posting_clusters and posting_cluster_merges follow job_posting_fetch_log
--- instead: RLS enabled, no policies, so they default-deny to anon and
--- authenticated and stay service-role only. Both are ingest-internal
--- bookkeeping. Anything a page needs to render reaches job_postings through
--- posting_identity, which is public-readable already.
+-- posting_clusters, posting_cluster_merges and posting_identity_keys follow
+-- job_posting_fetch_log instead: RLS enabled, no policies, so they
+-- default-deny to anon and authenticated and stay service-role only. All
+-- three are ingest-internal bookkeeping. Anything a page needs to render
+-- reaches job_postings through posting_identity, which is public-readable
+-- already. posting_identity_keys in particular should never be public: its
+-- fuzzy keys embed normalized employer and title strings, which is inference
+-- about the corpus rather than data any reader asked for.
 
 alter table posting_clusters enable row level security;
 alter table posting_cluster_merges enable row level security;
+alter table posting_identity_keys enable row level security;
 
 
 -- ---------------------------------------------------------------------------

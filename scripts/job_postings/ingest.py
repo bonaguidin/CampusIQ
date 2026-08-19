@@ -57,6 +57,11 @@ POSTINGS_TABLE = "job_postings"
 FETCH_LOG_TABLE = "job_posting_fetch_log"
 CLUSTERS_TABLE = "posting_clusters"
 MERGES_TABLE = "posting_cluster_merges"
+KEYS_TABLE = "posting_identity_keys"
+
+# Syndicators. An ATS row outranks these when choosing a cluster's canonical
+# posting, because it is the employer's own feed rather than a rewrite of it.
+VENDOR_SOURCES = frozenset({"adzuna", "jsearch"})
 
 UPSERT_CONFLICT = "source,source_job_id"
 
@@ -117,6 +122,7 @@ class RunReport:
     clusters_created: int = 0
     clusters_matched_exact: int = 0
     clusters_matched_fuzzy: int = 0
+    clusters_merged: int = 0
 
     @property
     def quota_spent(self) -> int:
@@ -142,6 +148,7 @@ class RunReport:
             f"    exact  (ATS id from URL)  {self.clusters_matched_exact}",
             f"    fuzzy  (employer/title)   {self.clusters_matched_fuzzy}",
             f"    new clusters              {self.clusters_created}",
+            f"    clusters merged           {self.clusters_merged}",
         ]
         errors = sum(len(o.normalization_errors) for o in self.outcomes)
         if errors:
@@ -251,22 +258,30 @@ def resolve_and_attach_identity(rows: list[dict], store: Any, report: RunReport)
     """
     for row in rows:
         exact, fuzzy = identity_keys(row)
-        cluster_id = None
-        rule = None
+        exact_hit = store.find_cluster(exact) if exact else None
+        fuzzy_hit = store.find_cluster(fuzzy) if fuzzy else None
 
-        if exact is not None:
-            cluster_id = store.find_cluster(exact)
-            if cluster_id is not None:
-                rule = "ats_url_id"
-                report.clusters_matched_exact += 1
+        if exact_hit is not None:
+            cluster_id, rule = exact_hit, "ats_url_id"
+            report.clusters_matched_exact += 1
 
-        if cluster_id is None and fuzzy is not None:
-            cluster_id = store.find_cluster(fuzzy)
-            if cluster_id is not None:
-                rule = "fuzzy"
-                report.clusters_matched_fuzzy += 1
+            # DEDUP.md §5. A vendor can deliver a posting before the employer's
+            # own feed surfaces it, so the earlier row may already sit in a
+            # fuzzy cluster. This row -- carrying a recovered ATS id that
+            # resolves elsewhere -- is the evidence those two are one job.
+            if fuzzy_hit is not None and fuzzy_hit != exact_hit:
+                store.merge_clusters(
+                    absorbed=fuzzy_hit,
+                    surviving=exact_hit,
+                    match_rule="ats_url_id",
+                )
+                report.clusters_merged += 1
 
-        if cluster_id is None:
+        elif fuzzy_hit is not None:
+            cluster_id, rule = fuzzy_hit, "fuzzy"
+            report.clusters_matched_fuzzy += 1
+
+        else:
             cluster_id = store.create_cluster(
                 keys=[k for k in (exact, fuzzy) if k],
                 match_rule="seed",
@@ -274,17 +289,38 @@ def resolve_and_attach_identity(rows: list[dict], store: Any, report: RunReport)
             report.clusters_created += 1
             rule = "seed"
 
+        # Register whichever key this row contributed that the cluster did not
+        # already know. This is how a cluster first seen by fuzzy match becomes
+        # findable by exact id once an ATS row arrives.
+        store.attach_keys(cluster_id, [k for k in (exact, fuzzy) if k])
+
+        # normalize.py guarantees source_job_id on anything it produced, but
+        # canonical selection is an enhancement rather than a correctness
+        # requirement -- a row without one still gets clustered, it just cannot
+        # be pointed to as the representative.
+        source_job_id = row.get("source_job_id")
+        if source_job_id is not None:
+            store.set_canonical(cluster_id, row["source"], str(source_job_id))
+
         row["posting_identity"] = cluster_id
         row["_match_rule"] = rule
 
 
 class DryRunStore:
-    """Records what would happen. No network, no database."""
+    """Records what would happen. No network, no database.
+
+    Mirrors SupabaseStore's interface exactly, including merges and canonical
+    selection. Earlier this class was a bare dict and the tests passed against
+    it while the real store's fuzzy path did nothing at all -- a fake simpler
+    than the thing it stands in for produces confidence rather than coverage.
+    """
 
     def __init__(self) -> None:
-        self.clusters: dict[str, str] = {}
+        self.clusters: dict[str, str] = {}          # key -> cluster id
+        self.canonical: dict[str, tuple[str, str]] = {}
         self.rows: list[dict] = []
         self.log_rows: list[dict] = []
+        self.merges: list[dict] = []
         self._next = 0
 
     def find_cluster(self, key: str) -> str | None:
@@ -293,9 +329,35 @@ class DryRunStore:
     def create_cluster(self, keys: list[str], match_rule: str) -> str:
         self._next += 1
         cluster_id = f"dry-cluster-{self._next:05d}"
+        self.attach_keys(cluster_id, keys)
+        return cluster_id
+
+    def attach_keys(self, cluster_id: str, keys: list[str]) -> None:
         for k in keys:
             self.clusters[k] = cluster_id
-        return cluster_id
+
+    def merge_clusters(self, absorbed: str, surviving: str, *, match_rule: str,
+                       triggered_by: str | None = None) -> None:
+        for k, v in list(self.clusters.items()):
+            if v == absorbed:
+                self.clusters[k] = surviving
+        for row in self.rows:
+            if row.get("posting_identity") == absorbed:
+                row["posting_identity"] = surviving
+        if absorbed in self.canonical:
+            self.canonical.pop(absorbed)
+        self.merges.append({
+            "absorbed_cluster_id": absorbed,
+            "surviving_cluster_id": surviving,
+            "match_rule": match_rule,
+            "triggered_by_posting_id": triggered_by,
+        })
+
+    def set_canonical(self, cluster_id: str, source: str, source_job_id: str) -> None:
+        current = self.canonical.get(cluster_id)
+        if current is not None and source in VENDOR_SOURCES:
+            return
+        self.canonical[cluster_id] = (source, source_job_id)
 
     def upsert_postings(self, rows: list[dict]) -> int:
         self.rows.extend(rows)
@@ -327,25 +389,26 @@ class SupabaseStore:
         self._cluster_cache: dict[str, str] = {}
 
     def find_cluster(self, key: str) -> str | None:
+        """Exact lookup against posting_identity_keys.
+
+        Not a substring search over job_postings.url, which was the first cut
+        and was wrong twice: an ATS job id can sit inside a longer id or a
+        query parameter and match the wrong row, and a fuzzy key corresponds
+        to no URL at all -- so the whole fallback path would have quietly
+        created a fresh cluster every time and deduped nothing.
+        """
         if key in self._cluster_cache:
             return self._cluster_cache[key]
-        column = "url" if key.startswith("ats:") else None
-        if column is None:
-            return None
-        # An exact key encodes ats:<board>:<id>; the stored row carries the URL
-        # it was recovered from, so the lookup is over already-ingested rows.
-        _, _, external_id = key.split(":", 2)
         found = (
-            self.client.table(POSTINGS_TABLE)
-            .select("posting_identity,url")
-            .ilike("url", f"%{external_id}%")
-            .not_.is_("posting_identity", "null")
+            self.client.table(KEYS_TABLE)
+            .select("cluster_id")
+            .eq("key", key)
             .limit(1)
             .execute()
             .data
         )
         if found:
-            cluster_id = found[0]["posting_identity"]
+            cluster_id = found[0]["cluster_id"]
             self._cluster_cache[key] = cluster_id
             return cluster_id
         return None
@@ -358,9 +421,83 @@ class SupabaseStore:
             .data
         )
         cluster_id = created[0]["id"]
+        self.attach_keys(cluster_id, keys)
+        return cluster_id
+
+    def attach_keys(self, cluster_id: str, keys: list[str]) -> None:
+        """Point keys at a cluster. Idempotent -- a key already pointing here
+        is the normal case on a re-fetch, not a conflict."""
+        if not keys:
+            return
+        (
+            self.client.table(KEYS_TABLE)
+            .upsert(
+                [{"key": k, "cluster_id": cluster_id} for k in keys],
+                on_conflict="key",
+            )
+            .execute()
+        )
         for k in keys:
             self._cluster_cache[k] = cluster_id
-        return cluster_id
+
+    def merge_clusters(self, absorbed: str, surviving: str, *, match_rule: str,
+                       triggered_by: str | None = None) -> None:
+        """Fold `absorbed` into `surviving` and record why.
+
+        Repointing happens before the delete so no row is ever orphaned
+        mid-merge, and the log row is written last so it describes something
+        that actually completed.
+        """
+        self.client.table(KEYS_TABLE).update(
+            {"cluster_id": surviving}
+        ).eq("cluster_id", absorbed).execute()
+
+        self.client.table(POSTINGS_TABLE).update(
+            {"posting_identity": surviving}
+        ).eq("posting_identity", absorbed).execute()
+
+        self.client.table(MERGES_TABLE).insert({
+            "absorbed_cluster_id": absorbed,
+            "surviving_cluster_id": surviving,
+            "match_rule": match_rule,
+            "triggered_by_posting_id": triggered_by,
+        }).execute()
+
+        self.client.table(CLUSTERS_TABLE).delete().eq("id", absorbed).execute()
+
+        for k, v in list(self._cluster_cache.items()):
+            if v == absorbed:
+                self._cluster_cache[k] = surviving
+
+    def set_canonical(self, cluster_id: str, source: str, source_job_id: str) -> None:
+        """Point a cluster at its representative row, ATS over vendor.
+
+        The ATS row is the employer's own feed: unrewritten title, real posting
+        date. Only promotes -- a vendor row never displaces an ATS one.
+        """
+        existing = (
+            self.client.table(CLUSTERS_TABLE)
+            .select("canonical_posting_id")
+            .eq("id", cluster_id)
+            .limit(1)
+            .execute()
+            .data
+        )
+        if existing and existing[0].get("canonical_posting_id") and source in VENDOR_SOURCES:
+            return
+        row = (
+            self.client.table(POSTINGS_TABLE)
+            .select("id")
+            .eq("source", source)
+            .eq("source_job_id", source_job_id)
+            .limit(1)
+            .execute()
+            .data
+        )
+        if row:
+            self.client.table(CLUSTERS_TABLE).update(
+                {"canonical_posting_id": row[0]["id"]}
+            ).eq("id", cluster_id).execute()
 
     def upsert_postings(self, rows: list[dict]) -> int:
         payload = [{k: v for k, v in r.items() if not k.startswith("_")} for r in rows]

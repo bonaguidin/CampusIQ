@@ -197,6 +197,99 @@ def test_genuinely_different_jobs_get_separate_clusters():
     assert report.clusters_created == 2
 
 
+def test_fuzzy_path_actually_clusters():
+    """Two vendor-native listings for one job, neither carrying an ATS link.
+
+    Worth its own test because the first cut of SupabaseStore returned None for
+    every fuzzy key, so this path created a new cluster every time while the
+    dict-backed test double happily passed.
+    """
+    a = {"source": "adzuna", "url": "https://www.adzuna.com/land/ad/111",
+         "company": "Toyota Motor North America, Inc.", "title": "Finance Intern (R4412)",
+         "location": "Plano, TX"}
+    b = {"source": "jsearch", "url": "https://www.linkedin.com/jobs/view/999",
+         "company": "Toyota Motor North America", "title": "Finance Intern",
+         "location": "Plano, Texas"}
+    store, report = DryRunStore(), RunReport(started_at=datetime.now(timezone.utc), dry_run=True)
+    resolve_and_attach_identity([a], store, report)
+    resolve_and_attach_identity([b], store, report)
+
+    assert a["posting_identity"] == b["posting_identity"]
+    assert report.clusters_matched_fuzzy == 1
+    assert report.clusters_created == 1
+
+
+def test_late_ats_row_merges_two_clusters():
+    """DEDUP.md §5. A vendor delivers first and lands in a fuzzy cluster; the
+    employer's own feed surfaces the job later, and that row's recovered ATS id
+    is the evidence the two clusters are one."""
+    vendor_first = {
+        "source": "adzuna", "url": "https://www.adzuna.com/land/ad/222",
+        "company": "PMG", "title": "Affiliate Marketing Lead", "location": "Dallas, TX",
+    }
+    store, report = DryRunStore(), RunReport(started_at=datetime.now(timezone.utc), dry_run=True)
+    resolve_and_attach_identity([vendor_first], store, report)
+
+    # A different vendor listing that DOES carry the Greenhouse link, seeding
+    # an exact-keyed cluster separate from the fuzzy one above.
+    syndicated = {
+        "source": "jsearch",
+        "url": "https://job-boards.greenhouse.io/pmg/jobs/8496729002",
+        "company": "Someone Else", "title": "Different Title", "location": "Dallas, TX",
+    }
+    resolve_and_attach_identity([syndicated], store, report)
+    assert syndicated["posting_identity"] != vendor_first["posting_identity"]
+
+    # Now the ATS row itself: exact key hits the syndicated cluster, fuzzy key
+    # hits the vendor one. Two clusters, one job.
+    ats_row = {
+        "source": "greenhouse",
+        "url": "https://job-boards.greenhouse.io/pmg/jobs/8496729002",
+        "company": "PMG", "title": "Affiliate Marketing Lead", "location": "Dallas, TX",
+    }
+    resolve_and_attach_identity([ats_row], store, report)
+
+    assert report.clusters_merged == 1
+    assert store.merges[0]["match_rule"] == "ats_url_id"
+    assert store.find_cluster("ats:greenhouse:8496729002") == ats_row["posting_identity"]
+    # The absorbed cluster's keys now point at the survivor.
+    assert store.clusters[
+        [k for k in store.clusters if k.startswith("fuzzy:pmg")][0]
+    ] == ats_row["posting_identity"]
+
+
+def test_ats_row_becomes_canonical_over_a_vendor_row():
+    """The ATS row is the employer's own feed -- unrewritten title, real date."""
+    store, report = DryRunStore(), RunReport(started_at=datetime.now(timezone.utc), dry_run=True)
+    vendor = {"source": "adzuna", "source_job_id": "v1",
+              "url": "https://job-boards.greenhouse.io/pmg/jobs/8496729002?src=adzuna",
+              "company": "PMG", "title": "Affiliate Marketing Lead", "location": "Dallas, TX"}
+    resolve_and_attach_identity([vendor], store, report)
+    cluster = vendor["posting_identity"]
+    assert store.canonical[cluster][0] == "adzuna"
+
+    ats = {"source": "greenhouse", "source_job_id": "8496729002",
+           "url": "https://job-boards.greenhouse.io/pmg/jobs/8496729002",
+           "company": "PMG", "title": "Affiliate Marketing Lead", "location": "Dallas, TX"}
+    resolve_and_attach_identity([ats], store, report)
+    assert store.canonical[cluster] == ("greenhouse", "8496729002")
+
+
+def test_vendor_row_never_displaces_an_ats_canonical():
+    store, report = DryRunStore(), RunReport(started_at=datetime.now(timezone.utc), dry_run=True)
+    ats = {"source": "lever", "source_job_id": "3414ba28-35f7-45d3-8e13-35c883959635",
+           "url": "https://jobs.lever.co/matchgroup/3414ba28-35f7-45d3-8e13-35c883959635",
+           "company": "Match Group", "title": "SWE Intern", "location": "Dallas, TX"}
+    resolve_and_attach_identity([ats], store, report)
+    cluster = ats["posting_identity"]
+
+    later_vendor = {"source": "jsearch", "source_job_id": "j9",
+                    "url": "https://jobs.lever.co/matchgroup/3414ba28-35f7-45d3-8e13-35c883959635?utm=x",
+                    "company": "Match Group", "title": "SWE Intern", "location": "Dallas, TX"}
+    resolve_and_attach_identity([later_vendor], store, report)
+    assert store.canonical[cluster][0] == "lever"
+
+
 def test_exact_match_is_preferred_over_fuzzy():
     """Evidence must beat inference: a recovered ATS id decides the cluster
     even when a fuzzy key would have matched something else."""
