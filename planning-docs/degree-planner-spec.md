@@ -239,6 +239,18 @@ live 23-group tree (all 8 of his course_records rows join cleanly:
 course_records.course_code → course_catalog.code → coursedog_group_id →
 requirement_group_option_courses, confirmed end to end, zero unmatched).
 
+**Hand-trace correction — Interdisciplinary Projects.** The original
+hand-trace called this group "Satisfied (ENGR 2101 completed)." That was
+wrong. Interdisciplinary Projects is enumerated_all with 3 required
+options — ENGR 2101, 3101, 4101, a project sequence spanning sophomore,
+junior, and senior year — not a choose-one group. Ethan Brooks has only
+completed ENGR 2101, so the correct status is IN_PROGRESS (1 of 3
+required options satisfied), confirmed by the built evaluator. This is
+the first concrete case where the automated engine caught a manual
+hand-trace error rather than the other way around — worth keeping as
+documented evidence of why the engine exists, not just silently
+correcting the number.
+
 **Unified three-state status model, applied to every group in the tree
 (leaf and compound alike):**
 - `SATISFIED` — leaf: a matching course exists in course_records
@@ -250,10 +262,16 @@ requirement_group_option_courses, confirmed end to end, zero unmatched).
   minCredits.
 - `IN_PROGRESS` — compound_all/compound_any: at least one child has any
   matched course but the group isn't SATISFIED. Credit-threshold: 0 <
-  accumulated credits < minCredits. (Leaf groups have no IN_PROGRESS
-  state of their own — a leaf is SATISFIED or NOT_STARTED; the
-  in-progress/completed distinction at the course level is already
-  collapsed into "satisfied" per §8.4.)
+  accumulated credits < minCredits. **Leaf groups use this same
+  three-state model, not a restricted SATISFIED/NOT_STARTED-only
+  subset** — an earlier draft of this section claimed leaves had no
+  IN_PROGRESS state of their own, which was a spec error, not a code
+  error, caught when the built engine correctly evaluated Computer
+  Science Core as IN_PROGRESS at 3-of-11 matched options. The
+  in-progress/completed distinction at the individual course_records row
+  level is still collapsed into "counts as satisfied" per §8.4 — that
+  part holds — but the group's own status is computed with the full
+  three-state model like every other node in the tree.
 - `NOT_STARTED` — no matched course anywhere in the subtree.
 - `MANUAL_REVIEW` — groups with requires_manual_definition = true
   (Technical Electives, Advanced Major Electives). No structured course
@@ -342,3 +360,20 @@ just "add tests"):**
    CS 4340 | STAT 4340 | OREM 3340 cross-listing, or equivalent) —
    confirms matching any one of an "or" option's course IDs satisfies
    that option, not all of them.
+
+**Built and tested** — GradusIQ_career/course_discovery/
+requirement_satisfaction.py (pure evaluator) and GradusIQ_career/
+requirement_satisfaction_fetch.py (thin fetch function, placed outside
+course_discovery/ per that module's own no-Supabase-access rule,
+matching profile_builder.py's existing placement precedent). 14 tests
+including a real live-pulled Ethan Brooks fixture, credit-threshold
+boundary cases, and cross-listed or-logic cases, per this section's
+required coverage above. Credit-threshold groups are identified via a
+dedicated group_type value (enumerated_credit_threshold), not a
+hardcoded ID allowlist — added by migration
+20260819160000_requirement_groups_credit_threshold_group_type.sql
+(applied live; the single live Content Area 4, Physics row migrated from
+enumerated_all to enumerated_credit_threshold, and
+fetch_smu_requirements.py's CONDITION_TO_GROUP_TYPE updated so a future
+re-ingestion maps completeVariableCoursesAndVariableCredits correctly
+without a manual fix). Not yet wired into an API endpoint or UI.
