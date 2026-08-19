@@ -14,6 +14,36 @@
 # The entries below are a STARTER SET, not a reviewed one.
 # ============================================================================
 #
+# ============================================================================
+# DECIDED 2026-08-19: THIS FILE IS THE VOCABULARY. skill_terms_review.csv IS
+# NOT A COMPETING ONE.
+# ============================================================================
+#
+# Two approaches to the same problem existed in parallel and were drifting.
+# This one is curated, alias-based and word-boundary matched. The other,
+# skill_terms_review.csv on the `ats-fetcher` branch, generated 8,725
+# candidate terms from the O*NET software catalogue and filtered them by how
+# often each fired against real posting text.
+#
+# The frequency data settles it, and not in the generated file's favour. Of
+# its 8,725 terms only 121 ever fired at all, and the ones that fired hardest
+# are: Training (91), IMPACT (89), Testing (84), Experian (70), Client (65),
+# Shape (42), MAGIC (39), Vision (33). Those are O*NET product names and
+# ordinary English words colliding with prose -- "Experian" is a PMG *client*,
+# not a skill anyone was asked for. A high fire count measures string
+# collision, not relevance, which is exactly the failure §4's "never naive
+# substring search" rule exists to prevent.
+#
+# So skill_terms_review.csv is retired as a vocabulary source. It keeps real
+# value as the permanent record of what was considered and rejected, and as
+# the evidence behind this decision -- do not delete it.
+#
+# Seven genuine skills were harvested from its 121 fired terms and appear at
+# the bottom of this file. Everything else was a collision.
+#
+# Current count: 46. §4's target is roughly 60-120, so this is still under
+# where it should be, and the gap is real work rather than a rounding error.
+#
 # THE TABLE IS BOUNDED, NOT OPEN-ENDED (§4).
 #
 # Build aliases **only** for skills O*NET already rates as important for the
@@ -199,3 +229,46 @@ skills:
     # phrase, but "comfortable presenting to senior stakeholders" is not, and
     # counting only the literal phrase undercounts in a way that looks like
     # signal. Flagged for the review pass.
+
+  # --- Added 2026-08-19 from corpus evidence ---------------------------------
+  #
+  # These seven are the entire harvest from skill_terms_review.csv's 121
+  # terms that fired against real postings. Everything else in that 121 was a
+  # collision rather than a skill -- see the decision note at the top of this
+  # file. Each of these was checked against what the posting text actually
+  # said, not just accepted for having a fire count.
+
+  - canonical: Google Analytics
+    aliases: [Google Analytics, GA4, Google Analytics 4]
+    # 18 postings. Marketing-side analytics, which the curated list had no
+    # entry for at all despite marketing being a named target role family.
+
+  - canonical: Adobe Analytics
+    aliases: [Adobe Analytics, Omniture, Adobe Experience Cloud]
+    # 8 postings.
+
+  - canonical: Google Ads
+    aliases: [Google Ads, Google AdWords, AdWords, Google Ad Manager]
+    # 5 postings.
+
+  - canonical: Social Media Marketing
+    aliases: [social media marketing, social media strategy, social media management, paid social]
+    # 15 postings fired on the bare term "social media", which is too loose --
+    # "follow us on social media" is not a skill. The aliases here require the
+    # word to be doing work.
+
+  - canonical: Epic
+    aliases: [Epic Systems, EpicCare, Epic EHR, Epic EMR]
+    # 17 postings. Deliberately NOT aliased as bare "Epic" -- "epic
+    # collaboration" and "epic scale" are common prose, and the review file's
+    # own fire count for the bare term is inflated by exactly that. Worth
+    # carrying because seven of the 44 DFW employers are health systems and
+    # Epic is the dominant EHR.
+
+  - canonical: Figma
+    aliases: [Figma]
+    # 4 postings.
+
+  - canonical: Node.js
+    aliases: [Node.js, NodeJS, Node JS]
+    # 4 postings. Bare "Node" is excluded on purpose -- too collision-prone.

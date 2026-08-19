@@ -32,95 +32,110 @@ the nightly run instead of fixing anything.
 
 | File | What it is | Trust level |
 |---|---|---|
-| `role_families.yaml` | Title → role family rules, longest-phrase-first | **See the warning below** |
-| `skill_aliases.yaml` | Canonical skill → surface forms | Starter set, unreviewed |
-| `employers.example.yaml` | Shape template for the employer target list | Template only, no real data |
+| `dfw_employers_ats.csv` | 44 DFW employers, platforms and slugs | Researched 2026-08-19 |
+| `role_families.yaml` | Title → one of the 14 target roles | Remapped 2026-08-19, unreviewed |
+| `skill_aliases.yaml` | Canonical skill → surface forms | 46 skills, review still owed |
+| `slug_worksheet.md` | Generated checklist behind the CSV | Complete |
+| `employers.example.yaml` | Shape template from the skeleton repo | Superseded by the CSV |
 
-## WARNING: role_families.yaml targets a different taxonomy
+## role_families.yaml — remapped 2026-08-19
 
-The ten families in this file are general professional occupations. The
-fourteen roles this product actually serves, in `data/role_requirements.json`,
-are student and intern positions. They are not the same list and were not
-built for the same purpose.
+Now the fourteen target roles from `data/role_requirements.json`, exactly. The
+previous ten families were general professional occupations from the DFW
+market research, correct for the mid-career Career OS concept this project
+started as and wrong for a product serving students.
 
-```
-role_families.yaml          role_requirements.json
---------------------        ----------------------------------
-financial_analyst      ~    Finance Intern
-business_analyst       ~    Business Analyst Intern
-software_engineer      ~    Software Engineering Intern
-data_analyst                (no clear target role)
-data_engineer               (no clear target role)
-accountant                  (no clear target role)
-it_support                  (no clear target role)
-marketing                   (no clear target role)
-human_resources        ~    People Operations Intern
-supply_chain           ~    Operations Intern
-                            Computer Engineering Intern    (no family)
-                            Embedded Systems Intern        (no family)
-                            Aerospace Engineering Intern   (no family)
-                            Flight Systems Intern          (no family)
-                            Mechanical Analysis Intern     (no family)
-                            Lab Assistant                  (no family)
-                            Pre-Health Clinical Volunteer  (no family)
-                            Research Assistant             (no family)
-                            Student Success Peer Mentor    (no family)
-```
+**Expect ~99% of employer-board postings to map to NULL, and expect that to be
+correct.** Measured: of 153 real postings from PMG and Match Group, 2 have
+student-shaped titles — 1.3%, and one of those is "Apprenticeship - Junior
+Marketing Assistant". Atmos Energy's board returns "Sr Applications
+Developer", "Service Technician", "Mgr Safety".
 
-Roughly five map loosely and nine target roles have no family at all. Wiring
-this file up as-is would leave most of the product's roles unmapped, and — the
-worse failure — would map some titles into a plausible-looking wrong family.
-The file's own comments name that asymmetry:
+That is what an employer's own ATS board is: every open role, overwhelmingly
+experienced hires. It splits the two source types by purpose:
 
-> Unmapped → shows up in the unmapped bin. Loud. Fixable.
-> Mis-mapped → shows up as a plausible wrong percentage. Silent.
+- **Employer-direct (ATS, Workday)** is for breadth — who is hiring in DFW, in
+  what volume, wanting which skills. Student-role hit rate 1–2%.
+- **Adzuna and JSearch** are for student roles specifically, because they are
+  searched by role. Their `target_role` comes from the query and never touches
+  this file.
 
-**Treat this as a worked example of the rule format, not as a usable mapping.**
-It needs rewriting against the fourteen target roles before anything reads it.
-The rules are deliberately cheap to change; that is the design, not a defect.
+Anyone reading a low mapped-count as "the rules are broken" will loosen
+phrases until general postings match student families. That is the silent
+failure the file's own comments warn about, and it is worse than mapping
+nothing.
 
-## skill_aliases.yaml is unreviewed
+Status: first pass, unreviewed. The boundaries worth a second look are
+Computer Engineering vs. Embedded Systems, and Lab Assistant vs. Research
+Assistant — both overlap in real posting language.
 
-39 canonical skills. The file's header says the entries are a starter set and
-marks the alias review as **Kasheia's**, distinct from the extraction
-spot-check, which is Deepak's. Nothing has reviewed them yet.
+## skill_aliases.yaml — 46 skills, and it won the vocabulary question
 
-Note this is a separate artifact from `skill_terms_review.csv` on the
-`ats-fetcher` branch (8,725 candidate terms from O*NET, of which only 121 ever
-fired against a real posting). Two different approaches to the same problem:
-this one is small, curated and alias-based; that one is large, generated and
-frequency-filtered. Someone should decide which survives rather than letting
-both drift.
+Two approaches were drifting in parallel. This file is curated, alias-based,
+word-boundary matched. `skill_terms_review.csv` on the `ats-fetcher` branch
+generated 8,725 candidates from the O*NET software catalogue and ranked them
+by how often each fired against real posting text.
 
-## dfw_employers_ats.csv — the real list, arrived 2026-08-19
+**The frequency data settled it against the generated file.** Only 121 of its
+8,725 terms fired at all, and the hardest-firing are Training (91), IMPACT
+(89), Testing (84), Experian (70), Client (65), Shape (42), MAGIC (39),
+Vision (33) — O*NET product names and ordinary words colliding with prose.
+Experian is a PMG *client*, not a skill. Fire count measures collision, not
+relevance, which is the failure the "never naive substring search" rule exists
+to prevent.
+
+So `skill_terms_review.csv` is retired as a vocabulary source and kept as the
+record of what was rejected and why. **Do not delete it** — it is the evidence
+behind this decision.
+
+Seven genuine skills were harvested from those 121: Google Analytics, Adobe
+Analytics, Google Ads, Social Media Marketing, Epic, Figma, Node.js. Epic
+earns its place because seven of the 44 DFW employers are health systems and
+it is the dominant EHR; it is deliberately not aliased as bare "Epic", since
+"epic collaboration" is common prose.
+
+46 skills against a target of roughly 60–120. Still under, and that gap is
+real work rather than rounding.
+
+## dfw_employers_ats.csv — researched and merged 2026-08-19
 
 44 hand-researched DFW employers plus one example row the loader skips.
 Columns: priority, employer, sector, dfw_location, domain,
 target_role_families, ats, slug, checked_date, notes.
 
-**It does not make any employer fetchable.** The ATS fetcher needs `{ats,
-slug}` per employer. This file has `ats` for **1 of 44** (Match Group, lever)
-and `slug` for **0 of 44** — that column was never filled in. A slug is the
-identifier in an employer's own careers URL and has to be looked up by hand,
-per employer. Until that happens the table describes who to target, not who
-can be reached.
+**43 platforms and 44 slugs are filled in. 13 employers are actually
+fetchable.** The gap between those numbers is the finding:
 
-`scripts/job_postings/load_employers.py` loads it and reports that gap in its
-own output rather than leaving it to be discovered later. A test pins the
-current state, so the first slug someone fills in will make that test fail —
-which is the intended signal, not a regression.
+| | |
+|---|---:|
+| on a platform with an adapter | 13 |
+| no adapter for their platform | 23 |
+| supported platform, slug will not build an endpoint | 7 |
+| platform never confirmed | 1 |
+
+Of 44 employers, exactly **one** — Match Group, on Lever — was reachable
+before the Workday adapter. Nineteen are on Workday, of which twelve carry a
+usable `/site` path. The other seven record a host only; the endpoint cannot
+be built without the site segment, and `parse_workday_slug` returns `None`
+rather than guessing `careers`, which would 404 or hit another tenant's board.
+
+`load_employers.py` reports all four categories separately, because they need
+different people: an adapter is code, a site path is research, an unconfirmed
+platform is neither until someone looks.
 
 Two other things to know:
 
-- `notes` is mostly hypotheses — "Enterprise HCM likely — check for
-  myworkdayjobs.com". That is the research still outstanding, written down. A
-  guess about an employer's ATS is not a fact about it, and a slug pointing at
-  the wrong company produces real postings attributed to the wrong employer.
-- `target_role_families` uses the **mid-career taxonomy**, same as
-  `role_families.yaml` and for the same reason. "Financial analyst; client
-  service associate; risk/compliance" are not among the fourteen student roles
-  in `data/role_requirements.json`. Loaded verbatim; remapping is the same
-  outstanding decision described above.
+- `notes` mixes verified findings with the original hypotheses. Entries
+  carrying `verified 2026-08-19:` were confirmed against a live endpoint or
+  DNS; the rest are still guesses like "Enterprise HCM likely".
+- `target_role_families` still uses the **mid-career taxonomy** —
+  "Financial analyst; client service associate" rather than any of the
+  fourteen student roles. Unlike `role_families.yaml`, this column was left as
+  written: it records what the research assumed, and rewriting it inside a
+  loader would bury a decision.
+
+Comerica's `fifththird` Workday tenant is correct, not a wrong-company error —
+Fifth Third completed its acquisition of Comerica in February 2026.
 
 PMG is not in this list, despite being one of the two employers actually
 fetched in the 2026-08-05 run. Match Group is.
