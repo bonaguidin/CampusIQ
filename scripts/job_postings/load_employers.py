@@ -50,7 +50,22 @@ from errors import JobPostingConfigError  # noqa: E402
 DEFAULT_CSV = REPO_ROOT / "data" / "job_postings" / "dfw_employers_ats.csv"
 EMPLOYERS_TABLE = "employers"
 
-KNOWN_ATS = {"greenhouse", "lever", "ashby", "smartrecruiters", "recruitee"}
+# Every platform the employers table accepts, which is a wider set than the
+# platforms anything can fetch. The real DFW list made the difference concrete:
+# 19 of 44 employers are on Workday and exactly one is on any of the original
+# five, so restricting this to fetchable platforms would discard the research
+# for 43 employers on the way in.
+KNOWN_ATS = {
+    "greenhouse", "lever", "ashby", "smartrecruiters", "recruitee", "workday",
+    "icims", "oracle_cloud", "taleo", "successfactors", "avature",
+    "eightfold", "ukg", "talent_community", "proprietary",
+}
+
+# Which of those an adapter exists for. This is the set that grows when someone
+# writes code, and it is what `fetchable()` means.
+FETCHABLE_ATS = {
+    "greenhouse", "lever", "ashby", "smartrecruiters", "recruitee", "workday",
+}
 
 # The template row ships in the file so the shape is self-documenting. It says
 # so in its own employer cell; matching on the priority column rather than the
@@ -155,8 +170,27 @@ def parse_rows(path: Path) -> tuple[list[dict], list[str]]:
 
 
 def fetchable(rows: list[dict]) -> list[dict]:
-    """Employers the ATS fetcher could actually reach: both ats and slug."""
-    return [r for r in rows if r["ats_platform"] and r["slug"]]
+    """Employers an adapter could actually reach.
+
+    Three conditions, not two. A platform and a slug are necessary but not
+    sufficient: an employer on iCIMS has both and is still unreachable, because
+    no iCIMS adapter exists. And a Workday slug recording only a host with no
+    site path cannot be turned into an endpoint at all -- seven of the nineteen
+    Workday rows are in that state -- so the slug has to be parseable, not
+    merely present.
+    """
+    out = []
+    for r in rows:
+        platform, slug = r.get("ats_platform"), r.get("slug")
+        if not platform or not slug or platform not in FETCHABLE_ATS:
+            continue
+        if platform == "workday":
+            from workday import parse_workday_slug
+
+            if parse_workday_slug(slug) is None:
+                continue
+        out.append(r)
+    return out
 
 
 def render_report(rows: list[dict], warnings: list[str], *, dry_run: bool) -> str:
@@ -176,13 +210,31 @@ def render_report(rows: list[dict], warnings: list[str], *, dry_run: bool) -> st
         "",
     ]
     if len(ready) < len(rows):
+        no_platform = [r for r in rows if not r["ats_platform"]]
+        no_adapter = [r for r in rows
+                      if r["ats_platform"] and r["ats_platform"] not in FETCHABLE_ATS]
+        unbuildable = [r for r in rows
+                       if r["ats_platform"] in FETCHABLE_ATS and r not in ready]
+
+        lines += [f"  {len(rows) - len(ready)} employer(s) cannot be fetched, for three different reasons:", ""]
+        if no_adapter:
+            platforms = sorted({r["ats_platform"] for r in no_adapter})
+            lines += [
+                f"    {len(no_adapter):>2}  no adapter for their platform -- {', '.join(platforms)}.",
+                "        Writing one is code, not research.",
+            ]
+        if unbuildable:
+            lines += [
+                f"    {len(unbuildable):>2}  on a supported platform but the slug will not build an",
+                "        endpoint. Workday rows recording a host with no /site path are",
+                "        the whole of this group; the site segment has to be looked up.",
+            ]
+        if no_platform:
+            lines += [f"    {len(no_platform):>2}  platform never confirmed."]
         lines += [
-            f"  {len(rows) - len(ready)} employer(s) cannot be fetched yet. The ATS fetcher",
-            "  needs both a platform and a slug; the slug is the identifier in the",
-            "  employer's own careers URL and has to be looked up by hand.",
             "",
-            "  This load is still worth doing -- it is what confirmed_roles builds on --",
-            "  but it does not put any new employer within reach of the nightly run.",
+            "  Loading is still worth doing regardless -- it is what confirmed_roles",
+            "  builds on, and it records the research so nobody repeats it.",
             "",
         ]
     if warnings:

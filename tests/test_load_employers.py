@@ -76,11 +76,25 @@ def test_blank_fields_become_none_not_empty_string(tmp_path):
 
 def test_unknown_ats_is_nulled_with_a_warning(tmp_path):
     """The table's check constraint would reject it, so storing it would fail
-    the whole load for one bad cell."""
-    p = write_csv(tmp_path, "1,Acme,Finance,Dallas,acme.com,Analyst,workday,acme,,\n")
+    the whole load for one bad cell.
+
+    'brassring' rather than 'workday' -- this test originally used the latter,
+    which stopped being unknown the moment the platform vocabulary widened.
+    """
+    p = write_csv(tmp_path, "1,Acme,Finance,Dallas,acme.com,Analyst,brassring,acme,,\n")
     rows, warnings = parse_rows(p)
     assert rows[0]["ats_platform"] is None
-    assert any("workday" in w for w in warnings)
+    assert any("brassring" in w for w in warnings)
+
+
+def test_a_widened_platform_is_kept(tmp_path):
+    """Workday and the other enterprise platforms are valid values now. They
+    are not fetchable by every adapter, but that is a different question and
+    fetchable() answers it."""
+    p = write_csv(tmp_path, "1,Acme,Finance,Dallas,acme.com,Analyst,workday,acme.wd1.myworkdayjobs.com/External,,\n")
+    rows, warnings = parse_rows(p)
+    assert rows[0]["ats_platform"] == "workday"
+    assert not warnings
 
 
 def test_known_ats_is_lowercased(tmp_path):
@@ -133,7 +147,24 @@ def test_report_says_plainly_when_nothing_is_fetchable(tmp_path):
     rows, warnings = parse_rows(p)
     out = render_report(rows, warnings, dry_run=True)
     assert "actually fetchable      0" in out
-    assert "cannot be fetched yet" in out
+    assert "cannot be fetched" in out
+
+
+def test_report_separates_the_three_reasons_something_is_unfetchable(tmp_path):
+    """One count hides three different problems, and they need different
+    people: an adapter is code, a site path is research, and an unconfirmed
+    platform is neither until someone looks."""
+    p = write_csv(tmp_path,
+        "1,NoAdapter,F,Dallas,a.com,Analyst,icims,careers-a.icims.com,,\n"
+        "1,NoSitePath,F,Dallas,b.com,Analyst,workday,b.wd1.myworkdayjobs.com,,\n"
+        "1,Unconfirmed,F,Dallas,c.com,Analyst,,something,,\n"
+        "1,Good,F,Dallas,d.com,Analyst,workday,d.wd1.myworkdayjobs.com/External,,\n")
+    rows, warnings = parse_rows(p)
+    out = render_report(rows, warnings, dry_run=True)
+    assert "actually fetchable      1" in out
+    assert "no adapter for their platform" in out and "icims" in out
+    assert "will not build an" in out
+    assert "platform never confirmed" in out
 
 
 # ---------------------------------------------------------------------------
@@ -148,13 +179,41 @@ def test_real_csv_parses_to_44_employers():
 
 
 @pytest.mark.skipif(not CSV.exists(), reason="employer CSV not in the repo")
-def test_real_csv_has_no_fetchable_employers_yet():
-    """Pins the current state so it is visible rather than assumed. When slugs
-    get filled in, this test failing is the signal that they did."""
+def test_real_csv_state_after_the_slug_pass():
+    """Pins where the research actually landed.
+
+    The previous version of this test asserted zero slugs and zero fetchable
+    employers, and it failed the moment the completed worksheet was merged --
+    which is what it was written to do. This is its replacement.
+
+    The shape of the answer is the finding: 44 employers researched, 43 of them
+    on platforms the original five adapters cannot touch. Workday is why that
+    is not fatal.
+    """
     rows, _ = parse_rows(CSV)
-    assert fetchable(rows) == []
-    assert sum(1 for r in rows if r["slug"]) == 0
-    assert sum(1 for r in rows if r["ats_platform"]) == 1
+    assert len(rows) == 44
+    assert sum(1 for r in rows if r["slug"]) == 44, "every employer got a slug"
+
+    platforms = {}
+    for r in rows:
+        platforms[r["ats_platform"]] = platforms.get(r["ats_platform"], 0) + 1
+    assert platforms.get("workday") == 19
+    assert platforms.get("lever") == 1
+
+    # Match Group on Lever, plus the twelve Workday boards whose slug carries a
+    # site path. The other seven Workday rows are hosts without a site and
+    # cannot be built into an endpoint.
+    assert len(fetchable(rows)) == 13
+
+
+@pytest.mark.skipif(not CSV.exists(), reason="employer CSV not in the repo")
+def test_platforms_without_an_adapter_are_not_called_fetchable():
+    """An iCIMS employer has both a platform and a slug and is still
+    unreachable, because no iCIMS adapter exists."""
+    rows, _ = parse_rows(CSV)
+    reachable = {r["ats_platform"] for r in fetchable(rows)}
+    assert reachable <= {"workday", "lever"}
+    assert "icims" not in reachable and "taleo" not in reachable
 
 
 @pytest.mark.skipif(not CSV.exists(), reason="employer CSV not in the repo")

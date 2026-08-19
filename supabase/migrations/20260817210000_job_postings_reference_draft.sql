@@ -166,7 +166,8 @@ create table job_postings (
   id uuid primary key default gen_random_uuid(),
   source text not null check (source in (
     'adzuna', 'jsearch',
-    'greenhouse', 'lever', 'ashby', 'smartrecruiters', 'recruitee'
+    'greenhouse', 'lever', 'ashby', 'smartrecruiters', 'recruitee',
+    'workday'
   )),
   source_job_id text not null,
   title text not null,
@@ -266,7 +267,8 @@ create table job_posting_fetch_log (
   id uuid primary key default gen_random_uuid(),
   source text not null check (source in (
     'adzuna', 'jsearch',
-    'greenhouse', 'lever', 'ashby', 'smartrecruiters', 'recruitee'
+    'greenhouse', 'lever', 'ashby', 'smartrecruiters', 'recruitee',
+    'workday'
   )),
   target_role text,                -- AMENDED -- was `not null`
   employer text,                   -- AMENDED -- ATS runs are per-employer
@@ -513,8 +515,22 @@ create table employers (
   sector text,
   dfw_location text,
   domain text,
+  -- Two different questions, and conflating them is what the first version of
+  -- this constraint did. This column answers "what platform is this employer
+  -- on", which for the real DFW list is mostly enterprise HCM: of 44
+  -- employers, 19 are Workday and exactly ONE is on any of the five platforms
+  -- the fetcher supports. Restricting this to the fetchable five would have
+  -- rejected 43 of 44 rows on insert and thrown away hard-won research.
+  --
+  -- "Can we fetch it" is a property of which adapters exist, lives in code
+  -- (scripts/job_postings/), and changes when someone writes one. It is
+  -- deliberately not encoded here.
   ats_platform text check (ats_platform is null or ats_platform in (
-    'greenhouse', 'lever', 'ashby', 'smartrecruiters', 'recruitee'
+    -- fetchable today
+    'greenhouse', 'lever', 'ashby', 'smartrecruiters', 'recruitee', 'workday',
+    -- known, no adapter
+    'icims', 'oracle_cloud', 'taleo', 'successfactors', 'avature',
+    'eightfold', 'ukg', 'talent_community', 'proprietary'
   )),
   priority integer,
   checked_date date,
