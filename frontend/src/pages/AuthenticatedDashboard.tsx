@@ -8,6 +8,7 @@ import { ChatPanel } from '../components/ChatPanel';
 import { GuidedTour } from '../components/GuidedTour';
 import { DashboardSuccessNotice } from '../components/DashboardSuccessNotice';
 import { CourseDiscoveryPanel } from '../components/CourseDiscoveryPanel';
+import { RequirementSatisfactionPanel } from '../components/RequirementSatisfactionPanel';
 import { FitAnalysisPanel } from '../components/FitAnalysisPanel';
 import { GapAnalysisPanel } from '../components/GapAnalysisPanel';
 import { ShiftAnalysisPanel } from '../components/ShiftAnalysisPanel';
@@ -494,6 +495,7 @@ export function AuthenticatedDashboard() {
                   selectedRole={courseDiscoverySelectedRole}
                   onSelectedRoleChange={setCourseDiscoverySelectedRole}
                 />
+                <RequirementSatisfactionPanel />
               </div>
             )}
 

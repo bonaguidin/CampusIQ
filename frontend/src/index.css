@@ -2061,6 +2061,102 @@ a {
   border: 1px solid var(--line);
 }
 
+/* Degree Requirements tree — reuses the course-discovery-status-badge base
+   class with new modifiers rather than a second badge component, matching
+   how course-status-badge/fit-badge/theme-badge already share that base
+   look with their own modifier sets. --gold is the one warm/amber token in
+   :root (otherwise scoped to the Career tab redesign, but the variable
+   itself is global) and is the closest fit for "partially done" that isn't
+   --ready or --pending. MANUAL_REVIEW deliberately does not read as a
+   failure (no --error) -- nothing can auto-resolve it, so it gets the same
+   neutral, flagged register AnalysisPanel's skipped state already uses. */
+.course-discovery-status-badge--satisfied {
+  color: var(--ready);
+  background: var(--ready-tint);
+}
+
+.course-discovery-status-badge--in-progress {
+  color: var(--gold-text);
+  background: var(--gold-tint);
+}
+
+.course-discovery-status-badge--not-started {
+  color: var(--muted);
+  background: var(--surface);
+  border: 1px solid var(--line);
+}
+
+.course-discovery-status-badge--manual-review {
+  color: var(--muted);
+  background: var(--surface);
+  border: 1px dashed var(--line);
+}
+
+.requirement-tree,
+.requirement-group-children {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.requirement-tree {
+  margin-top: var(--sp-3);
+}
+
+.requirement-group {
+  padding: var(--sp-2) 0;
+  border-top: 1px solid var(--line);
+}
+
+.requirement-tree > .requirement-group:first-child {
+  border-top: none;
+}
+
+.requirement-group-children {
+  margin-top: var(--sp-2);
+  margin-left: var(--sp-4);
+  padding-left: var(--sp-3);
+  border-left: 1px solid var(--line);
+}
+
+.requirement-group-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+
+.requirement-group-toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  font-weight: 600;
+  color: var(--ink);
+  cursor: pointer;
+  text-align: left;
+}
+
+.requirement-group-toggle-icon {
+  color: var(--muted);
+  font-size: var(--text-xs);
+}
+
+.requirement-group-name {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.requirement-group-detail,
+.requirement-group-matched {
+  font-size: var(--text-sm);
+  color: var(--muted);
+  margin: var(--sp-1) 0 0;
+}
+
 .course-discovery-meta {
   font-size: var(--text-sm);
   color: var(--muted);
