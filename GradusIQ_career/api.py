@@ -77,6 +77,10 @@ from GradusIQ_career.course_discovery.models import (
 from GradusIQ_career.course_discovery.needs import derive_career_skill_needs
 from GradusIQ_career.features.market_data import is_role_supported, supported_target_roles
 from GradusIQ_career.course_discovery.service import CourseDiscoveryService
+from GradusIQ_career.course_discovery.requirement_satisfaction import (
+    evaluate_requirement_tree,
+    to_satisfaction_result,
+)
 from GradusIQ_career.resume.extraction import extract_resume_text
 from GradusIQ_career.resume.parser import parse_resume_text
 from GradusIQ_career.resume.review import (
@@ -93,6 +97,7 @@ from GradusIQ_career.resume.store import (
     store_parsed_resume,
     write_confirmed_academic_facts,
 )
+from GradusIQ_career.requirement_satisfaction_fetch import fetch_requirement_tree
 from GradusIQ_career.supabase_client import SupabaseConfigError, build_client_for_token
 from GradusIQ_career.transcript.catalog import match_courses
 from GradusIQ_career.transcript.crosscheck import cross_check_terms
@@ -1720,6 +1725,55 @@ def _home_institution_id(client, student_id: str) -> str:
     return home_rows[0]["institution_id"]
 
 
+def _resolve_program_id_for_student(client, student_id: str) -> str | None:
+    """The programs.id matching this student's home institution + catalog year.
+
+    Returns None -- not an HTTPException -- when there is no home
+    institution, no catalog_year on it, or no programs row for that
+    (institution_id, catalog_year) pair. Unlike _home_institution_id's 409,
+    this is an expected outcome today for every student except Ethan
+    Brooks/SMU CS-BS: the requirement-skeleton tables (programs,
+    requirement_groups, ...) currently hold exactly one program, so "no
+    program data for this student" is the common case, not a data-integrity
+    problem worth erroring on. Joins on catalog_year rather than major/degree
+    text, matching why student_institutions.catalog_year was added
+    (20260819140000): programs.catalog_year is the same key
+    requirement_groups snapshots are pinned to (20260818130000).
+    """
+    try:
+        home_rows = (
+            client.table("student_institutions")
+            .select("institution_id,catalog_year")
+            .eq("student_id", student_id)
+            .eq("relationship", "home")
+            .execute()
+            .data
+        )
+    except Exception as exc:  # noqa: BLE001 -- RLS denial or transport
+        raise HTTPException(status_code=502, detail="Could not resolve institution.") from exc
+    if not home_rows:
+        return None
+    institution_id = home_rows[0]["institution_id"]
+    catalog_year = home_rows[0].get("catalog_year")
+    if not catalog_year:
+        return None
+
+    try:
+        program_rows = (
+            client.table("programs")
+            .select("id")
+            .eq("institution_id", institution_id)
+            .eq("catalog_year", catalog_year)
+            .execute()
+            .data
+        )
+    except Exception as exc:  # noqa: BLE001 -- RLS denial or transport
+        raise HTTPException(status_code=502, detail="Could not resolve program.") from exc
+    if not program_rows:
+        return None
+    return program_rows[0]["id"]
+
+
 def _reconcile_course_lifecycle(client, student_id: str) -> None:
     """Promote due planned courses before serving academic data.
 
@@ -2251,6 +2305,54 @@ def patch_me_course_record(
         raise HTTPException(status_code=502, detail="Could not update the course record.") from exc
 
     return {"course_record": updated}
+
+
+@router.get(
+    "/api/v2/student/me/requirement-satisfaction",
+    dependencies=[Depends(authorize_proxy_request)],
+)
+def get_me_requirement_satisfaction(request: Request) -> dict:
+    """Degree-requirement progress against the student's program, if any.
+
+    Live for exactly one program today (SMU CS-BS / Ethan Brooks). Every
+    other student's institution+catalog_year resolves to no programs row,
+    which is reported as a 200 skipped FeatureResult -- the same shape
+    every other feature uses for an unmet precondition -- rather than a
+    4xx, since "no requirement data for your program yet" is expected
+    product state, not a client error. evaluate_requirement_tree() is a
+    pure, deterministic, sub-second computation, so this route deliberately
+    does not use either of the existing analysis-cache layers (demo file
+    cache, student_analysis_cache): both exist to amortize GAP's ~100-200s
+    DeepSeek call, which has no analogue here.
+    """
+    client = _session_client(request)
+    student_id = _resolve_session_student_id(client)
+    program_id = _resolve_program_id_for_student(client, student_id)
+    if program_id is None:
+        return FeatureResult(
+            feature="REQUIREMENT_SATISFACTION",
+            status="skipped",
+            summary="Requirement tracking isn't available for your institution or program yet.",
+            missing_fields=[
+                MissingField(
+                    path="student_institutions.program",
+                    label="Supported degree program",
+                )
+            ],
+        ).to_dict()
+
+    try:
+        raw = fetch_requirement_tree(client, program_id, student_id)
+        groups = evaluate_requirement_tree(
+            raw.groups, raw.options, raw.option_courses, raw.course_records, raw.catalog_by_gid
+        )
+        result = to_satisfaction_result(str(student_id), str(program_id), groups)
+    except HTTPException:
+        raise
+    except Exception as exc:  # noqa: BLE001 -- unexpected fetch/evaluation failure
+        raise HTTPException(status_code=502, detail="Requirement satisfaction is unavailable.") from exc
+
+    return result.model_dump(mode="json")
 
 
 def create_app(config: APIConfig | None = None) -> FastAPI:
