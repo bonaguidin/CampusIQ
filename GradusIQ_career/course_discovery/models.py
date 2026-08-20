@@ -217,6 +217,17 @@ class PrerequisiteClause(StrictModel):
 
     course_codes: list[str] = Field(min_length=1)
     grade_min: str | None = None
+    # Unverifiable alternative paths that also satisfy this clause, named
+    # alongside the course requirement rather than mixed with an unrelated
+    # course code -- "C- or better in CS 2341 or equivalent", "CS 5324 or
+    # permission of instructor" (both confirmed live, data/catalog/smu/).
+    # requires_all still only names the real course(s); this is a footnote,
+    # never itself enforced or resolved by the scheduler -- a student who
+    # satisfied the requirement via AP-equivalent credit or an instructor's
+    # sign-off is not otherwise represented anywhere in this model, and
+    # dropping the qualifier would erase that possibility silently instead
+    # of surfacing it for a future consumer to act on.
+    alternate_paths: list[str] = Field(default_factory=list)
 
 
 class StructuredPrerequisite(StrictModel):

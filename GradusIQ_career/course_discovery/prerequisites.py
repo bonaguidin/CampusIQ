@@ -192,6 +192,16 @@ def evaluate_prerequisites(
 #     "...junior or senior classification. Cross Listing: ECEN 360 and
 #     STAT 315 ."
 #   Restriction-only, no course logic (SMU): "Restricted to Lyle seniors."
+#   Trailing "or equivalent" / "or permission of instructor" footnote, the
+#   course requirement otherwise stated plainly (SMU, data/catalog/smu/):
+#     "Prerequisites: C- or better in CS 2341 or equivalent."
+#     "Prerequisite: CS 5324 or permission of instructor."
+#   Parsed normally into requires_all; the footnote is recorded on
+#   PrerequisiteClause.alternate_paths, never enforced or resolved. NOT the
+#   same shape as CHEM 1303's "C- or higher in CHEM 1302, appropriate
+#   equivalent credit for CHEM 1303, or a passing grade on the Chemistry
+#   Placement Exam" -- a third, distinct alternative (an exam) follows
+#   "equivalent" there, so that one still lands in needs_review.
 #
 # NO CACHING/PERSISTENCE: computed on demand from an in-memory
 # CourseCatalogRecord, same as prerequisite_requirement() above -- that
@@ -212,6 +222,22 @@ _GRADE_BARE = re.compile(r"(?<![A-Za-z0-9])([A-D][+-]?)\s+or\s+better\b")
 
 _CONCURRENT_NAMED = re.compile(r"concurrent enrollment in\s+(.*)", re.IGNORECASE)
 _CONCURRENT_TRAILING = re.compile(r",?\s*or\s+concurrent enrollment\.?\s*$", re.IGNORECASE)
+
+# Trailing "or equivalent" / "or permission of instructor": a course
+# requirement stated plainly, with one unverifiable alternative path named
+# at the very end of the clause and nothing else -- "C- or better in CS
+# 2341 or equivalent.", "CS 5324 or permission of instructor." (both
+# confirmed live, data/catalog/smu/). Anchored at the end of the clause on
+# purpose: this must NOT match CHEM 1303's "C- or higher in CHEM 1302,
+# appropriate equivalent credit for CHEM 1303, or a passing grade on the
+# Chemistry Placement Exam" (also confirmed live), where "equivalent"
+# appears mid-clause with a third, different alternative (an exam) still
+# following it -- that case has no clean "just the course, plus one named
+# footnote" shape and must stay in needs_review, not be force-fit here.
+_OR_EQUIVALENT_TRAILING = re.compile(r",?\s*or\s+equivalent\.?\s*$", re.IGNORECASE)
+_OR_PERMISSION_TRAILING = re.compile(
+    r",?\s*or\s+permission\s+of\s+(?:the\s+)?instructor\.?\s*$", re.IGNORECASE
+)
 
 _AND_SPLIT = re.compile(r"\band\b", re.IGNORECASE)
 _OR_WORD = re.compile(r"\bor\b", re.IGNORECASE)
@@ -333,6 +359,20 @@ def structured_prerequisite(course: CourseCatalogRecord) -> StructuredPrerequisi
         is_trailing_coreq = bool(_CONCURRENT_TRAILING.search(clause))
         working = _CONCURRENT_TRAILING.sub("", clause).strip(" ,;.") if is_trailing_coreq else clause
 
+        # Strip a trailing "or equivalent" / "or permission of instructor"
+        # footnote before anything downstream sees it: unstripped, "equivalent"
+        # would otherwise trip _NON_COURSE_ALTERNATIVE below and send the whole
+        # clause to needs_review even though the real course requirement is
+        # perfectly clear. The footnote itself is never dropped -- it travels
+        # on the resulting PrerequisiteClause.alternate_paths instead.
+        alternate_paths: list[str] = []
+        if _OR_EQUIVALENT_TRAILING.search(working):
+            working = _OR_EQUIVALENT_TRAILING.sub("", working).strip(" ,;.")
+            alternate_paths.append("or equivalent")
+        if _OR_PERMISSION_TRAILING.search(working):
+            working = _OR_PERMISSION_TRAILING.sub("", working).strip(" ,;.")
+            alternate_paths.append("or permission of instructor")
+
         grade_match = _GRADE_WITH_LABEL.search(working) or _GRADE_BARE.search(working)
         grade_min = grade_match.group(1).upper() if grade_match else None
         working_no_grade = _GRADE_WITH_LABEL.sub("", working)
@@ -371,7 +411,9 @@ def structured_prerequisite(course: CourseCatalogRecord) -> StructuredPrerequisi
                 if not sub_codes:
                     any_sub_empty = True
                     continue
-                requires_all.append(PrerequisiteClause(course_codes=sub_codes, grade_min=grade_min))
+                requires_all.append(
+                    PrerequisiteClause(course_codes=sub_codes, grade_min=grade_min, alternate_paths=alternate_paths)
+                )
                 if is_trailing_coreq:
                     coreq_allowed.extend(sub_codes)
             if ambiguous or any_sub_empty:
@@ -381,7 +423,9 @@ def structured_prerequisite(course: CourseCatalogRecord) -> StructuredPrerequisi
                 needs_review.append(clause)
             continue
 
-        requires_all.append(PrerequisiteClause(course_codes=codes, grade_min=grade_min))
+        requires_all.append(
+            PrerequisiteClause(course_codes=codes, grade_min=grade_min, alternate_paths=alternate_paths)
+        )
         if is_trailing_coreq:
             coreq_allowed.extend(codes)
 

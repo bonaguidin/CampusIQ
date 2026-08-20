@@ -196,6 +196,80 @@ def test_course_list_with_consent_of_instructor_alternative_is_not_required():
     assert len(result.needs_review) == 1
 
 
+# ── Trailing "or equivalent" / "or permission of instructor": parsed
+#    normally into requires_all, with the footnote preserved on
+#    PrerequisiteClause.alternate_paths rather than dropped or forced into
+#    needs_review. All 5 cases here are real prerequisites strings pulled
+#    live this session from data/catalog/smu/*.json (CS 3377, CS 2341,
+#    CS 5325, OREM 3340, CHEM 1303) -- the exact set spec §10 flagged as
+#    the needs-review bucket sharing this one boilerplate pattern, with
+#    CS 2341 being the one gating half of CS Core's remaining chain. ──────
+
+
+def test_or_equivalent_smu_cs_3377():
+    text = "Prerequisites: C- or better in CS 2341 or equivalent."
+    result = structured_prerequisite(_course(text, ["CS 2341"]))
+    assert _clauses(result) == [(["CS 2341"], "C-")]
+    assert result.requires_all[0].alternate_paths == ["or equivalent"]
+    assert result.needs_review == []
+
+
+def test_or_equivalent_smu_cs_2341_gates_cs_core_chain():
+    """CS 2341 is the prerequisite gating half of CS Core's remaining
+    no-choice chain (spec §10) -- this is the concrete case the fix exists
+    for, so it gets its own named test rather than riding along generically.
+    """
+    text = "Prerequisite: C- or better in CS 1342 or equivalent."
+    result = structured_prerequisite(_course(text, ["CS 1342"]))
+    assert _clauses(result) == [(["CS 1342"], "C-")]
+    assert result.requires_all[0].alternate_paths == ["or equivalent"]
+    assert result.needs_review == []
+
+
+def test_or_permission_of_instructor_smu_cs_5325():
+    text = "Prerequisite: CS 5324 or permission of instructor."
+    result = structured_prerequisite(_course(text, ["CS 5324"]))
+    assert _clauses(result) == [(["CS 5324"], None)]
+    assert result.requires_all[0].alternate_paths == ["or permission of instructor"]
+    assert result.needs_review == []
+
+
+def test_or_equivalent_smu_orem_3340():
+    text = "Prerequisite: C- or better in MATH 1338 or equivalent."
+    result = structured_prerequisite(_course(text, ["MATH 1338"]))
+    assert _clauses(result) == [(["MATH 1338"], "C-")]
+    assert result.requires_all[0].alternate_paths == ["or equivalent"]
+    assert result.needs_review == []
+
+
+def test_chem_1303_mid_clause_equivalent_with_third_alternative_still_needs_review():
+    """NOT the same shape as the 4 cases above: "equivalent" appears
+    mid-clause, followed by a third, distinct alternative (an exam) -- no
+    clean "course, plus one trailing footnote" shape to parse, so this must
+    remain conservative rather than being force-fit into the new pattern.
+    """
+    text = (
+        "Prerequisite to all advanced courses in the department. Prerequisites: "
+        "C- or higher in CHEM 1302, appropriate equivalent credit for CHEM 1303, "
+        "or a passing grade on the Chemistry Placement Exam."
+    )
+    result = structured_prerequisite(_course(text, ["CHEM 1302", "CHEM 1303"]))
+    assert result.requires_all == []
+    assert len(result.needs_review) == 1
+    assert "CHEM 1302" in result.needs_review[0]
+
+
+def test_or_equivalent_does_not_swallow_a_genuine_second_alternative():
+    """A course code followed by "or equivalent" mid-clause, with unrelated
+    content still trailing after it, must not match the trailing-only
+    regex -- guards against over-matching beyond the exact anchored shape.
+    """
+    text = "Prerequisite: CS 9999 or equivalent, and departmental approval."
+    result = structured_prerequisite(_course(text, ["CS 9999"]))
+    assert result.requires_all == []
+    assert len(result.needs_review) == 1
+
+
 # ── Genuinely ambiguous nested AND/OR: best-effort parse recorded, flagged
 #    for review -- not silently trusted, not silently discarded ───────────
 
