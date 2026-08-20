@@ -270,6 +270,102 @@ def test_or_equivalent_does_not_swallow_a_genuine_second_alternative():
     assert len(result.needs_review) == 1
 
 
+# ── Bare comma-separated course list, no "and"/"or" connector: AND, not
+#    OR (spec §10.1's follow-up finding, scoped in this session's
+#    investigation to 230 real courses -- CS 3353 was the one that
+#    surfaced it). Splits into one clause per course. All 6 real cases
+#    here are live text pulled from data/catalog/smu/*.json this session.
+#    Confirmed both collection points needed the fix: CS 3353 hits the
+#    top-level fallback (no "and" anywhere); CS 5320/5330/5343 hit the
+#    _AND_SPLIT sub-clause loop (a literal "and" appears before the LAST
+#    item only, leaving the earlier bare-comma pair merged before this
+#    fix) ─────────────────────────────────────────────────────────────────
+
+
+def test_bare_comma_two_courses_no_connector_splits_into_and():
+    text = "Prerequisites: C- or better in CS 2341, CS 2353."
+    result = structured_prerequisite(_course(text, ["CS 2341", "CS 2353"]))
+    assert _clauses(result) == [(["CS 2341"], "C-"), (["CS 2353"], "C-")]
+    assert result.needs_review == []
+
+
+def test_bare_comma_two_courses_no_connector_splits_into_and_second_example():
+    text = "Prerequisites: C- or better in MATH 1337, MATH 1338."
+    result = structured_prerequisite(_course(text, ["MATH 1337", "MATH 1338"]))
+    assert _clauses(result) == [(["MATH 1337"], "C-"), (["MATH 1338"], "C-")]
+
+
+def test_and_split_sub_clause_with_bare_comma_pair_also_splits():
+    """CS 5320: the literal "and" only appears before the THIRD item, so
+    the AND-split sub-clause loop -- not the top-level fallback -- is what
+    has to apply the fix to the earlier "CS 3353, CS 4340" pair. This is
+    the case proving both collection points needed the change, not just
+    one."""
+    text = "Prerequisites: C- or better in CS 3353, CS 4340, and MATH 3304."
+    result = structured_prerequisite(_course(text, ["CS 3353", "CS 4340", "MATH 3304"]))
+    assert _clauses(result) == [
+        (["CS 3353"], "C-"), (["CS 4340"], "C-"), (["MATH 3304"], "C-"),
+    ]
+
+
+def test_and_split_sub_clause_bare_comma_pair_cs_5330():
+    text = "Prerequisites: C- or better in CS 2341, CS 2353, and CS 3341."
+    result = structured_prerequisite(_course(text, ["CS 2341", "CS 2353", "CS 3341"]))
+    assert _clauses(result) == [
+        (["CS 2341"], "C-"), (["CS 2353"], "C-"), (["CS 3341"], "C-"),
+    ]
+
+
+def test_and_split_sub_clause_bare_comma_pair_cs_5343():
+    text = "Prerequisites: C- or better in CS 2340, CS 3353, and CS 3341."
+    result = structured_prerequisite(_course(text, ["CS 2340", "CS 3353", "CS 3341"]))
+    assert _clauses(result) == [
+        (["CS 2340"], "C-"), (["CS 3353"], "C-"), (["CS 3341"], "C-"),
+    ]
+
+
+def test_ambiguous_bucket_list_ending_in_or_permission_stays_merged():
+    """Out of scope for this fix, deliberately unchanged: a comma list
+    whose ONLY connector is a trailing "or permission of instructor"
+    governs the WHOLE list (a genuine multi-way OR: any one of the 5
+    courses, or permission), not an AND-list with a footnote. Real text,
+    SMU ASCE department."""
+    text = "Prerequisite: ASCE 1300, ASCE 1310, ASCE 3300, ASCE 3320, ASCE 3330, or permission of instructor."
+    codes = ["ASCE 1300", "ASCE 1310", "ASCE 3300", "ASCE 3320", "ASCE 3330"]
+    result = structured_prerequisite(_course(text, codes))
+    assert _clauses(result) == [(codes, None)]
+    assert result.requires_all[0].alternate_paths == ["or permission of instructor"]
+    assert result.needs_review == []
+
+
+def test_ambiguous_bucket_two_course_list_ending_in_or_permission_stays_merged():
+    """The genuinely-ambiguous case named in this session's investigation:
+    "(CHEM 1303 AND CHEM 1304) OR permission" vs. "CHEM 1303 OR CHEM 1304
+    OR permission" cannot be told apart from the text alone. Left exactly
+    as today produces it -- one merged clause -- rather than guessed at
+    either direction. Real text, SMU CHEM department (CHEM 4306/4317/
+    4321/4322 all share this exact string)."""
+    text = "Prerequisites: CHEM 1303, CHEM 1304 or permission of instructor."
+    result = structured_prerequisite(_course(text, ["CHEM 1303", "CHEM 1304"]))
+    assert _clauses(result) == [(["CHEM 1303", "CHEM 1304"], None)]
+    assert result.requires_all[0].alternate_paths == ["or permission of instructor"]
+    assert result.needs_review == []
+
+
+def test_bare_comma_split_does_not_break_slash_joined_cross_listing():
+    """CEE 5363: a genuine cross-listed pair (CEE 2310/ME 2310) alongside
+    a separately bare-comma'd course (CEE 2320) -- must split into 2
+    clauses (AND), but the cross-listed pair must stay merged as ONE of
+    them, not shatter into 3 independently-required courses. This is the
+    regression risk the fix has to get right from the start."""
+    text = "Prerequisites: CEE 2310/ME 2310, CEE 2320."
+    result = structured_prerequisite(_course(text, ["CEE 2310", "ME 2310", "CEE 2320"]))
+    assert _clauses(result) == [
+        (["CEE 2310", "ME 2310"], None),
+        (["CEE 2320"], None),
+    ]
+
+
 # ── Genuinely ambiguous nested AND/OR: best-effort parse recorded, flagged
 #    for review -- not silently trusted, not silently discarded ───────────
 

@@ -499,45 +499,59 @@ GradusIQ_career/course_discovery/scheduler.py, real prerequisite text
 pulled live from data/catalog/smu/*.json, checked into
 tests/fixtures/ethan_brooks_scheduler_input.json and
 tests/test_scheduler.py. Real computed result, 5 terms, comfortably
-inside the 6-term horizon to Spring 2029:
+inside the 6-term horizon to Spring 2029, recomputed after the
+bare-comma-as-OR parsing fix below landed:
 
 | Term | Courses | Credits |
 |---|---|---|
-| 2026-Fall | CS 2341, CS 2353, CS 3353, ENGR 2112, ENGR 3101, ENGR 4101, MATH 3304 | 15 |
-| 2027-Spring | CS 3341 | 3 |
+| 2026-Fall | CS 2341, CS 2353, ENGR 2112, ENGR 3101, ENGR 4101, MATH 3304 | 12 |
+| 2027-Spring | CS 3341, CS 3353 | 6 |
 | 2027-Fall | CS 5330, CS 5343, CS 5344 | 9 |
 | 2028-Spring | CS 5328 | 3 |
 | 2028-Fall | CS 5351 | 3 |
 
-**Real data-quality gap surfaced by this worked example, not fixed as
-part of this build task:** structured_prerequisite() merges a comma-only
-course list with no "and"/"or" connector into one OR-set
-PrerequisiteClause even when the source text is actually an AND-list.
-CS 3353's real text is "C- or better in CS 2341, CS 2353." (no connector
-at all) and CS 5330's is "..., CS 2341, CS 2353, and CS 3341." (an
-Oxford-comma AND-list) — both are genuine AND requirements, not real "or"
-alternatives, but the CS 2341/CS 2353 pair inside each parses as one
-2-code OR-set clause. Per this section's OR-clause decision, the
-scheduler correctly drops that clause and flags it (visible in both
-courses' `limitations`) rather than guessing — the right behavior given
-what StructuredPrerequisite actually reports — but the practical effect
-is that this real schedule is MORE PERMISSIVE than the true catalog
-requirement: CS 3353 lands in the same term as CS 2341/CS 2353 instead of
-strictly after them. Worth calling out specifically: **the "CS 5330's
-(CS 2341 or CS 2353)" example named earlier in this section's OR-clause
-decision is not actually a real "or" in the source catalog text** — it is
-this same comma-list parsing gap, not a genuine alternative-path
-requirement. The OR-clause-drop-and-flag decision itself is still correct
-and necessary in general (a real OR does exist elsewhere, e.g. Statistical
-Methods' CS 4340/STAT 4340/OREM 3340), but this specific illustrative case
-was mischaracterized. Fixing structured_prerequisite()'s comma-list
-handling (recognizing "X, Y[, and Z]" with no "or" as an AND-list, the
-same way "and" is already recognized) would make CS 3353 move to
-2027-Spring and remove both flagged limitations — a real, scoped follow-up,
-not a v1 blocker (the current output is safely-more-permissive, not
-unsafe, and CS 5328's "Corequisite: CS 5330" — the same deferred
-corequisite-parsing gap already flagged for the BIOL content-area case —
-is the same story: overly conservative, not incorrect).
+**Data-quality gap found and fixed this session:**
+structured_prerequisite() used to merge a comma-only course list with no
+"and"/"or" connector into one OR-set PrerequisiteClause even when the
+source text was actually an AND-list. CS 3353's real text is "C- or
+better in CS 2341, CS 2353." (no connector at all) and CS 5330's is
+"..., CS 2341, CS 2353, and CS 3341." (an Oxford-comma AND-list) — both
+are genuine AND requirements, not real "or" alternatives. Scoped
+corpus-wide before fixing (230 real courses affected, 158 SMU + 72 TAMU,
+of which 203 were unambiguous and 27 were a genuinely separate,
+deliberately-untouched ambiguous case — a comma list ending in a trailing
+"or equivalent"/"or permission of instructor" governing the WHOLE list,
+e.g. ASCE 3310's "..., ASCE 3330, or permission of instructor", a real
+6-way OR, correctly left alone). Fixed in
+GradusIQ_career/course_discovery/prerequisites.py's new
+_clauses_for_codes()/_identity_groups() helpers, applied at both
+collection points (the top-level fallback and the _AND_SPLIT sub-clause
+loop — CS 5320 confirmed both needed it, since its literal "and" only
+appears before the third item, leaving the earlier bare-comma pair
+merged under the old code at the sub-clause level). Slash-joined
+cross-listed identities (e.g. "CEE 2310/ME 2310", "CS 4340/OREM 3340/
+STAT 4340") are collapsed to one identity before the AND-split decision,
+so a genuine cross-listed pair is never shattered into two independently-
+required courses — the confirmed main regression risk, built in from the
+start. 29 tests in tests/test_structured_prerequisite.py (8 new), full
+suite 1506 passed, no regressions.
+
+Effect on the worked example above: CS 3353 now lands strictly after CS
+2341/CS 2353 (2027-Spring, not 2026-Fall alongside them), and CS 5330
+carries a real edge on all three of CS 2341/CS 2353/CS 3341 rather than a
+dropped-and-flagged OR-set — no `limitations` remain on any of the 13
+courses. The "CS 5330's (CS 2341 or CS 2353)" example originally named in
+this section's OR-clause decision was never actually a real "or" in the
+source catalog text; the OR-clause-drop-and-flag decision itself is still
+correct and necessary in general (a real OR does exist elsewhere, e.g.
+Statistical Methods' CS 4340/STAT 4340/OREM 3340 and the 27-item ambiguous
+bucket left untouched by this fix), but that specific illustrative case
+was mischaracterized. CS 5328's "Corequisite: CS 5330" — the same
+deferred corequisite-parsing gap already flagged for the BIOL
+content-area case — is still not fixed (out of scope for this fix, which
+targeted the bare-comma-as-OR bug specifically); it still produces an
+overly conservative but safe "CS 5330 strictly before CS 5328" edge
+instead of allowing the same term.
 
 Also confirmed via this real fixture: **in-progress-counts-as-cleared**
 correctly lets CS 2341 (whose only real prerequisite, CS 1342, is

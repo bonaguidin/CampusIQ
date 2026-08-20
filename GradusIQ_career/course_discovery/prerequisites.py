@@ -202,6 +202,18 @@ def evaluate_prerequisites(
 #   equivalent credit for CHEM 1303, or a passing grade on the Chemistry
 #   Placement Exam" -- a third, distinct alternative (an exam) follows
 #   "equivalent" there, so that one still lands in needs_review.
+#   Bare comma-separated course list, no "and"/"or" connector at all --
+#   catalog convention (confirmed against dozens of matching examples
+#   elsewhere in this same corpus that spell the "and" out) treats this as
+#   AND, not OR (SMU, data/catalog/smu/):
+#     "Prerequisites: C- or better in CS 2341, CS 2353."
+#   Splits into one clause per course (all required), not one merged
+#   OR-set -- see _clauses_for_codes(). Deliberately NOT applied when a
+#   trailing "or equivalent"/"or permission of instructor" already
+#   governs the whole list (e.g. "ASCE 1300, ... , ASCE 3330, or
+#   permission of instructor", a genuine multi-way OR) -- that shape stays
+#   a single merged clause, unchanged; see _clauses_for_codes()'s own
+#   docstring for why.
 #
 # NO CACHING/PERSISTENCE: computed on demand from an in-memory
 # CourseCatalogRecord, same as prerequisite_requirement() above -- that
@@ -241,6 +253,15 @@ _OR_PERMISSION_TRAILING = re.compile(
 
 _AND_SPLIT = re.compile(r"\band\b", re.IGNORECASE)
 _OR_WORD = re.compile(r"\bor\b", re.IGNORECASE)
+
+# A run of 2+ course codes joined by nothing but slashes -- "CEE 2310/ME
+# 2310", "CS 4340/OREM 3340/STAT 4340" -- denotes ONE course under multiple
+# departmental listings, not independent alternatives or independent
+# requirements. Must be collapsed to a single identity before deciding
+# whether a comma-separated code list is AND or OR (see _identity_groups
+# and _clauses_for_codes below), or a cross-listed pair would be wrongly
+# split into two separately-required courses.
+_SLASH_CHAIN = re.compile(r"[A-Z]{2,4}\s?\d{3,4}(?:\s*/\s*[A-Z]{2,4}\s?\d{3,4})+")
 
 # Clauses matching this and carrying no course code are recognized eligibility
 # text, not an unhandled gap -- routed to StructuredPrerequisite.restrictions.
@@ -303,6 +324,81 @@ def _codes_in_text(text: str, known_codes: list[str]) -> list[str]:
     already handled upstream).
     """
     return [code for code in known_codes if code and code in text]
+
+
+def _identity_groups(text: str, codes: list[str]) -> list[list[str]]:
+    """Group `codes` by slash-joined cross-listing chains found in `text`.
+
+    A code with no slash partner is its own single-element group. Order
+    follows each group's first-seen code in `codes`, so downstream output
+    stays deterministic regardless of iteration order over the chains
+    found in `text`.
+    """
+    parent = {code: code for code in codes}
+
+    def find(x: str) -> str:
+        while parent[x] != x:
+            x = parent[x]
+        return x
+
+    def union(a: str, b: str) -> None:
+        ra, rb = find(a), find(b)
+        if ra != rb:
+            parent[ra] = rb
+
+    for match in _SLASH_CHAIN.finditer(text):
+        chain = [part.strip() for part in match.group(0).split("/")]
+        members = [
+            code for code in codes
+            if any(code.replace(" ", "") == part.replace(" ", "") for part in chain)
+        ]
+        for a, b in zip(members, members[1:]):
+            union(a, b)
+
+    grouped: dict[str, list[str]] = {}
+    for code in codes:
+        grouped.setdefault(find(code), []).append(code)
+    representatives = list(dict.fromkeys(find(code) for code in codes))
+    return [grouped[rep] for rep in representatives]
+
+
+def _clauses_for_codes(
+    text: str, codes: list[str], grade_min: str | None, alternate_paths: list[str]
+) -> list["PrerequisiteClause"]:
+    """One or more PrerequisiteClauses for a group of course codes found
+    together in one (sub-)clause's text.
+
+    Splits into one clause per cross-listing-collapsed identity group --
+    AND semantics, one code (or cross-listed pair/chain) independently
+    required per clause -- when nothing but bare commas join the codes:
+    "C- or better in CS 2341, CS 2353." (confirmed live, CS 3353) means
+    both are required, not either/or, matching the many real examples in
+    this same corpus that use the identical structure with the connector
+    word present ("CS 2341, CS 2353, and CS 3341", CS 5330).
+
+    Stays ONE merged OR-set clause -- today's behavior, unchanged -- when:
+      - only one identity group exists at all (a single course, or a pure
+        cross-listed pair/chain with nothing else in the clause); or
+      - a genuine "or" connects the codes, literally present in `text`
+        (e.g. Statistical Methods' "CS 4340, STAT 4340, or OREM 3340"); or
+      - `alternate_paths` is non-empty -- a trailing "or equivalent" / "or
+        permission of instructor" qualifier was already stripped from the
+        clause before this runs (see structured_prerequisite()), so its
+        own "or" no longer appears in `text` even though it's the real
+        reason multiple codes were named together (e.g. ASCE 3310's "...
+        ASCE 3330, or permission of instructor" -- a genuine 6-way OR
+        across all 5 courses plus the qualifier, not an AND-list).
+        Deliberately left alone -- this whole shape (comma list + trailing
+        qualifier over multiple courses) is a separate, genuinely
+        ambiguous bucket, out of scope for this fix.
+    """
+    groups = _identity_groups(text, codes)
+    if len(groups) <= 1 or alternate_paths or _OR_WORD.search(text):
+        return [PrerequisiteClause(course_codes=codes, grade_min=grade_min, alternate_paths=alternate_paths)]
+    return [
+        PrerequisiteClause(course_codes=group, grade_min=grade_min, alternate_paths=alternate_paths)
+        for group in groups
+    ]
 
 
 def _has_ambiguous_and_or(text_without_grade_phrase: str, code_count: int) -> bool:
@@ -411,8 +507,8 @@ def structured_prerequisite(course: CourseCatalogRecord) -> StructuredPrerequisi
                 if not sub_codes:
                     any_sub_empty = True
                     continue
-                requires_all.append(
-                    PrerequisiteClause(course_codes=sub_codes, grade_min=grade_min, alternate_paths=alternate_paths)
+                requires_all.extend(
+                    _clauses_for_codes(sub_clause, sub_codes, grade_min, alternate_paths)
                 )
                 if is_trailing_coreq:
                     coreq_allowed.extend(sub_codes)
@@ -423,9 +519,7 @@ def structured_prerequisite(course: CourseCatalogRecord) -> StructuredPrerequisi
                 needs_review.append(clause)
             continue
 
-        requires_all.append(
-            PrerequisiteClause(course_codes=codes, grade_min=grade_min, alternate_paths=alternate_paths)
-        )
+        requires_all.extend(_clauses_for_codes(working_no_grade, codes, grade_min, alternate_paths))
         if is_trailing_coreq:
             coreq_allowed.extend(codes)
 

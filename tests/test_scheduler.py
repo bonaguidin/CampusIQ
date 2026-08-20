@@ -76,25 +76,14 @@ def test_ethan_brooks_13_course_v1_scope():
     cap, starting 2026-Fall (today, per system context, sits right at that
     term's boundary -- see spec §10's term-horizon discussion).
 
-    VERIFIED FINDING, not asserted blindly: structured_prerequisite()
-    merges a comma-only list with no 'and'/'or' connector into one OR-set
-    clause even when the source text is an AND-list. CS 3353's real text
-    is "C- or better in CS 2341, CS 2353." (no connector at all) and CS
-    5330's is "..., CS 2341, CS 2353, and CS 3341." (Oxford AND-list) --
-    both are genuine AND requirements, not real "or" alternatives, but
-    parse as one 2-code OR-set clause for the CS2341/CS2353 pair. Per
-    §10.1's OR-clause decision this scheduler drops that clause and flags
-    it rather than guessing -- which is the safe, faithful behavior given
-    what StructuredPrerequisite actually reports, but means this specific
-    real schedule is MORE PERMISSIVE than the true catalog requirement:
-    CS 3353 lands in the same term as CS 2341/CS 2353 instead of strictly
-    after them. This is a pre-existing gap in structured_prerequisite()'s
-    comma-list handling (out of scope for this build task -- see the
-    fixture's own _notes), not a bug in this scheduler's OR-clause
-    handling, which is doing exactly what §10.1 specifies with the input
-    it was given. Recorded here, verified, and asserted explicitly so a
-    future prerequisites.py fix has a test that will visibly change
-    (CS 3353 moving to 2027-Spring) rather than a silent behavior change.
+    Reflects the bare-comma-as-OR parsing fix (prerequisites.py's
+    _clauses_for_codes()): CS 3353's real text "C- or better in CS 2341,
+    CS 2353." now correctly splits into two hard AND edges instead of one
+    dropped-and-flagged OR-set clause, so CS 3353 lands strictly after CS
+    2341/CS 2353 (2027-Spring), not in the same term as them -- see the
+    fixture's own _notes for the before/after. CS 5330's real "..., CS
+    2341, CS 2353, and CS 3341." similarly now carries all three as real
+    edges, with no limitations left on either course.
     """
     fixture, courses, prerequisites, satisfied, unscheduled = _load_ethan_brooks_case()
 
@@ -128,9 +117,9 @@ def test_ethan_brooks_13_course_v1_scope():
     ]
     by_term = {term.term_key: sorted(c.course_code for c in term.courses) for term in result.terms}
     assert by_term["2026-Fall"] == [
-        "CS 2341", "CS 2353", "CS 3353", "ENGR 2112", "ENGR 3101", "ENGR 4101", "MATH 3304",
+        "CS 2341", "CS 2353", "ENGR 2112", "ENGR 3101", "ENGR 4101", "MATH 3304",
     ]
-    assert by_term["2027-Spring"] == ["CS 3341"]
+    assert by_term["2027-Spring"] == ["CS 3341", "CS 3353"]
     assert by_term["2027-Fall"] == ["CS 5330", "CS 5343", "CS 5344"]
     assert by_term["2028-Spring"] == ["CS 5328"]
     assert by_term["2028-Fall"] == ["CS 5351"]
@@ -138,34 +127,28 @@ def test_ethan_brooks_13_course_v1_scope():
     # Credit totals per term, none exceeding the 15-credit cap.
     totals = {term.term_key: term.total_credit_hours for term in result.terms}
     assert totals == {
-        "2026-Fall": 15.0, "2027-Spring": 3.0, "2027-Fall": 9.0,
+        "2026-Fall": 12.0, "2027-Spring": 6.0, "2027-Fall": 9.0,
         "2028-Spring": 3.0, "2028-Fall": 3.0,
     }
     assert sum(totals.values()) == 33.0
     assert all(total <= 15.0 for total in totals.values())
 
-    # The dropped-and-flagged OR-set clause (see the docstring above) is
-    # visible on both courses whose real text produced it -- not silently
-    # resolved either direction.
+    # No limitations anywhere -- every real prerequisite among these 13
+    # courses now resolves to either an already-satisfied clause or a
+    # clean hard AND edge; the bare-comma-as-OR bug that used to leave
+    # CS 3353/CS 5330 flagged is fixed.
     limitations_by_code = {
         c.course_code: c.limitations for term in result.terms for c in term.courses
     }
-    assert limitations_by_code["CS 3353"] == [
-        "prerequisite (CS 2341 or CS 2353) not modeled as a hard ordering edge -- "
-        "OR-clause, not tracked to a single alternative"
-    ]
-    assert limitations_by_code["CS 5330"] == [
-        "prerequisite (CS 2341 or CS 2353) not modeled as a hard ordering edge -- "
-        "OR-clause, not tracked to a single alternative"
-    ]
-    # Every other course has no limitations -- their real prerequisites
-    # were either already satisfied or resolved to clean single edges.
-    assert {code for code, lims in limitations_by_code.items() if lims} == {"CS 3353", "CS 5330"}
+    assert all(lims == [] for lims in limitations_by_code.values())
 
-    # CS Core's real prereq chain is respected: CS 2341 before CS 3341,
-    # CS 3341 before its dependents, CS 5328 before CS 5351.
+    # CS Core's real prereq chain is respected: CS 2341 before CS 3341
+    # AND before CS 3353 (now a real edge, not dropped), CS 3341 before
+    # its dependents, CS 5328 before CS 5351.
     term_index = {code: i for i, term in enumerate(result.terms) for code in by_term[term.term_key]}
     assert term_index["CS 2341"] < term_index["CS 3341"]
+    assert term_index["CS 2341"] < term_index["CS 3353"]
+    assert term_index["CS 2353"] < term_index["CS 3353"]
     assert term_index["CS 3341"] < term_index["CS 5330"]
     assert term_index["CS 3341"] < term_index["CS 5344"]
     assert term_index["CS 5328"] < term_index["CS 5351"]
