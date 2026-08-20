@@ -377,3 +377,170 @@ enumerated_all to enumerated_credit_threshold, and
 fetch_smu_requirements.py's CONDITION_TO_GROUP_TYPE updated so a future
 re-ingestion maps completeVariableCoursesAndVariableCredits correctly
 without a manual fix). Not yet wired into an API endpoint or UI.
+
+---
+
+## 10. Scheduler — scoping decisions
+
+Scoped via a hand-trace against Ethan Brooks' real remaining
+requirements (13 leaf groups still open, per the live requirement-
+satisfaction endpoint), the same grounding approach used for the
+satisfaction engine.
+
+**Findings:** his remaining requirements split into 3 single-course
+fills, one no-choice 8-course chain (Computer Science Core, with real
+prereq ordering: CS 2341 → CS 3341 → {CS 3353, CS 5330, CS 5343, CS
+5344} → CS 5328 → CS 5351), 5 groups requiring genuine course selection
+(Advanced/Domain-Specific AI, Experiential Learning, Statistical
+Methods, the lab-science content-area choice, Engineering Leadership),
+and 2 freeform groups (Technical Electives, Advanced Major Electives)
+that are un-schedulable until an adviser names actual courses.
+
+**Decided: v1 scope is ordering only, selection deferred.** The
+scheduler handles topological ordering and credit-hour bin-packing for
+groups with a single obvious candidate or a fixed no-choice chain. The
+5 groups requiring genuine selection among options are deferred to a
+later phase — building selection logic now would sit on top of §9's
+still-open credit-threshold/compound-any display semantics, risking
+rework. This still covers the majority of Ethan's real remaining courses
+by count.
+
+**Known bug, deferred (not a v1 blocker):** structured_prerequisite()
+doesn't parse "prerequisite or corequisite" / "corequisite" phrasing
+into coreq_allowed — it lands in requires_all as an ordinary
+prerequisite. On real SMU data this creates an actual cycle (BIOL 1301
+requires BIOL 1101 requires BIOL 1301), which would break a naive
+topological sort. This only affects the Biology/Chemistry lab-science
+content-area choice — one of the 5 deferred selection groups — so it is
+NOT a v1 blocker, but must be fixed before Phase 2 (selection logic)
+is built.
+
+**Fixed for v1: "X or equivalent" parser gap.** 4 of 5 needs-review
+prerequisite strings shared one common boilerplate pattern
+("C-/better in COURSE or equivalent" / "... or permission of
+instructor") that the parser conservatively refused rather than guessed
+at. This blocked CS 2341, which gates half of CS Core's remaining
+no-choice chain — squarely in v1 scope. See build task for the fix.
+
+**Term-offering data: confirmed absent, accepted as a documented v1
+simplification.** Re-checked directly (not just re-citing the original
+§3.4/§7 flag) — no field or table anywhere carries term-offering
+patterns; only 2 phrase-based hits exist in the entire SMU corpus,
+neither relevant to Ethan's candidates. v1 assumes every course is
+offered every long term. Known risk, not uniform: CS 5391/5394
+(independent study, arranged per-student) and CS 5325 (a specialized
+5000-level elective, plausibly once-a-year) are the two candidates most
+likely to violate this assumption among his real remaining courses.
+
+**No existing TermPlanner class or per-term credit-hour cap exists** —
+searched directly, not found under that name. Reusable: academic_terms/
+academic_term_dates + planning/term_view.py's term-identity/upcoming-term
+logic, transcript/terms.py's SEASON_ORDER vocabulary,
+planning/planned.py's add_planned/ensure_term_row for attaching courses
+to future terms. Credit-hour bin-packing is new logic — nothing to
+reuse for the cap itself (planned.py's MAX_CREDIT_HOURS=99.99 is a
+single-course sanity ceiling, not a registration-load cap).
+
+---
+
+## 10.1 Scheduler — architecture
+
+Investigated and proposed against real conventions already in this
+codebase — specifically GradusIQ_career/action_planning/query.py's
+dependency_order() (Kahn's algorithm, lexicographic tie-break,
+cycle-detection-first, PlanFailure fail-closed envelope,
+unconstrained/limitations-never-silent output) — mirrored exactly rather
+than reinvented, same discipline the satisfaction engine used matching
+course_discovery/'s existing shape.
+
+**Module placement:** GradusIQ_career/course_discovery/scheduler.py, a
+pure function (no Client, hand-built fixtures, zero I/O) consuming
+already-computed RequirementGroupResult + StructuredPrerequisite + term
+data.
+
+**v1 scope, corrected from §10's original framing:** every LEAF group
+that is no-choice (single obvious course, or a fixed multi-course chain
+with no selection among alternatives) — not limited to the two buckets
+named in §10's scoping pass. This includes Interdisciplinary Projects'
+remaining ENGR 3101/ENGR 4101 (missed in the original scoping - a real
+oversight, not an intentional exclusion) alongside the 3 single fills
+and Computer Science Core's 8-course chain. The 5 groups requiring
+genuine selection among options, plus the 2 freeform groups, remain
+deferred per §10.
+
+**Decisions:**
+- **OR-clause prerequisites** (e.g. CS 5330's (CS 2341 or CS 2353)):
+  drop the edge, record as a limitation, matching action_planning's
+  documented policy exactly — never synthesize a hard edge that would
+  silently convert OR into AND.
+- **In-progress counts as satisfied** for prerequisite-clearing purposes
+  (not just satisfaction-engine display), consistent with §8.4 — a
+  future term's prerequisite check treats an in-progress course as
+  cleared, since it resolves before any later term begins.
+- **Credit-hour cap: hardcoded 15 for v1**, not adaptive to student
+  history. Revisit only if a real case demonstrates 15 produces a bad
+  plan.
+- **Over-constrained detection is in scope for v1** — if remaining
+  no-choice credit hours can't fit before expected_graduation given the
+  cap and term horizon, the scheduler flags this via the same
+  fail-closed status/failure pattern used elsewhere, not silently.
+
+**Output shape:** ScheduledCourse (course_code, credit_hours,
+requirement_group_id for traceability, limitations), TermPlan (term_key,
+courses, total_credit_hours), UnscheduledRequirement
+(requirement_group_id, name, reason: SELECTION_DEFERRED |
+FREEFORM_MANUAL_REVIEW), wrapped in ScheduleResult (student_id,
+program_id, terms, unscheduled, status: SCHEDULED|ERROR, failure:
+PlanFailure | None — reused directly from action_planning).
+
+**Worked example (Ethan Brooks, corrected 13-course v1 scope, 15-credit
+cap, starting 2026-Fall):** built and tested —
+GradusIQ_career/course_discovery/scheduler.py, real prerequisite text
+pulled live from data/catalog/smu/*.json, checked into
+tests/fixtures/ethan_brooks_scheduler_input.json and
+tests/test_scheduler.py. Real computed result, 5 terms, comfortably
+inside the 6-term horizon to Spring 2029:
+
+| Term | Courses | Credits |
+|---|---|---|
+| 2026-Fall | CS 2341, CS 2353, CS 3353, ENGR 2112, ENGR 3101, ENGR 4101, MATH 3304 | 15 |
+| 2027-Spring | CS 3341 | 3 |
+| 2027-Fall | CS 5330, CS 5343, CS 5344 | 9 |
+| 2028-Spring | CS 5328 | 3 |
+| 2028-Fall | CS 5351 | 3 |
+
+**Real data-quality gap surfaced by this worked example, not fixed as
+part of this build task:** structured_prerequisite() merges a comma-only
+course list with no "and"/"or" connector into one OR-set
+PrerequisiteClause even when the source text is actually an AND-list.
+CS 3353's real text is "C- or better in CS 2341, CS 2353." (no connector
+at all) and CS 5330's is "..., CS 2341, CS 2353, and CS 3341." (an
+Oxford-comma AND-list) — both are genuine AND requirements, not real "or"
+alternatives, but the CS 2341/CS 2353 pair inside each parses as one
+2-code OR-set clause. Per this section's OR-clause decision, the
+scheduler correctly drops that clause and flags it (visible in both
+courses' `limitations`) rather than guessing — the right behavior given
+what StructuredPrerequisite actually reports — but the practical effect
+is that this real schedule is MORE PERMISSIVE than the true catalog
+requirement: CS 3353 lands in the same term as CS 2341/CS 2353 instead of
+strictly after them. Worth calling out specifically: **the "CS 5330's
+(CS 2341 or CS 2353)" example named earlier in this section's OR-clause
+decision is not actually a real "or" in the source catalog text** — it is
+this same comma-list parsing gap, not a genuine alternative-path
+requirement. The OR-clause-drop-and-flag decision itself is still correct
+and necessary in general (a real OR does exist elsewhere, e.g. Statistical
+Methods' CS 4340/STAT 4340/OREM 3340), but this specific illustrative case
+was mischaracterized. Fixing structured_prerequisite()'s comma-list
+handling (recognizing "X, Y[, and Z]" with no "or" as an AND-list, the
+same way "and" is already recognized) would make CS 3353 move to
+2027-Spring and remove both flagged limitations — a real, scoped follow-up,
+not a v1 blocker (the current output is safely-more-permissive, not
+unsafe, and CS 5328's "Corequisite: CS 5330" — the same deferred
+corequisite-parsing gap already flagged for the BIOL content-area case —
+is the same story: overly conservative, not incorrect).
+
+Also confirmed via this real fixture: **in-progress-counts-as-cleared**
+correctly lets CS 2341 (whose only real prerequisite, CS 1342, is
+in-progress) and MATH 3304 (whose OR-clause is trivially met by
+already-in-progress MATH 1338) both land in the very first term, matching
+the decision above.
