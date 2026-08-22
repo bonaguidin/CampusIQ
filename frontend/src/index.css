@@ -5869,6 +5869,71 @@ a {
   opacity: 0.6;
 }
 
+/* Demo dashboard's static, read-only course-lifecycle example table -- same
+   flat/monochrome badge language as the term planner above, but its own
+   modifier classes rather than reusing course-status-badge's (this content
+   is never editable, so it must never look identical to TermPlanner's rows). */
+
+.demo-lifecycle-preview {
+  margin-top: var(--sp-5);
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--line);
+}
+
+.demo-lifecycle-heading {
+  margin: 0 0 var(--sp-1);
+}
+
+.demo-lifecycle-note {
+  margin: 0 0 var(--sp-3);
+  color: var(--muted);
+  font-size: 0.875rem;
+  font-style: italic;
+}
+
+.demo-lifecycle-rows {
+  display: flex;
+  flex-direction: column;
+}
+
+.demo-lifecycle-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3) 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.demo-lifecycle-row small {
+  display: block;
+  color: var(--muted);
+}
+
+.demo-lifecycle-badge--in_progress {
+  border-color: var(--ink);
+  color: var(--ink);
+}
+
+.demo-lifecycle-badge--completed {
+  border-color: var(--muted);
+  color: var(--ink);
+}
+
+.demo-lifecycle-badge--planned {
+  border-style: dashed;
+}
+
+.demo-lifecycle-badge--dropped {
+  opacity: 0.6;
+}
+
+@media (max-width: 640px) {
+  .demo-lifecycle-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+}
+
 .current-grade-cell {
   display: flex;
   align-items: center;

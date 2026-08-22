@@ -21,7 +21,15 @@
 // The proxy secret is attached to every forwarded request either way.
 
 // POST features run AI work; 'profile' is a plain read and is the only GET.
-const ALLOWED_FEATURES = new Set(['gap', 'fit', 'shift', 'professor-comments', 'chat'])
+const ALLOWED_FEATURES = new Set([
+  'gap',
+  'fit',
+  'shift',
+  'professor-comments',
+  'chat',
+  'course-discovery',
+  'action-plan',
+])
 const GET_FEATURES = new Set(['profile'])
 const STUDENT_SLUG_PATTERN = /^[A-Za-z0-9]{1,64}$/
 const PROXY_SECRET_HEADER = 'X-GradusIQ-Proxy-Secret'
@@ -82,8 +90,13 @@ const ME_TARGETS = Object.assign(Object.create(null), {
   'me-planned-courses': { methods: ['GET', 'POST'], needsFeature: false, optionalTermId: true },
   'me-planned-course-remove': { method: 'DELETE', needsFeature: false, needsPlannedRecord: true },
   'me-catalog-search': { method: 'GET', needsFeature: false, needsQuery: true },
+  // Action Plan's real backend route is /api/v2/student/me/action-plan --
+  // NOT under /analyze/, so it cannot ride ME_ANALYZE_FEATURES/meBackendPath's
+  // generic /analyze/:feature fallback the way gap/fit/shift/course-discovery
+  // do. It needs its own target, same as me-terms/me-chat.
+  'me-action-plan': { method: 'POST', needsFeature: false },
 })
-const ME_ANALYZE_FEATURES = new Set(['gap', 'fit', 'shift', 'professor-comments'])
+const ME_ANALYZE_FEATURES = new Set(['gap', 'fit', 'shift', 'professor-comments', 'course-discovery'])
 
 // Must stay in step with TABLE_BY_SEGMENT in GradusIQ_career/resume/review.py.
 const REVIEW_TABLES = new Set([
@@ -143,6 +156,7 @@ function meBackendPath(target, feature, reviewTable, recordId, searchQuery, term
   if (target === 'me-catalog-search') {
     return `/api/v2/student/me/catalog/search?q=${encodeURIComponent(searchQuery)}`
   }
+  if (target === 'me-action-plan') return '/api/v2/student/me/action-plan'
   if (target === 'me-chat') return '/api/v2/student/me/chat'
   if (target === 'me-profile') return '/api/v2/student/me/profile'
   if (target === 'me-resume-upload') return '/api/v2/student/me/resume/upload'

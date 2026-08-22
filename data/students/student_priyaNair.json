@@ -793,6 +793,33 @@
       }
     }
   },
+  "course_lifecycle_preview": [
+    {
+      "status": "planned",
+      "course_code": "AERO 302",
+      "title": "Aerodynamics I",
+      "term_label": "Fall 2026"
+    },
+    {
+      "status": "in_progress",
+      "course_code": "AERO 221",
+      "title": "Analytical Methods for Aerospace Engineering",
+      "term_label": "Spring 2026"
+    },
+    {
+      "status": "completed",
+      "course_code": "HIST 105",
+      "title": "History of the United States",
+      "term_label": "Fall 2024",
+      "letter_grade": "A"
+    },
+    {
+      "status": "dropped",
+      "course_code": "COMM 203",
+      "title": "Public Speaking",
+      "term_label": "Fall 2024"
+    }
+  ],
   "examTopicTags": {
     "5010": [
       {

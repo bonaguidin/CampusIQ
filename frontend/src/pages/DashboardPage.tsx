@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/useAuth';
 import { AcademicSnapshot } from '../components/AcademicSnapshot';
+import { DemoCourseLifecyclePreview } from '../components/DemoCourseLifecyclePreview';
+import { CourseDiscoveryPanel } from '../components/CourseDiscoveryPanel';
 import { CareerPanel } from '../components/CareerPanel';
 import { GapAnalysisPanel } from '../components/GapAnalysisPanel';
 import { FitAnalysisPanel } from '../components/FitAnalysisPanel';
@@ -407,6 +409,10 @@ function DemoDashboardPage() {
                   submissions={profile.submissions}
                   examTopicTags={profile.examTopicTags}
                 />
+                <DemoCourseLifecyclePreview rows={profile.course_lifecycle_preview ?? []} />
+                {career && career.target_roles.length > 0 && (
+                  <CourseDiscoveryPanel targetRoles={career.target_roles} />
+                )}
               </div>
             )}
 

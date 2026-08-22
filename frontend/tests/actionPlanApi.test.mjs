@@ -52,13 +52,28 @@ test('analyzeActionPlan request never carries a student id, need objects, plan n
   assert.equal('edges' in sent, false)
 })
 
-test('analyzeActionPlan has no demo/slug route -- it is authenticated only', async (t) => {
+test('analyzeActionPlan uses the demo route when a slug identity is supplied, matching Course Discovery', async (t) => {
+  const calls = []
+  t.mock.method(globalThis, 'fetch', fakeFetch(calls))
+
+  await analyzeActionPlan({ slug: 'demo-student', accessToken: null }, 'Robotics Engineer')
+
+  assert.equal(calls[0].url, '/api/students/demo-student/analyze/action-plan')
+  assert.equal(calls[0].init.headers.Authorization, undefined)
+  assert.deepEqual(JSON.parse(calls[0].init.body), { target_role: 'Robotics Engineer' })
+})
+
+test('analyzeActionPlan prefers the demo route over accessToken when both are present', async (t) => {
+  // Mirrors analysisPath()'s precedence for every other analyze call: a slug
+  // identity always means a demo session, even if a stray accessToken is
+  // also present on the identity object.
   const calls = []
   t.mock.method(globalThis, 'fetch', fakeFetch(calls))
 
   await analyzeActionPlan({ slug: 'demo-student', accessToken: 'session-token' })
 
-  assert.equal(calls[0].url, '/api/v2/student/me/action-plan')
+  assert.equal(calls[0].url, '/api/students/demo-student/analyze/action-plan')
+  assert.equal(calls[0].init.headers.Authorization, undefined)
 })
 
 test('analyzeActionPlan requires a session', () => {

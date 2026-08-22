@@ -681,6 +681,33 @@
       }
     }
   },
+  "course_lifecycle_preview": [
+    {
+      "status": "planned",
+      "course_code": "ACCT 230",
+      "title": "Foundations of Accounting II",
+      "term_label": "Fall 2026"
+    },
+    {
+      "status": "in_progress",
+      "course_code": "ACCT 229",
+      "title": "Foundations of Accounting I",
+      "term_label": "Spring 2026"
+    },
+    {
+      "status": "completed",
+      "course_code": "HIST 105",
+      "title": "History of the United States",
+      "term_label": "Fall 2025",
+      "letter_grade": "A-"
+    },
+    {
+      "status": "dropped",
+      "course_code": "COMM 203",
+      "title": "Public Speaking",
+      "term_label": "Fall 2025"
+    }
+  ],
   "examTopicTags": {
     "5004": [
       {

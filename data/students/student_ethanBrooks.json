@@ -975,6 +975,33 @@
       }
     }
   },
+  "course_lifecycle_preview": [
+    {
+      "status": "planned",
+      "course_code": "ENGR 216",
+      "title": "Engineering Mechanics: Statics",
+      "term_label": "Fall 2026"
+    },
+    {
+      "status": "in_progress",
+      "course_code": "MATH 151",
+      "title": "Engineering Mathematics I",
+      "term_label": "Spring 2026"
+    },
+    {
+      "status": "completed",
+      "course_code": "HIST 105",
+      "title": "History of the United States",
+      "term_label": "Fall 2025",
+      "letter_grade": "B+"
+    },
+    {
+      "status": "dropped",
+      "course_code": "COMM 203",
+      "title": "Public Speaking",
+      "term_label": "Fall 2025"
+    }
+  ],
   "examTopicTags": {
     "5021": [
       {

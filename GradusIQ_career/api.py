@@ -71,6 +71,7 @@ from GradusIQ_career.planning.lifecycle import (
 from GradusIQ_career.action_planning import build_action_plan, dependency_order
 from GradusIQ_career.course_discovery.agent import CourseDiscoveryAgent
 from GradusIQ_career.course_discovery.catalog import LocalCatalogRepository
+from GradusIQ_career.course_discovery.agent_models import CourseDiscoveryResult
 from GradusIQ_career.course_discovery.models import (
     CatalogInstitution,
     CareerSkillNeed,
@@ -113,6 +114,8 @@ from GradusIQ_career.degree_plan_career_optimization import (
     compute_career_optimized_response,
     skipped_response,
 )
+from GradusIQ_career.demo.profile_adapter import build_demo_intelligence_profile
+from GradusIQ_career.demo.role_slug import role_slug
 from GradusIQ_career.resume.extraction import extract_resume_text
 from GradusIQ_career.resume.parser import parse_resume_text
 from GradusIQ_career.resume.review import (
@@ -1259,6 +1262,76 @@ def _run_authenticated_action_plan_preview(
     }
 
 
+def _resolve_demo_course_discovery_inputs(
+    profile_json: dict, body: CourseDiscoveryRequest | None
+):
+    """Demo-only sibling of _resolve_course_discovery_inputs.
+
+    No request/session/Postgres dependency: profile_json comes straight off
+    disk (load_student_profile), and planned_courses is hardcoded to [] since
+    demo students have no planned_courses rows anywhere. Same skip-condition
+    FeatureResult shapes as the real path, for consistent frontend handling.
+    """
+    canonical = build_demo_intelligence_profile(profile_json)
+    institution = resolve_institution(canonical.institution.name)
+    if institution is None:
+        return FeatureResult(
+            feature="COURSE_DISCOVERY", status="skipped",
+            summary="Course discovery is not available for this institution.",
+            missing_fields=[MissingField(path="institution.name", label="Supported institution")],
+        )
+    roles = canonical.career.target_roles if canonical.career.confirmed else []
+    requested = body.target_role.strip() if body and body.target_role else None
+    target_role = requested or (roles[0] if len(roles) == 1 else None)
+    if target_role is None or target_role not in roles:
+        return FeatureResult(
+            feature="COURSE_DISCOVERY", status="skipped",
+            summary="Select a confirmed target role before discovering courses.",
+            missing_fields=[MissingField(path="career.target_roles", label="Confirmed target role")],
+        )
+    if not is_role_supported(target_role):
+        return FeatureResult(
+            feature="COURSE_DISCOVERY", status="skipped",
+            summary="Career analysis isn't available for this target role yet.",
+            missing_fields=[MissingField(
+                path="career.target_roles",
+                label="Career analysis isn't available for this target role yet. Choose a supported target role.",
+            )],
+        )
+    context = CourseDiscoveryContext(profile=canonical, institution=institution, planned_courses=[])
+    needs = derive_career_skill_needs(canonical, target_role)
+    return context, needs, target_role
+
+
+def load_cached_course_discovery(student_slug: str, target_role: str) -> dict | None:
+    """A validated cached Course Discovery result, or None on any cache miss.
+
+    Cache files are built by GradusIQ_career/demo/build_course_discovery_cache.py.
+    Malformed/missing files, a non-success status, or a data shape that no
+    longer matches CourseDiscoveryResult are all treated as a cache miss
+    rather than trusted or crashing -- same defensive posture as
+    load_cached_feature_result.
+    """
+    if not student_slug.isalnum() or len(student_slug) > 64:
+        return None
+    cache_path = CACHED_ANALYSIS_DIR / f"course_discovery_{student_slug}_{role_slug(target_role)}.json"
+    if not cache_path.exists():
+        return None
+    try:
+        cached = json.loads(cache_path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    if not isinstance(cached, dict):
+        return None
+    if cached.get("feature") != "COURSE_DISCOVERY" or cached.get("status") != "success" or cached.get("errors"):
+        return None
+    try:
+        CourseDiscoveryResult.model_validate(cached.get("data"))
+    except Exception:  # noqa: BLE001 -- any validation failure is a cache miss
+        return None
+    return cached
+
+
 _GRADUATION_PATTERN = re.compile(r"^(Spring|Fall) 20[0-9]{2}$")
 
 
@@ -1351,6 +1424,96 @@ def action_plan_me(request: Request, body: CourseDiscoveryRequest | None = None)
     enrollment or advisor action. See _run_authenticated_action_plan_preview.
     """
     return _run_authenticated_action_plan_preview(request, body)
+
+
+@router.post(
+    "/api/students/{student_slug}/analyze/course-discovery",
+    dependencies=[Depends(authorize_proxy_request)],
+)
+def analyze_course_discovery_demo(
+    request: Request, student_slug: str, body: CourseDiscoveryRequest | None = None
+) -> dict:
+    """Demo counterpart to /api/v2/student/me/analyze/course-discovery.
+
+    authorize_student_access 403s every non-demo slug (see its docstring), so
+    by the time this returns, student_slug is guaranteed to be in
+    DEMO_STUDENT_SLUGS. Cache-first, same as GAP/FIT/SHIFT: serves
+    data/demo_cache/course_discovery_<slug>_<role>.json when present, else
+    falls back to a live run. The live fallback is request-scoped only -- it
+    is never written back to the cache file (see _run_course_discovery_agent),
+    so a live-fallback response can never permanently change what the next
+    demo viewer sees.
+    """
+    authorize_student_access(request, student_slug)
+    profile_json = load_student_profile(student_slug)
+    resolved = _resolve_demo_course_discovery_inputs(profile_json, body)
+    if isinstance(resolved, FeatureResult):
+        return resolved.to_dict()
+    context, needs, target_role = resolved
+    cached = load_cached_course_discovery(student_slug, target_role)
+    if cached is not None:
+        return cached
+    outcome = _run_course_discovery_agent(request, context, needs, target_role)
+    if outcome.errors or outcome.result is None:
+        return FeatureResult(
+            feature="COURSE_DISCOVERY", status="failed",
+            summary="Course discovery failed.", errors=outcome.errors,
+        ).to_dict()
+    return FeatureResult(
+        feature="COURSE_DISCOVERY", status="success", summary=outcome.result.summary,
+        data=outcome.result.model_dump(mode="json"),
+    ).to_dict()
+
+
+@router.post(
+    "/api/students/{student_slug}/analyze/action-plan",
+    dependencies=[Depends(authorize_proxy_request)],
+)
+def analyze_action_plan_demo(
+    request: Request, student_slug: str, body: CourseDiscoveryRequest | None = None
+) -> dict:
+    """Demo counterpart to /api/v2/student/me/action-plan.
+
+    Named .../analyze/action-plan (unlike the real .../me/action-plan) so it
+    rides the frontend proxy's existing generic /analyze/:feature rewrite --
+    the only proxy change this route needs is an ALLOWED_FEATURES entry. The
+    real route's shipped path is left as-is.
+    """
+    authorize_student_access(request, student_slug)
+    profile_json = load_student_profile(student_slug)
+    resolved = _resolve_demo_course_discovery_inputs(profile_json, body)
+    if isinstance(resolved, FeatureResult):
+        return resolved.to_dict()
+    context, needs, target_role = resolved
+    cached = load_cached_course_discovery(student_slug, target_role)
+    if cached is not None:
+        course_discovery_result = CourseDiscoveryResult.model_validate(cached["data"])
+    else:
+        outcome = _run_course_discovery_agent(request, context, needs, target_role)
+        if outcome.errors or outcome.result is None:
+            return {
+                "feature": "ACTION_PLAN", "status": "failed",
+                "summary": "Course discovery failed.", "errors": outcome.errors,
+            }
+        course_discovery_result = outcome.result
+    plan = build_action_plan(
+        target_role=target_role, skill_needs=needs,
+        course_discovery_result=course_discovery_result,
+    )
+    if plan.execution_status == "ERROR":
+        return {
+            "feature": "ACTION_PLAN", "status": "failed",
+            "summary": plan.summary,
+            "action_plan": plan.model_dump(mode="json"),
+            "dependency_order": None,
+        }
+    order = dependency_order(plan, course_discovery_result)
+    return {
+        "feature": "ACTION_PLAN", "status": "success",
+        "summary": plan.summary,
+        "action_plan": plan.model_dump(mode="json"),
+        "dependency_order": order.model_dump(mode="json"),
+    }
 
 
 @router.post(

@@ -67,6 +67,10 @@
       "destination": "/api/proxy?target=me-terms"
     },
     {
+      "source": "/api/v2/student/me/action-plan",
+      "destination": "/api/proxy?target=me-action-plan"
+    },
+    {
       "source": "/api/v2/student/me/planned-courses/:id",
       "destination": "/api/proxy?target=me-planned-course-remove&id=:id"
     },
