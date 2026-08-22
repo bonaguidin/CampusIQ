@@ -100,6 +100,11 @@ from GradusIQ_career.course_discovery.scheduler import (
     schedule_courses,
 )
 from GradusIQ_career.course_discovery.scheduler_scope import scope_schedule_input
+from GradusIQ_career.course_discovery.technical_elective_candidates import (
+    TECHNICAL_ELECTIVE_NAME,
+    TECHNICAL_ELECTIVE_RULE_ID,
+    generate_technical_elective_candidates,
+)
 from GradusIQ_career.course_discovery.requirement_ranker import rank_requirement_candidates
 from GradusIQ_career.degree_plan_career_optimization import (
     CareerOptimizationCoordinator,
@@ -2591,6 +2596,57 @@ def get_me_schedule(request: Request) -> dict:
     if isinstance(state, FeatureResult):
         return state.to_dict()
     return state.academic_schedule.model_dump(mode="json")
+
+
+@router.get(
+    "/api/v2/student/me/degree-plan/technical-electives",
+    dependencies=[Depends(authorize_proxy_request)],
+)
+def get_me_technical_elective_candidates(request: Request) -> dict:
+    """Read-only provisional SMU CS 3000+ pool for the manual requirement."""
+    try:
+        state = _reconstruct_academic_schedule(request)
+        if isinstance(state, FeatureResult):
+            return state.to_dict()
+        technical_rows = [
+            row for row in state.raw.groups
+            if row.get("coursedog_rule_id") == TECHNICAL_ELECTIVE_RULE_ID
+            and row.get("name") == TECHNICAL_ELECTIVE_NAME
+            and row.get("group_type") == "freeform"
+            and row.get("requires_manual_definition") is True
+        ]
+        if len(technical_rows) != 1 or state.catalog_institution is None:
+            return FeatureResult(
+                feature="TECHNICAL_ELECTIVE_CANDIDATES",
+                status="skipped",
+                summary="Technical elective options aren't available for this degree program yet.",
+                missing_fields=[],
+            ).to_dict()
+        requirement = technical_rows[0]
+        planned_codes = {
+            course.course_code for course in state.academic_selection.courses
+        } | {
+            course.course_code
+            for term in state.academic_schedule.terms
+            for course in term.courses
+        }
+        result = generate_technical_elective_candidates(
+            student_id=state.student_id,
+            program_id=state.program_id,
+            requirement_group_id=str(requirement["id"]),
+            requirement_name=str(requirement["name"]),
+            catalog_year=str(requirement["catalog_year"]),
+            catalog_courses=LocalCatalogRepository().records(state.catalog_institution),
+            completed_or_in_progress_codes=state.already_satisfied,
+            planned_or_selected_codes=planned_codes,
+        )
+        return result.model_dump(mode="json")
+    except HTTPException:
+        raise
+    except Exception as exc:  # noqa: BLE001 -- preserve the academic UI on local failure
+        raise HTTPException(
+            status_code=502, detail="Technical elective options are unavailable."
+        ) from exc
 
 
 @router.post(
