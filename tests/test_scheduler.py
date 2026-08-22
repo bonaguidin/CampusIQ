@@ -110,25 +110,27 @@ def test_ethan_brooks_13_course_v1_scope():
     assert sorted(scheduled_codes) == sorted(c.course_code for c in courses)
     assert len(scheduled_codes) == len(set(scheduled_codes)) == 13
 
-    # Real computed term plan -- 5 terms, well inside Ethan's 6-term
-    # horizon to Spring 2029.
+    # Real computed term plan -- now 4 terms, well inside Ethan's 6-term
+    # horizon to Spring 2029. Correct explicit-corequisite semantics let
+    # CS 5328 share 2027-Fall with CS 5330 (while CS 3341 remains a strict
+    # earlier-term prerequisite), which in turn unlocks CS 5351 one term
+    # earlier. No course was added, removed, or specially placed for Ethan.
     assert [term.term_key for term in result.terms] == [
-        "2026-Fall", "2027-Spring", "2027-Fall", "2028-Spring", "2028-Fall",
+        "2026-Fall", "2027-Spring", "2027-Fall", "2028-Spring",
     ]
     by_term = {term.term_key: sorted(c.course_code for c in term.courses) for term in result.terms}
     assert by_term["2026-Fall"] == [
         "CS 2341", "CS 2353", "ENGR 2112", "ENGR 3101", "ENGR 4101", "MATH 3304",
     ]
     assert by_term["2027-Spring"] == ["CS 3341", "CS 3353"]
-    assert by_term["2027-Fall"] == ["CS 5330", "CS 5343", "CS 5344"]
-    assert by_term["2028-Spring"] == ["CS 5328"]
-    assert by_term["2028-Fall"] == ["CS 5351"]
+    assert by_term["2027-Fall"] == ["CS 5328", "CS 5330", "CS 5343", "CS 5344"]
+    assert by_term["2028-Spring"] == ["CS 5351"]
 
     # Credit totals per term, none exceeding the 15-credit cap.
     totals = {term.term_key: term.total_credit_hours for term in result.terms}
     assert totals == {
-        "2026-Fall": 12.0, "2027-Spring": 6.0, "2027-Fall": 9.0,
-        "2028-Spring": 3.0, "2028-Fall": 3.0,
+        "2026-Fall": 12.0, "2027-Spring": 6.0, "2027-Fall": 12.0,
+        "2028-Spring": 3.0,
     }
     assert sum(totals.values()) == 33.0
     assert all(total <= 15.0 for total in totals.values())
@@ -150,6 +152,8 @@ def test_ethan_brooks_13_course_v1_scope():
     assert term_index["CS 2341"] < term_index["CS 3353"]
     assert term_index["CS 2353"] < term_index["CS 3353"]
     assert term_index["CS 3341"] < term_index["CS 5330"]
+    assert term_index["CS 3341"] < term_index["CS 5328"]
+    assert term_index["CS 5330"] <= term_index["CS 5328"]
     assert term_index["CS 3341"] < term_index["CS 5344"]
     assert term_index["CS 5328"] < term_index["CS 5351"]
 
@@ -317,6 +321,114 @@ def test_three_course_cycle_fails_closed():
 
     assert result.status == "ERROR"
     assert result.failure.error_class == "CycleDetected"
+
+
+# ---------------------------------------------------------------------------
+# 5. Corequisites: same-term eligible without weakening strict prerequisites
+# ---------------------------------------------------------------------------
+
+
+def _course_to_schedule(code: str, credits: float = 3) -> CourseToSchedule:
+    return CourseToSchedule(
+        course_code=code,
+        credit_hours=credits,
+        requirement_group_id="g",
+        requirement_group_name="g",
+    )
+
+
+def test_corequisite_pair_may_share_the_same_term():
+    courses = [_course_to_schedule("A"), _course_to_schedule("B")]
+    prerequisites = {"B": StructuredPrerequisite(coreq_allowed=["A"])}
+
+    result = schedule_courses(
+        student_id="stu-1", program_id="prog-1",
+        courses=courses, prerequisites=prerequisites, already_satisfied=set(), unscheduled=[],
+        starting_year=2026, starting_season="Fall", max_terms=2,
+    )
+
+    assert result.status == "SCHEDULED"
+    assert [[course.course_code for course in term.courses] for term in result.terms] == [["A", "B"]]
+
+
+def test_mutual_corequisites_form_same_term_component_not_false_cycle():
+    courses = [_course_to_schedule("A"), _course_to_schedule("B")]
+    prerequisites = {
+        "A": StructuredPrerequisite(coreq_allowed=["B"]),
+        "B": StructuredPrerequisite(
+            requires_all=[PrerequisiteClause(course_codes=["A"])],
+            coreq_allowed=["A"],
+        ),
+    }
+
+    result = schedule_courses(
+        student_id="stu-1", program_id="prog-1",
+        courses=courses, prerequisites=prerequisites, already_satisfied=set(), unscheduled=[],
+        starting_year=2026, starting_season="Fall", max_terms=2,
+    )
+
+    assert result.status == "SCHEDULED"
+    assert sorted(course.course_code for course in result.terms[0].courses) == ["A", "B"]
+
+
+def test_mixed_strict_and_corequisite_graph_preserves_earlier_term_boundary():
+    courses = [_course_to_schedule(code) for code in ("A", "B", "C")]
+    prerequisites = {
+        "B": StructuredPrerequisite(
+            requires_all=[PrerequisiteClause(course_codes=["A"])],
+            coreq_allowed=["C"],
+        ),
+        "C": StructuredPrerequisite(
+            requires_all=[PrerequisiteClause(course_codes=["A"])],
+        ),
+    }
+
+    result = schedule_courses(
+        student_id="stu-1", program_id="prog-1",
+        courses=courses, prerequisites=prerequisites, already_satisfied=set(), unscheduled=[],
+        starting_year=2026, starting_season="Fall", max_terms=3,
+    )
+
+    assert result.status == "SCHEDULED"
+    term_index = {
+        course.course_code: index
+        for index, term in enumerate(result.terms)
+        for course in term.courses
+    }
+    assert term_index["A"] < term_index["B"]
+    assert term_index["C"] == term_index["B"]
+
+
+def test_corequisite_capacity_places_one_way_corequisite_earlier():
+    courses = [_course_to_schedule("A", 9), _course_to_schedule("B", 9)]
+    prerequisites = {"B": StructuredPrerequisite(coreq_allowed=["A"])}
+
+    result = schedule_courses(
+        student_id="stu-1", program_id="prog-1",
+        courses=courses, prerequisites=prerequisites, already_satisfied=set(), unscheduled=[],
+        starting_year=2026, starting_season="Fall", max_terms=2, credit_hour_cap=15,
+    )
+
+    assert result.status == "SCHEDULED"
+    assert [[course.course_code for course in term.courses] for term in result.terms] == [["A"], ["B"]]
+    assert all(term.total_credit_hours <= 15 for term in result.terms)
+
+
+def test_mutual_corequisite_pair_that_exceeds_cap_fails_closed():
+    courses = [_course_to_schedule("A", 9), _course_to_schedule("B", 9)]
+    prerequisites = {
+        "A": StructuredPrerequisite(coreq_allowed=["B"]),
+        "B": StructuredPrerequisite(coreq_allowed=["A"]),
+    }
+
+    result = schedule_courses(
+        student_id="stu-1", program_id="prog-1",
+        courses=courses, prerequisites=prerequisites, already_satisfied=set(), unscheduled=[],
+        starting_year=2026, starting_season="Fall", max_terms=2, credit_hour_cap=15,
+    )
+
+    assert result.status == "ERROR"
+    assert result.failure.error_class == "OverConstrained"
 
 
 # ---------------------------------------------------------------------------

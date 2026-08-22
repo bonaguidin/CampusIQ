@@ -234,6 +234,14 @@ _GRADE_BARE = re.compile(r"(?<![A-Za-z0-9])([A-D][+-]?)\s+or\s+better\b")
 
 _CONCURRENT_NAMED = re.compile(r"concurrent enrollment in\s+(.*)", re.IGNORECASE)
 _CONCURRENT_TRAILING = re.compile(r",?\s*or\s+concurrent enrollment\.?\s*$", re.IGNORECASE)
+# SMU uses explicit sentence-leading labels for corequisites. Keep these
+# anchored so an incidental mention of "corequisite" elsewhere in prose
+# cannot reclassify an unrelated prerequisite clause.
+_EXPLICIT_COREQUISITE = re.compile(r"^corequisites?\s*:\s*(.*)$", re.IGNORECASE)
+_PREREQUISITE_OR_COREQUISITE = re.compile(
+    r"^(?:or\s+)?prerequisites?(?:\s+or\s+|/)corequisites?\s*:?\s*(.*)$",
+    re.IGNORECASE,
+)
 
 # Trailing "or equivalent" / "or permission of instructor": a course
 # requirement stated plainly, with one unverifiable alternative path named
@@ -434,6 +442,27 @@ def structured_prerequisite(course: CourseCatalogRecord) -> StructuredPrerequisi
     needs_review: list[str] = []
 
     for clause in _split_clauses(text):
+        # A pure explicit corequisite has no prior-completion requirement:
+        # every named course is concurrent-eligible and stays out of
+        # requires_all. This is the real SMU "Corequisite: BIOL 1301" /
+        # "Corequisites: ..." family.
+        explicit_corequisite = _EXPLICIT_COREQUISITE.match(clause)
+        if explicit_corequisite:
+            codes = _codes_in_text(explicit_corequisite.group(1), known_codes)
+            if codes:
+                coreq_allowed.extend(codes)
+            else:
+                needs_review.append(clause)
+            continue
+
+        # "Prerequisite or corequisite" means completion in an earlier term
+        # OR concurrent enrollment. It therefore remains a real requirement
+        # clause while its course codes are also marked concurrent-eligible.
+        prerequisite_or_corequisite = _PREREQUISITE_OR_COREQUISITE.match(clause)
+        is_explicit_prereq_coreq = prerequisite_or_corequisite is not None
+        if prerequisite_or_corequisite:
+            clause = prerequisite_or_corequisite.group(1).strip()
+
         # Explicit named corequisite: "concurrent enrollment in CSCE 313".
         named = _CONCURRENT_NAMED.search(clause)
         if named:
@@ -453,6 +482,7 @@ def structured_prerequisite(course: CourseCatalogRecord) -> StructuredPrerequisi
         # enrollment -- both requires_all (still a real requirement) and
         # coreq_allowed (concurrent enrollment also counts).
         is_trailing_coreq = bool(_CONCURRENT_TRAILING.search(clause))
+        is_coreq_eligible = is_trailing_coreq or is_explicit_prereq_coreq
         working = _CONCURRENT_TRAILING.sub("", clause).strip(" ,;.") if is_trailing_coreq else clause
 
         # Strip a trailing "or equivalent" / "or permission of instructor"
@@ -510,7 +540,7 @@ def structured_prerequisite(course: CourseCatalogRecord) -> StructuredPrerequisi
                 requires_all.extend(
                     _clauses_for_codes(sub_clause, sub_codes, grade_min, alternate_paths)
                 )
-                if is_trailing_coreq:
+                if is_coreq_eligible:
                     coreq_allowed.extend(sub_codes)
             if ambiguous or any_sub_empty:
                 # Best-effort AND-split parse is still recorded above (more
@@ -520,7 +550,7 @@ def structured_prerequisite(course: CourseCatalogRecord) -> StructuredPrerequisi
             continue
 
         requires_all.extend(_clauses_for_codes(working_no_grade, codes, grade_min, alternate_paths))
-        if is_trailing_coreq:
+        if is_coreq_eligible:
             coreq_allowed.extend(codes)
 
     return StructuredPrerequisite(

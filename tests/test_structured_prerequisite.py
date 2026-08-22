@@ -16,6 +16,8 @@ re-deriving it.
 
 from __future__ import annotations
 
+import pytest
+
 from GradusIQ_career.course_discovery.models import CatalogInstitution, CourseCatalogRecord
 from GradusIQ_career.course_discovery.prerequisites import structured_prerequisite
 
@@ -167,6 +169,80 @@ def test_explicit_named_corequisite_own_clause():
     # never named in requires_all, no prior-completion requirement at all.
     assert result.coreq_allowed == ["CSCE 313"]
     assert not any("CSCE 313" in clause.course_codes for clause in result.requires_all)
+
+
+def test_explicit_corequisite_label_is_pure_corequisite():
+    result = structured_prerequisite(_course("Corequisite: BIOL 1301.", ["BIOL 1301"]))
+    assert result.requires_all == []
+    assert result.coreq_allowed == ["BIOL 1301"]
+    assert result.needs_review == []
+
+
+def test_plural_explicit_corequisites_label():
+    result = structured_prerequisite(
+        _course("Corequisites: BIOL 1301 and CHEM 1303.", ["BIOL 1301", "CHEM 1303"])
+    )
+    assert result.requires_all == []
+    assert result.coreq_allowed == ["BIOL 1301", "CHEM 1303"]
+
+
+def test_prerequisite_or_corequisite_allows_concurrent_enrollment():
+    result = structured_prerequisite(
+        _course("Prerequisite or corequisite: BIOL 1101.", ["BIOL 1101"])
+    )
+    assert _clauses(result) == [(["BIOL 1101"], None)]
+    assert result.coreq_allowed == ["BIOL 1101"]
+    assert result.needs_review == []
+
+
+def test_plural_prerequisites_or_corequisites_allows_concurrent_enrollment():
+    result = structured_prerequisite(
+        _course(
+            "Prerequisites or corequisites: BIOL 1101 and CHEM 1113.",
+            ["BIOL 1101", "CHEM 1113"],
+        )
+    )
+    assert _clauses(result) == [(["BIOL 1101"], None), (["CHEM 1113"], None)]
+    assert result.coreq_allowed == ["BIOL 1101", "CHEM 1113"]
+
+
+@pytest.mark.parametrize(
+    ("text", "codes", "expected_clauses"),
+    [
+        (
+            "Prerequisite/Corequisite: STAT 4340 or STAT 4341.",
+            ["STAT 4340", "STAT 4341"],
+            [(["STAT 4340", "STAT 4341"], None)],
+        ),
+        (
+            "or prerequisite or corequisite: APSM 2310.",
+            ["APSM 2310"],
+            [(["APSM 2310"], None)],
+        ),
+        (
+            "or prerequisite or corequisite APSM 2310.",
+            ["APSM 2310"],
+            [(["APSM 2310"], None)],
+        ),
+    ],
+)
+def test_real_explicit_corequisite_label_variants(text, codes, expected_clauses):
+    result = structured_prerequisite(_course(text, codes))
+
+    assert _clauses(result) == expected_clauses
+    assert result.coreq_allowed == codes
+
+
+def test_mixed_explicit_prerequisite_and_corequisite_labels():
+    result = structured_prerequisite(
+        _course(
+            "Prerequisite: CS 3341. Corequisite: CS 5330.",
+            ["CS 3341", "CS 5330"],
+        )
+    )
+    assert _clauses(result) == [(["CS 3341"], None)]
+    assert result.coreq_allowed == ["CS 5330"]
+    assert result.needs_review == []
 
 
 # ── Real course mixed with an unverifiable non-course alternative path:

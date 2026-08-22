@@ -76,6 +76,7 @@ class CourseToSchedule(StrictModel):
     credit_hours: float = Field(gt=0)
     requirement_group_id: str = Field(min_length=1)
     requirement_group_name: str = Field(min_length=1)
+    selection_limitations: list[str] = Field(default_factory=list)
 
 
 class ScheduledCourse(StrictModel):
@@ -156,12 +157,16 @@ def _external_limitation(course_code: str) -> str:
     return f"prerequisite {course_code} is outside the scheduled course set and not yet satisfied -- not modeled as a hard ordering edge"
 
 
-def _build_edges(
+def _external_corequisite_limitation(course_code: str) -> str:
+    return f"corequisite {course_code} is outside the scheduled course set and not yet satisfied -- same-term fulfillment cannot be verified"
+
+
+def _build_dependencies(
     courses: list[CourseToSchedule],
     prerequisites: Mapping[str, StructuredPrerequisite],
     already_satisfied: Iterable[str],
-) -> tuple[list[tuple[str, str]], dict[str, list[str]]]:
-    """(dependent, prerequisite) edge pairs plus per-course limitation notes.
+) -> tuple[list[tuple[str, str]], list[tuple[str, str]], dict[str, list[str]]]:
+    """Strict edges, same-term-eligible corequisite pairs, and limitations.
 
     Only single-course requires_all clauses whose one course is itself in
     `courses` become hard edges. Everything else -- an OR-clause with
@@ -175,18 +180,40 @@ def _build_edges(
     in_scope = {course.course_code for course in courses}
     satisfied = set(already_satisfied)
     edges: list[tuple[str, str]] = []
-    limitations: dict[str, list[str]] = {course.course_code: [] for course in courses}
+    corequisite_pairs: list[tuple[str, str]] = []
+    limitations: dict[str, list[str]] = {
+        course.course_code: list(course.selection_limitations) for course in courses
+    }
 
     for course in courses:
         structured = prerequisites.get(course.course_code)
         if structured is None:
             continue
+        coreq_allowed = set(structured.coreq_allowed)
+        coreqs_seen_in_clauses: set[str] = set()
         for clause in structured.requires_all:
             codes = clause.course_codes
             if any(code in satisfied for code in codes):
                 # At least one alternative is already cleared -- the whole
                 # clause is met, regardless of how many codes it names.
                 continue
+            clause_coreqs = [code for code in codes if code in coreq_allowed]
+            coreqs_seen_in_clauses.update(clause_coreqs)
+            if clause_coreqs:
+                in_scope_coreqs = [code for code in clause_coreqs if code in in_scope]
+                if len(in_scope_coreqs) == 1:
+                    corequisite_pairs.append((course.course_code, in_scope_coreqs[0]))
+                elif len(in_scope_coreqs) > 1:
+                    limitations[course.course_code].append(
+                        f"corequisite ({' or '.join(in_scope_coreqs)}) not resolved to a single alternative"
+                    )
+                else:
+                    limitations[course.course_code].append(
+                        _external_corequisite_limitation(clause_coreqs[0])
+                    )
+                codes = [code for code in codes if code not in coreq_allowed]
+                if not codes:
+                    continue
             if len(codes) > 1:
                 limitations[course.course_code].append(_clause_limitation(codes))
                 continue
@@ -196,7 +223,17 @@ def _build_edges(
             else:
                 limitations[course.course_code].append(_external_limitation(code))
 
-    return edges, limitations
+        # Pure corequisites (e.g. "Corequisite: BIOL 1301" or "concurrent
+        # enrollment in CSCE 313") do not appear in requires_all at all.
+        for code in structured.coreq_allowed:
+            if code in coreqs_seen_in_clauses or code in satisfied:
+                continue
+            if code in in_scope:
+                corequisite_pairs.append((course.course_code, code))
+            else:
+                limitations[course.course_code].append(_external_corequisite_limitation(code))
+
+    return edges, corequisite_pairs, limitations
 
 
 def _next_long_term(year: int, season: str) -> tuple[int, str]:
@@ -244,7 +281,9 @@ def schedule_courses(
         PlanNode(node_id=code, node_type="course", source_ref=code, status="OPEN")
         for code in course_by_code
     ]
-    edge_pairs, limitations_by_code = _build_edges(courses, prerequisites, already_satisfied)
+    edge_pairs, corequisite_pairs, limitations_by_code = _build_dependencies(
+        courses, prerequisites, already_satisfied
+    )
     plan_edges = [
         PlanEdge(from_node_id=dependent, to_node_id=prerequisite, relation="requires")
         for dependent, prerequisite in edge_pairs
@@ -267,6 +306,10 @@ def schedule_courses(
         successors[prerequisite].append(dependent)
         in_degree[dependent] += 1
 
+    corequisites_by_dependent: dict[str, list[str]] = {code: [] for code in course_by_code}
+    for dependent, corequisite in corequisite_pairs:
+        corequisites_by_dependent[dependent].append(corequisite)
+
     # A course whose own credit_hours already exceeds the cap can never be
     # scheduled -- fail closed immediately rather than looping forever
     # trying to fit it.
@@ -286,22 +329,58 @@ def schedule_courses(
             )
 
     ready = sorted(code for code, degree in in_degree.items() if degree == 0)
+    placed: set[str] = set()
     terms: list[TermPlan] = []
     year, season = starting_year, starting_season
 
     for _ in range(max_terms):
         if not ready:
             break
-        term_courses: list[str] = []
-        total = 0.0
-        leftover: list[str] = []
+        chosen: set[str] = set()
+        ready_set = set(ready)
+
+        def corequisite_closure(code: str, visiting: set[str] | None = None) -> set[str] | None:
+            """Courses that must accompany `code` this term.
+
+            A corequisite already placed in an earlier term is cleared. An
+            in-scope corequisite not yet strictly ready cannot accompany the
+            dependent safely. `visiting` makes mutual corequisites a single
+            same-term component rather than a dependency cycle.
+            """
+            if code in placed or code in chosen:
+                return set()
+            if code not in ready_set:
+                return None
+            visiting = set() if visiting is None else visiting
+            if code in visiting:
+                return set()
+            visiting.add(code)
+            closure = {code}
+            for corequisite in corequisites_by_dependent.get(code, []):
+                if corequisite in placed or corequisite in chosen:
+                    continue
+                nested = corequisite_closure(corequisite, visiting)
+                if nested is None:
+                    return None
+                closure.update(nested)
+            return closure
+
         for code in ready:
-            credits = course_by_code[code].credit_hours
-            if total + credits <= credit_hour_cap:
-                term_courses.append(code)
-                total += credits
-            else:
-                leftover.append(code)
+            if code in chosen:
+                continue
+            closure = corequisite_closure(code)
+            if closure is None:
+                continue
+            additional = closure - chosen
+            credits = sum(course_by_code[item].credit_hours for item in additional)
+            current_total = sum(course_by_code[item].credit_hours for item in chosen)
+            if current_total + credits <= credit_hour_cap:
+                chosen.update(additional)
+
+        term_courses = sorted(chosen)
+        total = sum(course_by_code[code].credit_hours for code in term_courses)
+        if not term_courses:
+            break
 
         terms.append(
             TermPlan(
@@ -325,7 +404,8 @@ def schedule_courses(
                 in_degree[successor] -= 1
                 if in_degree[successor] == 0:
                     newly_ready.append(successor)
-        ready = sorted(set(leftover) | set(newly_ready))
+        placed.update(term_courses)
+        ready = sorted((ready_set - chosen) | set(newly_ready))
         year, season = _next_long_term(year, season)
 
     if ready:
