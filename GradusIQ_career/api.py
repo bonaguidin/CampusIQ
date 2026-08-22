@@ -22,7 +22,7 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Iterator, Literal
+from typing import Any, Iterator, Literal, Mapping
 from pydantic import BaseModel, ConfigDict, Field
 
 from dotenv import load_dotenv
@@ -36,6 +36,7 @@ from GradusIQ_career.ai.contracts import ChatOutput, feature_output_is_valid
 from GradusIQ_career.ai.runtime import AIRuntime
 from GradusIQ_career.ai.model_config import (
     ROLES_VALIDATED_AT_STARTUP,
+    get_model_for_role,
     validate_configured_models,
 )
 from GradusIQ_career.ai.openrouter_client import (
@@ -72,6 +73,7 @@ from GradusIQ_career.course_discovery.agent import CourseDiscoveryAgent
 from GradusIQ_career.course_discovery.catalog import LocalCatalogRepository
 from GradusIQ_career.course_discovery.models import (
     CatalogInstitution,
+    CareerSkillNeed,
     CourseCatalogRecord,
     CourseDiscoveryContext,
     PlannedCourseEvidence,
@@ -98,6 +100,14 @@ from GradusIQ_career.course_discovery.scheduler import (
     schedule_courses,
 )
 from GradusIQ_career.course_discovery.scheduler_scope import scope_schedule_input
+from GradusIQ_career.course_discovery.requirement_ranker import rank_requirement_candidates
+from GradusIQ_career.degree_plan_career_optimization import (
+    CareerOptimizationCoordinator,
+    CareerOptimizedScheduleResponse,
+    build_requirement_ranking_fingerprint,
+    compute_career_optimized_response,
+    skipped_response,
+)
 from GradusIQ_career.resume.extraction import extract_resume_text
 from GradusIQ_career.resume.parser import parse_resume_text
 from GradusIQ_career.resume.review import (
@@ -1101,6 +1111,14 @@ class CourseDiscoveryRequest(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
     target_role: str | None = Field(default=None, min_length=1, max_length=150)
+
+
+class CareerOptimizeScheduleRequest(BaseModel):
+    """Career preference only; every academic input is rebuilt server-side."""
+
+    model_config = ConfigDict(extra="forbid")
+    target_role: str | None = Field(default=None, min_length=1, max_length=150)
+    force_refresh: bool = False
 
 
 def _resolve_course_discovery_inputs(
@@ -2575,6 +2593,118 @@ def get_me_schedule(request: Request) -> dict:
     return state.academic_schedule.model_dump(mode="json")
 
 
+@router.post(
+    "/api/v2/student/me/schedule/career-optimize",
+    dependencies=[Depends(authorize_proxy_request)],
+)
+def post_me_schedule_career_optimize(
+    request: Request, body: CareerOptimizeScheduleRequest
+) -> dict:
+    """Explicit, non-persisted career-ranking preview over academic choices."""
+    try:
+        state = _reconstruct_academic_schedule(request)
+    except HTTPException:
+        raise
+    except Exception as exc:  # noqa: BLE001 -- same academic boundary as GET
+        raise HTTPException(status_code=502, detail="Schedule is unavailable.") from exc
+    if isinstance(state, FeatureResult):
+        return state.to_dict()
+
+    resolved_model = get_model_for_role("course_discovery")
+    client = _session_client(request)
+    canonical = build_student_intelligence_profile(client, state.student_id)
+    confirmed_roles = canonical.career.target_roles if canonical.career.confirmed else []
+    requested_role = body.target_role.strip() if body.target_role else None
+    target_role = requested_role or (confirmed_roles[0] if len(confirmed_roles) == 1 else None)
+    if target_role is None:
+        summary = (
+            "Choose which confirmed target role should guide this preview."
+            if len(confirmed_roles) > 1
+            else "Confirm a target role before optimizing this schedule for a career."
+        )
+        return skipped_response(
+            academic_schedule=state.academic_schedule, resolved_model=resolved_model,
+            target_role=None, summary=summary,
+        ).model_dump(mode="json")
+    if target_role not in confirmed_roles:
+        return skipped_response(
+            academic_schedule=state.academic_schedule, resolved_model=resolved_model,
+            target_role=target_role,
+            summary="The selected target role is not confirmed on this student profile.",
+        ).model_dump(mode="json")
+    if not is_role_supported(target_role):
+        return skipped_response(
+            academic_schedule=state.academic_schedule, resolved_model=resolved_model,
+            target_role=target_role,
+            summary="Career analysis isn't available for this target role yet.",
+        ).model_dump(mode="json")
+    career_needs: list[CareerSkillNeed] = derive_career_skill_needs(canonical, target_role)
+    if not career_needs:
+        return skipped_response(
+            academic_schedule=state.academic_schedule, resolved_model=resolved_model,
+            target_role=target_role,
+            summary="No trusted unmet career-skill needs are available for this target role.",
+        ).model_dump(mode="json")
+
+    rankable = [
+        item for item in state.academic_selection.candidate_sets
+        if len(item.feasible_candidates) > 1
+    ]
+    if not rankable:
+        return skipped_response(
+            academic_schedule=state.academic_schedule, resolved_model=resolved_model,
+            target_role=target_role,
+            summary="No structured requirement has more than one feasible candidate to rank.",
+        ).model_dump(mode="json")
+    fingerprint = build_requirement_ranking_fingerprint(
+        student_id=state.student_id, target_role=target_role,
+        career_needs=career_needs, candidate_sets=rankable,
+        catalog_by_code=state.catalog_by_code, resolved_model=resolved_model,
+    )
+
+    def rank_batch(candidate_sets):
+        with request.app.state.ai_concurrency.slot():
+            model_client = build_client()
+            return [
+                rank_requirement_candidates(
+                    model_client, candidate_set, target_role=target_role,
+                    career_needs=career_needs, catalog_by_code=state.catalog_by_code,
+                )
+                for candidate_set in candidate_sets
+            ]
+
+    def build_optimized(career_ranks: Mapping[str, int]) -> ScheduleResult:
+        raw = state.raw
+        selection = select_structured_requirements(
+            state.groups, raw.groups, raw.options, raw.option_courses,
+            raw.catalog_by_gid, raw.catalog_credit_by_code, state.base_courses,
+            state.base_unscheduled, state.prerequisites, state.already_satisfied,
+            student_id=state.student_id, program_id=state.program_id,
+            starting_year=state.starting_year, starting_season=state.starting_season,
+            max_terms=state.max_terms,
+            career_rank_by_candidate_id=career_ranks,
+        )
+        return schedule_courses(
+            state.student_id, state.program_id, selection.courses,
+            state.prerequisites, state.already_satisfied, selection.unscheduled,
+            starting_year=state.starting_year,
+            starting_season=state.starting_season, max_terms=state.max_terms,
+        )
+
+    coordinator: CareerOptimizationCoordinator = request.app.state.career_optimization
+    response: CareerOptimizedScheduleResponse = coordinator.run(
+        student_id=state.student_id, fingerprint=fingerprint,
+        force_refresh=body.force_refresh,
+        compute=lambda cache_status: compute_career_optimized_response(
+            target_role=target_role, fingerprint=fingerprint,
+            resolved_model=resolved_model, academic_schedule=state.academic_schedule,
+            rankable_candidate_sets=rankable, rank_batch=rank_batch,
+            build_optimized_schedule=build_optimized, cache_status=cache_status,
+        ),
+    )
+    return response.model_dump(mode="json")
+
+
 def create_app(config: APIConfig | None = None) -> FastAPI:
     # Fail the deploy, not the first request: a placeholder model ID would
     # otherwise surface as an opaque 502 (chat) or a silent status="failed"
@@ -2597,6 +2727,7 @@ def create_app(config: APIConfig | None = None) -> FastAPI:
         active_config.rate_limit_requests, active_config.rate_limit_window_seconds
     )
     application.state.ai_concurrency = AIConcurrencyGate(active_config.max_concurrent_ai_requests)
+    application.state.career_optimization = CareerOptimizationCoordinator()
     application.add_middleware(
         CORSMiddleware,
         allow_origins=list(active_config.allowed_origins),

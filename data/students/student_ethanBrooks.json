@@ -867,9 +867,7 @@
   ],
   "career": {
     "target_roles": [
-      "Software Engineering Intern",
-      "Computer Engineering Intern",
-      "Embedded Systems Intern"
+      "Software Engineering Intern"
     ],
     "interests": [
       "embedded systems",
@@ -883,8 +881,6 @@
     "skills_self_reported": {
       "technical": [
         "Python basics",
-        "MATLAB basics",
-        "engineering computation",
         "technical writing",
         "Excel basics"
       ],
