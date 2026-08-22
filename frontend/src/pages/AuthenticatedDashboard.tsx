@@ -10,6 +10,7 @@ import { DashboardSuccessNotice } from '../components/DashboardSuccessNotice';
 import { CourseDiscoveryPanel } from '../components/CourseDiscoveryPanel';
 import { RequirementSatisfactionPanel } from '../components/RequirementSatisfactionPanel';
 import { DegreeSchedulePanel } from '../components/DegreeSchedulePanel';
+import { DegreePlannerSummary } from '../components/DegreePlannerSummary';
 import type { DegreeScheduleResponse } from '../api/degreeSchedule';
 import { FitAnalysisPanel } from '../components/FitAnalysisPanel';
 import { GapAnalysisPanel } from '../components/GapAnalysisPanel';
@@ -499,6 +500,12 @@ export function AuthenticatedDashboard() {
                   onSelectedRoleChange={setCourseDiscoverySelectedRole}
                 />
                 <div className="degree-planner-flow">
+                  <DegreePlannerSummary
+                    institution={dashboard.institutionName}
+                    major={major}
+                    expectedGraduation={dashboard.expectedGraduation}
+                    schedule={degreeScheduleResult}
+                  />
                   <DegreeSchedulePanel
                     targetRole={dashboard.career.target_roles[0]}
                     onResult={setDegreeScheduleResult}

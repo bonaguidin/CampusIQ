@@ -2151,10 +2151,21 @@ a {
 }
 
 .requirement-group-detail,
-.requirement-group-matched {
+.requirement-group-matched,
+.requirement-group-adviser-note,
+.requirement-satisfaction-subtitle {
   font-size: var(--text-sm);
   color: var(--muted);
   margin: var(--sp-1) 0 0;
+}
+
+.requirement-satisfaction-panel {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+.requirement-group-adviser-note {
+  max-width: 62ch;
 }
 
 .technical-elective-options {
@@ -2233,6 +2244,77 @@ a {
 
 .technical-elective-local-error {
   margin: 0;
+}
+
+/* ── DEGREE PLANNER SUMMARY ─────────────────────────────────────────────── */
+.degree-planner-flow {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+.degree-planner-summary {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(280px, 1fr);
+  gap: var(--sp-5);
+  align-items: end;
+  border-top: 3px solid var(--accent);
+}
+
+.degree-planner-summary h2,
+.degree-planner-summary p,
+.degree-planner-summary dl,
+.degree-planner-summary dd {
+  margin: 0;
+}
+
+.degree-planner-eyebrow {
+  display: block;
+  margin-bottom: var(--sp-1);
+  color: var(--muted);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.degree-planner-summary h2 {
+  font-size: var(--text-xl);
+}
+
+.degree-planner-institution,
+.degree-planner-status {
+  margin-top: var(--sp-1) !important;
+  color: var(--muted);
+}
+
+.degree-planner-status {
+  color: var(--ready);
+  font-weight: 600;
+}
+
+.degree-planner-summary-facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-3);
+}
+
+.degree-planner-summary-facts > div {
+  min-width: 0;
+  padding-left: var(--sp-3);
+  border-left: 1px solid var(--line);
+}
+
+.degree-planner-summary-facts dt {
+  color: var(--muted);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.degree-planner-summary-facts dd {
+  margin-top: var(--sp-1);
+  font-weight: 600;
 }
 
 /* ── DEGREE SCHEDULE ─────────────────────────────────────────────────────── */

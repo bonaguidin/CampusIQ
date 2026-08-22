@@ -6,7 +6,7 @@ const STATUS_LABEL: Record<RequirementGroupStatus, string> = {
   SATISFIED: 'Satisfied',
   IN_PROGRESS: 'In progress',
   NOT_STARTED: 'Not started',
-  MANUAL_REVIEW: 'Needs review',
+  MANUAL_REVIEW: 'Adviser review needed',
 };
 
 const STATUS_MODIFIER: Record<RequirementGroupStatus, string> = {
@@ -26,11 +26,10 @@ function RequirementStatusBadge({ status }: { status: RequirementGroupStatus }) 
 
 // Self-referential: a RequirementGroupResult's children are the same shape,
 // to whatever depth the program's requirement tree actually has. No
-// accordion library -- one collapsible <li> per node, expanded by default so
-// the tree reads as a document on first render rather than a stack of
-// closed drawers.
+// accordion library -- one accessible collapsible <li> per node. Details are
+// closed initially so the top-level audit remains scannable.
 export function RequirementGroupNode({ group }: { group: RequirementGroupResult }) {
-  const [expanded, setExpanded] = useState(true);
+  const [expanded, setExpanded] = useState(false);
   const hasChildren = group.children.length > 0;
 
   return (
@@ -57,6 +56,12 @@ export function RequirementGroupNode({ group }: { group: RequirementGroupResult 
       {group.matched_course_codes.length > 0 && (
         <p className="requirement-group-matched">
           Matched: {group.matched_course_codes.join(', ')}
+        </p>
+      )}
+
+      {group.status === 'MANUAL_REVIEW' && (
+        <p className="requirement-group-adviser-note">
+          Course options for this requirement are not automatically selected yet.
         </p>
       )}
 
