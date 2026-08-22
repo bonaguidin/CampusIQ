@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react';
+import { Fragment, useCallback, useEffect } from 'react';
 import { fetchDegreeSchedule, isSkippedDegreeSchedule, type DegreeScheduleResponse } from '../api/degreeSchedule';
 import { useAuth } from '../auth/useAuth';
 import { useAnalysisRun } from '../hooks/useAnalysisRun';
@@ -7,6 +7,7 @@ import {
   DEFERRED_REASON_LABEL,
   degreeScheduleContentState,
 } from '../lib/degreeSchedulePresentation';
+import { CareerOptimizationPanel } from './CareerOptimizationPanel';
 import { DegreeScheduleTerms } from './DegreeScheduleTerms';
 
 export function DegreeSchedulePanel({
@@ -34,7 +35,8 @@ export function DegreeSchedulePanel({
   const deferred = schedule?.status === 'SCHEDULED' ? schedule.unscheduled : [];
 
   return (
-    <section className="card degree-schedule-panel" aria-labelledby="degree-schedule-title">
+    <Fragment>
+      <section className="card degree-schedule-panel" aria-labelledby="degree-schedule-title">
       <div className="editable-section-header">
         <div>
           <h3 id="degree-schedule-title" className="editable-section-title">Degree Schedule</h3>
@@ -113,6 +115,10 @@ export function DegreeSchedulePanel({
           </section>
         </>
       )}
-    </section>
+      </section>
+      {schedule?.status === 'SCHEDULED' && (
+        <CareerOptimizationPanel accessToken={accessToken} academicSchedule={schedule} confirmedTargetRole={targetRole} />
+      )}
+    </Fragment>
   );
 }
