@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { RequirementGroupResult, RequirementGroupStatus } from '../api/requirementSatisfaction';
+import { TechnicalElectiveCandidates } from './TechnicalElectiveCandidates';
 
 const STATUS_LABEL: Record<RequirementGroupStatus, string> = {
   SATISFIED: 'Satisfied',
@@ -57,6 +58,10 @@ export function RequirementGroupNode({ group }: { group: RequirementGroupResult 
         <p className="requirement-group-matched">
           Matched: {group.matched_course_codes.join(', ')}
         </p>
+      )}
+
+      {group.coursedog_rule_id === 'AjzAZTn4' && (
+        <TechnicalElectiveCandidates requirementGroupId={group.id} />
       )}
 
       {hasChildren && expanded && (
