@@ -41,6 +41,18 @@ _Running list: bugs, gaps, and feature ideas. Update as items close._
   Adzuna is confirmed as the sole primary vendor for job-posting data going forward;
   JSearch's remaining justified use is narrow, not a general secondary source.
 
+## 🟡 Job postings pipeline — manual ops step blocking nightly ingest
+
+- [ ] **GitHub repo secrets not yet added.** `ADZUNA_APP_ID`, `ADZUNA_APP_KEY`, `SUPABASE_URL`, and `SUPABASE_SECRET_KEY` still need to be added manually to the GitHub repo's Actions secrets before `.github/workflows/postings-ingest.yml` does anything beyond skip cleanly on its nightly schedule. This is a manual/ops task, not code — no PR will close this, someone with repo admin access has to add the secrets in GitHub settings.
+
+## ✅ Shipped this session (2026-08-22)
+
+- **Degree Planner** — term-by-term schedule UI, opt-in career-optimization schedule preview, technical elective candidates surfaced under their requirement group, and the BIOL 1301/1101 corequisite parsing fix. All merged to `main`.
+- **Postings Grounding** — `job_postings` schema now fully applied live (including the amendment migration), ATS/cross-source identity resolution, Adzuna/JSearch/Workday clients, and the nightly ingest + retention workflow. Merged to `main`, currently inert pending the secrets above.
+- **ATS Fetcher** — remediated and merged: platform-count claim corrected (4 platforms implemented, not 5 — Recruitee scoped but not built), Greenhouse null-title crash fixed, SmartRecruiters silent-empty-description bug fixed, ~49 new tests added. **Open follow-up:** Recruitee needs a Recruitee-boarded employer added to `employers.json` before it can actually be built and verified.
+- **Node 20 `.ts` import fix** (`6874b82`) — small closed item: resolved a `.ts` import incompatibility with the Node 20 test runner. Worth remembering if a new `.ts` file under `frontend/src` hits the same pattern.
+- **`data/onet/reference/coverage_gaps.csv`** — salvaged from `origin/onet-data-load` (122 real unrated O*NET occupations, e.g. Financial and Investment Analysts, Data Scientists). The branch's `build_onet.py`/README/STATUS.md were superseded by dev's own grounding-remap version and were not brought over — only this CSV was useful. Worth addressing as its own coverage-improvement item, separate from that branch.
+
 ## 🟢 Academic Record — term structure (Phase 1 audited and built, not yet merged)
 
 Full audit complete (2026-08-11) and Phase 1 implementation built and staged (2026-08-11), not yet committed. Key findings/decisions, for reference:
@@ -57,7 +69,7 @@ Full audit complete (2026-08-11) and Phase 1 implementation built and staged (20
 - GAP's Tavily-backed live role research (`role_research_agent.py`) — genuinely live, timeout-bounded, injection-bounded, fails safe to static, 15 roles cached.
 - Demo-analysis cache (`data/demo_cache/`) infrastructure — the old "failed entries served as successes" bug is confirmed fixed.
 - The O*NET *data itself* isn't fake — real O*NET 30.3, correctly rescaled. It's a coverage mismatch, not a correctness bug.
-- **CI gate is live and working.** No direct-to-main pushes by anyone since 2026-08-09; all subsequent PRs (#23 through #39) landed as proper merge commits with passing checks.
+- **CI gate is live and working.** No direct-to-main pushes by anyone since 2026-08-09; all subsequent PRs (#23 through #39) landed as proper merge commits with passing checks. **Confirmed 2026-08-22**: `.github/workflows/ci.yml` exists, runs on PRs into `main`/`dev`, executes backend pytest and frontend `node --test`, with pinned tool versions. The "No CI gate before deploy" item is done.
 - **FIT/GAP/SHIFT grounding, `validate_data` conflict, and demo-cache fabrication** — all resolved and merged to main as of 2026-08-12 (PRs #37, #38, #39). See 🟠 section above for specifics. Don't re-audit from scratch; the known residuals are documented there.
 
 ## 🟢 Agentic architecture — proposed, not started
