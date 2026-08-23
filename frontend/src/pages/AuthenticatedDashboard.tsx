@@ -11,7 +11,7 @@ import { CourseDiscoveryPanel } from '../components/CourseDiscoveryPanel';
 import { RequirementSatisfactionPanel } from '../components/RequirementSatisfactionPanel';
 import { DegreeSchedulePanel } from '../components/DegreeSchedulePanel';
 import { DegreePlannerSummary } from '../components/DegreePlannerSummary';
-import type { DegreeScheduleResponse } from '../api/degreeSchedule';
+import type { DegreeScheduleResponse } from '../api/degreeSchedule.mjs';
 import { FitAnalysisPanel } from '../components/FitAnalysisPanel';
 import { GapAnalysisPanel } from '../components/GapAnalysisPanel';
 import { ShiftAnalysisPanel } from '../components/ShiftAnalysisPanel';

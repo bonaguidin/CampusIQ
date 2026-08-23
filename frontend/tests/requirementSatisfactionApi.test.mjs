@@ -4,7 +4,7 @@ import test from 'node:test'
 import {
   fetchRequirementSatisfaction,
   isSkippedRequirementSatisfaction,
-} from '../src/api/requirementSatisfaction.ts'
+} from '../src/api/requirementSatisfaction.mjs'
 
 function fakeFetch(calls, status, body) {
   return async (url, init) => {

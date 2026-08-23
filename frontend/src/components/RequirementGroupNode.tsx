@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { RequirementGroupResult, RequirementGroupStatus } from '../api/requirementSatisfaction';
+import type { RequirementGroupResult, RequirementGroupStatus } from '../api/requirementSatisfaction.mjs';
 import { TechnicalElectiveCandidates } from './TechnicalElectiveCandidates';
 
 const STATUS_LABEL: Record<RequirementGroupStatus, string> = {

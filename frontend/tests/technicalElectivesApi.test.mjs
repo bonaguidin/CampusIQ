@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { fetchTechnicalElectiveCandidates } from '../src/api/technicalElectives.ts';
+import { fetchTechnicalElectiveCandidates } from '../src/api/technicalElectives.mjs';
 
 test('technical elective candidates use the authenticated read-only route', async (t) => {
   const calls = [];

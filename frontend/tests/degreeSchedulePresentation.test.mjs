@@ -10,7 +10,7 @@ import {
   formatCredits,
   nextPlannedTerm,
   termPresentation,
-} from '../src/lib/degreeSchedulePresentation.ts'
+} from '../src/lib/degreeSchedulePresentation.mjs'
 
 test('term presentation preserves backend order, courses, totals, and limitations', () => {
   const terms = [

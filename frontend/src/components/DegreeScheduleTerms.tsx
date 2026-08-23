@@ -1,5 +1,5 @@
-import type { TermPlan } from '../api/degreeSchedule';
-import { formatCredits, termPresentation } from '../lib/degreeSchedulePresentation';
+import type { TermPlan } from '../api/degreeSchedule.mjs';
+import { formatCredits, termPresentation } from '../lib/degreeSchedulePresentation.mjs';
 
 export function DegreeScheduleTerms({ terms, ariaLabel }: { terms: TermPlan[]; ariaLabel: string }) {
   const presented = termPresentation(terms);

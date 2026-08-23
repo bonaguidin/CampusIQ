@@ -1,12 +1,12 @@
 import { Fragment, useCallback, useEffect } from 'react';
-import { fetchDegreeSchedule, isSkippedDegreeSchedule, type DegreeScheduleResponse } from '../api/degreeSchedule';
+import { fetchDegreeSchedule, isSkippedDegreeSchedule, type DegreeScheduleResponse } from '../api/degreeSchedule.mjs';
 import { useAuth } from '../auth/useAuth';
 import { useAnalysisRun } from '../hooks/useAnalysisRun';
 import {
   DEFERRED_REASON_DESCRIPTION,
   DEFERRED_REASON_LABEL,
   degreeScheduleContentState,
-} from '../lib/degreeSchedulePresentation';
+} from '../lib/degreeSchedulePresentation.mjs';
 import { CareerOptimizationPanel } from './CareerOptimizationPanel';
 import { DegreeScheduleTerms } from './DegreeScheduleTerms';
 

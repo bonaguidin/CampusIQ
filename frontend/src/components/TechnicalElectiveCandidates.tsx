@@ -5,7 +5,7 @@ import {
   isSkippedTechnicalElectives,
   type TechnicalElectiveCandidate,
   type TechnicalElectiveEligibility,
-} from '../api/technicalElectives';
+} from '../api/technicalElectives.mjs';
 import { useAnalysisRun } from '../hooks/useAnalysisRun';
 
 const LABEL: Record<TechnicalElectiveEligibility, string> = {

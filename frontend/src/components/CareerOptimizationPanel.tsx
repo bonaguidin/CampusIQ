@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
-import { fetchCareerOptimizedSchedule } from '../api/careerOptimizedSchedule';
-import type { ScheduleResult } from '../api/degreeSchedule';
+import { fetchCareerOptimizedSchedule } from '../api/careerOptimizedSchedule.mjs';
+import type { ScheduleResult } from '../api/degreeSchedule.mjs';
 import {
   INITIAL_CAREER_OPTIMIZATION_STATE,
   careerChangeSummary,
@@ -12,8 +12,8 @@ import {
   graduationTimingImpact,
   type CareerOptimizationRunState,
   type CareerOptimizationView,
-} from '../lib/careerSchedulePresentation';
-import { displayTermKey } from '../lib/degreeSchedulePresentation';
+} from '../lib/careerSchedulePresentation.mjs';
+import { displayTermKey } from '../lib/degreeSchedulePresentation.mjs';
 import { DegreeScheduleTerms } from './DegreeScheduleTerms';
 
 function CourseList({ courses }: { courses: { courseCode: string; termKey: string }[] }) {

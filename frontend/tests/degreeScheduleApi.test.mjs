@@ -4,7 +4,7 @@ import test from 'node:test'
 import {
   fetchDegreeSchedule,
   isSkippedDegreeSchedule,
-} from '../src/api/degreeSchedule.ts'
+} from '../src/api/degreeSchedule.mjs'
 
 function fakeFetch(calls, status, body) {
   return async (url, init) => {

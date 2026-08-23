@@ -4,7 +4,7 @@ import test from 'node:test'
 import {
   fetchCareerOptimizedSchedule,
   isCareerOptimizedScheduleResponse,
-} from '../src/api/careerOptimizedSchedule.ts'
+} from '../src/api/careerOptimizedSchedule.mjs'
 
 const schedule = {
   student_id: 'sid', program_id: 'pid', terms: [], unscheduled: [], status: 'SCHEDULED', failure: null,

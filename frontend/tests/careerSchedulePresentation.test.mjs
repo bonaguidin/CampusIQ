@@ -10,7 +10,7 @@ import {
   completedCareerOptimizationState,
   courseTermMoves,
   graduationTimingImpact,
-} from '../src/lib/careerSchedulePresentation.ts'
+} from '../src/lib/careerSchedulePresentation.mjs'
 
 function schedule(entries) {
   const terms = new Map()

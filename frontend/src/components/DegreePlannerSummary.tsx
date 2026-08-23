@@ -1,5 +1,5 @@
-import type { DegreeScheduleResponse } from '../api/degreeSchedule';
-import { adviserReviewCount, nextPlannedTerm } from '../lib/degreeSchedulePresentation';
+import type { DegreeScheduleResponse } from '../api/degreeSchedule.mjs';
+import { adviserReviewCount, nextPlannedTerm } from '../lib/degreeSchedulePresentation.mjs';
 
 export function DegreePlannerSummary({
   institution,

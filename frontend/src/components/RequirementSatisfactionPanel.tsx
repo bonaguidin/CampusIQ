@@ -4,7 +4,7 @@ import {
   fetchRequirementSatisfaction,
   isSkippedRequirementSatisfaction,
   type RequirementSatisfactionResponse,
-} from '../api/requirementSatisfaction';
+} from '../api/requirementSatisfaction.mjs';
 import { useAnalysisRun } from '../hooks/useAnalysisRun';
 import { RequirementGroupNode } from './RequirementGroupNode';
 
