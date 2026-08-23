@@ -5,7 +5,8 @@
     "assignments/submissions/examTopicTags previously referenced course_ids 3010/3012/3014/3023/3024/3025 (the old TAMU courses). Those course_ids no longer exist in courses[] below -- left in place rather than deleted, since removing them would lose real fixture-authoring work and new SMU-specific assignment content hasn't been drafted to replace it. A future pass must either rewrite them against the new course_ids or remove them explicitly.",
     "gpa_current recomputed against the new SMU transcript using SMU's own plus/minus grade_point_map (uses_plus_minus=true, unlike TAMU's stripped scale) -- not carried over from the old TAMU value.",
     "expected_graduation reformatted from 'YYYY-MM' to 'Spring YYYY' to match production's students.expected_graduation format (20260812143000_profile_completion_field_formats.sql) -- this fixture had never picked up that migration's format change, since it only touched the live DB.",
-    "examTopicTags: Gradus IQ's own topic layer — NOT part of real Canvas data."
+    "examTopicTags: Gradus IQ's own topic layer — NOT part of real Canvas data.",
+    "course_lifecycle_preview: illustrative rows for the read-only demo lifecycle preview, updated for the SMU/CS conversion above. in_progress/completed reuse real, validated codes from courses[] below (CS 1342, CS 1341); planned/dropped (CS 2353, PSY 1300) are plausible but not independently catalog-verified the way courses[] is."
   ],
   "student": {
     "id": 603,
@@ -978,27 +979,27 @@
   "course_lifecycle_preview": [
     {
       "status": "planned",
-      "course_code": "ENGR 216",
-      "title": "Engineering Mechanics: Statics",
+      "course_code": "CS 2353",
+      "title": "Programming with Data Structures",
       "term_label": "Fall 2026"
     },
     {
       "status": "in_progress",
-      "course_code": "MATH 151",
-      "title": "Engineering Mathematics I",
+      "course_code": "CS 1342",
+      "title": "Principles of Computer Science II",
       "term_label": "Spring 2026"
     },
     {
       "status": "completed",
-      "course_code": "HIST 105",
-      "title": "History of the United States",
+      "course_code": "CS 1341",
+      "title": "Principles of Computer Science I",
       "term_label": "Fall 2025",
-      "letter_grade": "B+"
+      "letter_grade": "A-"
     },
     {
       "status": "dropped",
-      "course_code": "COMM 203",
-      "title": "Public Speaking",
+      "course_code": "PSY 1300",
+      "title": "Introduction to Psychology",
       "term_label": "Fall 2025"
     }
   ],
