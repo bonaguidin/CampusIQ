@@ -8,7 +8,10 @@ from GradusIQ_career.course_discovery.models import PrerequisiteClause, Structur
 from GradusIQ_career.course_discovery.models import CatalogInstitution
 from GradusIQ_career.course_discovery.prerequisites import structured_prerequisite
 from GradusIQ_career.course_discovery.requirement_satisfaction import evaluate_requirement_tree
-from GradusIQ_career.course_discovery.requirement_selection import select_structured_requirements
+from GradusIQ_career.course_discovery.requirement_selection import (
+    select_structured_requirements,
+    structured_candidate_codes,
+)
 from GradusIQ_career.course_discovery.scheduler import UnscheduledRequirement, satisfied_course_codes
 from GradusIQ_career.course_discovery.scheduler_scope import scope_schedule_input
 
@@ -26,8 +29,13 @@ def option(option_id, group_id, index, logic="and"):
     return {"id": option_id, "requirement_group_id": group_id, "option_index": index, "logic": logic}
 
 
-def course(option_id, gid=None, unresolved=None):
-    return {"requirement_group_option_id": option_id, "coursedog_group_id": gid, "unresolved_course_ref": unresolved}
+def course(option_id, gid=None, unresolved=None, code=None):
+    return {
+        "requirement_group_option_id": option_id,
+        "coursedog_group_id": gid,
+        "unresolved_course_ref": unresolved,
+        "course_code": code,
+    }
 
 
 def run(groups, options, option_courses, catalog, credits, *, records=None, prerequisites=None, max_terms=4, career_ranks=None):
@@ -250,3 +258,63 @@ def test_ethan_real_tree_resolves_five_structured_groups_globally():
     assert result.search_stats.candidate_combinations_before_pruning == 19008
     assert result.search_stats.candidate_combinations_after_structural_pruning == 1080
     assert result.search_stats.candidate_combinations_evaluated == 1080
+
+
+# ---------------------------------------------------------------------------
+# course_code path (TAMU, or any future non-Coursedog school) --
+# supabase/migrations/20260823140000_requirement_group_option_courses_
+# course_code.sql. structured_candidate_codes() is a clean mirror of the
+# established catalog_by_gid/catalog_by_code pattern; select_structured_
+# requirements()'s internal combinatorial choice generation (_option_
+# variants/_leaf_choices/_choices_for_group) is NOT extended here -- see
+# this build's report for why that cluster needs separate design work
+# (a cross-listed course inside an "and"-logic option needs an
+# equivalence-aware variant/product model, not a mechanical resolve-and-
+# lookup mirror) rather than a forced fit.
+# ---------------------------------------------------------------------------
+
+
+def test_structured_candidate_codes_course_code_path():
+    raw_groups = [group("g1", "enumerated_all")]
+    evaluated = evaluate_requirement_tree(
+        raw_groups, [option("o1", "g1", 0)], [course("o1", code="CHEM 107")], [], {}, {"CHEM 107": ["CHEM 107"]}
+    )
+    codes = structured_candidate_codes(
+        evaluated, raw_groups, [option("o1", "g1", 0)], [course("o1", code="CHEM 107")], {},
+        {"CHEM 107": ["CHEM 107"]},
+    )
+    assert codes == {"CHEM 107"}
+
+
+def test_structured_candidate_codes_cross_listing_includes_both_halves():
+    """Unlike scheduler_scope.py's per-requirement list, this function
+    returns a flat candidate set -- both halves of a cross-listing belong
+    in it (no double-counting risk here, see module docstring note)."""
+    raw_groups = [group("g1", "enumerated_all")]
+    option_courses = [course("o1", code="ENGR 216/PHYS 216")]
+    catalog_by_code = {"ENGR 216/PHYS 216": ["ENGR 216", "PHYS 216"]}
+    evaluated = evaluate_requirement_tree(
+        raw_groups, [option("o1", "g1", 0)], option_courses, [], {}, catalog_by_code
+    )
+    codes = structured_candidate_codes(
+        evaluated, raw_groups, [option("o1", "g1", 0)], option_courses, {}, catalog_by_code
+    )
+    assert codes == {"ENGR 216", "PHYS 216"}
+
+
+def test_structured_candidate_codes_coursedog_group_id_path_unaffected():
+    """Explicit proof the new optional catalog_by_code param doesn't
+    change SMU's existing coursedog_group_id resolution."""
+    raw_groups = [group("g1", "enumerated_all")]
+    option_courses = [course("o1", gid="g-a")]
+    catalog_by_gid = {"g-a": "AAA 100"}
+    evaluated = evaluate_requirement_tree(raw_groups, [option("o1", "g1", 0)], option_courses, [], catalog_by_gid)
+
+    without_param = structured_candidate_codes(
+        evaluated, raw_groups, [option("o1", "g1", 0)], option_courses, catalog_by_gid
+    )
+    with_unrelated_param = structured_candidate_codes(
+        evaluated, raw_groups, [option("o1", "g1", 0)], option_courses, catalog_by_gid,
+        {"SOME OTHER CODE": ["SOME OTHER CODE"]},
+    )
+    assert without_param == with_unrelated_param == {"AAA 100"}
