@@ -41,19 +41,45 @@ def _options_have_choice(options: list[dict], courses_by_option: dict[str, list[
     )
 
 
-def _leaf_course_codes(
+def _leaf_course_requirements(
     options: list[dict],
     courses_by_option: dict[str, list[dict]],
     catalog_by_gid: Mapping[str, str],
-) -> set[str]:
-    codes: set[str] = set()
+    catalog_by_code: Mapping[str, list[str]] | None = None,
+) -> list[frozenset[str]]:
+    """One entry per requirement_group_option_courses row, each entry the
+    set of course codes that would satisfy that ONE row -- resolves via
+    coursedog_group_id (SMU) or course_code (TAMU, any future
+    non-Coursedog school), same additive pattern established in
+    course_discovery/requirement_satisfaction.py's _resolve_option_codes().
+
+    Normally a singleton set. Exactly 2 codes only for a course_code row
+    that is a "/"-joined cross-listing (e.g. "ENGR 216/PHYS 216",
+    resolved to both real codes by catalog_by_code) -- that is ONE course
+    requirement satisfiable under either department code, not two
+    separate courses to schedule. Renamed from the pre-course_code
+    _leaf_course_codes(), which returned a flat set() -- that shape
+    cannot represent "these 2 codes are the same requirement" and would
+    silently double-schedule a cross-listed course under both codes if
+    naively extended; callers must treat each list entry as one
+    requirement, never flatten it into a single set.
+    """
+    catalog_by_code = catalog_by_code or {}
+    requirements: list[frozenset[str]] = []
     for option in options:
         for course in courses_by_option.get(option["id"], []):
             gid = course.get("coursedog_group_id")
-            code = catalog_by_gid.get(gid) if gid else None
-            if code:
-                codes.add(code)
-    return codes
+            if gid:
+                code = catalog_by_gid.get(gid)
+                if code:
+                    requirements.append(frozenset({code}))
+                continue
+            course_code = course.get("course_code")
+            if course_code:
+                codes = catalog_by_code.get(course_code, [])
+                if codes:
+                    requirements.append(frozenset(codes))
+    return requirements
 
 
 def scope_schedule_input(
@@ -62,7 +88,9 @@ def scope_schedule_input(
     option_courses: list[Mapping[str, Any]],
     catalog_by_gid: Mapping[str, str],
     catalog_credit_by_code: Mapping[str, float],
+    catalog_by_code: Mapping[str, list[str]] | None = None,
 ) -> tuple[list[CourseToSchedule], list[UnscheduledRequirement]]:
+    catalog_by_code = catalog_by_code or {}
     options_by_group: dict[str, list[dict]] = {}
     for option in options:
         options_by_group.setdefault(option["requirement_group_id"], []).append(dict(option))
@@ -117,22 +145,48 @@ def scope_schedule_input(
             defer(group, "SELECTION_DEFERRED")
             return
 
-        required = _leaf_course_codes(group_options, courses_by_option, catalog_by_gid)
-        remaining = sorted(required - set(group.matched_course_codes))
-        for code in remaining:
-            credit_hours = catalog_credit_by_code.get(code)
-            if credit_hours is None or credit_hours <= 0:
-                # No usable catalog credit-hours row for this course --
+        group_requirements = _leaf_course_requirements(
+            group_options, courses_by_option, catalog_by_gid, catalog_by_code
+        )
+        matched = set(group.matched_course_codes)
+        # `seen` guards the same de-duplication the old flat set() gave for
+        # free: if two rows happen to resolve to the identical single code
+        # (or share a code with an already-scheduled cross-listing), only
+        # the first is scheduled, not one CourseToSchedule per row.
+        seen: set[str] = set()
+        for requirement_codes in sorted(group_requirements, key=lambda codes: sorted(codes)):
+            if requirement_codes & matched:
+                continue
+            if requirement_codes & seen:
+                continue
+            # A cross-listed requirement (>1 code) picks whichever
+            # alternative has usable catalog credit-hours, preferring the
+            # lexicographically-first when more than one does -- it is ONE
+            # course under two department codes, so exactly one
+            # CourseToSchedule is emitted, never one per code (see
+            # _leaf_course_requirements' docstring on why the flat-set
+            # shape this replaced would have double-scheduled it).
+            chosen_code: str | None = None
+            chosen_credit: float | None = None
+            for candidate in sorted(requirement_codes):
+                credit_hours = catalog_credit_by_code.get(candidate)
+                if credit_hours is not None and credit_hours > 0:
+                    chosen_code = candidate
+                    chosen_credit = credit_hours
+                    break
+            seen.update(requirement_codes)
+            if chosen_code is None:
+                # No usable catalog credit-hours row for any alternative --
                 # CourseToSchedule requires credit_hours > 0. Does not occur
-                # for any of Ethan Brooks' real remaining courses; a
-                # defensive skip so one unmapped course doesn't take down
-                # the whole schedule, matching this module's fail-closed
-                # posture elsewhere.
+                # for any of Ethan Brooks' or Deepak's real remaining
+                # courses; a defensive skip so one unmapped course doesn't
+                # take down the whole schedule, matching this module's
+                # fail-closed posture elsewhere.
                 continue
             courses.append(
                 CourseToSchedule(
-                    course_code=code,
-                    credit_hours=credit_hours,
+                    course_code=chosen_code,
+                    credit_hours=chosen_credit,
                     requirement_group_id=group.id,
                     requirement_group_name=group.name,
                 )
