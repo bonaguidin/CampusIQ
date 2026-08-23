@@ -1,0 +1,99 @@
+{
+  "data": {
+    "career_needs": [
+      {
+        "category": "knowledge",
+        "confidence": 0.81,
+        "evidence_source": "O*NET 19-4061.00 onet",
+        "evidence_state": "VERIFIED_LOCAL",
+        "importance": "required",
+        "need_id": "need_ac1986829639",
+        "skill": "English Language",
+        "target_role": "Research Assistant"
+      },
+      {
+        "category": "abilities",
+        "confidence": 0.75,
+        "evidence_source": "O*NET 19-4061.00 onet",
+        "evidence_state": "VERIFIED_LOCAL",
+        "importance": "required",
+        "need_id": "need_7e0f935b314d",
+        "skill": "Oral Comprehension",
+        "target_role": "Research Assistant"
+      },
+      {
+        "category": "abilities",
+        "confidence": 0.75,
+        "evidence_source": "O*NET 19-4061.00 onet",
+        "evidence_state": "VERIFIED_LOCAL",
+        "importance": "required",
+        "need_id": "need_8be72f1d0bb5",
+        "skill": "Oral Expression",
+        "target_role": "Research Assistant"
+      },
+      {
+        "category": "skills",
+        "confidence": 0.75,
+        "evidence_source": "O*NET 19-4061.00 onet",
+        "evidence_state": "VERIFIED_LOCAL",
+        "importance": "required",
+        "need_id": "need_23056a7c5a7e",
+        "skill": "Reading Comprehension",
+        "target_role": "Research Assistant"
+      },
+      {
+        "category": "abilities",
+        "confidence": 0.75,
+        "evidence_source": "O*NET 19-4061.00 onet",
+        "evidence_state": "VERIFIED_LOCAL",
+        "importance": "required",
+        "need_id": "need_94b0d91f4e62",
+        "skill": "Written Comprehension",
+        "target_role": "Research Assistant"
+      },
+      {
+        "category": "technology",
+        "confidence": 0.7,
+        "evidence_source": "O*NET 19-4061.00 onet",
+        "evidence_state": "VERIFIED_LOCAL",
+        "importance": "required",
+        "need_id": "need_7dd72cb3c11a",
+        "skill": "Microsoft Excel",
+        "target_role": "Research Assistant"
+      },
+      {
+        "category": "technology",
+        "confidence": 0.7,
+        "evidence_source": "O*NET 19-4061.00 onet",
+        "evidence_state": "VERIFIED_LOCAL",
+        "importance": "required",
+        "need_id": "need_622729843b85",
+        "skill": "Microsoft Office software",
+        "target_role": "Research Assistant"
+      },
+      {
+        "category": "technology",
+        "confidence": 0.7,
+        "evidence_source": "O*NET 19-4061.00 onet",
+        "evidence_state": "VERIFIED_LOCAL",
+        "importance": "required",
+        "need_id": "need_f3f73a596e32",
+        "skill": "Microsoft PowerPoint",
+        "target_role": "Research Assistant"
+      }
+    ],
+    "current_major": "Biology",
+    "degree_applicability": "UNKNOWN",
+    "intended_major": "N/A",
+    "offering_status": "UNKNOWN",
+    "prerequisite_blocked": [],
+    "requires_verification": [],
+    "summary": "Verified 0 institution-scoped course recommendation(s); 0 additional candidate(s) require human verification; 0 candidate(s) blocked by an unmet prerequisite. Degree applicability and future offering remain unknown.",
+    "target_role": "Research Assistant",
+    "verified_recommendations": []
+  },
+  "errors": [],
+  "feature": "COURSE_DISCOVERY",
+  "status": "success",
+  "summary": "Verified 0 institution-scoped course recommendation(s); 0 additional candidate(s) require human verification; 0 candidate(s) blocked by an unmet prerequisite. Degree applicability and future offering remain unknown."
+}

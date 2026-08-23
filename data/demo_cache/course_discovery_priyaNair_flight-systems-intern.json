@@ -1,0 +1,99 @@
+{
+  "data": {
+    "career_needs": [
+      {
+        "category": "knowledge",
+        "confidence": 0.94,
+        "evidence_source": "O*NET 17-2011.00 onet",
+        "evidence_state": "VERIFIED_LOCAL",
+        "importance": "required",
+        "need_id": "need_a646a372fe3d",
+        "skill": "Engineering and Technology",
+        "target_role": "Flight Systems Intern"
+      },
+      {
+        "category": "knowledge",
+        "confidence": 0.81,
+        "evidence_source": "O*NET 17-2011.00 onet",
+        "evidence_state": "VERIFIED_LOCAL",
+        "importance": "required",
+        "need_id": "need_da833ccb938d",
+        "skill": "Mathematics",
+        "target_role": "Flight Systems Intern"
+      },
+      {
+        "category": "skills",
+        "confidence": 0.78,
+        "evidence_source": "O*NET 17-2011.00 onet",
+        "evidence_state": "VERIFIED_LOCAL",
+        "importance": "required",
+        "need_id": "need_4ff945554591",
+        "skill": "Critical Thinking",
+        "target_role": "Flight Systems Intern"
+      },
+      {
+        "category": "knowledge",
+        "confidence": 0.78,
+        "evidence_source": "O*NET 17-2011.00 onet",
+        "evidence_state": "VERIFIED_LOCAL",
+        "importance": "required",
+        "need_id": "need_2d63fe40b14f",
+        "skill": "Design",
+        "target_role": "Flight Systems Intern"
+      },
+      {
+        "category": "abilities",
+        "confidence": 0.78,
+        "evidence_source": "O*NET 17-2011.00 onet",
+        "evidence_state": "VERIFIED_LOCAL",
+        "importance": "required",
+        "need_id": "need_f30e8dd349c5",
+        "skill": "Written Comprehension",
+        "target_role": "Flight Systems Intern"
+      },
+      {
+        "category": "knowledge",
+        "confidence": 0.76,
+        "evidence_source": "O*NET 17-2011.00 onet",
+        "evidence_state": "VERIFIED_LOCAL",
+        "importance": "required",
+        "need_id": "need_4e02102953b5",
+        "skill": "Physics",
+        "target_role": "Flight Systems Intern"
+      },
+      {
+        "category": "abilities",
+        "confidence": 0.75,
+        "evidence_source": "O*NET 17-2011.00 onet",
+        "evidence_state": "VERIFIED_LOCAL",
+        "importance": "required",
+        "need_id": "need_6c278d7b7ca2",
+        "skill": "Deductive Reasoning",
+        "target_role": "Flight Systems Intern"
+      },
+      {
+        "category": "abilities",
+        "confidence": 0.75,
+        "evidence_source": "O*NET 17-2011.00 onet",
+        "evidence_state": "VERIFIED_LOCAL",
+        "importance": "required",
+        "need_id": "need_e8c1d0abb014",
+        "skill": "Inductive Reasoning",
+        "target_role": "Flight Systems Intern"
+      }
+    ],
+    "current_major": "Aerospace Engineering",
+    "degree_applicability": "UNKNOWN",
+    "intended_major": "N/A",
+    "offering_status": "UNKNOWN",
+    "prerequisite_blocked": [],
+    "requires_verification": [],
+    "summary": "Verified 0 institution-scoped course recommendation(s); 0 additional candidate(s) require human verification; 0 candidate(s) blocked by an unmet prerequisite. Degree applicability and future offering remain unknown.",
+    "target_role": "Flight Systems Intern",
+    "verified_recommendations": []
+  },
+  "errors": [],
+  "feature": "COURSE_DISCOVERY",
+  "status": "success",
+  "summary": "Verified 0 institution-scoped course recommendation(s); 0 additional candidate(s) require human verification; 0 candidate(s) blocked by an unmet prerequisite. Degree applicability and future offering remain unknown."
+}

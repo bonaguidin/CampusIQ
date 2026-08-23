@@ -1,0 +1,159 @@
+{
+  "data": {
+    "career_needs": [
+      {
+        "category": "knowledge",
+        "confidence": 0.94,
+        "evidence_source": "O*NET 15-1252.00 onet",
+        "evidence_state": "VERIFIED_LOCAL",
+        "importance": "required",
+        "need_id": "need_800c5636a44a",
+        "skill": "Computers and Electronics",
+        "target_role": "Software Engineering Intern"
+      },
+      {
+        "category": "skills",
+        "confidence": 0.72,
+        "evidence_source": "O*NET 15-1252.00 onet",
+        "evidence_state": "VERIFIED_LOCAL",
+        "importance": "required",
+        "need_id": "need_114ec83afc45",
+        "skill": "Critical Thinking",
+        "target_role": "Software Engineering Intern"
+      },
+      {
+        "category": "technology",
+        "confidence": 0.7,
+        "evidence_source": "O*NET 15-1252.00 onet",
+        "evidence_state": "VERIFIED_LOCAL",
+        "importance": "required",
+        "need_id": "need_62eeb0dec363",
+        "skill": "Amazon Web Services AWS software",
+        "target_role": "Software Engineering Intern"
+      },
+      {
+        "category": "technology",
+        "confidence": 0.7,
+        "evidence_source": "O*NET 15-1252.00 onet",
+        "evidence_state": "VERIFIED_LOCAL",
+        "importance": "required",
+        "need_id": "need_c74639481b1d",
+        "skill": "Apache Kafka",
+        "target_role": "Software Engineering Intern"
+      },
+      {
+        "category": "technology",
+        "confidence": 0.7,
+        "evidence_source": "O*NET 15-1252.00 onet",
+        "evidence_state": "VERIFIED_LOCAL",
+        "importance": "required",
+        "need_id": "need_af2fb6b0d3e6",
+        "skill": "Atlassian JIRA",
+        "target_role": "Software Engineering Intern"
+      },
+      {
+        "category": "technology",
+        "confidence": 0.7,
+        "evidence_source": "O*NET 15-1252.00 onet",
+        "evidence_state": "VERIFIED_LOCAL",
+        "importance": "required",
+        "need_id": "need_3dda0ce2a37b",
+        "skill": "C",
+        "target_role": "Software Engineering Intern"
+      },
+      {
+        "category": "technology",
+        "confidence": 0.7,
+        "evidence_source": "O*NET 15-1252.00 onet",
+        "evidence_state": "VERIFIED_LOCAL",
+        "importance": "required",
+        "need_id": "need_ac4fd104b86b",
+        "skill": "Cascading style sheets CSS",
+        "target_role": "Software Engineering Intern"
+      },
+      {
+        "category": "technology",
+        "confidence": 0.7,
+        "evidence_source": "O*NET 15-1252.00 onet",
+        "evidence_state": "VERIFIED_LOCAL",
+        "importance": "required",
+        "need_id": "need_04a31ab04616",
+        "skill": "Docker",
+        "target_role": "Software Engineering Intern"
+      }
+    ],
+    "current_major": "Computer Science",
+    "degree_applicability": "UNKNOWN",
+    "intended_major": "N/A",
+    "offering_status": "UNKNOWN",
+    "prerequisite_blocked": [],
+    "requires_verification": [],
+    "summary": "Verified 1 institution-scoped course recommendation(s); 0 additional candidate(s) require human verification; 0 candidate(s) blocked by an unmet prerequisite. Degree applicability and future offering remain unknown.",
+    "target_role": "Software Engineering Intern",
+    "verified_recommendations": [
+      {
+        "course_code": "CS 1140",
+        "credit_max": 1.0,
+        "credit_min": 1.0,
+        "degree_applicability": "UNKNOWN",
+        "description": "This intensive mini course provides a practical introduction to Python programming for students with little or no prior coding experience. Topics covered include fundamental programming concepts such as variables, data types, control structures (conditionals and loops), functions, and basic data structures. Through hands-on exercises and small projects, students develop the foundational skills necessary to read, write, and debug Python programs, preparing them for further study in data science, machine learning, or software development. This course is offered at an entry-level appropriate for non-CS students and does not count towards the BSCS or BACS degrees.",
+        "eligibility_status": "ELIGIBLE",
+        "institution": "smu",
+        "match_kinds": [
+          "MATCHED_TITLE",
+          "MATCHED_DESCRIPTION"
+        ],
+        "matched_needs": [
+          {
+            "category": "knowledge",
+            "confidence": 0.94,
+            "evidence_source": "O*NET 15-1252.00 onet",
+            "evidence_state": "VERIFIED_LOCAL",
+            "importance": "required",
+            "need_id": "need_800c5636a44a",
+            "skill": "Computers and Electronics",
+            "target_role": "Software Engineering Intern"
+          }
+        ],
+        "matched_terms": [
+          "program"
+        ],
+        "offering_status": "UNKNOWN",
+        "prerequisite_evaluation": {
+          "in_progress_courses": [],
+          "missing_courses": [],
+          "planned_courses": [],
+          "reasons": [
+            "catalog lists no prerequisites"
+          ],
+          "requirement": {
+            "course_codes": [],
+            "mode": "NONE",
+            "raw_text": null,
+            "restrictions": [],
+            "unresolved_reasons": []
+          },
+          "satisfied_courses": [],
+          "status": "ELIGIBLE",
+          "unknown_courses": []
+        },
+        "prerequisite_status": "ELIGIBLE",
+        "provenance": {
+          "catalog_year": "2026-2027",
+          "course_code": "CS 1140",
+          "institution": "smu",
+          "source_last_checked": "2026-08-18",
+          "source_url": "https://catalog.smu.edu/departments/CS/courses"
+        },
+        "ranking_reason": "Only eligible candidate directly supports foundational programming knowledge for software engineering.",
+        "skill_alignment_explanation": "Python programming course builds core programming skills relevant to Computers and Electronics knowledge.",
+        "student_status": "NOT_TAKEN",
+        "title": "Introduction to Python Programming"
+      }
+    ]
+  },
+  "errors": [],
+  "feature": "COURSE_DISCOVERY",
+  "status": "success",
+  "summary": "Verified 1 institution-scoped course recommendation(s); 0 additional candidate(s) require human verification; 0 candidate(s) blocked by an unmet prerequisite. Degree applicability and future offering remain unknown."
+}

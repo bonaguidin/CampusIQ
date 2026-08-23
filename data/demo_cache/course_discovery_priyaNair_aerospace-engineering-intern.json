@@ -1,0 +1,429 @@
+{
+  "data": {
+    "career_needs": [
+      {
+        "category": "knowledge",
+        "confidence": 0.94,
+        "evidence_source": "O*NET 17-2011.00 onet",
+        "evidence_state": "VERIFIED_LOCAL",
+        "importance": "required",
+        "need_id": "need_31bbee7e9b3c",
+        "skill": "Engineering and Technology",
+        "target_role": "Aerospace Engineering Intern"
+      },
+      {
+        "category": "knowledge",
+        "confidence": 0.81,
+        "evidence_source": "O*NET 17-2011.00 onet",
+        "evidence_state": "VERIFIED_LOCAL",
+        "importance": "required",
+        "need_id": "need_77dd8f9b8cc9",
+        "skill": "Mathematics",
+        "target_role": "Aerospace Engineering Intern"
+      },
+      {
+        "category": "skills",
+        "confidence": 0.78,
+        "evidence_source": "O*NET 17-2011.00 onet",
+        "evidence_state": "VERIFIED_LOCAL",
+        "importance": "required",
+        "need_id": "need_bf4d49670b17",
+        "skill": "Critical Thinking",
+        "target_role": "Aerospace Engineering Intern"
+      },
+      {
+        "category": "knowledge",
+        "confidence": 0.78,
+        "evidence_source": "O*NET 17-2011.00 onet",
+        "evidence_state": "VERIFIED_LOCAL",
+        "importance": "required",
+        "need_id": "need_f773ae73c63d",
+        "skill": "Design",
+        "target_role": "Aerospace Engineering Intern"
+      },
+      {
+        "category": "abilities",
+        "confidence": 0.78,
+        "evidence_source": "O*NET 17-2011.00 onet",
+        "evidence_state": "VERIFIED_LOCAL",
+        "importance": "required",
+        "need_id": "need_fde067e99092",
+        "skill": "Written Comprehension",
+        "target_role": "Aerospace Engineering Intern"
+      },
+      {
+        "category": "knowledge",
+        "confidence": 0.76,
+        "evidence_source": "O*NET 17-2011.00 onet",
+        "evidence_state": "VERIFIED_LOCAL",
+        "importance": "required",
+        "need_id": "need_e8a21ad91faa",
+        "skill": "Physics",
+        "target_role": "Aerospace Engineering Intern"
+      },
+      {
+        "category": "abilities",
+        "confidence": 0.75,
+        "evidence_source": "O*NET 17-2011.00 onet",
+        "evidence_state": "VERIFIED_LOCAL",
+        "importance": "required",
+        "need_id": "need_5436982afddd",
+        "skill": "Deductive Reasoning",
+        "target_role": "Aerospace Engineering Intern"
+      },
+      {
+        "category": "abilities",
+        "confidence": 0.75,
+        "evidence_source": "O*NET 17-2011.00 onet",
+        "evidence_state": "VERIFIED_LOCAL",
+        "importance": "required",
+        "need_id": "need_f7afe7056e8e",
+        "skill": "Inductive Reasoning",
+        "target_role": "Aerospace Engineering Intern"
+      }
+    ],
+    "current_major": "Aerospace Engineering",
+    "degree_applicability": "UNKNOWN",
+    "intended_major": "N/A",
+    "offering_status": "UNKNOWN",
+    "prerequisite_blocked": [],
+    "requires_verification": [
+      {
+        "course_code": "AERO 401",
+        "eligibility_status": "UNRESOLVED",
+        "institution": "tamu",
+        "match_kinds": [
+          "MATCHED_TITLE",
+          "MATCHED_DESCRIPTION"
+        ],
+        "matched_needs": [
+          {
+            "category": "knowledge",
+            "confidence": 0.78,
+            "evidence_source": "O*NET 17-2011.00 onet",
+            "evidence_state": "VERIFIED_LOCAL",
+            "importance": "required",
+            "need_id": "need_f773ae73c63d",
+            "skill": "Design",
+            "target_role": "Aerospace Engineering Intern"
+          }
+        ],
+        "prerequisite_evaluation": {
+          "in_progress_courses": [],
+          "missing_courses": [
+            "AERO 306",
+            "AERO 307",
+            "AERO 321",
+            "AERO 351"
+          ],
+          "planned_courses": [],
+          "reasons": [
+            "prerequisite text contains an unsupported non-course restriction",
+            "parsed non-course restrictions require trusted structured data",
+            "mixed AND/OR grouping was not preserved by the catalog parser"
+          ],
+          "requirement": {
+            "course_codes": [
+              "AERO 306",
+              "AERO 307",
+              "AERO 321",
+              "AERO 351"
+            ],
+            "mode": "UNRESOLVED",
+            "raw_text": "Grade of C or better in AERO 306 , AERO 307 , AERO 321 , and AERO 351 , or concurrent enrollment.",
+            "restrictions": [
+              "Grade of C or better"
+            ],
+            "unresolved_reasons": [
+              "prerequisite text contains an unsupported non-course restriction",
+              "parsed non-course restrictions require trusted structured data",
+              "mixed AND/OR grouping was not preserved by the catalog parser"
+            ]
+          },
+          "satisfied_courses": [],
+          "status": "UNRESOLVED",
+          "unknown_courses": []
+        },
+        "provenance": {
+          "catalog_year": "2026-2027",
+          "course_code": "AERO 401",
+          "institution": "tamu",
+          "source_last_checked": "2026-06-20",
+          "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/aero/"
+        },
+        "reasons": [
+          "prerequisite text contains an unsupported non-course restriction",
+          "parsed non-course restrictions require trusted structured data",
+          "mixed AND/OR grouping was not preserved by the catalog parser"
+        ],
+        "title": "Aerospace Design Principles"
+      },
+      {
+        "course_code": "AERO 402",
+        "eligibility_status": "UNRESOLVED",
+        "institution": "tamu",
+        "match_kinds": [
+          "MATCHED_TITLE",
+          "MATCHED_DESCRIPTION"
+        ],
+        "matched_needs": [
+          {
+            "category": "knowledge",
+            "confidence": 0.78,
+            "evidence_source": "O*NET 17-2011.00 onet",
+            "evidence_state": "VERIFIED_LOCAL",
+            "importance": "required",
+            "need_id": "need_f773ae73c63d",
+            "skill": "Design",
+            "target_role": "Aerospace Engineering Intern"
+          }
+        ],
+        "prerequisite_evaluation": {
+          "in_progress_courses": [],
+          "missing_courses": [
+            "AERO 306",
+            "AERO 307",
+            "AERO 321",
+            "AERO 351",
+            "AERO 401"
+          ],
+          "planned_courses": [],
+          "reasons": [
+            "prerequisite text contains an unsupported non-course restriction",
+            "parsed non-course restrictions require trusted structured data",
+            "mixed AND/OR grouping was not preserved by the catalog parser"
+          ],
+          "requirement": {
+            "course_codes": [
+              "AERO 306",
+              "AERO 307",
+              "AERO 321",
+              "AERO 351",
+              "AERO 401"
+            ],
+            "mode": "UNRESOLVED",
+            "raw_text": "Grade of C or better in AERO 306 , AERO 307 , AERO 321 , AERO 351 , and AERO 401 .",
+            "restrictions": [
+              "Grade of C or better"
+            ],
+            "unresolved_reasons": [
+              "prerequisite text contains an unsupported non-course restriction",
+              "parsed non-course restrictions require trusted structured data",
+              "mixed AND/OR grouping was not preserved by the catalog parser"
+            ]
+          },
+          "satisfied_courses": [],
+          "status": "UNRESOLVED",
+          "unknown_courses": []
+        },
+        "provenance": {
+          "catalog_year": "2026-2027",
+          "course_code": "AERO 402",
+          "institution": "tamu",
+          "source_last_checked": "2026-06-20",
+          "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/aero/"
+        },
+        "reasons": [
+          "prerequisite text contains an unsupported non-course restriction",
+          "parsed non-course restrictions require trusted structured data",
+          "mixed AND/OR grouping was not preserved by the catalog parser"
+        ],
+        "title": "Aerospace Systems Design"
+      },
+      {
+        "course_code": "MATH 151",
+        "eligibility_status": "UNRESOLVED",
+        "institution": "tamu",
+        "match_kinds": [
+          "MATCHED_TITLE",
+          "MATCHED_DESCRIPTION"
+        ],
+        "matched_needs": [
+          {
+            "category": "knowledge",
+            "confidence": 0.81,
+            "evidence_source": "O*NET 17-2011.00 onet",
+            "evidence_state": "VERIFIED_LOCAL",
+            "importance": "required",
+            "need_id": "need_77dd8f9b8cc9",
+            "skill": "Mathematics",
+            "target_role": "Aerospace Engineering Intern"
+          }
+        ],
+        "prerequisite_evaluation": {
+          "in_progress_courses": [],
+          "missing_courses": [
+            "MATH 150"
+          ],
+          "planned_courses": [],
+          "reasons": [
+            "prerequisite text contains an unsupported non-course restriction",
+            "parsed non-course restrictions require trusted structured data"
+          ],
+          "requirement": {
+            "course_codes": [
+              "MATH 150"
+            ],
+            "mode": "UNRESOLVED",
+            "raw_text": "Grade of C or better in MATH 150 or equivalent or acceptable score on TAMU Math Placement Exam; also taught at Galveston and Qatar campuses.",
+            "restrictions": [
+              "Grade of C or better"
+            ],
+            "unresolved_reasons": [
+              "prerequisite text contains an unsupported non-course restriction",
+              "parsed non-course restrictions require trusted structured data"
+            ]
+          },
+          "satisfied_courses": [],
+          "status": "UNRESOLVED",
+          "unknown_courses": []
+        },
+        "provenance": {
+          "catalog_year": "2026-2027",
+          "course_code": "MATH 151",
+          "institution": "tamu",
+          "source_last_checked": "2026-06-20",
+          "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/math/"
+        },
+        "reasons": [
+          "prerequisite text contains an unsupported non-course restriction",
+          "parsed non-course restrictions require trusted structured data"
+        ],
+        "title": "Engineering Mathematics I"
+      },
+      {
+        "course_code": "MATH 152",
+        "eligibility_status": "UNRESOLVED",
+        "institution": "tamu",
+        "match_kinds": [
+          "MATCHED_TITLE",
+          "MATCHED_DESCRIPTION"
+        ],
+        "matched_needs": [
+          {
+            "category": "knowledge",
+            "confidence": 0.81,
+            "evidence_source": "O*NET 17-2011.00 onet",
+            "evidence_state": "VERIFIED_LOCAL",
+            "importance": "required",
+            "need_id": "need_77dd8f9b8cc9",
+            "skill": "Mathematics",
+            "target_role": "Aerospace Engineering Intern"
+          }
+        ],
+        "prerequisite_evaluation": {
+          "in_progress_courses": [],
+          "missing_courses": [
+            "MATH 151",
+            "MATH 150"
+          ],
+          "planned_courses": [],
+          "reasons": [
+            "prerequisite text contains an unsupported non-course restriction",
+            "parsed non-course restrictions require trusted structured data"
+          ],
+          "requirement": {
+            "course_codes": [
+              "MATH 151",
+              "MATH 150"
+            ],
+            "mode": "UNRESOLVED",
+            "raw_text": "Grade of C or better in MATH 151 or equivalent; grade of C or better in MATH 150 or equivalent, or acceptable score on TAMU Math Placement Exam; also taught at Galveston campus.",
+            "restrictions": [
+              "Grade of C or better",
+              "grade of C or better"
+            ],
+            "unresolved_reasons": [
+              "prerequisite text contains an unsupported non-course restriction",
+              "parsed non-course restrictions require trusted structured data"
+            ]
+          },
+          "satisfied_courses": [],
+          "status": "UNRESOLVED",
+          "unknown_courses": []
+        },
+        "provenance": {
+          "catalog_year": "2026-2027",
+          "course_code": "MATH 152",
+          "institution": "tamu",
+          "source_last_checked": "2026-06-20",
+          "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/math/"
+        },
+        "reasons": [
+          "prerequisite text contains an unsupported non-course restriction",
+          "parsed non-course restrictions require trusted structured data"
+        ],
+        "title": "Engineering Mathematics II"
+      },
+      {
+        "course_code": "CVEN 314",
+        "eligibility_status": "UNRESOLVED",
+        "institution": "tamu",
+        "match_kinds": [
+          "MATCHED_TITLE",
+          "MATCHED_DESCRIPTION"
+        ],
+        "matched_needs": [
+          {
+            "category": "knowledge",
+            "confidence": 0.94,
+            "evidence_source": "O*NET 17-2011.00 onet",
+            "evidence_state": "VERIFIED_LOCAL",
+            "importance": "required",
+            "need_id": "need_31bbee7e9b3c",
+            "skill": "Engineering and Technology",
+            "target_role": "Aerospace Engineering Intern"
+          }
+        ],
+        "prerequisite_evaluation": {
+          "in_progress_courses": [],
+          "missing_courses": [
+            "CVEN 302"
+          ],
+          "planned_courses": [],
+          "reasons": [
+            "prerequisite text contains an unsupported non-course restriction",
+            "parsed non-course restrictions require trusted structured data"
+          ],
+          "requirement": {
+            "course_codes": [
+              "CVEN 302"
+            ],
+            "mode": "UNRESOLVED",
+            "raw_text": "Prerequisite: Grade of C or better in CVEN 302 , or approval of instructor.",
+            "restrictions": [
+              "approval of instructor",
+              "Grade of C or better"
+            ],
+            "unresolved_reasons": [
+              "prerequisite text contains an unsupported non-course restriction",
+              "parsed non-course restrictions require trusted structured data"
+            ]
+          },
+          "satisfied_courses": [],
+          "status": "UNRESOLVED",
+          "unknown_courses": []
+        },
+        "provenance": {
+          "catalog_year": "2026-2027",
+          "course_code": "CVEN 314",
+          "institution": "tamu",
+          "source_last_checked": "2026-08-13",
+          "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/cven/"
+        },
+        "reasons": [
+          "prerequisite text contains an unsupported non-course restriction",
+          "parsed non-course restrictions require trusted structured data"
+        ],
+        "title": "Sensor Technology in Civil Engineering"
+      }
+    ],
+    "summary": "Verified 0 institution-scoped course recommendation(s); 5 additional candidate(s) require human verification; 0 candidate(s) blocked by an unmet prerequisite. Degree applicability and future offering remain unknown.",
+    "target_role": "Aerospace Engineering Intern",
+    "verified_recommendations": []
+  },
+  "errors": [],
+  "feature": "COURSE_DISCOVERY",
+  "status": "success",
+  "summary": "Verified 0 institution-scoped course recommendation(s); 5 additional candidate(s) require human verification; 0 candidate(s) blocked by an unmet prerequisite. Degree applicability and future offering remain unknown."
+}

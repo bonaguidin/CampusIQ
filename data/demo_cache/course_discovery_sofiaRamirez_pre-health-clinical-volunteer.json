@@ -1,0 +1,170 @@
+{
+  "data": {
+    "career_needs": [
+      {
+        "category": "knowledge",
+        "confidence": 0.95,
+        "evidence_source": "O*NET 31-9092.00 onet",
+        "evidence_state": "VERIFIED_LOCAL",
+        "importance": "required",
+        "need_id": "need_6768a7df97db",
+        "skill": "English Language",
+        "target_role": "Pre-Health Clinical Volunteer"
+      },
+      {
+        "category": "knowledge",
+        "confidence": 0.88,
+        "evidence_source": "O*NET 31-9092.00 onet",
+        "evidence_state": "VERIFIED_LOCAL",
+        "importance": "required",
+        "need_id": "need_a0c116c1e8c1",
+        "skill": "Customer and Personal Service",
+        "target_role": "Pre-Health Clinical Volunteer"
+      },
+      {
+        "category": "knowledge",
+        "confidence": 0.83,
+        "evidence_source": "O*NET 31-9092.00 onet",
+        "evidence_state": "VERIFIED_LOCAL",
+        "importance": "required",
+        "need_id": "need_c94722e1be07",
+        "skill": "Medicine and Dentistry",
+        "target_role": "Pre-Health Clinical Volunteer"
+      },
+      {
+        "category": "knowledge",
+        "confidence": 0.78,
+        "evidence_source": "O*NET 31-9092.00 onet",
+        "evidence_state": "VERIFIED_LOCAL",
+        "importance": "required",
+        "need_id": "need_9567ab377f3a",
+        "skill": "Administrative",
+        "target_role": "Pre-Health Clinical Volunteer"
+      },
+      {
+        "category": "abilities",
+        "confidence": 0.75,
+        "evidence_source": "O*NET 31-9092.00 onet",
+        "evidence_state": "VERIFIED_LOCAL",
+        "importance": "required",
+        "need_id": "need_6235db51f037",
+        "skill": "Oral Comprehension",
+        "target_role": "Pre-Health Clinical Volunteer"
+      },
+      {
+        "category": "abilities",
+        "confidence": 0.75,
+        "evidence_source": "O*NET 31-9092.00 onet",
+        "evidence_state": "VERIFIED_LOCAL",
+        "importance": "required",
+        "need_id": "need_d84cd3464c4d",
+        "skill": "Oral Expression",
+        "target_role": "Pre-Health Clinical Volunteer"
+      },
+      {
+        "category": "abilities",
+        "confidence": 0.75,
+        "evidence_source": "O*NET 31-9092.00 onet",
+        "evidence_state": "VERIFIED_LOCAL",
+        "importance": "required",
+        "need_id": "need_bcc951023470",
+        "skill": "Written Comprehension",
+        "target_role": "Pre-Health Clinical Volunteer"
+      },
+      {
+        "category": "skills",
+        "confidence": 0.72,
+        "evidence_source": "O*NET 31-9092.00 onet",
+        "evidence_state": "VERIFIED_LOCAL",
+        "importance": "required",
+        "need_id": "need_ca3a08ac8bd2",
+        "skill": "Active Listening",
+        "target_role": "Pre-Health Clinical Volunteer"
+      }
+    ],
+    "current_major": "Biology",
+    "degree_applicability": "UNKNOWN",
+    "intended_major": "N/A",
+    "offering_status": "UNKNOWN",
+    "prerequisite_blocked": [],
+    "requires_verification": [],
+    "summary": "Verified 1 institution-scoped course recommendation(s); 0 additional candidate(s) require human verification; 0 candidate(s) blocked by an unmet prerequisite. Degree applicability and future offering remain unknown.",
+    "target_role": "Pre-Health Clinical Volunteer",
+    "verified_recommendations": [
+      {
+        "course_code": "ENGL 292",
+        "credit_max": 3.0,
+        "credit_min": 3.0,
+        "degree_applicability": "UNKNOWN",
+        "description": "Introduction to methodology, scope and practice of literature and medicine studies; analysis of literature and/or other texts dealing with health and illness; engagement with different disciplinary perspectives as a tool for critical thinking. Instructors teaching this class will choose texts, assessments and approaches that represent current scholarship and satisfy course learning objectives",
+        "eligibility_status": "ELIGIBLE",
+        "institution": "tamu",
+        "match_kinds": [
+          "MATCHED_TITLE",
+          "MATCHED_DESCRIPTION"
+        ],
+        "matched_needs": [
+          {
+            "category": "knowledge",
+            "confidence": 0.83,
+            "evidence_source": "O*NET 31-9092.00 onet",
+            "evidence_state": "VERIFIED_LOCAL",
+            "importance": "required",
+            "need_id": "need_c94722e1be07",
+            "skill": "Medicine and Dentistry",
+            "target_role": "Pre-Health Clinical Volunteer"
+          },
+          {
+            "category": "knowledge",
+            "confidence": 0.95,
+            "evidence_source": "O*NET 31-9092.00 onet",
+            "evidence_state": "VERIFIED_LOCAL",
+            "importance": "required",
+            "need_id": "need_6768a7df97db",
+            "skill": "English Language",
+            "target_role": "Pre-Health Clinical Volunteer"
+          }
+        ],
+        "matched_terms": [
+          "medicine",
+          "and"
+        ],
+        "offering_status": "UNKNOWN",
+        "prerequisite_evaluation": {
+          "in_progress_courses": [],
+          "missing_courses": [],
+          "planned_courses": [],
+          "reasons": [
+            "catalog lists no prerequisites"
+          ],
+          "requirement": {
+            "course_codes": [],
+            "mode": "NONE",
+            "raw_text": null,
+            "restrictions": [],
+            "unresolved_reasons": []
+          },
+          "satisfied_courses": [],
+          "status": "ELIGIBLE",
+          "unknown_courses": []
+        },
+        "prerequisite_status": "ELIGIBLE",
+        "provenance": {
+          "catalog_year": "2026-2027",
+          "course_code": "ENGL 292",
+          "institution": "tamu",
+          "source_last_checked": "2026-06-20",
+          "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/engl/"
+        },
+        "ranking_reason": "Only eligible course directly covering medicine and English language knowledge needs.",
+        "skill_alignment_explanation": "Focuses on literature and medicine studies, aligning with medicine and dentistry and English language skills.",
+        "student_status": "NOT_TAKEN",
+        "title": "Introduction to Literature and Medicine"
+      }
+    ]
+  },
+  "errors": [],
+  "feature": "COURSE_DISCOVERY",
+  "status": "success",
+  "summary": "Verified 1 institution-scoped course recommendation(s); 0 additional candidate(s) require human verification; 0 candidate(s) blocked by an unmet prerequisite. Degree applicability and future offering remain unknown."
+}

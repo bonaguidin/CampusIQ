@@ -1,0 +1,360 @@
+{
+  "data": {
+    "career_needs": [
+      {
+        "category": "skills",
+        "confidence": 0.84,
+        "evidence_source": "O*NET 21-1012.00 onet",
+        "evidence_state": "VERIFIED_LOCAL",
+        "importance": "required",
+        "need_id": "need_2306762eca77",
+        "skill": "Active Listening",
+        "target_role": "Student Success Peer Mentor"
+      },
+      {
+        "category": "abilities",
+        "confidence": 0.81,
+        "evidence_source": "O*NET 21-1012.00 onet",
+        "evidence_state": "VERIFIED_LOCAL",
+        "importance": "required",
+        "need_id": "need_ff2741ac9eb8",
+        "skill": "Oral Comprehension",
+        "target_role": "Student Success Peer Mentor"
+      },
+      {
+        "category": "abilities",
+        "confidence": 0.81,
+        "evidence_source": "O*NET 21-1012.00 onet",
+        "evidence_state": "VERIFIED_LOCAL",
+        "importance": "required",
+        "need_id": "need_7916d8a2ef3e",
+        "skill": "Oral Expression",
+        "target_role": "Student Success Peer Mentor"
+      },
+      {
+        "category": "skills",
+        "confidence": 0.78,
+        "evidence_source": "O*NET 21-1012.00 onet",
+        "evidence_state": "VERIFIED_LOCAL",
+        "importance": "required",
+        "need_id": "need_a46a9516c8fc",
+        "skill": "Speaking",
+        "target_role": "Student Success Peer Mentor"
+      },
+      {
+        "category": "knowledge",
+        "confidence": 0.76,
+        "evidence_source": "O*NET 21-1012.00 onet",
+        "evidence_state": "VERIFIED_LOCAL",
+        "importance": "required",
+        "need_id": "need_6171d588f8be",
+        "skill": "Customer and Personal Service",
+        "target_role": "Student Success Peer Mentor"
+      },
+      {
+        "category": "abilities",
+        "confidence": 0.75,
+        "evidence_source": "O*NET 21-1012.00 onet",
+        "evidence_state": "VERIFIED_LOCAL",
+        "importance": "required",
+        "need_id": "need_a3be25212a7e",
+        "skill": "Written Comprehension",
+        "target_role": "Student Success Peer Mentor"
+      },
+      {
+        "category": "abilities",
+        "confidence": 0.75,
+        "evidence_source": "O*NET 21-1012.00 onet",
+        "evidence_state": "VERIFIED_LOCAL",
+        "importance": "required",
+        "need_id": "need_f5af8086a6ba",
+        "skill": "Written Expression",
+        "target_role": "Student Success Peer Mentor"
+      },
+      {
+        "category": "skills",
+        "confidence": 0.72,
+        "evidence_source": "O*NET 21-1012.00 onet",
+        "evidence_state": "VERIFIED_LOCAL",
+        "importance": "required",
+        "need_id": "need_7e9f57aba95e",
+        "skill": "Critical Thinking",
+        "target_role": "Student Success Peer Mentor"
+      }
+    ],
+    "current_major": "Psychology",
+    "degree_applicability": "UNKNOWN",
+    "intended_major": "N/A",
+    "offering_status": "UNKNOWN",
+    "prerequisite_blocked": [],
+    "requires_verification": [],
+    "summary": "Verified 2 institution-scoped course recommendation(s); 0 additional candidate(s) require human verification; 0 candidate(s) blocked by an unmet prerequisite. Degree applicability and future offering remain unknown.",
+    "target_role": "Student Success Peer Mentor",
+    "verified_recommendations": [
+      {
+        "course_code": "COMM 203",
+        "credit_max": 3.0,
+        "credit_min": 3.0,
+        "degree_applicability": "UNKNOWN",
+        "description": "(SPCH 1315) Public Speaking. COURSE OVERVIEW. Explores principles, practice and criticism of public speaking. Emphasizes public speaking as more than performance, examining key skills, including audience analysis, research, organization, use of supporting materials and delivery techniques. Attention to ethical communication and sensitivity to diverse audiences across professional, political, religious, cultural and ideological contexts. Includes practice in informative, persuasive and group speaking, developing verbal and nonverbal communication strategies. RELEVANCE AND APPLICATION. Equips students with skills essential for professional, academic and civic life. Builds competence in organizing ideas, supporting arguments, adapting them to varied audiences. Develops confidence in extemporaneous speaking, critical listening and communication across diverse contexts. Prepares students for leadership roles, workplace communication and active participation in public dialogue. DEEPENING UNDERSTANDINGS. Highlights how everyday ideas about public speaking, such as viewing it only as performance or memorization, differ from research-based and practical perspectives. Develops understanding of speaking as a process involving invention, organization, style, delivery and audience adaptation, enhancing skills in extemporaneous speaking. Emphasizes that effective speaking requires ethical choices, critical thinking and sensitivity to diverse audiences as much as confidence in delivery. TOPICS AND THEMES. May include exploration of why public speaking matters in contemporary society; study of ethical principles in communication; development of confidence and listening skills; analysis of audiences and rhetorical situations; research and organization of supporting materials; crafting of effective introductions, bodies and conclusions; use of language and presentation aids; practice in informative, persuasive and ceremonial speaking; application of digital rhetoric and multimedia tools. Course speeches and examples may address diverse and sometimes controversial topics, reflecting perspectives represented in public life as well as subjects chosen by students; breadth of content emerges from student interests and experiences, and guidance from the instructor; also taught at Galveston campus.",
+        "eligibility_status": "ELIGIBLE",
+        "institution": "tamu",
+        "match_kinds": [
+          "MATCHED_DESCRIPTION",
+          "MATCHED_TITLE"
+        ],
+        "matched_needs": [
+          {
+            "category": "skills",
+            "confidence": 0.84,
+            "evidence_source": "O*NET 21-1012.00 onet",
+            "evidence_state": "VERIFIED_LOCAL",
+            "importance": "required",
+            "need_id": "need_2306762eca77",
+            "skill": "Active Listening",
+            "target_role": "Student Success Peer Mentor"
+          },
+          {
+            "category": "abilities",
+            "confidence": 0.81,
+            "evidence_source": "O*NET 21-1012.00 onet",
+            "evidence_state": "VERIFIED_LOCAL",
+            "importance": "required",
+            "need_id": "need_ff2741ac9eb8",
+            "skill": "Oral Comprehension",
+            "target_role": "Student Success Peer Mentor"
+          },
+          {
+            "category": "abilities",
+            "confidence": 0.81,
+            "evidence_source": "O*NET 21-1012.00 onet",
+            "evidence_state": "VERIFIED_LOCAL",
+            "importance": "required",
+            "need_id": "need_7916d8a2ef3e",
+            "skill": "Oral Expression",
+            "target_role": "Student Success Peer Mentor"
+          },
+          {
+            "category": "skills",
+            "confidence": 0.78,
+            "evidence_source": "O*NET 21-1012.00 onet",
+            "evidence_state": "VERIFIED_LOCAL",
+            "importance": "required",
+            "need_id": "need_a46a9516c8fc",
+            "skill": "Speaking",
+            "target_role": "Student Success Peer Mentor"
+          },
+          {
+            "category": "knowledge",
+            "confidence": 0.76,
+            "evidence_source": "O*NET 21-1012.00 onet",
+            "evidence_state": "VERIFIED_LOCAL",
+            "importance": "required",
+            "need_id": "need_6171d588f8be",
+            "skill": "Customer and Personal Service",
+            "target_role": "Student Success Peer Mentor"
+          },
+          {
+            "category": "abilities",
+            "confidence": 0.75,
+            "evidence_source": "O*NET 21-1012.00 onet",
+            "evidence_state": "VERIFIED_LOCAL",
+            "importance": "required",
+            "need_id": "need_a3be25212a7e",
+            "skill": "Written Comprehension",
+            "target_role": "Student Success Peer Mentor"
+          },
+          {
+            "category": "abilities",
+            "confidence": 0.75,
+            "evidence_source": "O*NET 21-1012.00 onet",
+            "evidence_state": "VERIFIED_LOCAL",
+            "importance": "required",
+            "need_id": "need_f5af8086a6ba",
+            "skill": "Written Expression",
+            "target_role": "Student Success Peer Mentor"
+          },
+          {
+            "category": "skills",
+            "confidence": 0.72,
+            "evidence_source": "O*NET 21-1012.00 onet",
+            "evidence_state": "VERIFIED_LOCAL",
+            "importance": "required",
+            "need_id": "need_7e9f57aba95e",
+            "skill": "Critical Thinking",
+            "target_role": "Student Success Peer Mentor"
+          }
+        ],
+        "matched_terms": [
+          "active",
+          "listening",
+          "speaking"
+        ],
+        "offering_status": "UNKNOWN",
+        "prerequisite_evaluation": {
+          "in_progress_courses": [],
+          "missing_courses": [],
+          "planned_courses": [],
+          "reasons": [
+            "catalog lists no prerequisites"
+          ],
+          "requirement": {
+            "course_codes": [],
+            "mode": "NONE",
+            "raw_text": null,
+            "restrictions": [],
+            "unresolved_reasons": []
+          },
+          "satisfied_courses": [],
+          "status": "ELIGIBLE",
+          "unknown_courses": []
+        },
+        "prerequisite_status": "ELIGIBLE",
+        "provenance": {
+          "catalog_year": "2026-2027",
+          "course_code": "COMM 203",
+          "institution": "tamu",
+          "source_last_checked": "2026-08-13",
+          "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/comm/"
+        },
+        "ranking_reason": "Directly develops active listening, oral comprehension, oral expression, speaking, customer service, written comprehension, written expression, and critical thinking through public speaking practice.",
+        "skill_alignment_explanation": "Course description emphasizes audience analysis, critical listening, ethical communication, and organizing ideas for diverse audiences, aligning with all eight required skills and abilities.",
+        "student_status": "NOT_TAKEN",
+        "title": "Public Speaking"
+      },
+      {
+        "course_code": "COMM 204",
+        "credit_max": 3.0,
+        "credit_min": 3.0,
+        "degree_applicability": "UNKNOWN",
+        "description": "COURSE OVERVIEW. Introduces principles, practice and criticism of public speaking adapted for online audiences and platforms. Emphasizes public speaking as more than performance, examining key skills, including audience analysis, research, organization, use of supporting materials and delivery techniques. Attention to ethical communication and sensitivity to diverse audiences across professional, political, religious, cultural and/or ideological contexts. Includes practice in informative, persuasive and ceremonial speaking, developing competence in composition, digital presentation and multimedia editing. RELEVANCE AND APPLICATION. Equips students with skills essential for professional, academic and civic life. Builds competence in organizing ideas, supporting arguments, adapting them to varied online audiences. Develops confidence in digital delivery, critical listening and communication across diverse platforms. Prepares students for leadership roles, workplace communication and/or active participation in public dialogue through online media. DEEPENING UNDERSTANDINGS. Highlights how everyday ideas about public speaking, such as viewing it only as performance or memorization, differ from research-based and practical perspectives. Develops understanding of speaking as a process involving invention, organization, style, delivery and audience adaptation across both in-person and digital contexts. Emphasizes that effective speaking requires ethical choices, critical thinking and sensitivity to diverse audiences, as well as confidence in both live and recorded delivery. TOPICS AND THEMES. May include exploration of why public speaking matters in digital society; study of ethical principles in communication; development of confidence and listening skills; analysis of digital audiences and rhetorical situations; research and organization of supporting materials; crafting of effective introductions, bodies and conclusions; use of language and presentation aids; practice in informative, persuasive and/or ceremonial speaking; training in composition, delivery, recording and editing of speeches for digital distribution; application of digital rhetoric and multimedia tools across video conferencing, online platforms and social media. Course speeches and examples may address diverse and sometimes controversial topics, reflecting perspectives represented in public life as well as subjects chosen by students; breadth of content emerges from student interests and experiences, and guidance from the instructor.",
+        "eligibility_status": "ELIGIBLE",
+        "institution": "tamu",
+        "match_kinds": [
+          "MATCHED_TITLE",
+          "MATCHED_DESCRIPTION"
+        ],
+        "matched_needs": [
+          {
+            "category": "skills",
+            "confidence": 0.84,
+            "evidence_source": "O*NET 21-1012.00 onet",
+            "evidence_state": "VERIFIED_LOCAL",
+            "importance": "required",
+            "need_id": "need_2306762eca77",
+            "skill": "Active Listening",
+            "target_role": "Student Success Peer Mentor"
+          },
+          {
+            "category": "abilities",
+            "confidence": 0.81,
+            "evidence_source": "O*NET 21-1012.00 onet",
+            "evidence_state": "VERIFIED_LOCAL",
+            "importance": "required",
+            "need_id": "need_ff2741ac9eb8",
+            "skill": "Oral Comprehension",
+            "target_role": "Student Success Peer Mentor"
+          },
+          {
+            "category": "abilities",
+            "confidence": 0.81,
+            "evidence_source": "O*NET 21-1012.00 onet",
+            "evidence_state": "VERIFIED_LOCAL",
+            "importance": "required",
+            "need_id": "need_7916d8a2ef3e",
+            "skill": "Oral Expression",
+            "target_role": "Student Success Peer Mentor"
+          },
+          {
+            "category": "skills",
+            "confidence": 0.78,
+            "evidence_source": "O*NET 21-1012.00 onet",
+            "evidence_state": "VERIFIED_LOCAL",
+            "importance": "required",
+            "need_id": "need_a46a9516c8fc",
+            "skill": "Speaking",
+            "target_role": "Student Success Peer Mentor"
+          },
+          {
+            "category": "knowledge",
+            "confidence": 0.76,
+            "evidence_source": "O*NET 21-1012.00 onet",
+            "evidence_state": "VERIFIED_LOCAL",
+            "importance": "required",
+            "need_id": "need_6171d588f8be",
+            "skill": "Customer and Personal Service",
+            "target_role": "Student Success Peer Mentor"
+          },
+          {
+            "category": "abilities",
+            "confidence": 0.75,
+            "evidence_source": "O*NET 21-1012.00 onet",
+            "evidence_state": "VERIFIED_LOCAL",
+            "importance": "required",
+            "need_id": "need_a3be25212a7e",
+            "skill": "Written Comprehension",
+            "target_role": "Student Success Peer Mentor"
+          },
+          {
+            "category": "abilities",
+            "confidence": 0.75,
+            "evidence_source": "O*NET 21-1012.00 onet",
+            "evidence_state": "VERIFIED_LOCAL",
+            "importance": "required",
+            "need_id": "need_f5af8086a6ba",
+            "skill": "Written Expression",
+            "target_role": "Student Success Peer Mentor"
+          },
+          {
+            "category": "skills",
+            "confidence": 0.72,
+            "evidence_source": "O*NET 21-1012.00 onet",
+            "evidence_state": "VERIFIED_LOCAL",
+            "importance": "required",
+            "need_id": "need_7e9f57aba95e",
+            "skill": "Critical Thinking",
+            "target_role": "Student Success Peer Mentor"
+          }
+        ],
+        "matched_terms": [
+          "speaking"
+        ],
+        "offering_status": "UNKNOWN",
+        "prerequisite_evaluation": {
+          "in_progress_courses": [],
+          "missing_courses": [],
+          "planned_courses": [],
+          "reasons": [
+            "catalog lists no prerequisites"
+          ],
+          "requirement": {
+            "course_codes": [],
+            "mode": "NONE",
+            "raw_text": null,
+            "restrictions": [],
+            "unresolved_reasons": []
+          },
+          "satisfied_courses": [],
+          "status": "ELIGIBLE",
+          "unknown_courses": []
+        },
+        "prerequisite_status": "ELIGIBLE",
+        "provenance": {
+          "catalog_year": "2026-2027",
+          "course_code": "COMM 204",
+          "institution": "tamu",
+          "source_last_checked": "2026-08-13",
+          "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/comm/"
+        },
+        "ranking_reason": "Builds active listening, oral comprehension, oral expression, speaking, customer service, written comprehension, written expression, and critical thinking for digital audiences.",
+        "skill_alignment_explanation": "Course covers audience analysis, critical listening, ethical communication, and adapting messages to diverse online platforms, matching all eight required skills and abilities.",
+        "student_status": "NOT_TAKEN",
+        "title": "Public Speaking for Digital Platforms"
+      }
+    ]
+  },
+  "errors": [],
+  "feature": "COURSE_DISCOVERY",
+  "status": "success",
+  "summary": "Verified 2 institution-scoped course recommendation(s); 0 additional candidate(s) require human verification; 0 candidate(s) blocked by an unmet prerequisite. Degree applicability and future offering remain unknown."
+}

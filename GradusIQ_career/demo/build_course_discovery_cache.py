@@ -38,8 +38,12 @@ import sys
 from pathlib import Path
 from typing import Any, Sequence
 
+from dotenv import load_dotenv
+
 from GradusIQ_career.demo.profile_adapter import build_demo_intelligence_profile
 from GradusIQ_career.demo.role_slug import role_slug
+
+load_dotenv()
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
 _STUDENTS_DIR = _REPO_ROOT / "data" / "students"
