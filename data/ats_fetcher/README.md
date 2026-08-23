@@ -28,9 +28,11 @@ Public, zero-auth JSON endpoints published by each ATS. This is not scraping —
 | Lever | `api.lever.co/v0/postings/{company}?mode=json` | Sometimes carries salary |
 | Ashby | `api.ashbyhq.com/posting-api/job-board/{board}?includeCompensation=true` | Usually carries salary |
 | SmartRecruiters | `api.smartrecruiters.com/v1/companies/{company}/postings` | Paginated, limit/offset |
-| Recruitee | `{company}.recruitee.com/api/offers/` | — |
+| Recruitee | `{company}.recruitee.com/api/offers/` | Scoped, not yet implemented — see status note below |
 
-Six different response shapes. **The work is normalization, not fetching.** Normalize each into one internal posting object before anything else touches it.
+**Status: four platforms implemented** (Greenhouse, Lever, Ashby, SmartRecruiters), each confirmed against a real employer board. Recruitee is scoped in this table but has no adapter — no Recruitee-boarded employer exists in the current target list to build and verify one against. Add `fetch_recruitee` once one does.
+
+Five response shapes scoped, four implemented. **The work is normalization, not fetching.** Normalize each into one internal posting object before anything else touches it.
 
 Rate limits are undocumented. Be polite: sequential requests, a small delay between employers, retry with backoff, and never hammer on failure.
 

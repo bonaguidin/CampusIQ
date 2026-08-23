@@ -52,8 +52,8 @@ def fetch_greenhouse(slug):
     for j in d.get("jobs", []):
         out.append({
             "external_id": str(j.get("id", "")),
-            "title": j.get("title", "").strip(),
-            "location": (j.get("location") or {}).get("name", "").strip(),
+            "title": (j.get("title") or "").strip(),
+            "location": ((j.get("location") or {}).get("name") or "").strip(),
             "url": j.get("absolute_url", ""),
             "posted_at": (j.get("first_published") or j.get("updated_at") or "")[:10],
             "description": clean(j.get("content", "")),
