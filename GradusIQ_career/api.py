@@ -2547,7 +2547,7 @@ def get_me_requirement_satisfaction(request: Request) -> dict:
     try:
         raw = fetch_requirement_tree(client, program_id, student_id)
         groups = evaluate_requirement_tree(
-            raw.groups, raw.options, raw.option_courses, raw.course_records, raw.catalog_by_gid
+            raw.groups, raw.options, raw.option_courses, raw.course_records, raw.catalog_by_gid, raw.catalog_by_code
         )
         result = to_satisfaction_result(str(student_id), str(program_id), groups)
     except HTTPException:
@@ -2676,17 +2676,17 @@ def _reconstruct_academic_schedule(request: Request) -> _AcademicScheduleState |
 
     raw = fetch_requirement_tree(client, program_id, student_id)
     groups = evaluate_requirement_tree(
-        raw.groups, raw.options, raw.option_courses, raw.course_records, raw.catalog_by_gid
+        raw.groups, raw.options, raw.option_courses, raw.course_records, raw.catalog_by_gid, raw.catalog_by_code
     )
     courses, unscheduled = scope_schedule_input(
-        groups, raw.options, raw.option_courses, raw.catalog_by_gid, raw.catalog_credit_by_code
+        groups, raw.options, raw.option_courses, raw.catalog_by_gid, raw.catalog_credit_by_code, raw.catalog_by_code
     )
     institution_rows = client.table("institutions").select("name").eq("id", institution_id).execute().data
     institution_name = institution_rows[0]["name"] if institution_rows else None
     catalog_institution = resolve_institution(institution_name)
     catalog_repo = LocalCatalogRepository()
     candidate_codes = structured_candidate_codes(
-        groups, raw.groups, raw.options, raw.option_courses, raw.catalog_by_gid
+        groups, raw.groups, raw.options, raw.option_courses, raw.catalog_by_gid, raw.catalog_by_code
     )
     relevant_codes = sorted({course.course_code for course in courses} | candidate_codes)
     catalog_by_code: dict[str, CourseCatalogRecord] = {}
