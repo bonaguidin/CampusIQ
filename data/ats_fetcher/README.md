@@ -65,7 +65,7 @@ That makes this field set the ceiling on everything GAP can ever say. Bytes are 
 
 | Field | Notes |
 |---|---|
-| `role_family` | One of the ~10 DFW families, or **NULL**. See §5. |
+| `role_family` | One of the 14 student role families, or **NULL**. See §5. |
 | `is_dfw` | Boolean, derived from `location_raw`. **Load-bearing.** Handle remote/hybrid/multi-location explicitly rather than defaulting. |
 | `seniority` | `entry` / `mid` / `senior` / `unknown`, from title keywords (senior, sr., lead, principal, staff, manager, director, II, III). Tag only — see §6. |
 | `matched_skills` | Array of canonical skill names found in the description. **The actual payload.** See §4. |
@@ -81,7 +81,7 @@ Full description prose, **with one hedge:** retain raw description text on a rol
 
 **Rule: word-boundary matching against a canonical → alias table, longest alias first. Never naive substring search.**
 
-The table is bounded, not open-ended: build aliases **only** for skills O*NET already rates as important for the ~10 DFW role families. O*NET's importance scores are the skill set; the alias table only teaches the matcher to find those skills in prose. That is roughly 60–120 skills, reviewable by hand.
+The table is bounded, not open-ended: build aliases **only** for skills O*NET already rates as important for the 14 student role families (§5). O*NET's importance scores are the skill set; the alias table only teaches the matcher to find those skills in prose. That is roughly 60–120 skills, reviewable by hand.
 
 ### Table shape
 
@@ -110,9 +110,21 @@ Skills that need *reading* rather than *finding* — "comfortable presenting to 
 
 ## 5. Role family mapping — OPEN, your call on approach
 
+**Taxonomy note (added after this doc was written):** the illustrative titles and
+implied ~10-family taxonomy below predate a rewrite of the target role families.
+The current 14 student role families live in
+`data/job_postings/role_families.yaml` (branch `feat/postings-grounding`, merged
+to `dev`) — the same keys `data/role_requirements.json` and FIT/GAP already use.
+When this mapping actually gets built for ats-fetcher, scope it against that
+file's 14 families and its matching approach (longest-phrase-first,
+`exclude_phrases`, NULL-not-drop), not the ~10-family framing implied here. That
+file's own header also documents why a mapped-title hit rate as low as 1-2% on
+employer-direct boards is expected, not a bug — worth reading before assuming
+these rules are broken.
+
 `role_family` is the join key for `skill_frequency`, so a title in the wrong bucket contaminates that family's percentages.
 
-Employers do not write titles in our taxonomy. Real examples:
+Employers do not write titles in our taxonomy. Real examples (illustrative only — from the pre-rewrite taxonomy; see the note above):
 
 - "Financial Analyst I"
 - "Sr. Financial Analyst, FP&A"
@@ -221,7 +233,7 @@ Make this easy: a small script that dumps N random postings side by side — `ti
 
 - Zero model calls in this path
 - Field set per §3, including `is_dfw` and `seniority`
-- Longest-match-first alias matching, bounded to O*NET skills for the ~10 families
+- Longest-match-first alias matching, bounded to O*NET skills for the 14 student role families (see the taxonomy note in §5)
 - Keep and tag seniority; filter at read time, not ingest
 - Unmapped titles preserved with NULL `role_family` — never dropped
 - Raw text deleted at 7 days; extracted rows kept
