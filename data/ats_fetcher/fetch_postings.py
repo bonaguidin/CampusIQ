@@ -58,7 +58,7 @@ def fetch_greenhouse(slug):
             "posted_at": (j.get("first_published") or j.get("updated_at") or "")[:10],
             "description": clean(j.get("content", "")),
         })
-    return out
+    return out, 0
 
 def fetch_lever(slug):
     d = get_json(f"https://api.lever.co/v0/postings/{slug}?mode=json")
@@ -82,7 +82,7 @@ def fetch_lever(slug):
                           if ts else ""),
             "description": body.strip(),
         })
-    return out
+    return out, 0
 
 def fetch_ashby(slug):
     d = get_json(f"https://api.ashbyhq.com/posting-api/job-board/{slug}?includeCompensation=true")
@@ -98,12 +98,19 @@ def fetch_ashby(slug):
             "posted_at": (j.get("publishedAt") or "")[:10],
             "description": body.strip(),
         })
-    return out
+    return out, 0
 
 def fetch_smartrecruiters(slug):
     # GOTCHA: the list endpoint has NO description. Each posting needs a
     # second call. That's N+1 requests — slowest adapter by far.
-    out, offset = [], 0
+    #
+    # A detail-fetch failure drops that one posting rather than writing it
+    # with an empty description: a silent empty-description row would still
+    # count as a successfully fetched posting and quietly deflate the skill
+    # fire-rate downstream in build_skill_terms.py with no visible signal.
+    # `warnings` surfaces the drop count into pull_log.csv's status column
+    # (see main()) instead.
+    out, offset, warnings = [], 0, 0
     while True:
         d = get_json(f"https://api.smartrecruiters.com/v1/companies/{slug}"
                      f"/postings?limit=100&offset={offset}")
@@ -112,7 +119,6 @@ def fetch_smartrecruiters(slug):
             break
         for j in items:
             jid = j.get("id")
-            body = ""
             try:
                 time.sleep(PAUSE)
                 det = get_json(f"https://api.smartrecruiters.com/v1/companies/{slug}/postings/{jid}")
@@ -121,6 +127,8 @@ def fetch_smartrecruiters(slug):
                                  for k in ("jobDescription", "qualifications", "additionalInformation"))
             except Exception as e:
                 print(f"      detail fetch failed for {jid}: {e}", file=sys.stderr)
+                warnings += 1
+                continue
             loc = j.get("location") or {}
             out.append({
                 "external_id": str(jid),
@@ -134,7 +142,7 @@ def fetch_smartrecruiters(slug):
         if offset >= d.get("totalFound", 0):
             break
         time.sleep(PAUSE)
-    return out
+    return out, warnings
 
 ADAPTERS = {
     "greenhouse": fetch_greenhouse,
@@ -167,9 +175,11 @@ def main():
         if ats not in ADAPTERS:
             print(f"  {name:<28} SKIP unsupported ats '{ats}'"); continue
         try:
-            got = ADAPTERS[ats](slug)
-            print(f"  {name:<28} {ats:<16} {len(got):>5} postings")
-            log.append((name, ats, len(got), "ok"))
+            got, warnings = ADAPTERS[ats](slug)
+            print(f"  {name:<28} {ats:<16} {len(got):>5} postings"
+                  + (f"  ({warnings} detail fetch failures, dropped)" if warnings else ""))
+            status = "ok" if not warnings else f"partial_{warnings}_detail_failures"
+            log.append((name, ats, len(got), status))
             if not args.probe:
                 for g in got:
                     rows.append([name, ats, g["external_id"], g["title"],
