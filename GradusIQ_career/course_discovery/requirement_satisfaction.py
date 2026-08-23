@@ -34,6 +34,21 @@ condition mapped to this group_type by fetch_smu_requirements.py's
 CONDITION_TO_GROUP_TYPE. No coursedog_rule_id allowlist or other
 ID-based special-casing -- the schema itself now carries the
 distinction §8.4 originally flagged as unresolved.
+
+COURSE_CODE RESOLUTION (added for TAMU, any future non-Coursedog school --
+supabase/migrations/20260823140000_requirement_group_option_courses_
+course_code.sql): a requirement_group_option_courses row now resolves via
+either coursedog_group_id (through catalog_by_gid, SMU's existing path,
+untouched) or course_code (through catalog_by_code, new). Internally every
+row resolves to a LIST of acceptable codes, not a single code-or-None --
+normally 0 or 1 entries, but 2 for a TAMU-style slash-joined cross-listing
+(e.g. "ENGR 216/PHYS 216": course_catalog stores each cross-listed
+department code as its own independent row, so a student's transcript
+shows only ONE of the two and either must count). This is a strict
+generalization of the old str | None representation (wrap in a list),
+proven behavior-identical for SMU's existing coursedog_group_id path by
+tests/test_requirement_satisfaction.py's full existing suite passing
+unmodified -- see _resolve_option_codes() and _evaluate_option().
 """
 
 from __future__ import annotations
@@ -99,37 +114,72 @@ def _resolve_option_codes(
     option_id: str,
     option_courses: list[dict[str, Any]],
     catalog_by_gid: dict[str, str],
-) -> list[str | None]:
-    """One entry per requirement_group_option_courses row under this option.
-    None marks an unresolved_course_ref entry (or a coursedog_group_id with
-    no course_catalog match) -- it can never be matched against a
-    transcript, per §9's Engineering Leadership known-limitation.
+    catalog_by_code: dict[str, list[str]] | None = None,
+) -> list[list[str]]:
+    """One entry per requirement_group_option_courses row under this option,
+    each entry itself a list of acceptable course codes for that row.
+
+    Normally 0 (unresolved) or 1 entry -- an empty list marks an
+    unresolved_course_ref row, or a coursedog_group_id/course_code with no
+    course_catalog match, per §9's Engineering Leadership known-limitation;
+    it can never be matched against a transcript. Exactly 2 entries only
+    for a course_code row that is a "/"-joined cross-listing already split
+    by catalog_by_code (see requirement_satisfaction_fetch.py) -- either
+    counts as a match for that one row.
+
+    coursedog_group_id and course_code are mutually exclusive per-row (the
+    schema's own CHECK constraint), so each row resolves through exactly
+    one of catalog_by_gid or catalog_by_code, never both.
     """
-    codes: list[str | None] = []
+    catalog_by_code = catalog_by_code or {}
+    resolved: list[list[str]] = []
     for row in option_courses:
         gid = row.get("coursedog_group_id")
-        codes.append(catalog_by_gid.get(gid) if gid else None)
-    return codes
+        if gid:
+            code = catalog_by_gid.get(gid)
+            resolved.append([code] if code else [])
+            continue
+        course_code = row.get("course_code")
+        if course_code:
+            resolved.append(list(catalog_by_code.get(course_code, [])))
+            continue
+        resolved.append([])
+    return resolved
 
 
 def _evaluate_option(
-    logic: str, codes: list[str | None], matched_by_code: dict[str, dict[str, Any]]
+    logic: str, resolved_rows: list[list[str]], matched_by_code: dict[str, dict[str, Any]]
 ) -> tuple[bool, list[str]]:
     """Returns (option_satisfied, matched_course_codes_within_this_option).
 
-    'and': every entry must resolve to a code AND be matched -- an
-    unresolved entry makes the option permanently unsatisfiable. 'or': any
-    single resolved+matched code satisfies the option.
+    resolved_rows has one entry per requirement_group_option_courses row,
+    each entry itself a list of acceptable codes for that row (see
+    _resolve_option_codes -- more than one only for a cross-listed
+    course_code). A row counts as "matched" if ANY of its codes is in
+    matched_by_code -- this is a strict generalization of the old
+    str | None shape (a single code is just a 1-element list), so SMU's
+    coursedog_group_id rows (always 0 or 1 codes) behave identically to
+    before.
+
+    'and': every row must resolve to at least one code AND be matched --
+    a wholly-unresolved row makes the option permanently unsatisfiable.
+    'or': any single resolved+matched code, from any row, satisfies the
+    option.
     """
-    resolved = [c for c in codes if c is not None]
-    if not codes:
+    if not resolved_rows:
         return False, []
     if logic == "and":
-        if len(resolved) != len(codes):
+        if any(not codes for codes in resolved_rows):
             return False, []
-        matched = [c for c in resolved if c in matched_by_code]
-        return (len(matched) == len(resolved)), matched
-    matched = [c for c in resolved if c in matched_by_code]
+        rows_matched = 0
+        matched: list[str] = []
+        for codes in resolved_rows:
+            hits = [c for c in codes if c in matched_by_code]
+            if hits:
+                rows_matched += 1
+                matched.extend(hits)
+        return (rows_matched == len(resolved_rows)), matched
+    matched = [c for codes in resolved_rows for c in codes if c in matched_by_code]
     return (len(matched) > 0), matched
 
 
@@ -151,11 +201,18 @@ def evaluate_requirement_tree(
     option_courses: list[dict[str, Any]],
     course_records: list[dict[str, Any]],
     catalog_by_gid: dict[str, str],
+    catalog_by_code: dict[str, list[str]] | None = None,
 ) -> list[RequirementGroupResult]:
     """Walk a program's requirement_groups tree and return each top-level
     group's (and its descendants') RequirementGroupResult per §9's
     three-state model. Pure function -- no Client, no I/O.
+
+    catalog_by_code is optional and defaults to empty -- existing callers
+    (SMU, all of which resolve purely via catalog_by_gid) pass 5 positional
+    args exactly as before and are completely unaffected; see the module
+    docstring's COURSE_CODE RESOLUTION note.
     """
+    catalog_by_code = catalog_by_code or {}
     children_by_parent: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for group in groups:
         parent_id = group.get("parent_group_id")
@@ -181,11 +238,10 @@ def evaluate_requirement_tree(
         if group["group_type"] == "enumerated_credit_threshold":
             all_codes: set[str] = set()
             for option in opts:
-                for code in _resolve_option_codes(
-                    option["id"], option_courses_by_option.get(option["id"], []), catalog_by_gid
+                for codes in _resolve_option_codes(
+                    option["id"], option_courses_by_option.get(option["id"], []), catalog_by_gid, catalog_by_code
                 ):
-                    if code is not None:
-                        all_codes.add(code)
+                    all_codes.update(codes)
             matched_codes = sorted(code for code in all_codes if code in matched_by_code)
             accumulated = sum(matched_by_code[code].get("credit_hours") or 0 for code in matched_codes)
             required = group.get("credit_hours_required") or 0
@@ -209,7 +265,9 @@ def evaluate_requirement_tree(
         option_evals = [
             _evaluate_option(
                 option["logic"],
-                _resolve_option_codes(option["id"], option_courses_by_option.get(option["id"], []), catalog_by_gid),
+                _resolve_option_codes(
+                    option["id"], option_courses_by_option.get(option["id"], []), catalog_by_gid, catalog_by_code
+                ),
                 matched_by_code,
             )
             for option in opts
