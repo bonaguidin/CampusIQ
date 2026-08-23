@@ -4,6 +4,36 @@
 -- against this file until Deepak has reviewed it.
 --
 -- ============================================================================
+-- NOTE ADDED 2026-08-22 -- THE "NEVER APPLIED ANYWHERE" CLAIM BELOW IS STALE
+-- ============================================================================
+--
+-- Confirmed live (read-only, via PostgREST) on 2026-08-22: this migration's
+-- ORIGINAL content -- job_postings and job_posting_fetch_log, with exactly
+-- the columns from the pre-amendment version of this file (no url, is_dfw,
+-- location_kind, posting_identity; source restricted to 'adzuna'/'jsearch';
+-- raw_payload NOT NULL; target_role NOT NULL) -- IS applied to production.
+-- `supabase migration list --linked` shows this version as satisfied on
+-- both local and remote.
+--
+-- The AMENDED block immediately below was added to this same file in place
+-- (same filename, same version number) AFTER that original content was
+-- already live. None of the amendments -- the new columns on job_postings,
+-- the widened `source` platform list, or the four new tables
+-- (posting_clusters, posting_identity_keys, posting_cluster_merges,
+-- employers) -- have ever been run against the live database. Supabase's
+-- migration tracker records history by version/filename, not by content, so
+-- it already considers this version fully satisfied: a plain
+-- `supabase migration up` will silently skip this file rather than apply
+-- the amendments.
+--
+-- The amendments are carried in a separate follow-up migration instead:
+-- 20260822170000_job_postings_grounding_amendments.sql. That file is the
+-- delta between what's live and what this file's amended content below
+-- specifies -- read it alongside this one, not instead of it. This file's
+-- content, comments, and history are left exactly as they were; nothing
+-- below this note was rewritten.
+--
+-- ============================================================================
 -- AMENDED 2026-08-19 on feat/postings-grounding -- ATS SOURCES FOLDED IN
 -- ============================================================================
 --
