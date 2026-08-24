@@ -2460,6 +2460,136 @@ a {
   margin-bottom: var(--sp-1);
 }
 
+/* Degree Schedule: year tabs (reuses .academic-tabs/.academic-tab, the
+   segmented underline control from AcademicSnapshot) + two semester
+   columns per year. */
+
+.degree-schedule-years {
+  margin: var(--sp-5) 0;
+}
+
+.degree-schedule-year-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-4);
+}
+
+@media (max-width: 640px) {
+  .degree-schedule-year-columns {
+    grid-template-columns: 1fr;
+  }
+}
+
+.degree-schedule-semester {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.degree-schedule-semester-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--neutral-surface);
+  border-bottom: 1px solid var(--line);
+}
+
+.degree-schedule-semester-header h5 {
+  margin: 0;
+  font-size: var(--text-md);
+}
+
+.degree-schedule-semester-header span {
+  color: var(--muted);
+  font-size: var(--text-sm);
+  white-space: nowrap;
+}
+
+.degree-schedule-semester .empty-state {
+  padding: var(--sp-3) var(--sp-4);
+}
+
+.degree-schedule-semester-courses {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.degree-schedule-semester-course {
+  padding: var(--sp-3) var(--sp-4);
+  border-top: 1px solid var(--line);
+}
+
+.degree-schedule-semester-course:first-child {
+  border-top: 0;
+}
+
+.degree-schedule-semester-course .degree-schedule-course-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+.degree-schedule-semester-course .degree-schedule-course-row span:last-child {
+  color: var(--muted);
+  font-size: var(--text-sm);
+  white-space: nowrap;
+}
+
+.degree-schedule-semester-course small {
+  display: block;
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+
+/* Same badge base look as course-discovery-status-badge (--satisfied /
+   --in-progress): filled tint, not the flat outlined style used for
+   course_records' lifecycle badges elsewhere -- this pairing (grade vs.
+   in-progress) is the one place in the app a color actually needs to draw
+   the eye, per the approved Degree Schedule mockup. */
+.degree-schedule-badge {
+  display: inline-block;
+  margin-top: var(--sp-1);
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+
+.degree-schedule-badge--grade {
+  color: var(--ready);
+  background: var(--ready-tint);
+  font-family: var(--font-data);
+}
+
+.degree-schedule-badge--in-progress {
+  color: var(--gold-text);
+  background: var(--gold-tint);
+  text-transform: uppercase;
+}
+
+.degree-schedule-suggested {
+  padding: var(--sp-3) var(--sp-4);
+  border-top: 1px solid var(--line);
+}
+
+.degree-schedule-suggested h6 {
+  margin: 0 0 var(--sp-2);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+}
+
+.degree-schedule-suggested .degree-schedule-semester-course {
+  padding: var(--sp-2) 0;
+}
+
 .career-optimization {
   display: grid;
   gap: var(--sp-4);
