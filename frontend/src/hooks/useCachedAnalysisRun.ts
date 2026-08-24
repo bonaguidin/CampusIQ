@@ -105,10 +105,18 @@ export function useCachedAnalysisRun<TData>(
     }
     if (!accessToken) return;
 
-    let cancelled = false;
+    // No cancellation flag here: attemptedRef above already guarantees this
+    // body runs at most once per hook instance, ever -- including under
+    // StrictMode's development-only double-invoke (mount, cleanup, mount),
+    // where attemptedRef's true value (set synchronously above, before
+    // either invocation's cleanup runs) makes the second invocation a no-op.
+    // A `cancelled` flag flipped by that synthetic cleanup would silently
+    // drop the FIRST invocation's real fetch result instead -- the one
+    // fetch this effect ever makes -- leaving state stuck at 'idle' even
+    // after a real cached result comes back.
     getCachedAnalysis<TData>(feature, accessToken)
       .then((result) => {
-        if (cancelled || result === null) return;
+        if (result === null) return;
         setState({ phase: 'done', result });
       })
       .catch(() => {
@@ -116,9 +124,6 @@ export function useCachedAnalysisRun<TData>(
         // state at 'idle' so the student still sees the normal invitation and
         // can trigger a live run themselves.
       });
-    return () => {
-      cancelled = true;
-    };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally mount-only
   }, []);
 
