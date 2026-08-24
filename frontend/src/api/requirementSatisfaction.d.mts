@@ -3,6 +3,7 @@
 // is what lets TS callers under src/ consume it with full checking.
 
 import type { FeatureResult } from '../types/analysis';
+import type { AnalysisIdentity } from './analysisApi.mjs';
 
 export type RequirementGroupStatus = 'SATISFIED' | 'IN_PROGRESS' | 'NOT_STARTED' | 'MANUAL_REVIEW';
 
@@ -40,4 +41,6 @@ export declare function isSkippedRequirementSatisfaction(
   result: RequirementSatisfactionResponse,
 ): result is RequirementSatisfactionSkipped;
 
-export declare function fetchRequirementSatisfaction(token: string): Promise<RequirementSatisfactionResponse>;
+export declare function fetchRequirementSatisfaction(
+  identity: AnalysisIdentity,
+): Promise<RequirementSatisfactionResponse>;

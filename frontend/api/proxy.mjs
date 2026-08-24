@@ -20,7 +20,7 @@
 //
 // The proxy secret is attached to every forwarded request either way.
 
-// POST features run AI work; 'profile' is a plain read and is the only GET.
+// POST features run AI work; the GET_FEATURES below are plain reads.
 const ALLOWED_FEATURES = new Set([
   'gap',
   'fit',
@@ -30,7 +30,15 @@ const ALLOWED_FEATURES = new Set([
   'course-discovery',
   'action-plan',
 ])
-const GET_FEATURES = new Set(['profile'])
+// Degree planner reads: local (non-Postgres) demo counterparts to the
+// session-scoped me-schedule/me-requirement-satisfaction/me-technical-
+// electives targets below. See GradusIQ_career/demo/local_requirement_tree.py.
+const GET_FEATURES = new Set([
+  'profile',
+  'schedule',
+  'requirement-satisfaction',
+  'technical-electives',
+])
 const STUDENT_SLUG_PATTERN = /^[A-Za-z0-9]{1,64}$/
 const PROXY_SECRET_HEADER = 'X-GradusIQ-Proxy-Secret'
 
@@ -144,6 +152,9 @@ function backendPath(student, feature) {
   const slug = encodeURIComponent(student)
   if (feature === 'chat') return `/api/students/${slug}/chat`
   if (feature === 'profile') return `/api/students/${slug}/profile`
+  if (feature === 'schedule') return `/api/students/${slug}/schedule`
+  if (feature === 'requirement-satisfaction') return `/api/students/${slug}/requirement-satisfaction`
+  if (feature === 'technical-electives') return `/api/students/${slug}/degree-plan/technical-electives`
   return `/api/students/${slug}/analyze/${feature}`
 }
 

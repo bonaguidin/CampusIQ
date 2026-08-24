@@ -8,6 +8,7 @@ import {
   degreeScheduleContentState,
 } from '../lib/degreeSchedulePresentation.mjs';
 import { CareerOptimizationPanel } from './CareerOptimizationPanel';
+import { DegreeScheduleTerms } from './DegreeScheduleTerms';
 import { DegreeScheduleYears } from './DegreeScheduleYears';
 
 interface CourseRecordLike {
@@ -22,16 +23,24 @@ interface CourseRecordLike {
 
 export function DegreeSchedulePanel({
   targetRole,
-  courses,
+  courses = [],
   onResult,
 }: {
   targetRole?: string;
-  courses: CourseRecordLike[];
+  // Only consumed by the authenticated (DegreeScheduleYears) branch below --
+  // demo identities render the simpler DegreeScheduleTerms instead and never
+  // need this, since DegreeScheduleYears itself calls session-scoped
+  // /me/terms and /me/grading-schema with no demo counterpart.
+  courses?: CourseRecordLike[];
   onResult?: (result: DegreeScheduleResponse) => void;
 }) {
-  const { session } = useAuth();
-  const accessToken = session?.access_token ?? '';
-  const load = useCallback(() => fetchDegreeSchedule(accessToken), [accessToken]);
+  // Same { slug, session } shared AuthContext CourseDiscoveryPanel already
+  // reads: slug is set only for the demo picker, session only for a real
+  // signed-in student, so identity here needs no caller-supplied prop.
+  const { slug, session } = useAuth();
+  const accessToken = session?.access_token ?? null;
+  const identity = { slug, accessToken };
+  const load = useCallback(() => fetchDegreeSchedule(identity), [slug, accessToken]);
   const { state, trigger } = useAnalysisRun(load);
 
   useEffect(() => { trigger(); }, [trigger]);
@@ -99,7 +108,19 @@ export function DegreeSchedulePanel({
             Your academic schedule is shown below. Requirements that still need adviser input are listed separately.
           </p>
 
-          <DegreeScheduleYears accessToken={accessToken} scheduleTerms={schedule.terms} courses={courses} />
+          {/* Demo identities get the simpler term list: DegreeScheduleYears
+              calls session-scoped /me/terms + /me/grading-schema routes
+              directly with no demo counterpart, so it can't run without a
+              real session. */}
+          {identity.slug ? (
+            contentState === 'empty' ? (
+              <p className="empty-state">No deterministic courses currently need scheduling.</p>
+            ) : (
+              <DegreeScheduleTerms terms={schedule.terms} ariaLabel="Academic degree schedule" />
+            )
+          ) : (
+            <DegreeScheduleYears accessToken={accessToken ?? ''} scheduleTerms={schedule.terms} courses={courses} />
+          )}
 
           <section className="degree-schedule-deferred" aria-labelledby="degree-schedule-deferred-title">
             <h4 id="degree-schedule-deferred-title">Requirements not scheduled yet</h4>
@@ -124,8 +145,12 @@ export function DegreeSchedulePanel({
         </>
       )}
       </section>
-      {schedule?.status === 'SCHEDULED' && (
-        <CareerOptimizationPanel accessToken={accessToken} academicSchedule={schedule} confirmedTargetRole={targetRole} />
+      {/* Demo identities (identity.slug set) never get Career Optimization: it
+          has no durable cache the way GAP/FIT/SHIFT/Course Discovery do, so a
+          public, tokenless button in front of it would mean every demo
+          visitor's click is a fresh paid AI call. */}
+      {schedule?.status === 'SCHEDULED' && !identity.slug && (
+        <CareerOptimizationPanel accessToken={identity.accessToken ?? ''} academicSchedule={schedule} confirmedTargetRole={targetRole} />
       )}
     </Fragment>
   );

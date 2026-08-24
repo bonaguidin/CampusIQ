@@ -20,7 +20,7 @@ import time
 from collections import deque
 from contextlib import contextmanager
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Any, Iterator, Literal, Mapping
 from pydantic import BaseModel, ConfigDict, Field
@@ -58,7 +58,7 @@ from GradusIQ_career.planning.planned import (
     remove_planned,
 )
 from GradusIQ_career.planning.search import CatalogSearchError, search_catalog
-from GradusIQ_career.planning.term_view import TermsView, fetch_terms_view
+from GradusIQ_career.planning.term_view import TermsView, build_terms_view, fetch_terms_view
 from GradusIQ_career.planning.lifecycle import (
     CourseNotEditable,
     LifecycleError,
@@ -114,7 +114,12 @@ from GradusIQ_career.degree_plan_career_optimization import (
     compute_career_optimized_response,
     skipped_response,
 )
-from GradusIQ_career.demo.profile_adapter import build_demo_intelligence_profile
+from GradusIQ_career.demo.profile_adapter import build_demo_intelligence_profile, local_course_records
+from GradusIQ_career.demo.local_requirement_tree import (
+    fetch_local_requirement_tree,
+    local_term_dates,
+    resolve_local_program,
+)
 from GradusIQ_career.demo.role_slug import role_slug
 from GradusIQ_career.resume.extraction import extract_resume_text
 from GradusIQ_career.resume.parser import parse_resume_text
@@ -2638,22 +2643,48 @@ class _AcademicScheduleState:
     catalog_institution: CatalogInstitution | None
 
 
+def _no_program_result() -> FeatureResult:
+    return FeatureResult(
+        feature="SCHEDULE", status="skipped",
+        summary="Requirement tracking isn't available for your institution or program yet.",
+        missing_fields=[MissingField(
+            path="student_institutions.program", label="Supported degree program"
+        )],
+    )
+
+
 def _reconstruct_academic_schedule(request: Request) -> _AcademicScheduleState | FeatureResult:
     """Provider-free authoritative schedule state shared by GET and preview POST."""
     client = _session_client(request)
     student_id = _resolve_session_student_id(client)
     program_id = _resolve_program_id_for_student(client, student_id)
     if program_id is None:
-        return FeatureResult(
-            feature="SCHEDULE", status="skipped",
-            summary="Requirement tracking isn't available for your institution or program yet.",
-            missing_fields=[MissingField(
-                path="student_institutions.program", label="Supported degree program"
-            )],
-        )
+        return _no_program_result()
 
     student_rows = client.table("students").select("expected_graduation").eq("id", student_id).execute().data
     expected_graduation = student_rows[0].get("expected_graduation") if student_rows else None
+
+    institution_id = _home_institution_id(client, student_id)
+    terms_view = fetch_terms_view(client, student_id, institution_id)
+    raw = fetch_requirement_tree(client, program_id, student_id)
+    institution_rows = client.table("institutions").select("name").eq("id", institution_id).execute().data
+    institution_name = institution_rows[0]["name"] if institution_rows else None
+
+    return _build_academic_schedule_state(
+        student_id=str(student_id), program_id=str(program_id), institution_name=institution_name,
+        raw=raw, expected_graduation=expected_graduation, terms_view=terms_view,
+    )
+
+
+def _build_academic_schedule_state(
+    *, student_id: str, program_id: str, institution_name: str | None, raw: Any,
+    expected_graduation: str | None, terms_view: Any,
+) -> _AcademicScheduleState | FeatureResult:
+    """Pure computation shared by the Postgres-backed and local-demo schedule
+    paths -- no I/O of any kind. Given the same RawTreeInputs/TermsView shape
+    either path produces, this is the ONE place scheduling/requirement logic
+    lives, so the demo path can never drift from the real one.
+    """
     graduation_term = _parse_expected_graduation(expected_graduation) if expected_graduation else None
     if graduation_term is None:
         return FeatureResult(
@@ -2664,8 +2695,6 @@ def _reconstruct_academic_schedule(request: Request) -> _AcademicScheduleState |
             )],
         )
 
-    institution_id = _home_institution_id(client, student_id)
-    terms_view = fetch_terms_view(client, student_id, institution_id)
     starting_term = _resolve_starting_term(terms_view)
     if starting_term is None:
         return FeatureResult(
@@ -2674,15 +2703,12 @@ def _reconstruct_academic_schedule(request: Request) -> _AcademicScheduleState |
             missing_fields=[],
         )
 
-    raw = fetch_requirement_tree(client, program_id, student_id)
     groups = evaluate_requirement_tree(
         raw.groups, raw.options, raw.option_courses, raw.course_records, raw.catalog_by_gid, raw.catalog_by_code
     )
     courses, unscheduled = scope_schedule_input(
         groups, raw.options, raw.option_courses, raw.catalog_by_gid, raw.catalog_credit_by_code, raw.catalog_by_code
     )
-    institution_rows = client.table("institutions").select("name").eq("id", institution_id).execute().data
-    institution_name = institution_rows[0]["name"] if institution_rows else None
     catalog_institution = resolve_institution(institution_name)
     catalog_repo = LocalCatalogRepository()
     candidate_codes = structured_candidate_codes(
@@ -2761,6 +2787,46 @@ def get_me_schedule(request: Request) -> dict:
     return state.academic_schedule.model_dump(mode="json")
 
 
+def _technical_elective_candidates_from_state(state: _AcademicScheduleState) -> dict:
+    """Shared by the /me and demo technical-electives routes: given an already
+    -built _AcademicScheduleState, find the one freeform technical-elective
+    group and generate its candidate pool. No I/O.
+    """
+    technical_rows = [
+        row for row in state.raw.groups
+        if row.get("coursedog_rule_id") == TECHNICAL_ELECTIVE_RULE_ID
+        and row.get("name") == TECHNICAL_ELECTIVE_NAME
+        and row.get("group_type") == "freeform"
+        and row.get("requires_manual_definition") is True
+    ]
+    if len(technical_rows) != 1 or state.catalog_institution is None:
+        return FeatureResult(
+            feature="TECHNICAL_ELECTIVE_CANDIDATES",
+            status="skipped",
+            summary="Technical elective options aren't available for this degree program yet.",
+            missing_fields=[],
+        ).to_dict()
+    requirement = technical_rows[0]
+    planned_codes = {
+        course.course_code for course in state.academic_selection.courses
+    } | {
+        course.course_code
+        for term in state.academic_schedule.terms
+        for course in term.courses
+    }
+    result = generate_technical_elective_candidates(
+        student_id=state.student_id,
+        program_id=state.program_id,
+        requirement_group_id=str(requirement["id"]),
+        requirement_name=str(requirement["name"]),
+        catalog_year=str(requirement["catalog_year"]),
+        catalog_courses=LocalCatalogRepository().records(state.catalog_institution),
+        completed_or_in_progress_codes=state.already_satisfied,
+        planned_or_selected_codes=planned_codes,
+    )
+    return result.model_dump(mode="json")
+
+
 @router.get(
     "/api/v2/student/me/degree-plan/technical-electives",
     dependencies=[Depends(authorize_proxy_request)],
@@ -2771,45 +2837,95 @@ def get_me_technical_elective_candidates(request: Request) -> dict:
         state = _reconstruct_academic_schedule(request)
         if isinstance(state, FeatureResult):
             return state.to_dict()
-        technical_rows = [
-            row for row in state.raw.groups
-            if row.get("coursedog_rule_id") == TECHNICAL_ELECTIVE_RULE_ID
-            and row.get("name") == TECHNICAL_ELECTIVE_NAME
-            and row.get("group_type") == "freeform"
-            and row.get("requires_manual_definition") is True
-        ]
-        if len(technical_rows) != 1 or state.catalog_institution is None:
-            return FeatureResult(
-                feature="TECHNICAL_ELECTIVE_CANDIDATES",
-                status="skipped",
-                summary="Technical elective options aren't available for this degree program yet.",
-                missing_fields=[],
-            ).to_dict()
-        requirement = technical_rows[0]
-        planned_codes = {
-            course.course_code for course in state.academic_selection.courses
-        } | {
-            course.course_code
-            for term in state.academic_schedule.terms
-            for course in term.courses
-        }
-        result = generate_technical_elective_candidates(
-            student_id=state.student_id,
-            program_id=state.program_id,
-            requirement_group_id=str(requirement["id"]),
-            requirement_name=str(requirement["name"]),
-            catalog_year=str(requirement["catalog_year"]),
-            catalog_courses=LocalCatalogRepository().records(state.catalog_institution),
-            completed_or_in_progress_codes=state.already_satisfied,
-            planned_or_selected_codes=planned_codes,
-        )
-        return result.model_dump(mode="json")
+        return _technical_elective_candidates_from_state(state)
     except HTTPException:
         raise
     except Exception as exc:  # noqa: BLE001 -- preserve the academic UI on local failure
         raise HTTPException(
             status_code=502, detail="Technical elective options are unavailable."
         ) from exc
+
+
+# ── Degree planner: demo counterparts ─────────────────────────────────────────
+#
+# Career Optimization has no demo counterpart -- see
+# post_me_schedule_career_optimize below: it has no durable cache the way
+# GAP/FIT/SHIFT/Course Discovery do (data/demo_cache/), so a public,
+# tokenless button in front of it would mean every demo visitor's click is a
+# fresh paid AI call. Not worth it for a feature that would only ever
+# resolve for one demo student anyway.
+
+
+def _reconstruct_academic_schedule_for_demo(
+    student_slug: str, profile_json: dict[str, Any]
+) -> _AcademicScheduleState | FeatureResult:
+    """Demo-only sibling of _reconstruct_academic_schedule: same shared pure
+    core (_build_academic_schedule_state), fed by data/catalog/'s local
+    requirement skeleton instead of Postgres -- demo students have zero rows
+    in any of the tables the real path reads.
+
+    Only resolves for a demo student whose institution+major match a wired
+    local program (today: SMU Computer Science, i.e. only ethanBrooks).
+    Every other demo student gets the identical 'skipped' shape a real
+    student without program data already gets -- no separate handling
+    needed on the frontend, which already renders that state.
+    """
+    student = profile_json.get("student") or {}
+    program = resolve_local_program(student.get("institution"), student.get("major_current"))
+    if program is None:
+        return _no_program_result()
+
+    raw = fetch_local_requirement_tree(program, local_course_records(profile_json))
+    today = date.today()
+    terms_view = build_terms_view([], local_term_dates(today), today)
+
+    return _build_academic_schedule_state(
+        student_id=f"demo:{student_slug}", program_id=program.program_id,
+        institution_name=program.institution_name, raw=raw,
+        expected_graduation=student.get("expected_graduation"), terms_view=terms_view,
+    )
+
+
+@router.get(
+    "/api/students/{student_slug}/schedule",
+    dependencies=[Depends(authorize_proxy_request)],
+)
+def get_demo_schedule(request: Request, student_slug: str) -> dict:
+    """Demo counterpart to GET /api/v2/student/me/schedule."""
+    authorize_student_access(request, student_slug)
+    profile_json = load_student_profile(student_slug)
+    state = _reconstruct_academic_schedule_for_demo(student_slug, profile_json)
+    if isinstance(state, FeatureResult):
+        return state.to_dict()
+    return state.academic_schedule.model_dump(mode="json")
+
+
+@router.get(
+    "/api/students/{student_slug}/requirement-satisfaction",
+    dependencies=[Depends(authorize_proxy_request)],
+)
+def get_demo_requirement_satisfaction(request: Request, student_slug: str) -> dict:
+    """Demo counterpart to GET /api/v2/student/me/requirement-satisfaction."""
+    authorize_student_access(request, student_slug)
+    profile_json = load_student_profile(student_slug)
+    state = _reconstruct_academic_schedule_for_demo(student_slug, profile_json)
+    if isinstance(state, FeatureResult):
+        return state.to_dict()
+    return to_satisfaction_result(state.student_id, state.program_id, state.groups).model_dump(mode="json")
+
+
+@router.get(
+    "/api/students/{student_slug}/degree-plan/technical-electives",
+    dependencies=[Depends(authorize_proxy_request)],
+)
+def get_demo_technical_elective_candidates(request: Request, student_slug: str) -> dict:
+    """Demo counterpart to GET /api/v2/student/me/degree-plan/technical-electives."""
+    authorize_student_access(request, student_slug)
+    profile_json = load_student_profile(student_slug)
+    state = _reconstruct_academic_schedule_for_demo(student_slug, profile_json)
+    if isinstance(state, FeatureResult):
+        return state.to_dict()
+    return _technical_elective_candidates_from_state(state)
 
 
 @router.post(

@@ -19,10 +19,13 @@ export function RequirementSatisfactionPanel({
 }: {
   onResult?: (result: RequirementSatisfactionResponse) => void;
 }) {
-  const { session } = useAuth();
+  // Same { slug, session } shared AuthContext CourseDiscoveryPanel already
+  // reads -- no caller-supplied identity prop needed.
+  const { slug, session } = useAuth();
+  const accessToken = session?.access_token ?? null;
   const load = useCallback(
-    () => fetchRequirementSatisfaction(session?.access_token ?? ''),
-    [session?.access_token],
+    () => fetchRequirementSatisfaction({ slug, accessToken }),
+    [slug, accessToken],
   );
   const { state, trigger } = useAnalysisRun(load);
   const started = useRef(false);

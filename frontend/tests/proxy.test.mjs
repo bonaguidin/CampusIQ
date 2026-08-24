@@ -1113,6 +1113,34 @@ test('me-schedule-career-optimize forwards a POST body with Authorization to the
   assert.equal(wrongMethod.status, 400)
 })
 
+test('slug-addressed schedule/requirement-satisfaction/technical-electives forward GETs with no Authorization', async () => {
+  const cases = [
+    ['schedule', '/api/students/ethanBrooks/schedule'],
+    ['requirement-satisfaction', '/api/students/ethanBrooks/requirement-satisfaction'],
+    ['technical-electives', '/api/students/ethanBrooks/degree-plan/technical-electives'],
+  ]
+  for (const [feature, backendPath] of cases) {
+    const { handler, seen } = planningHandler()
+    const response = await handler.fetch(
+      new Request(`https://gradusiq.example/api/proxy?student=ethanBrooks&feature=${feature}`, {
+        method: 'GET',
+        headers: { Authorization: 'Bearer should-not-forward' },
+      }),
+    )
+    assert.equal(response.status, 200)
+    assert.equal(seen[0].url, `https://backend.example${backendPath}`)
+    assert.equal(seen[0].method, 'GET')
+    assert.equal(seen[0].headers.Authorization, undefined)
+
+    const wrongMethod = await handler.fetch(
+      new Request(`https://gradusiq.example/api/proxy?student=ethanBrooks&feature=${feature}`, {
+        method: 'POST',
+      }),
+    )
+    assert.equal(wrongMethod.status, 400, `${feature} should reject POST`)
+  }
+})
+
 test('the target allowlist stays closed after adding the degree planner targets', async () => {
   const { handler, seen } = planningHandler()
   const rejected = [

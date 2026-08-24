@@ -1201,6 +1201,89 @@ def test_profile_route_unknown_slug_is_rejected_before_any_file_read(client):
 
 
 # ═══════════════════════════════════════════════════════════════════════════
+# GET /api/students/{slug}/schedule, /requirement-satisfaction,
+# /degree-plan/technical-electives
+#
+# Demo counterparts to the /me/... routes -- local (non-Postgres), so they
+# only resolve real data for the one demo student whose institution+major
+# match a wired local program (SMU Computer Science -> ethanBrooks; see
+# GradusIQ_career/demo/local_requirement_tree.py). Every other demo slug
+# gets the same 200 "skipped" shape a real student without program data
+# already gets. Same two controls as /profile: proxy secret +
+# authorize_student_access.
+# ═══════════════════════════════════════════════════════════════════════════
+
+_DEGREE_PLANNER_SUFFIXES = ("schedule", "requirement-satisfaction", "degree-plan/technical-electives")
+
+
+@pytest.mark.parametrize("suffix", _DEGREE_PLANNER_SUFFIXES)
+@pytest.mark.parametrize("slug", sorted(api.DEMO_STUDENT_SLUGS))
+def test_degree_planner_routes_serve_every_demo_slug_without_a_token(slug, suffix, client):
+    response = client.get(f"/api/students/{slug}/{suffix}")
+
+    assert response.status_code == 200
+    assert "Authorization" not in response.request.headers
+
+
+def test_ethan_brooks_schedule_is_actually_scheduled(client):
+    response = client.get("/api/students/ethanBrooks/schedule")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["status"] == "SCHEDULED"
+    assert body["terms"]
+
+
+def test_ethan_brooks_requirement_satisfaction_has_real_groups(client):
+    response = client.get("/api/students/ethanBrooks/requirement-satisfaction")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["student_id"] == "demo:ethanBrooks"
+    assert body["groups"]
+    matched = {code for group in body["groups"] for code in group["matched_course_codes"]}
+    assert "CS 1341" in matched  # completed per data/students/student_ethanBrooks.json
+
+
+def test_ethan_brooks_technical_electives_returns_candidates(client):
+    response = client.get("/api/students/ethanBrooks/degree-plan/technical-electives")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["requirement_name"] == "Technical Electives (9 Credit Hours)"
+    assert "candidates" in body
+
+
+@pytest.mark.parametrize("suffix", _DEGREE_PLANNER_SUFFIXES)
+@pytest.mark.parametrize("slug", sorted(api.DEMO_STUDENT_SLUGS - {"ethanBrooks"}))
+def test_other_demo_students_get_the_skipped_shape_not_an_error(slug, suffix, client):
+    response = client.get(f"/api/students/{slug}/{suffix}")
+
+    assert response.status_code == 200
+    assert response.json()["status"] == "skipped"
+
+
+@pytest.mark.parametrize("suffix", _DEGREE_PLANNER_SUFFIXES)
+def test_degree_planner_routes_require_the_proxy_secret(suffix):
+    unauthenticated = TestClient(api.create_app(make_test_config()))
+
+    response = unauthenticated.get(f"/api/students/jordanReyes/{suffix}")
+
+    assert response.status_code == 401
+
+
+@pytest.mark.parametrize("suffix", _DEGREE_PLANNER_SUFFIXES)
+def test_degree_planner_routes_non_demo_slug_without_token_is_401(suffix, client, monkeypatch):
+    monkeypatch.setattr(
+        api, "build_client_for_token", lambda token: pytest.fail("must not build a DB client")
+    )
+
+    response = client.get(f"/api/students/{NON_DEMO_SLUG}/{suffix}")
+
+    assert response.status_code == 401
+
+
+# ═══════════════════════════════════════════════════════════════════════════
 # Regression guard: no student data may return to frontend/public/.
 # ═══════════════════════════════════════════════════════════════════════════
 

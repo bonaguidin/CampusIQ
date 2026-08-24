@@ -55,6 +55,33 @@ def _career_items(entries: list[Mapping[str, Any]] | None) -> list[CareerItem]:
     return [CareerItem.model_validate({**item, "source": DEMO_SOURCE}) for item in entries or []]
 
 
+def local_course_records(profile_json: Mapping[str, Any]) -> list[dict[str, Any]]:
+    """course_records-shaped rows for the local degree-schedule/requirement-
+    satisfaction path (see api.py's _reconstruct_academic_schedule_for_demo).
+    Reuses _course_status's completed/in_progress mapping so this stays in
+    step with build_demo_intelligence_profile's own AcademicCourse.status.
+    counts_toward_credit defaults True, matching
+    course_discovery.requirement_satisfaction._build_matched_courses's own
+    default for a missing field.
+    """
+    courses = profile_json.get("courses") or []
+    enrollments_by_course_id = {
+        enrollment["course_id"]: enrollment for enrollment in profile_json.get("enrollments") or []
+    }
+    records: list[dict[str, Any]] = []
+    for course in courses:
+        if course.get("workflow_state") in _EXCLUDED_WORKFLOW_STATES:
+            continue
+        enrollment = enrollments_by_course_id.get(course["id"])
+        records.append({
+            "course_code": course["course_code"],
+            "status": _course_status(course, enrollment),
+            "credit_hours": float(course["credit_hours"]),
+            "counts_toward_credit": True,
+        })
+    return records
+
+
 def build_demo_intelligence_profile(profile_json: Mapping[str, Any]) -> StudentIntelligenceProfile:
     """Pure function: flat demo JSON dict -> validated StudentIntelligenceProfile.
 

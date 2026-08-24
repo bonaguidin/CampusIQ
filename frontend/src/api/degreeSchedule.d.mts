@@ -3,6 +3,7 @@
 // what lets TS callers under src/ consume it with full checking.
 
 import type { FeatureResult } from '../types/analysis';
+import type { AnalysisIdentity } from './analysisApi.mjs';
 
 export interface ScheduledCourse {
   course_code: string;
@@ -44,4 +45,4 @@ export type DegreeScheduleResponse = ScheduleResult | DegreeScheduleSkipped;
 
 export declare function isSkippedDegreeSchedule(result: DegreeScheduleResponse): result is DegreeScheduleSkipped;
 
-export declare function fetchDegreeSchedule(token: string): Promise<DegreeScheduleResponse>;
+export declare function fetchDegreeSchedule(identity: AnalysisIdentity): Promise<DegreeScheduleResponse>;

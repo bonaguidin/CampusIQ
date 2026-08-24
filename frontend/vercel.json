@@ -19,6 +19,18 @@
       "destination": "/api/proxy?student=:student&feature=profile"
     },
     {
+      "source": "/api/students/:student/schedule",
+      "destination": "/api/proxy?student=:student&feature=schedule"
+    },
+    {
+      "source": "/api/students/:student/requirement-satisfaction",
+      "destination": "/api/proxy?student=:student&feature=requirement-satisfaction"
+    },
+    {
+      "source": "/api/students/:student/degree-plan/technical-electives",
+      "destination": "/api/proxy?student=:student&feature=technical-electives"
+    },
+    {
       "source": "/api/v2/student/me/analyze/:feature",
       "destination": "/api/proxy?target=me-analyze&feature=:feature"
     },

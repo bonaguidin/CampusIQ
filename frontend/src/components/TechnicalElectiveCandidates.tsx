@@ -21,12 +21,15 @@ function creditLabel(course: TechnicalElectiveCandidate) {
 }
 
 export function TechnicalElectiveCandidates({ requirementGroupId }: { requirementGroupId: string }) {
-  const { session } = useAuth();
+  // Same { slug, session } shared AuthContext CourseDiscoveryPanel already
+  // reads -- no caller-supplied identity prop needed.
+  const { slug, session } = useAuth();
+  const accessToken = session?.access_token ?? null;
   const [expanded, setExpanded] = useState(false);
   const [showAll, setShowAll] = useState(false);
   const load = useCallback(
-    () => fetchTechnicalElectiveCandidates(session?.access_token ?? ''),
-    [session?.access_token],
+    () => fetchTechnicalElectiveCandidates({ slug, accessToken }),
+    [slug, accessToken],
   );
   const { state, trigger } = useAnalysisRun(load);
   const started = useRef(false);

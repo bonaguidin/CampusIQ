@@ -3,6 +3,7 @@
 // what lets TS callers under src/ consume it with full checking.
 
 import type { FeatureResult } from '../types/analysis';
+import type { AnalysisIdentity } from './analysisApi.mjs';
 
 export type TechnicalElectiveEligibility =
   | 'READY'
@@ -59,5 +60,5 @@ export declare function isSkippedTechnicalElectives(
 ): result is FeatureResult<Record<string, never>>;
 
 export declare function fetchTechnicalElectiveCandidates(
-  token: string,
+  identity: AnalysisIdentity,
 ): Promise<TechnicalElectiveCandidateResponse>;
