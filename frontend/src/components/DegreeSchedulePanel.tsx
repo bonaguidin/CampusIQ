@@ -8,13 +8,25 @@ import {
   degreeScheduleContentState,
 } from '../lib/degreeSchedulePresentation.mjs';
 import { CareerOptimizationPanel } from './CareerOptimizationPanel';
-import { DegreeScheduleTerms } from './DegreeScheduleTerms';
+import { DegreeScheduleYears } from './DegreeScheduleYears';
+
+interface CourseRecordLike {
+  id: string;
+  term_id: string | null;
+  course_code: string;
+  title: string | null;
+  credit_hours: number | string;
+  letter_grade: string | null;
+  status: string;
+}
 
 export function DegreeSchedulePanel({
   targetRole,
+  courses,
   onResult,
 }: {
   targetRole?: string;
+  courses: CourseRecordLike[];
   onResult?: (result: DegreeScheduleResponse) => void;
 }) {
   const { session } = useAuth();
@@ -87,11 +99,7 @@ export function DegreeSchedulePanel({
             Your academic schedule is shown below. Requirements that still need adviser input are listed separately.
           </p>
 
-          {contentState === 'empty' ? (
-            <p className="empty-state">No deterministic courses currently need scheduling.</p>
-          ) : (
-            <DegreeScheduleTerms terms={schedule.terms} ariaLabel="Academic degree schedule" />
-          )}
+          <DegreeScheduleYears accessToken={accessToken} scheduleTerms={schedule.terms} courses={courses} />
 
           <section className="degree-schedule-deferred" aria-labelledby="degree-schedule-deferred-title">
             <h4 id="degree-schedule-deferred-title">Requirements not scheduled yet</h4>
