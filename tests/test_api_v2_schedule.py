@@ -12,6 +12,7 @@ catalog with matching codes).
 """
 
 import json
+from datetime import date
 from pathlib import Path
 
 import pytest
@@ -23,6 +24,7 @@ from GradusIQ_career.course_discovery.requirement_candidate_ranking import (
     RankedRequirementCandidate,
     RequirementCandidateRanking,
 )
+from GradusIQ_career.planning import term_view as term_view_module
 from test_api_v2_me_routes import _canonical_profile
 from test_api_v2_requirement_satisfaction import (
     CATALOG_YEAR,
@@ -83,11 +85,29 @@ def _patch_client(monkeypatch, tables):
     return fake
 
 
+def _freeze_today(monkeypatch, frozen):
+    """Pin fetch_terms_view's date.today() call so 'upcoming term' resolution
+    stays deterministic regardless of when the suite actually runs -- _SMU_TERM_DATES'
+    2026-08-19 pull date is a real calendar date, not a moving target, so
+    without this the test silently breaks the moment real time crosses
+    2026-08-24 (Fall 2026's start_date). Subclassing date and overriding only
+    .today() (rather than replacing the date class/constructor wholesale)
+    keeps every other date(y, m, d) call in the production code path intact.
+    """
+    class _FrozenDate(date):
+        @classmethod
+        def today(cls):
+            return frozen
+
+    monkeypatch.setattr(term_view_module, "date", _FrozenDate)
+
+
 # 1. Ethan Brooks -- 200, full ScheduleResult including deterministic
 #    structured choices while preserving the response contract.
 def test_ethan_brooks_returns_full_schedule_result(client, monkeypatch):
     tables, student_id, program_id = _schedule_tables()
     _patch_client(monkeypatch, tables)
+    _freeze_today(monkeypatch, date(2026, 8, 19))
 
     response = client.get(URL, headers={"Authorization": "Bearer good-token"})
     assert response.status_code == 200
