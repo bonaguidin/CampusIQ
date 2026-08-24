@@ -71,6 +71,22 @@
       "destination": "/api/proxy?target=me-action-plan"
     },
     {
+      "source": "/api/v2/student/me/schedule/career-optimize",
+      "destination": "/api/proxy?target=me-schedule-career-optimize"
+    },
+    {
+      "source": "/api/v2/student/me/schedule",
+      "destination": "/api/proxy?target=me-schedule"
+    },
+    {
+      "source": "/api/v2/student/me/requirement-satisfaction",
+      "destination": "/api/proxy?target=me-requirement-satisfaction"
+    },
+    {
+      "source": "/api/v2/student/me/degree-plan/technical-electives",
+      "destination": "/api/proxy?target=me-technical-electives"
+    },
+    {
       "source": "/api/v2/student/me/planned-courses/:id",
       "destination": "/api/proxy?target=me-planned-course-remove&id=:id"
     },

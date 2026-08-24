@@ -95,6 +95,13 @@ const ME_TARGETS = Object.assign(Object.create(null), {
   // generic /analyze/:feature fallback the way gap/fit/shift/course-discovery
   // do. It needs its own target, same as me-terms/me-chat.
   'me-action-plan': { method: 'POST', needsFeature: false },
+  // Degree planner: schedule, requirement satisfaction, technical electives,
+  // and the opt-in career-ranked schedule preview. Same shape as
+  // me-terms/me-action-plan -- fixed backend path, no extra params.
+  'me-schedule': { method: 'GET', needsFeature: false },
+  'me-requirement-satisfaction': { method: 'GET', needsFeature: false },
+  'me-technical-electives': { method: 'GET', needsFeature: false },
+  'me-schedule-career-optimize': { method: 'POST', needsFeature: false },
 })
 const ME_ANALYZE_FEATURES = new Set(['gap', 'fit', 'shift', 'professor-comments', 'course-discovery'])
 
@@ -157,6 +164,10 @@ function meBackendPath(target, feature, reviewTable, recordId, searchQuery, term
     return `/api/v2/student/me/catalog/search?q=${encodeURIComponent(searchQuery)}`
   }
   if (target === 'me-action-plan') return '/api/v2/student/me/action-plan'
+  if (target === 'me-schedule') return '/api/v2/student/me/schedule'
+  if (target === 'me-requirement-satisfaction') return '/api/v2/student/me/requirement-satisfaction'
+  if (target === 'me-technical-electives') return '/api/v2/student/me/degree-plan/technical-electives'
+  if (target === 'me-schedule-career-optimize') return '/api/v2/student/me/schedule/career-optimize'
   if (target === 'me-chat') return '/api/v2/student/me/chat'
   if (target === 'me-profile') return '/api/v2/student/me/profile'
   if (target === 'me-resume-upload') return '/api/v2/student/me/resume/upload'
