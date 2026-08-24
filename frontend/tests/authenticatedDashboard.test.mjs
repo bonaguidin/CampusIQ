@@ -135,6 +135,10 @@ test('authenticated dashboard covers canonical states, routing, themes, errors, 
   assert.equal(await page.locator('.degree-progress-ring').count(), 0)
   await page.getByText('Not yet available — run Role Fit under Career.').waitFor()
   await page.getByText('Not yet available — run Readiness Check under Career.').waitFor()
+  // No in-progress coursework in this fixture (its one course is
+  // 'completed') -- the current-term card's empty state, not a fallback to
+  // a future term.
+  await page.locator('.academic-readiness-cards').getByText('No current term.').waitFor()
 
   await page.getByRole('button', { name: 'Academic' }).click()
 
@@ -331,7 +335,7 @@ test('authenticated dashboard covers canonical states, routing, themes, errors, 
     errors: [], missing_fields: [],
   }
 
-  await page.goto(`${origin}/authenticated-dashboard-preview.html?mode=complete`)
+  await page.goto(`${origin}/authenticated-dashboard-preview.html?mode=complete&currentTerm=inprogress`)
   await page.getByRole('heading', { name: 'Alex Morgan' }).waitFor()
 
   // 3 of 4 leaf groups satisfied -> 75%. Compound parents (group-1, group-2)
@@ -347,6 +351,27 @@ test('authenticated dashboard covers canonical states, routing, themes, errors, 
   await page.locator('.career-readiness-card-label').getByText('Biggest skill gap').waitFor()
   await page.locator('.career-readiness-cards').getByText('System design experience').waitFor()
   await page.locator('.career-readiness-cards').getByText('Must-Have').waitFor()
+
+  // Current-term card: two in-progress courses (7 credits) fixture-added
+  // via ?currentTerm=inprogress, on top of the base fixture's one
+  // COMPLETED course -- only the in-progress ones render here.
+  const currentTermCard = page.locator('.academic-readiness-cards')
+  await currentTermCard.getByText('Fall 2026').waitFor()
+  await currentTermCard.getByText('7 credits').waitFor()
+  await currentTermCard.getByText('CS 221').waitFor()
+  await currentTermCard.getByText('MATH 251').waitFor()
+  assert.equal(await currentTermCard.getByText('In progress').count(), 2)
+  assert.equal(await currentTermCard.getByText('CS 101').count(), 0)
+
+  // "View full schedule" lands on Academic -> Course Discovery, where the
+  // full DegreeScheduleYears view lives (it auto-selects the in-progress
+  // term's year tab itself -- no deep link needed here).
+  await currentTermCard.getByRole('button', { name: 'View full schedule →' }).click()
+  await page.getByRole('heading', { name: 'Course Discovery' }).waitFor()
+  assert.equal(
+    await page.getByRole('button', { name: 'Academic', exact: true }).getAttribute('aria-current'),
+    'page',
+  )
 
   // CASE 2: career only renders academic onboarding.
   await page.goto(`${origin}/authenticated-dashboard-preview.html?mode=career`)

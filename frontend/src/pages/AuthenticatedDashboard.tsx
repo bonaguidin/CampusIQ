@@ -13,6 +13,7 @@ import { DegreeProgressRing } from '../components/DegreeProgressRing';
 import { fetchRequirementSatisfaction, isSkippedRequirementSatisfaction } from '../api/requirementSatisfaction.mjs';
 import { countSatisfiedLeafGroups } from '../lib/requirementProgress.mjs';
 import { pickTopRole, pickBiggestGap } from '../lib/careerReadinessCards.mjs';
+import { currentTermSnapshot } from '../lib/currentTermSnapshot.mjs';
 import { DegreeSchedulePanel } from '../components/DegreeSchedulePanel';
 import { DegreePlannerSummary } from '../components/DegreePlannerSummary';
 import type { DegreeScheduleResponse } from '../api/degreeSchedule.mjs';
@@ -136,23 +137,19 @@ export function AuthenticatedDashboard() {
     () => (canonical ? missingChecklistFields(canonical) : []),
     [canonical],
   );
-  // Academic Overview's "what am I taking right now" -- in-progress course
-  // records already on the profile, with the term(s) they belong to. No
-  // separate fetch: term dates/status (and planned coursework) are GPA
-  // Calculator's concern via TermPlanner, not Overview's.
-  const academicOverviewCurrentCourses = useMemo(
-    () => (dashboard ? dashboard.courses.filter((course) => course.status === 'in_progress') : []),
+  // "What am I taking right now" -- in-progress course records already on
+  // the profile, with the term(s) they belong to. No separate fetch: term
+  // dates/status (and planned coursework) are GPA Calculator's concern via
+  // TermPlanner, not Overview's or Academic Overview's. Shared by Academic
+  // Overview's "Current coursework" section and Overview's current-term
+  // card -- see currentTermSnapshot.mjs for why this is a union across
+  // simultaneous in-progress terms, not a single-term pick.
+  const currentTerm = useMemo(
+    () => (dashboard ? currentTermSnapshot({ courses: dashboard.courses, terms: dashboard.terms }) : null),
     [dashboard],
   );
-  const academicOverviewCurrentTermLabel = useMemo(() => {
-    if (!dashboard) return null;
-    const termIds = new Set(academicOverviewCurrentCourses.map((course) => course.term_id).filter(Boolean));
-    const label = dashboard.terms
-      .filter((term) => termIds.has(term.id))
-      .map((term) => term.label)
-      .join(', ');
-    return label || null;
-  }, [dashboard, academicOverviewCurrentCourses]);
+  const academicOverviewCurrentCourses = currentTerm?.courses ?? [];
+  const academicOverviewCurrentTermLabel = currentTerm?.termLabel ?? null;
 
   /**
    * Send the student to the field, wherever they asked from.
@@ -372,6 +369,42 @@ export function AuthenticatedDashboard() {
                     <div className="overview-block-title">Academic readiness</div>
                     <p>{dashboard.completeness.academics.transcript_data_present ? `${String(dashboard.courses.length)} confirmed courses across ${String(dashboard.terms.length)} terms.` : 'No confirmed transcript data yet.'}</p>
                     {!dashboard.completeness.academics.transcript_data_present && <Link to="/transcript" className="btn btn-primary btn-sm">Upload transcript</Link>}
+                    <div className="academic-readiness-cards">
+                      <div>
+                        <div className="career-readiness-card-label">Current term</div>
+                        {currentTerm ? (
+                          <div className="theme-card">
+                            <div className="theme-header">
+                              <span className="theme-name">{currentTerm.termLabel ?? 'Current term'}</span>
+                              <span className="overview-stat-detail">{currentTerm.totalCredits} credits</span>
+                            </div>
+                            <ul className="degree-schedule-semester-courses">
+                              {currentTerm.courses.map((course) => (
+                                <li key={course.id} className="degree-schedule-semester-course">
+                                  <div className="degree-schedule-course-row">
+                                    <span>
+                                      <strong>{course.course_code}</strong>
+                                      {course.title && <small>{course.title}</small>}
+                                    </span>
+                                    <span>{course.credit_hours} credits</span>
+                                  </div>
+                                  <span className="degree-schedule-badge degree-schedule-badge--in-progress">In progress</span>
+                                </li>
+                              ))}
+                            </ul>
+                            <button
+                              type="button"
+                              className="overview-schedule-link"
+                              onClick={() => navigateToAcademicSubTab('course-discovery')}
+                            >
+                              View full schedule →
+                            </button>
+                          </div>
+                        ) : (
+                          <p className="empty-state">No current term.</p>
+                        )}
+                      </div>
+                    </div>
                   </section>
                   <section className="overview-block">
                     <div className="overview-block-title">Career readiness</div>

@@ -897,12 +897,35 @@ a {
 
 /* Career readiness's two small cards, below the existing summary line.
    Reuses .theme-card/.theme-header/.theme-name (FIT's own card shell) so
-   this introduces no new card pattern. */
-.career-readiness-cards {
+   this introduces no new card pattern. Academic readiness's current-term
+   card (below) shares this same wrapper spacing under its own name, since
+   it sits in a sibling .overview-block, not this one. */
+.career-readiness-cards,
+.academic-readiness-cards {
   display: flex;
   flex-direction: column;
   gap: var(--sp-3);
   margin-top: var(--sp-4);
+}
+
+/* "View full schedule" -- a button styled as a text link (same reset as
+   .missing-field-link:is(button)) rather than a react-router <Link>, since
+   it switches Academic's sub-tab in place, not the URL route. */
+.overview-schedule-link {
+  display: inline-block;
+  margin-top: var(--sp-3);
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.overview-schedule-link:hover,
+.overview-schedule-link:focus-visible {
+  text-decoration: none;
 }
 
 .career-readiness-card-label {
