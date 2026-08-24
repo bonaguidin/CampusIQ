@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/useAuth';
 import { analyzeCourseDiscovery, analyzeFit, analyzeGap, analyzeShift } from '../api/analysis';
@@ -9,10 +9,14 @@ import { GuidedTour } from '../components/GuidedTour';
 import { DashboardSuccessNotice } from '../components/DashboardSuccessNotice';
 import { CourseDiscoveryPanel } from '../components/CourseDiscoveryPanel';
 import { RequirementSatisfactionPanel } from '../components/RequirementSatisfactionPanel';
+import { DegreeProgressRing } from '../components/DegreeProgressRing';
+import { fetchRequirementSatisfaction, isSkippedRequirementSatisfaction } from '../api/requirementSatisfaction.mjs';
+import { countSatisfiedLeafGroups } from '../lib/requirementProgress.mjs';
+import { pickTopRole, pickBiggestGap } from '../lib/careerReadinessCards.mjs';
 import { DegreeSchedulePanel } from '../components/DegreeSchedulePanel';
 import { DegreePlannerSummary } from '../components/DegreePlannerSummary';
 import type { DegreeScheduleResponse } from '../api/degreeSchedule.mjs';
-import { FitAnalysisPanel } from '../components/FitAnalysisPanel';
+import { FitAnalysisPanel, FIT_LEVEL_LABEL } from '../components/FitAnalysisPanel';
 import { GapAnalysisPanel } from '../components/GapAnalysisPanel';
 import { ShiftAnalysisPanel } from '../components/ShiftAnalysisPanel';
 import { TermPlanner } from '../components/TermPlanner';
@@ -78,6 +82,23 @@ export function AuthenticatedDashboard() {
   const gapRun = useCachedAnalysisRun('gap', () => analyzeGap({ slug, accessToken }));
   const fitRun = useCachedAnalysisRun('fit', () => analyzeFit({ slug, accessToken }));
   const shiftRun = useCachedAnalysisRun('shift', () => analyzeShift({ slug, accessToken }));
+  // Overview's degree-progress ring needs the same requirement-satisfaction
+  // tree RequirementSatisfactionPanel renders under Academic -- lifted here
+  // instead of duplicated inside the panel, same lifted-state shape as
+  // gapRun/fitRun/shiftRun above. The endpoint is a plain authenticated read
+  // (no AI work, sub-second -- see requirementSatisfaction.mjs), so firing it
+  // on every dashboard load costs nothing like a GAP/FIT live run would.
+  const requirementRun = useAnalysisRun(useCallback(
+    () => fetchRequirementSatisfaction({ slug, accessToken }),
+    [slug, accessToken],
+  ));
+  const requirementTrigger = requirementRun.trigger;
+  const requirementStarted = useRef(false);
+  useEffect(() => {
+    if (requirementStarted.current) return;
+    requirementStarted.current = true;
+    requirementTrigger();
+  }, [requirementTrigger]);
   const canonical = studentAccount.profile?.intelligence_profile;
   const dashboard = useMemo(
     () => (canonical ? buildDashboardViewModel(canonical) : null),
@@ -159,6 +180,23 @@ export function AuthenticatedDashboard() {
   const displayName = dashboard.name ?? 'Student';
   const major = dashboard.majorCurrent ?? dashboard.majorIntended;
   const readiness = dashboard.completeness.overall;
+
+  // 'skipped' (no program to evaluate against yet) collapses to the same
+  // { satisfied: 0, total: 0 } as 'loading'/'transport-error' -- the ring
+  // renders its dash for all three, since none of them is a real 0-of-0.
+  const requirementGroups =
+    requirementRun.state.phase === 'done' && !isSkippedRequirementSatisfaction(requirementRun.state.result)
+      ? requirementRun.state.result.groups
+      : [];
+  const degreeProgress = countSatisfiedLeafGroups(requirementGroups);
+
+  const fitData =
+    fitRun.state.phase === 'done' && fitRun.state.result.status === 'success' ? fitRun.state.result.data : null;
+  const topRole = pickTopRole(fitData);
+
+  const gapData =
+    gapRun.state.phase === 'done' && gapRun.state.result.status === 'success' ? gapRun.state.result.data : null;
+  const biggestGap = pickBiggestGap(gapData);
 
   async function handleLogout() {
     await signOutSession();
@@ -327,6 +365,7 @@ export function AuthenticatedDashboard() {
                   <div className="overview-stat"><span className="overview-stat-value">{dashboard.officialGpa?.toFixed(2) ?? '—'}</span><span className="overview-stat-label">Official GPA</span></div>
                   <div className="overview-stat"><span className="overview-stat-value">{dashboard.courses.length}</span><span className="overview-stat-label">Confirmed Courses</span></div>
                   <div className="overview-stat"><span className="overview-stat-value readiness-state">{readiness}</span><span className="overview-stat-label">Profile Status</span></div>
+                  <DegreeProgressRing satisfied={degreeProgress.satisfied} total={degreeProgress.total} />
                 </div>
                 <div className="overview-grid">
                   <section className="overview-block">
@@ -338,6 +377,36 @@ export function AuthenticatedDashboard() {
                     <div className="overview-block-title">Career readiness</div>
                     <p>{dashboard.career.confirmed ? `${String(dashboard.career.target_roles.length)} target roles and ${String(dashboard.career.skills.technical.length + dashboard.career.skills.soft.length)} skills confirmed.` : 'No confirmed career profile yet.'}</p>
                     {!dashboard.career.confirmed && <Link to="/resume" className="btn btn-primary btn-sm">Upload resume</Link>}
+                    <div className="career-readiness-cards">
+                      <div>
+                        <div className="career-readiness-card-label">Top matched role</div>
+                        {topRole ? (
+                          <div className="theme-card">
+                            <div className="theme-header">
+                              <span className="theme-name">{topRole.role}</span>
+                              <span className={`fit-badge fit-badge--${topRole.fit_level}`}>{FIT_LEVEL_LABEL[topRole.fit_level]}</span>
+                            </div>
+                          </div>
+                        ) : (
+                          <p className="empty-state">Not yet available — run Role Fit under Career.</p>
+                        )}
+                      </div>
+                      <div>
+                        <div className="career-readiness-card-label">Biggest skill gap</div>
+                        {biggestGap ? (
+                          <div className="theme-card">
+                            <div className="theme-header">
+                              <span className="theme-name">{biggestGap.gap}</span>
+                              <span className={`gap-priority-badge gap-priority-badge--${biggestGap.priority}`}>
+                                {biggestGap.priority === 'must' ? 'Must-Have' : 'Nice-to-Have'}
+                              </span>
+                            </div>
+                          </div>
+                        ) : (
+                          <p className="empty-state">Not yet available — run Readiness Check under Career.</p>
+                        )}
+                      </div>
+                    </div>
                   </section>
                 </div>
               </div>

@@ -21,9 +21,43 @@ test('authenticated dashboard covers canonical states, routing, themes, errors, 
       { key: '2027-Spring', id: null, label: 'Spring 2027', year: 2027, season: 'Spring', sequence: null, start_date: '2027-01-19', end_date: '2027-05-11', enrolled: false, is_upcoming: false },
     ],
   })
+  // Overview's degree-progress ring and career-readiness cards read these two
+  // routes directly (requirement-satisfaction) or via useCachedAnalysisRun's
+  // mount-time cache read (analysis-cache/{feature}). Both start unset, which
+  // the route handlers below turn into an explicit 404 -- the same "nothing
+  // cached yet" state a real student with no prior GAP/FIT run or no program
+  // to evaluate against would see -- so CASE 1 below can assert the graceful
+  // empty state before a later case sets fixtures and re-navigates to assert
+  // real values.
+  let requirementSatisfactionFixture = null
+  const analysisCacheFixtures = {}
   const apiPlugin = { name: 'dashboard-api', configureServer(server) { server.middlewares.use((request, response, next) => {
     const path = request.url?.split('?')[0]
     if (planning.handle(path, request.method, request, response)) return undefined
+    if (path === '/api/v2/student/me/requirement-satisfaction') {
+      response.setHeader('content-type', 'application/json')
+      if (requirementSatisfactionFixture) {
+        response.statusCode = 200
+        response.end(JSON.stringify(requirementSatisfactionFixture))
+      } else {
+        response.statusCode = 404
+        response.end(JSON.stringify({ detail: 'Not found.' }))
+      }
+      return
+    }
+    if (path?.startsWith('/api/v2/student/me/analysis-cache/')) {
+      const feature = path.slice('/api/v2/student/me/analysis-cache/'.length)
+      const fixture = analysisCacheFixtures[feature]
+      response.setHeader('content-type', 'application/json')
+      if (fixture) {
+        response.statusCode = 200
+        response.end(JSON.stringify(fixture))
+      } else {
+        response.statusCode = 404
+        response.end(JSON.stringify({ detail: 'Not found.' }))
+      }
+      return
+    }
     if (request.url?.startsWith('/api/v2/student/me/analyze/')) {
       requests.push({ url: request.url, authorization: request.headers.authorization })
       response.statusCode = 200; response.setHeader('content-type', 'application/json')
@@ -92,6 +126,16 @@ test('authenticated dashboard covers canonical states, routing, themes, errors, 
   await page.getByRole('heading', { name: 'Alex Morgan' }).waitFor()
   await page.getByText('Texas A&M University').waitFor()
   await page.getByText('Official GPA').first().waitFor()
+
+  // Degree-progress ring and career-readiness cards, with no requirement
+  // program and no cached GAP/FIT results: the graceful "not yet available"
+  // state, not a broken 0%-full ring or blank cards.
+  await page.getByText('Degree Progress').waitFor()
+  await page.locator('.overview-stat--ring').getByText('—', { exact: true }).waitFor()
+  assert.equal(await page.locator('.degree-progress-ring').count(), 0)
+  await page.getByText('Not yet available — run Role Fit under Career.').waitFor()
+  await page.getByText('Not yet available — run Readiness Check under Career.').waitFor()
+
   await page.getByRole('button', { name: 'Academic' }).click()
 
   // The top-level Academic item is itself the overview -- clicking it lands
@@ -232,6 +276,77 @@ test('authenticated dashboard covers canonical states, routing, themes, errors, 
   await page.getByRole('heading', { name: 'Job Search', exact: true }).waitFor()
   await page.getByText('Live job search is not connected yet').waitFor()
   assert.equal(await page.getByRole('button', { name: 'Search Jobs' }).isDisabled(), true)
+
+  // CASE 1b: same profile, but with a requirement-satisfaction tree and
+  // cached GAP/FIT results now available -- the ring shows a real percentage
+  // and "X of Y" line, and the two career-readiness cards show real values,
+  // picked deterministically (first must-have gap; first role match) since
+  // neither source carries a severity/rank field to pick "biggest"/"top" by.
+  requirementSatisfactionFixture = {
+    student_id: 'student-real',
+    program_id: 'program-real',
+    groups: [
+      {
+        id: 'group-1', coursedog_rule_id: 'rule-1', name: 'Core', group_type: 'compound_all',
+        status: 'SATISFIED', detail: null, matched_course_codes: [],
+        children: [
+          { id: 'leaf-1', coursedog_rule_id: 'rule-1a', name: 'CS 101', group_type: 'enumerated_courses', status: 'SATISFIED', detail: null, matched_course_codes: ['CS 101'], children: [] },
+          { id: 'leaf-2', coursedog_rule_id: 'rule-1b', name: 'CS 102', group_type: 'enumerated_courses', status: 'SATISFIED', detail: null, matched_course_codes: [], children: [] },
+        ],
+      },
+      {
+        id: 'group-2', coursedog_rule_id: 'rule-2', name: 'Electives', group_type: 'compound_any',
+        status: 'IN_PROGRESS', detail: null, matched_course_codes: [],
+        children: [
+          { id: 'leaf-3', coursedog_rule_id: 'rule-2a', name: 'Elective A', group_type: 'enumerated_courses', status: 'SATISFIED', detail: null, matched_course_codes: [], children: [] },
+          { id: 'leaf-4', coursedog_rule_id: 'rule-2b', name: 'Elective B', group_type: 'enumerated_courses', status: 'NOT_STARTED', detail: null, matched_course_codes: [], children: [] },
+        ],
+      },
+    ],
+  }
+  analysisCacheFixtures.fit = {
+    feature: 'FIT', status: 'success', summary: '',
+    data: {
+      role_matches: [
+        { role: 'Software Engineer', fit_level: 'high', rationale: 'Strong technical background.', supporting_signals: [], missing_signals: [] },
+        { role: 'Data Analyst', fit_level: 'medium', rationale: 'Some overlap.', supporting_signals: [], missing_signals: [] },
+      ],
+      overall_fit_summary: 'Strong fit for engineering roles.',
+    },
+    errors: [], missing_fields: [],
+  }
+  analysisCacheFixtures.gap = {
+    feature: 'GAP', status: 'success', summary: '',
+    data: {
+      readiness_score: 6,
+      strengths: [],
+      must_have_gaps: [
+        { gap: 'System design experience', why_it_matters: 'Expected for this role level.', how_to_close: 'Take a systems course.' },
+      ],
+      nice_to_have_gaps: [
+        { gap: 'GraphQL', why_it_helps: 'Common in modern APIs.', how_to_close: 'Build a small project.' },
+      ],
+      recommended_next_steps: [],
+    },
+    errors: [], missing_fields: [],
+  }
+
+  await page.goto(`${origin}/authenticated-dashboard-preview.html?mode=complete`)
+  await page.getByRole('heading', { name: 'Alex Morgan' }).waitFor()
+
+  // 3 of 4 leaf groups satisfied -> 75%. Compound parents (group-1, group-2)
+  // are containers, not counted requirements themselves.
+  await page.locator('.degree-progress-ring').waitFor()
+  await page.getByText('75%').waitFor()
+  await page.getByText('3 of 4 requirement groups satisfied').waitFor()
+
+  await page.locator('.career-readiness-card-label').getByText('Top matched role').waitFor()
+  await page.locator('.career-readiness-cards').getByText('Software Engineer').waitFor()
+  await page.locator('.career-readiness-cards').getByText('High Fit').waitFor()
+
+  await page.locator('.career-readiness-card-label').getByText('Biggest skill gap').waitFor()
+  await page.locator('.career-readiness-cards').getByText('System design experience').waitFor()
+  await page.locator('.career-readiness-cards').getByText('Must-Have').waitFor()
 
   // CASE 2: career only renders academic onboarding.
   await page.goto(`${origin}/authenticated-dashboard-preview.html?mode=career`)

@@ -65,7 +65,7 @@ export function FitAnalysisPanel({ run: externalRun }: FitAnalysisPanelProps = {
   );
 }
 
-const FIT_LEVEL_LABEL: Record<FitLevel, string> = {
+export const FIT_LEVEL_LABEL: Record<FitLevel, string> = {
   high: 'High Fit',
   medium: 'Medium Fit',
   low: 'Low Fit',
