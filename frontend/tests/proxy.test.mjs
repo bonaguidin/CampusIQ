@@ -1013,3 +1013,151 @@ test('the target allowlist stays closed after adding the planning targets', asyn
   }
   assert.equal(seen.length, 0)
 })
+
+test('slug-addressed course-discovery and action-plan forward to their /analyze/:feature backend routes', async () => {
+  const { handler, seen } = planningHandler()
+  for (const feature of ['course-discovery', 'action-plan']) {
+    const response = await handler.fetch(
+      new Request(`https://gradusiq.example/api/proxy?student=priyaNair&feature=${feature}`, {
+        method: 'POST',
+        body: JSON.stringify({ target_role: 'Software Engineering Intern' }),
+      }),
+    )
+    assert.equal(response.status, 200)
+  }
+  assert.equal(seen[0].url, `https://backend.example/api/students/priyaNair/analyze/course-discovery`)
+  assert.equal(seen[1].url, `https://backend.example/api/students/priyaNair/analyze/action-plan`)
+  assert.equal(seen[0].headers.Authorization, undefined)
+})
+
+test('me-analyze course-discovery is no longer rejected by the proxy allowlist', async () => {
+  const { handler, seen } = planningHandler()
+  const response = await handler.fetch(
+    new Request('https://gradusiq.example/api/proxy?target=me-analyze&feature=course-discovery', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer real-session' },
+      body: JSON.stringify({ target_role: 'Software Engineering Intern' }),
+    }),
+  )
+  assert.equal(response.status, 200)
+  assert.equal(seen[0].url, 'https://backend.example/api/v2/student/me/analyze/course-discovery')
+  assert.equal(seen[0].headers.Authorization, 'Bearer real-session')
+})
+
+test('me-action-plan forwards a POST with Authorization to the real backend action-plan route', async () => {
+  const { handler, seen } = planningHandler()
+  const response = await handler.fetch(
+    new Request('https://gradusiq.example/api/proxy?target=me-action-plan', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer real-session' },
+      body: JSON.stringify({ target_role: 'Software Engineering Intern' }),
+    }),
+  )
+  assert.equal(response.status, 200)
+  assert.equal(seen[0].url, 'https://backend.example/api/v2/student/me/action-plan')
+  assert.equal(seen[0].headers.Authorization, 'Bearer real-session')
+
+  const wrongMethod = await handler.fetch(
+    new Request('https://gradusiq.example/api/proxy?target=me-action-plan', { method: 'GET' }),
+  )
+  assert.equal(wrongMethod.status, 400)
+})
+
+// ── degree planner: schedule, requirement satisfaction, technical electives,
+//    and the opt-in career-optimized schedule preview ──────────────────────
+
+test('me-schedule, me-requirement-satisfaction, and me-technical-electives forward GETs to their backend routes', async () => {
+  const cases = [
+    ['me-schedule', '/api/v2/student/me/schedule'],
+    ['me-requirement-satisfaction', '/api/v2/student/me/requirement-satisfaction'],
+    ['me-technical-electives', '/api/v2/student/me/degree-plan/technical-electives'],
+  ]
+  for (const [target, backendPath] of cases) {
+    const { handler, seen } = planningHandler()
+    const response = await handler.fetch(
+      new Request(`https://gradusiq.example/api/proxy?target=${target}`, {
+        method: 'GET',
+        headers: { Authorization: 'Bearer real-session' },
+      }),
+    )
+    assert.equal(response.status, 200)
+    assert.equal(seen[0].url, `https://backend.example${backendPath}`)
+    assert.equal(seen[0].method, 'GET')
+    assert.equal(seen[0].headers.Authorization, 'Bearer real-session')
+
+    const wrongMethod = await handler.fetch(
+      new Request(`https://gradusiq.example/api/proxy?target=${target}`, { method: 'POST' }),
+    )
+    assert.equal(wrongMethod.status, 400, `${target} should reject POST`)
+  }
+})
+
+test('me-schedule-career-optimize forwards a POST body with Authorization to the real backend route', async () => {
+  const { handler, seen } = planningHandler()
+  const response = await handler.fetch(
+    new Request('https://gradusiq.example/api/proxy?target=me-schedule-career-optimize', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer real-session' },
+      body: JSON.stringify({ target_role: 'Software Engineering Intern', force_refresh: false }),
+    }),
+  )
+  assert.equal(response.status, 200)
+  assert.equal(seen[0].url, 'https://backend.example/api/v2/student/me/schedule/career-optimize')
+  assert.equal(seen[0].headers.Authorization, 'Bearer real-session')
+
+  const wrongMethod = await handler.fetch(
+    new Request('https://gradusiq.example/api/proxy?target=me-schedule-career-optimize', {
+      method: 'GET',
+    }),
+  )
+  assert.equal(wrongMethod.status, 400)
+})
+
+test('slug-addressed schedule/requirement-satisfaction/technical-electives forward GETs with no Authorization', async () => {
+  const cases = [
+    ['schedule', '/api/students/ethanBrooks/schedule'],
+    ['requirement-satisfaction', '/api/students/ethanBrooks/requirement-satisfaction'],
+    ['technical-electives', '/api/students/ethanBrooks/degree-plan/technical-electives'],
+  ]
+  for (const [feature, backendPath] of cases) {
+    const { handler, seen } = planningHandler()
+    const response = await handler.fetch(
+      new Request(`https://gradusiq.example/api/proxy?student=ethanBrooks&feature=${feature}`, {
+        method: 'GET',
+        headers: { Authorization: 'Bearer should-not-forward' },
+      }),
+    )
+    assert.equal(response.status, 200)
+    assert.equal(seen[0].url, `https://backend.example${backendPath}`)
+    assert.equal(seen[0].method, 'GET')
+    assert.equal(seen[0].headers.Authorization, undefined)
+
+    const wrongMethod = await handler.fetch(
+      new Request(`https://gradusiq.example/api/proxy?student=ethanBrooks&feature=${feature}`, {
+        method: 'POST',
+      }),
+    )
+    assert.equal(wrongMethod.status, 400, `${feature} should reject POST`)
+  }
+})
+
+test('the target allowlist stays closed after adding the degree planner targets', async () => {
+  const { handler, seen } = planningHandler()
+  const rejected = [
+    'me-schedule-x',
+    'schedule',
+    'me-requirement',
+    'me-technical-elective',
+    'me-schedule-career-optimize-x',
+    'me-career-optimize',
+  ]
+  for (const target of rejected) {
+    const response = await handler.fetch(
+      new Request(`https://gradusiq.example/api/proxy?target=${encodeURIComponent(target)}`, {
+        method: 'GET',
+      }),
+    )
+    assert.equal(response.status, 400, `expected ${target} to be rejected`)
+  }
+  assert.equal(seen.length, 0)
+})

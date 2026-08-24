@@ -1,0 +1,218 @@
+{
+  "data": {
+    "career_needs": [
+      {
+        "category": "knowledge",
+        "confidence": 0.86,
+        "evidence_source": "O*NET 19-4021.00 onet",
+        "evidence_state": "VERIFIED_LOCAL",
+        "importance": "required",
+        "need_id": "need_406fd3fedb05",
+        "skill": "Biology",
+        "target_role": "Lab Assistant"
+      },
+      {
+        "category": "skills",
+        "confidence": 0.75,
+        "evidence_source": "O*NET 19-4021.00 onet",
+        "evidence_state": "VERIFIED_LOCAL",
+        "importance": "required",
+        "need_id": "need_f1a8b6ff8e56",
+        "skill": "Reading Comprehension",
+        "target_role": "Lab Assistant"
+      },
+      {
+        "category": "skills",
+        "confidence": 0.72,
+        "evidence_source": "O*NET 19-4021.00 onet",
+        "evidence_state": "VERIFIED_LOCAL",
+        "importance": "required",
+        "need_id": "need_76ee78661e86",
+        "skill": "Critical Thinking",
+        "target_role": "Lab Assistant"
+      },
+      {
+        "category": "abilities",
+        "confidence": 0.72,
+        "evidence_source": "O*NET 19-4021.00 onet",
+        "evidence_state": "VERIFIED_LOCAL",
+        "importance": "required",
+        "need_id": "need_6e033a87fc22",
+        "skill": "Inductive Reasoning",
+        "target_role": "Lab Assistant"
+      },
+      {
+        "category": "abilities",
+        "confidence": 0.72,
+        "evidence_source": "O*NET 19-4021.00 onet",
+        "evidence_state": "VERIFIED_LOCAL",
+        "importance": "required",
+        "need_id": "need_6d2a3e899447",
+        "skill": "Near Vision",
+        "target_role": "Lab Assistant"
+      },
+      {
+        "category": "abilities",
+        "confidence": 0.72,
+        "evidence_source": "O*NET 19-4021.00 onet",
+        "evidence_state": "VERIFIED_LOCAL",
+        "importance": "required",
+        "need_id": "need_892b703c2717",
+        "skill": "Oral Comprehension",
+        "target_role": "Lab Assistant"
+      },
+      {
+        "category": "knowledge",
+        "confidence": 0.7,
+        "evidence_source": "O*NET 19-4021.00 onet",
+        "evidence_state": "VERIFIED_LOCAL",
+        "importance": "required",
+        "need_id": "need_012b95f5897a",
+        "skill": "English Language",
+        "target_role": "Lab Assistant"
+      },
+      {
+        "category": "technology",
+        "confidence": 0.7,
+        "evidence_source": "O*NET 19-4021.00 onet",
+        "evidence_state": "VERIFIED_LOCAL",
+        "importance": "required",
+        "need_id": "need_b058f8fab359",
+        "skill": "Microsoft .NET Framework",
+        "target_role": "Lab Assistant"
+      }
+    ],
+    "current_major": "Biology",
+    "degree_applicability": "UNKNOWN",
+    "intended_major": "N/A",
+    "offering_status": "UNKNOWN",
+    "prerequisite_blocked": [],
+    "requires_verification": [],
+    "summary": "Verified 2 institution-scoped course recommendation(s); 0 additional candidate(s) require human verification; 0 candidate(s) blocked by an unmet prerequisite. Degree applicability and future offering remain unknown.",
+    "target_role": "Lab Assistant",
+    "verified_recommendations": [
+      {
+        "course_code": "BIOL 111",
+        "credit_max": 4.0,
+        "credit_min": 4.0,
+        "degree_applicability": "UNKNOWN",
+        "description": "(BIOL 1306 and 1106, 1406) Introductory Biology I. First half of an introdutory two-semester survey of contemporary biology that covers the chemical basis of life, structure and biology of the cell, molecular biology and genetics; includes laboratory that reinforces and provides supplemental information related to the lecture topics; also taught at Galveston campus",
+        "eligibility_status": "ELIGIBLE",
+        "institution": "tamu",
+        "match_kinds": [
+          "MATCHED_TITLE",
+          "MATCHED_DESCRIPTION"
+        ],
+        "matched_needs": [
+          {
+            "category": "knowledge",
+            "confidence": 0.86,
+            "evidence_source": "O*NET 19-4021.00 onet",
+            "evidence_state": "VERIFIED_LOCAL",
+            "importance": "required",
+            "need_id": "need_406fd3fedb05",
+            "skill": "Biology",
+            "target_role": "Lab Assistant"
+          }
+        ],
+        "matched_terms": [
+          "biology"
+        ],
+        "offering_status": "UNKNOWN",
+        "prerequisite_evaluation": {
+          "in_progress_courses": [],
+          "missing_courses": [],
+          "planned_courses": [],
+          "reasons": [
+            "catalog lists no prerequisites"
+          ],
+          "requirement": {
+            "course_codes": [],
+            "mode": "NONE",
+            "raw_text": null,
+            "restrictions": [],
+            "unresolved_reasons": []
+          },
+          "satisfied_courses": [],
+          "status": "ELIGIBLE",
+          "unknown_courses": []
+        },
+        "prerequisite_status": "ELIGIBLE",
+        "provenance": {
+          "catalog_year": "2026-2027",
+          "course_code": "BIOL 111",
+          "institution": "tamu",
+          "source_last_checked": "2026-06-20",
+          "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/biol/"
+        },
+        "ranking_reason": "This eligible introductory biology course directly addresses the required Biology knowledge need for Lab Assistant.",
+        "skill_alignment_explanation": "The course covers cellular biology, genetics, and molecular biology, providing foundational knowledge for biological laboratory work.",
+        "student_status": "NOT_TAKEN",
+        "title": "Introductory Biology I"
+      },
+      {
+        "course_code": "BIOL 113",
+        "credit_max": 3.0,
+        "credit_min": 3.0,
+        "degree_applicability": "UNKNOWN",
+        "description": "(BIOL 1308, BIOL 1408) Essentials in Biology. One-semester biology for non-majors; overview of essential biological concepts and their application to real world and contemporary issues; topics include evolution, biodiversity, cellular, molecular and forensic biology, genetics and heredity to scientific literacy, human impact on the environment, genetically modified organisms and emerging diseases",
+        "eligibility_status": "ELIGIBLE",
+        "institution": "tamu",
+        "match_kinds": [
+          "MATCHED_TITLE",
+          "MATCHED_DESCRIPTION"
+        ],
+        "matched_needs": [
+          {
+            "category": "knowledge",
+            "confidence": 0.86,
+            "evidence_source": "O*NET 19-4021.00 onet",
+            "evidence_state": "VERIFIED_LOCAL",
+            "importance": "required",
+            "need_id": "need_406fd3fedb05",
+            "skill": "Biology",
+            "target_role": "Lab Assistant"
+          }
+        ],
+        "matched_terms": [
+          "biology"
+        ],
+        "offering_status": "UNKNOWN",
+        "prerequisite_evaluation": {
+          "in_progress_courses": [],
+          "missing_courses": [],
+          "planned_courses": [],
+          "reasons": [
+            "catalog lists no prerequisites"
+          ],
+          "requirement": {
+            "course_codes": [],
+            "mode": "NONE",
+            "raw_text": null,
+            "restrictions": [],
+            "unresolved_reasons": []
+          },
+          "satisfied_courses": [],
+          "status": "ELIGIBLE",
+          "unknown_courses": []
+        },
+        "prerequisite_status": "ELIGIBLE",
+        "provenance": {
+          "catalog_year": "2026-2027",
+          "course_code": "BIOL 113",
+          "institution": "tamu",
+          "source_last_checked": "2026-06-20",
+          "source_url": "https://catalog.tamu.edu/undergraduate/course-descriptions/biol/"
+        },
+        "ranking_reason": "This eligible biology course for non-majors covers essential biological concepts needed for Lab Assistant.",
+        "skill_alignment_explanation": "The course addresses molecular biology, genetics, and heredity, aligning with the Biology knowledge requirement for the target role.",
+        "student_status": "NOT_TAKEN",
+        "title": "Essentials in Biology"
+      }
+    ]
+  },
+  "errors": [],
+  "feature": "COURSE_DISCOVERY",
+  "status": "success",
+  "summary": "Verified 2 institution-scoped course recommendation(s); 0 additional candidate(s) require human verification; 0 candidate(s) blocked by an unmet prerequisite. Degree applicability and future offering remain unknown."
+}

@@ -11,7 +11,7 @@ test('Degree Schedule mount auto-loads only academic GET and career optimization
     readFile(SCHEDULE, 'utf8'),
   ])
   assert.match(schedule, /useEffect\(\(\) => \{ trigger\(\); \}, \[trigger\]\)/)
-  assert.match(schedule, /fetchDegreeSchedule\(accessToken\)/)
+  assert.match(schedule, /fetchDegreeSchedule\(identity\)/)
   assert.doesNotMatch(panel, /useEffect/)
   assert.match(panel, /onClick=\{\(\) => run\(false\)\}/)
   assert.match(panel, /fetchCareerOptimizedSchedule\(accessToken/)
@@ -22,7 +22,7 @@ test('loading is localized while the parent academic schedule stays rendered', a
   assert.match(panel, /state\.phase === 'loading'/)
   assert.match(panel, /Finding career-aligned choices/)
   assert.match(panel, /disabled=\{!accessToken \|\| state\.phase === 'loading'\}/)
-  assert.match(schedule, /<DegreeScheduleTerms terms=\{schedule\.terms\}/)
+  assert.match(schedule, /<DegreeScheduleYears accessToken=\{accessToken \?\? ''\} scheduleTerms=\{schedule\.terms\}/)
   assert.match(schedule, /<CareerOptimizationPanel/)
 })
 

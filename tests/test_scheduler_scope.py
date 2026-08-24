@@ -50,6 +50,15 @@ def _option_course(option_id, coursedog_group_id):
     }
 
 
+def _option_course_by_code(option_id, course_code):
+    return {
+        "requirement_group_option_id": option_id,
+        "coursedog_group_id": None,
+        "unresolved_course_ref": None,
+        "course_code": course_code,
+    }
+
+
 # ---------------------------------------------------------------------------
 # 1. Ethan Brooks -- real 23-group tree, real 8 course_records, ground truth
 # ---------------------------------------------------------------------------
@@ -294,3 +303,72 @@ def test_compound_all_recurses_into_every_child_regardless_of_status():
     assert unscheduled == []
     assert {course.course_code for course in courses} == {"CS 2353"}
     assert courses[0].requirement_group_name == "Discrete Structures"
+
+
+# ---------------------------------------------------------------------------
+# 6. course_code path (TAMU, or any future non-Coursedog school) --
+#    supabase/migrations/20260823140000_requirement_group_option_courses_
+#    course_code.sql
+# ---------------------------------------------------------------------------
+
+
+def test_course_code_leaf_produces_a_schedulable_course():
+    """A TAMU-style leaf (course_code set, no coursedog_group_id at all)
+    no longer returns an empty set from _leaf_course_requirements() -- the
+    bug this build fixed: before catalog_by_code was threaded through,
+    every TAMU leaf resolved to zero courses regardless of the tree."""
+    raw_groups = [_group("leaf", "Required Courses", "enumerated_all")]
+    options = [_option("opt", "leaf", 0)]
+    option_courses = [_option_course_by_code("opt", "CHEM 107")]
+    catalog_by_code = {"CHEM 107": ["CHEM 107"]}
+
+    groups = evaluate_requirement_tree(raw_groups, options, option_courses, [], {}, catalog_by_code)
+    courses, unscheduled = scope_schedule_input(
+        groups, options, option_courses, {}, {"CHEM 107": 3.0}, catalog_by_code
+    )
+
+    assert unscheduled == []
+    assert [c.course_code for c in courses] == ["CHEM 107"]
+    assert courses[0].credit_hours == 3.0
+
+
+def test_course_code_cross_listing_schedules_exactly_once_not_twice():
+    """The double-counting risk this build specifically guarded against:
+    a "/"-joined cross-listing (e.g. TAMU's "ENGR 216/PHYS 216") is ONE
+    course under two department codes, not two courses -- must produce
+    exactly one CourseToSchedule, not one per resolved code."""
+    raw_groups = [_group("leaf", "Required Courses", "enumerated_all")]
+    options = [_option("opt", "leaf", 0)]
+    option_courses = [_option_course_by_code("opt", "ENGR 216/PHYS 216")]
+    catalog_by_code = {"ENGR 216/PHYS 216": ["ENGR 216", "PHYS 216"]}
+    catalog_credit_by_code = {"ENGR 216": 2.0, "PHYS 216": 2.0}
+
+    groups = evaluate_requirement_tree(raw_groups, options, option_courses, [], {}, catalog_by_code)
+    courses, unscheduled = scope_schedule_input(
+        groups, options, option_courses, {}, catalog_credit_by_code, catalog_by_code
+    )
+
+    assert unscheduled == []
+    assert len(courses) == 1
+    assert courses[0].course_code in ("ENGR 216", "PHYS 216")
+    assert courses[0].credit_hours == 2.0
+
+
+def test_course_code_cross_listing_already_satisfied_under_either_half_is_skipped():
+    """If the student already completed the cross-listed course under
+    EITHER department code, it must not be scheduled again."""
+    raw_groups = [_group("leaf", "Required Courses", "enumerated_all")]
+    options = [_option("opt", "leaf", 0)]
+    option_courses = [_option_course_by_code("opt", "ENGR 216/PHYS 216")]
+    catalog_by_code = {"ENGR 216/PHYS 216": ["ENGR 216", "PHYS 216"]}
+    course_records = [{"course_code": "PHYS 216", "status": "completed", "counts_toward_credit": True}]
+
+    groups = evaluate_requirement_tree(
+        raw_groups, options, option_courses, course_records, {}, catalog_by_code
+    )
+    courses, unscheduled = scope_schedule_input(
+        groups, options, option_courses, {}, {"ENGR 216": 2.0, "PHYS 216": 2.0}, catalog_by_code
+    )
+
+    assert unscheduled == []
+    assert courses == []

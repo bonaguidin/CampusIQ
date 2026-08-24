@@ -25,7 +25,7 @@ test('fetchRequirementSatisfaction calls the authenticated GET route with the be
     groups: [],
   }))
 
-  await fetchRequirementSatisfaction('session-token')
+  await fetchRequirementSatisfaction({ slug: null, accessToken: 'session-token' })
 
   assert.equal(calls.length, 1)
   assert.equal(calls[0].url, '/api/v2/student/me/requirement-satisfaction')
@@ -40,7 +40,7 @@ test('fetchRequirementSatisfaction returns the success payload as-is', async (t)
     groups: [{ id: 'g1', coursedog_rule_id: 'r1', name: 'Core', group_type: 'all_of', status: 'SATISFIED', detail: null, matched_course_codes: [], children: [] }],
   }))
 
-  const result = await fetchRequirementSatisfaction('session-token')
+  const result = await fetchRequirementSatisfaction({ slug: null, accessToken: 'session-token' })
 
   assert.equal(result.program_id, 'pid')
   assert.equal(isSkippedRequirementSatisfaction(result), false)
@@ -57,7 +57,7 @@ test('fetchRequirementSatisfaction returns a skipped FeatureResult when the stud
   }
   t.mock.method(globalThis, 'fetch', fakeFetch([], 200, skipped))
 
-  const result = await fetchRequirementSatisfaction('session-token')
+  const result = await fetchRequirementSatisfaction({ slug: null, accessToken: 'session-token' })
 
   assert.equal(isSkippedRequirementSatisfaction(result), true)
   assert.deepEqual(result.missing_fields, skipped.missing_fields)
@@ -67,7 +67,17 @@ test('fetchRequirementSatisfaction throws with the server detail on a non-200 re
   t.mock.method(globalThis, 'fetch', fakeFetch([], 502, { detail: 'Requirement satisfaction is unavailable.' }))
 
   await assert.rejects(
-    () => fetchRequirementSatisfaction('session-token'),
+    () => fetchRequirementSatisfaction({ slug: null, accessToken: 'session-token' }),
     /Requirement satisfaction is unavailable\./,
   )
+})
+
+test('fetchRequirementSatisfaction uses the demo route when a slug identity is supplied, with no Authorization header', async (t) => {
+  const calls = []
+  t.mock.method(globalThis, 'fetch', fakeFetch(calls, 200, { student_id: 'demo:ethanBrooks', program_id: 'local:smu-cs-bs', groups: [] }))
+
+  await fetchRequirementSatisfaction({ slug: 'ethanBrooks', accessToken: null })
+
+  assert.equal(calls[0].url, '/api/students/ethanBrooks/requirement-satisfaction')
+  assert.equal(calls[0].init.headers.Authorization, undefined)
 })

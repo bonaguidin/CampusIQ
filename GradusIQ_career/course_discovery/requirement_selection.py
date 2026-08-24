@@ -283,19 +283,37 @@ def structured_candidate_codes(
     options: list[Mapping[str, Any]],
     option_courses: list[Mapping[str, Any]],
     catalog_by_gid: Mapping[str, str],
+    catalog_by_code: Mapping[str, list[str]] | None = None,
 ) -> set[str]:
-    """All resolved codes under currently deferred structured groups."""
+    """All resolved codes under currently deferred structured groups.
+
+    Resolves via coursedog_group_id (SMU) or course_code (TAMU, any future
+    non-Coursedog school) -- same additive pattern established in
+    course_discovery/requirement_satisfaction.py's _resolve_option_codes().
+    Unlike scheduler_scope.py's _leaf_course_requirements(), this function
+    already returns a flat set() by design (a candidate-code lookup set,
+    not a per-row schedulable-requirement list), so a cross-listed
+    course_code's 2 resolved codes are both added directly -- there is no
+    "one CourseToSchedule per requirement" double-counting risk here,
+    since nothing downstream of this set builds a schedule from it.
+    """
+    catalog_by_code = catalog_by_code or {}
     deferred_ids = {group.id for group in groups if group.status != RequirementGroupStatus.SATISFIED}
     child_ids = {child.id for group in groups for child in group.children}
     relevant = deferred_ids | child_ids
     option_ids = {str(o["id"]) for o in options if str(o["requirement_group_id"]) in relevant}
-    return {
-        catalog_by_gid[str(row["coursedog_group_id"])]
-        for row in option_courses
-        if str(row["requirement_group_option_id"]) in option_ids
-        and row.get("coursedog_group_id")
-        and str(row["coursedog_group_id"]) in catalog_by_gid
-    }
+    codes: set[str] = set()
+    for row in option_courses:
+        if str(row["requirement_group_option_id"]) not in option_ids:
+            continue
+        gid = row.get("coursedog_group_id")
+        if gid and str(gid) in catalog_by_gid:
+            codes.add(catalog_by_gid[str(gid)])
+            continue
+        course_code = row.get("course_code")
+        if course_code:
+            codes.update(catalog_by_code.get(str(course_code), []))
+    return codes
 
 
 def select_structured_requirements(

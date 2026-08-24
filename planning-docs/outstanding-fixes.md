@@ -64,6 +64,43 @@ Full audit complete (2026-08-11) and Phase 1 implementation built and staged (20
 - **Status:** applied and live as of 2026-08-12. `supabase migration list --linked` shows `20260811120000` (academic_term_dates), `20260811120100` (planned_courses) and `20260811120200` (course_catalog_search) all present remotely, local and remote in sync with no drift. SMU's `--push` has also run (`2a9909f`): 16 coursedog rows are live in `academic_term_dates`, carrying `source_last_checked` 2026-08-12, and the committed snapshot matches them byte-for-byte apart from the re-read stamps.
 - **Explicitly deferred to Phase 2:** reconciliation logic for what happens when a real transcript arrives for a course a student had marked "planned" — this needs its own careful pass, not bolted onto Phase 1.
 
+## 🟡 TAMU requirement selection — combinatorial choice engine still SMU-only
+
+`course_discovery/requirement_selection.py`'s combinatorial choice engine
+(`_option_variants()` / `_leaf_choices()` / `_choices_for_group()`, feeding
+`select_structured_requirements()`) still resolves courses only via
+`coursedog_group_id` — it was deliberately NOT extended to `course_code`
+during the TAMU scheduler build (2026-08-23), unlike every other
+`catalog_by_gid`-only call site in the codebase, which was.
+
+**Why deferred, not just missed:** this cluster's shape doesn't mirror the
+simple "resolve a row to a code, check membership" pattern used everywhere
+else. It builds combinatorial variant tuples via `product()`/`combinations()`
+and checks satisfaction with `all(code in satisfied for code in variant)`.
+A "/"-joined cross-listing (e.g. TAMU's `ENGR 216/PHYS 216`) needs "either
+code satisfies," which this model can't express without real redesign —
+forcing a naive extension risked either silently under-detecting
+satisfaction (transcript has `PHYS 216`, code only checks `ENGR 216`) or
+generating spurious extra choice combinations. See
+`GradusIQ_career/course_discovery/scheduler_scope.py`'s
+`_leaf_course_requirements()` for the equivalence-group redesign this
+cluster would need an analogous version of.
+
+**Practical effect today:** TAMU's genuinely-choice requirement groups
+(e.g. `ENGL 103 or ENGL 104`, `MATH 251 or MATH 253`, the "Select one of
+the following" choice blocks) are correctly classified as
+`SELECTION_DEFERRED` by `scheduler_scope.py` and stay in a student's
+`unscheduled` list — visible, not silently wrong, not a regression — but
+are never auto-selected into a term plan the way SMU's equivalent choice
+groups (e.g. Statistical Methods' `CS 4340`/`STAT 4340`/`OREM 3340`) are.
+Confirmed live against Deepak Murali's real TAMU Computer Engineering - BS
+account: his real schedule run produced 6 no-choice courses across 2
+terms, with 17 groups correctly deferred rather than auto-resolved.
+
+- [ ] Extend `_option_variants()`/`_leaf_choices()`/`_choices_for_group()`
+      with an equivalence-aware course_code resolution path once there's
+      real TAMU choice-group usage to validate the redesign against.
+
 ## ✅ Confirmed working / not actually broken (don't re-investigate)
 
 - GAP's Tavily-backed live role research (`role_research_agent.py`) — genuinely live, timeout-bounded, injection-bounded, fails safe to static, 15 roles cached.

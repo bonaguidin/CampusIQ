@@ -508,6 +508,7 @@ export function AuthenticatedDashboard() {
                   />
                   <DegreeSchedulePanel
                     targetRole={dashboard.career.target_roles[0]}
+                    courses={dashboard.courses}
                     onResult={setDegreeScheduleResult}
                   />
                   <RequirementSatisfactionPanel />

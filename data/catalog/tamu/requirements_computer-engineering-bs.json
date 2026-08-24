@@ -1,0 +1,828 @@
+{
+  "source": "tamu_courseleaf",
+  "program": {
+    "code": "ECEN-CPEN-BS",
+    "name": "Computer Engineering",
+    "degree_designation": "BS - Bachelor of Science",
+    "source_url": "https://catalog.tamu.edu/undergraduate/engineering/electrical-computer/computer-engineering-bs/"
+  },
+  "catalog_year": "2026-2027",
+  "footnotes_enforced": false,
+  "footnotes": {
+    "1": "A grade of C or better is required.",
+    "2": "Entering students will be given a math placement exam. Test results will be used in selecting the appropriate starting course which may be at a higher or lower level.",
+    "3": "Of the 21 hours shown as University Core Curriculum electives, 3 must be from creative arts (BS-AREN curriculum take ARCH 249 , ARCH 250 , or ARCH 350 ), 3 from social and behavioral sciences (BS-DAEN curriculum take ECON 202 or ECON 203 ; BS-IDIS curriculum take ECON 202 ), 3 from language, philosophy and culture (BS-AREN, BS-CVEN, BS-EVEN and BS-PETE curriculum take PHIL 482 ). In addition, 6 hours are required from American history and 6 hours from government/political science. The required 3 hours of international and cultural diversity and 3 hours of cultural discourse may be satisfied by courses that also meet the creative arts, social and behavioral sciences, language, philosophy and culture or American history requirements if those courses are on the approved list of international and cultural diversity courses and cultural discourse courses.",
+    "4": "BS-BMEN, BS-CHEN and BS-MSEN require 8 hours of fundamentals of chemistry which are satisfied with CHEM 119 or CHEM 107 / CHEM 117 and CHEM 120 ; Students with an interest in BS-BMEN, BS-CHEN and BS-MSEN can take CHEM 120 second semester freshman year. Students who take CHEM 119 and CHEM 120 can substitute CHEM 120 for CHEM 107 / CHEM 117 .",
+    "5": "For BS-PETE, allocate 3 hours to core communications course ( ENGL 210 , COMM 203 , COMM 205 , or COMM 243 ) and/or 3 hours to University Core Curriculum elective. For BS-MEEN, allocate 3 hours to core communications course ( ENGL 203 , ENGL 210 , COMM 203 or COMM 205 ) and/or 3 hours to University Core Curriculum elective. For BS-BAEN, allocate 3 hours to core communications course ( ENGL 210 )",
+    "6": "6 hours chosen from either ( ECEN 403 and ECEN 404 ) or ( CSCE 483 and an additional 3 hours of Area electives.)",
+    "7": "Area electives chosen in consultation with academic advisor.",
+    "8": "Select from: MATH 407 , MATH 412 , MATH 414 , MATH 431 , MATH 471 , MEEN 315 , MEEN 221 , MEEN 222/MSEN 222 , PHYS 221 , PHYS 222 .",
+    "9": "All students are required to complete a high-impact experience in order to graduate. The list of possible high-impact experiences is available in the CSE or ECE advising office."
+  },
+  "groups": [
+    {
+      "coursedog_rule_id": null,
+      "parent_coursedog_rule_id": null,
+      "name": "First Year",
+      "group_type": "compound_all",
+      "n_required": null,
+      "credit_hours_required": null,
+      "notes_html": null,
+      "requires_manual_definition": false,
+      "options": [],
+      "footnote_refs": [],
+      "rule_id": "tamu-rule-001",
+      "parent_rule_id": null
+    },
+    {
+      "coursedog_rule_id": null,
+      "parent_coursedog_rule_id": null,
+      "name": "First Year — Fall",
+      "group_type": "compound_all",
+      "n_required": null,
+      "credit_hours_required": null,
+      "notes_html": null,
+      "requires_manual_definition": false,
+      "options": [],
+      "footnote_refs": [],
+      "rule_id": "tamu-rule-002",
+      "parent_rule_id": "tamu-rule-001"
+    },
+    {
+      "coursedog_rule_id": null,
+      "parent_coursedog_rule_id": null,
+      "name": "First Year — Fall — Required Courses",
+      "group_type": "enumerated_all",
+      "n_required": null,
+      "credit_hours_required": null,
+      "notes_html": null,
+      "requires_manual_definition": false,
+      "options": [
+        {
+          "option_index": 0,
+          "logic": "and",
+          "course_codes": [
+            "CHEM 107"
+          ],
+          "footnote_refs": [
+            1,
+            4
+          ]
+        },
+        {
+          "option_index": 1,
+          "logic": "and",
+          "course_codes": [
+            "CHEM 117"
+          ],
+          "footnote_refs": [
+            1,
+            4
+          ]
+        },
+        {
+          "option_index": 2,
+          "logic": "or",
+          "course_codes": [
+            "ENGL 103",
+            "ENGL 104"
+          ],
+          "footnote_refs": [
+            1
+          ]
+        },
+        {
+          "option_index": 3,
+          "logic": "and",
+          "course_codes": [
+            "ENGR 102"
+          ],
+          "footnote_refs": [
+            1
+          ]
+        },
+        {
+          "option_index": 4,
+          "logic": "and",
+          "course_codes": [
+            "MATH 151"
+          ],
+          "footnote_refs": [
+            1,
+            2
+          ]
+        }
+      ],
+      "footnote_refs": [],
+      "rule_id": "tamu-rule-003",
+      "parent_rule_id": "tamu-rule-002"
+    },
+    {
+      "coursedog_rule_id": null,
+      "parent_coursedog_rule_id": null,
+      "name": "First Year — Fall — University Core Curriculum",
+      "group_type": "freeform",
+      "n_required": null,
+      "credit_hours_required": 3.0,
+      "notes_html": null,
+      "requires_manual_definition": true,
+      "options": [],
+      "footnote_refs": [
+        3
+      ],
+      "rule_id": "tamu-rule-004",
+      "parent_rule_id": "tamu-rule-002"
+    },
+    {
+      "coursedog_rule_id": null,
+      "parent_coursedog_rule_id": null,
+      "name": "First Year — Spring",
+      "group_type": "compound_all",
+      "n_required": null,
+      "credit_hours_required": null,
+      "notes_html": null,
+      "requires_manual_definition": false,
+      "options": [],
+      "footnote_refs": [],
+      "rule_id": "tamu-rule-005",
+      "parent_rule_id": "tamu-rule-001"
+    },
+    {
+      "coursedog_rule_id": null,
+      "parent_coursedog_rule_id": null,
+      "name": "First Year — Spring — Required Courses",
+      "group_type": "enumerated_all",
+      "n_required": null,
+      "credit_hours_required": null,
+      "notes_html": null,
+      "requires_manual_definition": false,
+      "options": [
+        {
+          "option_index": 0,
+          "logic": "and",
+          "course_codes": [
+            "ENGR 216/PHYS 216"
+          ],
+          "footnote_refs": [
+            1
+          ]
+        },
+        {
+          "option_index": 1,
+          "logic": "and",
+          "course_codes": [
+            "MATH 152"
+          ],
+          "footnote_refs": [
+            1
+          ]
+        },
+        {
+          "option_index": 2,
+          "logic": "and",
+          "course_codes": [
+            "PHYS 206"
+          ],
+          "footnote_refs": [
+            1
+          ]
+        }
+      ],
+      "footnote_refs": [],
+      "rule_id": "tamu-rule-006",
+      "parent_rule_id": "tamu-rule-005"
+    },
+    {
+      "coursedog_rule_id": null,
+      "parent_coursedog_rule_id": null,
+      "name": "First Year — Spring — University Core Curriculum",
+      "group_type": "freeform",
+      "n_required": null,
+      "credit_hours_required": 3.0,
+      "notes_html": null,
+      "requires_manual_definition": true,
+      "options": [],
+      "footnote_refs": [
+        3
+      ],
+      "rule_id": "tamu-rule-007",
+      "parent_rule_id": "tamu-rule-005"
+    },
+    {
+      "coursedog_rule_id": null,
+      "parent_coursedog_rule_id": null,
+      "name": "First Year — Spring — Select one of the following",
+      "group_type": "enumerated_at_least_n",
+      "n_required": 1,
+      "credit_hours_required": 4.0,
+      "notes_html": null,
+      "requires_manual_definition": false,
+      "options": [
+        {
+          "option_index": 0,
+          "logic": "and",
+          "course_codes": [
+            "CHEM 120"
+          ],
+          "footnote_refs": [
+            1,
+            4
+          ]
+        },
+        {
+          "option_index": 1,
+          "logic": "manual",
+          "course_codes": [],
+          "freeform_label": "University Core Curriculum",
+          "footnote_refs": [
+            3,
+            5
+          ]
+        }
+      ],
+      "footnote_refs": [],
+      "rule_id": "tamu-rule-008",
+      "parent_rule_id": "tamu-rule-005"
+    },
+    {
+      "coursedog_rule_id": null,
+      "parent_coursedog_rule_id": null,
+      "name": "Second Year",
+      "group_type": "compound_all",
+      "n_required": null,
+      "credit_hours_required": null,
+      "notes_html": null,
+      "requires_manual_definition": false,
+      "options": [],
+      "footnote_refs": [],
+      "rule_id": "tamu-rule-009",
+      "parent_rule_id": null
+    },
+    {
+      "coursedog_rule_id": null,
+      "parent_coursedog_rule_id": null,
+      "name": "Second Year — Fall",
+      "group_type": "compound_all",
+      "n_required": null,
+      "credit_hours_required": null,
+      "notes_html": null,
+      "requires_manual_definition": false,
+      "options": [],
+      "footnote_refs": [],
+      "rule_id": "tamu-rule-010",
+      "parent_rule_id": "tamu-rule-009"
+    },
+    {
+      "coursedog_rule_id": null,
+      "parent_coursedog_rule_id": null,
+      "name": "Second Year — Fall — Required Courses",
+      "group_type": "enumerated_all",
+      "n_required": null,
+      "credit_hours_required": null,
+      "notes_html": null,
+      "requires_manual_definition": false,
+      "options": [
+        {
+          "option_index": 0,
+          "logic": "and",
+          "course_codes": [
+            "CSCE 120"
+          ],
+          "footnote_refs": [
+            1
+          ]
+        },
+        {
+          "option_index": 1,
+          "logic": "and",
+          "course_codes": [
+            "ECEN 248"
+          ],
+          "footnote_refs": [
+            1
+          ]
+        },
+        {
+          "option_index": 2,
+          "logic": "or",
+          "course_codes": [
+            "MATH 251",
+            "MATH 253"
+          ],
+          "footnote_refs": [
+            1
+          ]
+        },
+        {
+          "option_index": 3,
+          "logic": "and",
+          "course_codes": [
+            "PHYS 207"
+          ],
+          "footnote_refs": [
+            1
+          ]
+        },
+        {
+          "option_index": 4,
+          "logic": "and",
+          "course_codes": [
+            "PHYS 217/ENGR 217"
+          ],
+          "footnote_refs": [
+            1
+          ]
+        }
+      ],
+      "footnote_refs": [],
+      "rule_id": "tamu-rule-011",
+      "parent_rule_id": "tamu-rule-010"
+    },
+    {
+      "coursedog_rule_id": null,
+      "parent_coursedog_rule_id": null,
+      "name": "Second Year — Spring",
+      "group_type": "compound_all",
+      "n_required": null,
+      "credit_hours_required": null,
+      "notes_html": null,
+      "requires_manual_definition": false,
+      "options": [],
+      "footnote_refs": [],
+      "rule_id": "tamu-rule-012",
+      "parent_rule_id": "tamu-rule-009"
+    },
+    {
+      "coursedog_rule_id": null,
+      "parent_coursedog_rule_id": null,
+      "name": "Second Year — Spring — Required Courses",
+      "group_type": "enumerated_all",
+      "n_required": null,
+      "credit_hours_required": null,
+      "notes_html": null,
+      "requires_manual_definition": false,
+      "options": [
+        {
+          "option_index": 0,
+          "logic": "and",
+          "course_codes": [
+            "CSCE 221"
+          ],
+          "footnote_refs": [
+            1
+          ]
+        },
+        {
+          "option_index": 1,
+          "logic": "and",
+          "course_codes": [
+            "CSCE 222/ECEN 222"
+          ],
+          "footnote_refs": [
+            1
+          ]
+        },
+        {
+          "option_index": 2,
+          "logic": "and",
+          "course_codes": [
+            "ECEN 214"
+          ],
+          "footnote_refs": [
+            1
+          ]
+        },
+        {
+          "option_index": 3,
+          "logic": "or",
+          "course_codes": [
+            "ECEN 303",
+            "STAT 211"
+          ],
+          "footnote_refs": [
+            1
+          ]
+        },
+        {
+          "option_index": 4,
+          "logic": "and",
+          "course_codes": [
+            "MATH 308"
+          ],
+          "footnote_refs": [
+            1
+          ]
+        }
+      ],
+      "footnote_refs": [],
+      "rule_id": "tamu-rule-013",
+      "parent_rule_id": "tamu-rule-012"
+    },
+    {
+      "coursedog_rule_id": null,
+      "parent_coursedog_rule_id": null,
+      "name": "Third Year",
+      "group_type": "compound_all",
+      "n_required": null,
+      "credit_hours_required": null,
+      "notes_html": null,
+      "requires_manual_definition": false,
+      "options": [],
+      "footnote_refs": [],
+      "rule_id": "tamu-rule-014",
+      "parent_rule_id": null
+    },
+    {
+      "coursedog_rule_id": null,
+      "parent_coursedog_rule_id": null,
+      "name": "Third Year — Fall",
+      "group_type": "compound_all",
+      "n_required": null,
+      "credit_hours_required": null,
+      "notes_html": null,
+      "requires_manual_definition": false,
+      "options": [],
+      "footnote_refs": [],
+      "rule_id": "tamu-rule-015",
+      "parent_rule_id": "tamu-rule-014"
+    },
+    {
+      "coursedog_rule_id": null,
+      "parent_coursedog_rule_id": null,
+      "name": "Third Year — Fall — Required Courses",
+      "group_type": "enumerated_all",
+      "n_required": null,
+      "credit_hours_required": null,
+      "notes_html": null,
+      "requires_manual_definition": false,
+      "options": [
+        {
+          "option_index": 0,
+          "logic": "and",
+          "course_codes": [
+            "CSCE 313"
+          ],
+          "footnote_refs": [
+            1
+          ]
+        },
+        {
+          "option_index": 1,
+          "logic": "and",
+          "course_codes": [
+            "CSCE 350/ECEN 350"
+          ],
+          "footnote_refs": [
+            1
+          ]
+        },
+        {
+          "option_index": 2,
+          "logic": "and",
+          "course_codes": [
+            "CSCE 481"
+          ],
+          "footnote_refs": [
+            1
+          ]
+        },
+        {
+          "option_index": 3,
+          "logic": "and",
+          "course_codes": [
+            "ECEN 314"
+          ],
+          "footnote_refs": [
+            1
+          ]
+        },
+        {
+          "option_index": 4,
+          "logic": "and",
+          "course_codes": [
+            "MATH 311"
+          ],
+          "footnote_refs": [
+            1
+          ]
+        }
+      ],
+      "footnote_refs": [],
+      "rule_id": "tamu-rule-016",
+      "parent_rule_id": "tamu-rule-015"
+    },
+    {
+      "coursedog_rule_id": null,
+      "parent_coursedog_rule_id": null,
+      "name": "Third Year — Fall — Select one of the following",
+      "group_type": "enumerated_at_least_n",
+      "n_required": 1,
+      "credit_hours_required": 3.0,
+      "notes_html": null,
+      "requires_manual_definition": false,
+      "options": [
+        {
+          "option_index": 0,
+          "logic": "and",
+          "course_codes": [
+            "ENGL 210"
+          ],
+          "footnote_refs": []
+        },
+        {
+          "option_index": 1,
+          "logic": "and",
+          "course_codes": [
+            "COMM 205"
+          ],
+          "footnote_refs": []
+        },
+        {
+          "option_index": 2,
+          "logic": "and",
+          "course_codes": [
+            "COMM 243"
+          ],
+          "footnote_refs": []
+        }
+      ],
+      "footnote_refs": [
+        1
+      ],
+      "rule_id": "tamu-rule-017",
+      "parent_rule_id": "tamu-rule-015"
+    },
+    {
+      "coursedog_rule_id": null,
+      "parent_coursedog_rule_id": null,
+      "name": "Third Year — Spring",
+      "group_type": "compound_all",
+      "n_required": null,
+      "credit_hours_required": null,
+      "notes_html": null,
+      "requires_manual_definition": false,
+      "options": [],
+      "footnote_refs": [],
+      "rule_id": "tamu-rule-018",
+      "parent_rule_id": "tamu-rule-014"
+    },
+    {
+      "coursedog_rule_id": null,
+      "parent_coursedog_rule_id": null,
+      "name": "Third Year — Spring — Required Courses",
+      "group_type": "enumerated_all",
+      "n_required": null,
+      "credit_hours_required": null,
+      "notes_html": null,
+      "requires_manual_definition": false,
+      "options": [
+        {
+          "option_index": 0,
+          "logic": "and",
+          "course_codes": [
+            "CSCE 331"
+          ],
+          "footnote_refs": [
+            1
+          ]
+        },
+        {
+          "option_index": 1,
+          "logic": "or",
+          "course_codes": [
+            "CSCE 462",
+            "ECEN 449"
+          ],
+          "footnote_refs": [
+            1
+          ]
+        },
+        {
+          "option_index": 2,
+          "logic": "and",
+          "course_codes": [
+            "ECEN 325"
+          ],
+          "footnote_refs": [
+            1
+          ]
+        },
+        {
+          "option_index": 3,
+          "logic": "and",
+          "course_codes": [
+            "ECEN 454"
+          ],
+          "footnote_refs": [
+            1
+          ]
+        }
+      ],
+      "footnote_refs": [],
+      "rule_id": "tamu-rule-019",
+      "parent_rule_id": "tamu-rule-018"
+    },
+    {
+      "coursedog_rule_id": null,
+      "parent_coursedog_rule_id": null,
+      "name": "Third Year — Spring — University Core Curriculum",
+      "group_type": "freeform",
+      "n_required": null,
+      "credit_hours_required": 3.0,
+      "notes_html": null,
+      "requires_manual_definition": true,
+      "options": [],
+      "footnote_refs": [
+        3
+      ],
+      "rule_id": "tamu-rule-020",
+      "parent_rule_id": "tamu-rule-018"
+    },
+    {
+      "coursedog_rule_id": null,
+      "parent_coursedog_rule_id": null,
+      "name": "Fourth Year",
+      "group_type": "compound_all",
+      "n_required": null,
+      "credit_hours_required": null,
+      "notes_html": null,
+      "requires_manual_definition": false,
+      "options": [],
+      "footnote_refs": [],
+      "rule_id": "tamu-rule-021",
+      "parent_rule_id": null
+    },
+    {
+      "coursedog_rule_id": null,
+      "parent_coursedog_rule_id": null,
+      "name": "Fourth Year — Fall",
+      "group_type": "compound_all",
+      "n_required": null,
+      "credit_hours_required": null,
+      "notes_html": null,
+      "requires_manual_definition": false,
+      "options": [],
+      "footnote_refs": [],
+      "rule_id": "tamu-rule-022",
+      "parent_rule_id": "tamu-rule-021"
+    },
+    {
+      "coursedog_rule_id": null,
+      "parent_coursedog_rule_id": null,
+      "name": "Fourth Year — Fall — Senior design",
+      "group_type": "freeform",
+      "n_required": null,
+      "credit_hours_required": 3.0,
+      "notes_html": null,
+      "requires_manual_definition": true,
+      "options": [],
+      "footnote_refs": [
+        1,
+        6
+      ],
+      "rule_id": "tamu-rule-023",
+      "parent_rule_id": "tamu-rule-022"
+    },
+    {
+      "coursedog_rule_id": null,
+      "parent_coursedog_rule_id": null,
+      "name": "Fourth Year — Fall — University Core Curriculum",
+      "group_type": "freeform",
+      "n_required": null,
+      "credit_hours_required": 3.0,
+      "notes_html": null,
+      "requires_manual_definition": true,
+      "options": [],
+      "footnote_refs": [
+        3
+      ],
+      "rule_id": "tamu-rule-024",
+      "parent_rule_id": "tamu-rule-022"
+    },
+    {
+      "coursedog_rule_id": null,
+      "parent_coursedog_rule_id": null,
+      "name": "Fourth Year — Fall — Area elective",
+      "group_type": "freeform",
+      "n_required": null,
+      "credit_hours_required": 6.0,
+      "notes_html": null,
+      "requires_manual_definition": true,
+      "options": [],
+      "footnote_refs": [
+        1,
+        7
+      ],
+      "rule_id": "tamu-rule-025",
+      "parent_rule_id": "tamu-rule-022"
+    },
+    {
+      "coursedog_rule_id": null,
+      "parent_coursedog_rule_id": null,
+      "name": "Fourth Year — Fall — Engineering elective",
+      "group_type": "freeform",
+      "n_required": null,
+      "credit_hours_required": 3.0,
+      "notes_html": null,
+      "requires_manual_definition": true,
+      "options": [],
+      "footnote_refs": [
+        1,
+        8
+      ],
+      "rule_id": "tamu-rule-026",
+      "parent_rule_id": "tamu-rule-022"
+    },
+    {
+      "coursedog_rule_id": null,
+      "parent_coursedog_rule_id": null,
+      "name": "Fourth Year — Fall — High Impact Experience",
+      "group_type": "enumerated_at_least_n",
+      "n_required": 1,
+      "credit_hours_required": 0.0,
+      "notes_html": null,
+      "requires_manual_definition": false,
+      "options": [
+        {
+          "option_index": 0,
+          "logic": "or",
+          "course_codes": [
+            "CSCE 399",
+            "ECEN 399"
+          ],
+          "footnote_refs": []
+        }
+      ],
+      "footnote_refs": [
+        9
+      ],
+      "modeling_confidence": "inferred",
+      "rule_id": "tamu-rule-027",
+      "parent_rule_id": "tamu-rule-022"
+    },
+    {
+      "coursedog_rule_id": null,
+      "parent_coursedog_rule_id": null,
+      "name": "Fourth Year — Spring",
+      "group_type": "compound_all",
+      "n_required": null,
+      "credit_hours_required": null,
+      "notes_html": null,
+      "requires_manual_definition": false,
+      "options": [],
+      "footnote_refs": [],
+      "rule_id": "tamu-rule-028",
+      "parent_rule_id": "tamu-rule-021"
+    },
+    {
+      "coursedog_rule_id": null,
+      "parent_coursedog_rule_id": null,
+      "name": "Fourth Year — Spring — Senior Design",
+      "group_type": "freeform",
+      "n_required": null,
+      "credit_hours_required": 3.0,
+      "notes_html": null,
+      "requires_manual_definition": true,
+      "options": [],
+      "footnote_refs": [
+        1,
+        6
+      ],
+      "rule_id": "tamu-rule-029",
+      "parent_rule_id": "tamu-rule-028"
+    },
+    {
+      "coursedog_rule_id": null,
+      "parent_coursedog_rule_id": null,
+      "name": "Fourth Year — Spring — University Core Curriculum",
+      "group_type": "freeform",
+      "n_required": null,
+      "credit_hours_required": 6.0,
+      "notes_html": null,
+      "requires_manual_definition": true,
+      "options": [],
+      "footnote_refs": [
+        3
+      ],
+      "rule_id": "tamu-rule-030",
+      "parent_rule_id": "tamu-rule-028"
+    },
+    {
+      "coursedog_rule_id": null,
+      "parent_coursedog_rule_id": null,
+      "name": "Fourth Year — Spring — Area elective",
+      "group_type": "freeform",
+      "n_required": null,
+      "credit_hours_required": 6.0,
+      "notes_html": null,
+      "requires_manual_definition": true,
+      "options": [],
+      "footnote_refs": [
+        1,
+        7
+      ],
+      "rule_id": "tamu-rule-031",
+      "parent_rule_id": "tamu-rule-028"
+    }
+  ]
+}

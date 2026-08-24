@@ -570,6 +570,33 @@
       }
     }
   },
+  "course_lifecycle_preview": [
+    {
+      "status": "planned",
+      "course_code": "PSYC 317",
+      "title": "Social Psychology",
+      "term_label": "Fall 2026"
+    },
+    {
+      "status": "in_progress",
+      "course_code": "STAT 201",
+      "title": "Elementary Statistical Methods",
+      "term_label": "Spring 2026"
+    },
+    {
+      "status": "completed",
+      "course_code": "HIST 105",
+      "title": "History of the United States",
+      "term_label": "Fall 2024",
+      "letter_grade": "B"
+    },
+    {
+      "status": "dropped",
+      "course_code": "COMM 203",
+      "title": "Public Speaking",
+      "term_label": "Fall 2024"
+    }
+  ],
   "examTopicTags": {
     "5029": [
       {

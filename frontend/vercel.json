@@ -19,6 +19,18 @@
       "destination": "/api/proxy?student=:student&feature=profile"
     },
     {
+      "source": "/api/students/:student/schedule",
+      "destination": "/api/proxy?student=:student&feature=schedule"
+    },
+    {
+      "source": "/api/students/:student/requirement-satisfaction",
+      "destination": "/api/proxy?student=:student&feature=requirement-satisfaction"
+    },
+    {
+      "source": "/api/students/:student/degree-plan/technical-electives",
+      "destination": "/api/proxy?student=:student&feature=technical-electives"
+    },
+    {
       "source": "/api/v2/student/me/analyze/:feature",
       "destination": "/api/proxy?target=me-analyze&feature=:feature"
     },
@@ -65,6 +77,26 @@
     {
       "source": "/api/v2/student/me/terms",
       "destination": "/api/proxy?target=me-terms"
+    },
+    {
+      "source": "/api/v2/student/me/action-plan",
+      "destination": "/api/proxy?target=me-action-plan"
+    },
+    {
+      "source": "/api/v2/student/me/schedule/career-optimize",
+      "destination": "/api/proxy?target=me-schedule-career-optimize"
+    },
+    {
+      "source": "/api/v2/student/me/schedule",
+      "destination": "/api/proxy?target=me-schedule"
+    },
+    {
+      "source": "/api/v2/student/me/requirement-satisfaction",
+      "destination": "/api/proxy?target=me-requirement-satisfaction"
+    },
+    {
+      "source": "/api/v2/student/me/degree-plan/technical-electives",
+      "destination": "/api/proxy?target=me-technical-electives"
     },
     {
       "source": "/api/v2/student/me/planned-courses/:id",

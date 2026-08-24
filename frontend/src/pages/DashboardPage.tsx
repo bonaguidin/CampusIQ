@@ -2,6 +2,12 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/useAuth';
 import { AcademicSnapshot } from '../components/AcademicSnapshot';
+import { DemoCourseLifecyclePreview } from '../components/DemoCourseLifecyclePreview';
+import { CourseDiscoveryPanel } from '../components/CourseDiscoveryPanel';
+import { DegreePlannerSummary } from '../components/DegreePlannerSummary';
+import { DegreeSchedulePanel } from '../components/DegreeSchedulePanel';
+import { RequirementSatisfactionPanel } from '../components/RequirementSatisfactionPanel';
+import type { DegreeScheduleResponse } from '../api/degreeSchedule.mjs';
 import { CareerPanel } from '../components/CareerPanel';
 import { GapAnalysisPanel } from '../components/GapAnalysisPanel';
 import { FitAnalysisPanel } from '../components/FitAnalysisPanel';
@@ -258,6 +264,7 @@ function DemoDashboardPage() {
   const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState<NavSection>('overview');
   const [railOpen, setRailOpen] = useState(false);
+  const [degreeScheduleResult, setDegreeScheduleResult] = useState<DegreeScheduleResponse | null>(null);
   // First-run tour: remembered per demo student (localStorage), so it auto-shows
   // once and is replayable on demand via the topbar "?" button.
   const tourSeenKey = slug ? `gradusiq_tour_seen_demo_${slug}` : null;
@@ -407,6 +414,31 @@ function DemoDashboardPage() {
                   submissions={profile.submissions}
                   examTopicTags={profile.examTopicTags}
                 />
+                <DemoCourseLifecyclePreview rows={profile.course_lifecycle_preview ?? []} />
+                {career && career.target_roles.length > 0 && (
+                  <CourseDiscoveryPanel targetRoles={career.target_roles} />
+                )}
+                {/* Same composition as AuthenticatedDashboard.tsx's Course
+                    Discovery sub-tab. DegreeSchedulePanel/RequirementSatisfactionPanel
+                    resolve real data only for the one demo student whose
+                    institution+major match a wired local program (SMU
+                    Computer Science) -- every other demo student sees the
+                    same "not available yet" state a real student without
+                    program data gets. Career Optimization stays out of the
+                    demo (DegreeSchedulePanel already gates it on identity.slug). */}
+                <div className="degree-planner-flow">
+                  <DegreePlannerSummary
+                    institution={student.institution}
+                    major={student.major_current ?? student.major_intended}
+                    expectedGraduation={student.expected_graduation}
+                    schedule={degreeScheduleResult}
+                  />
+                  <DegreeSchedulePanel
+                    targetRole={career?.target_roles?.[0]}
+                    onResult={setDegreeScheduleResult}
+                  />
+                  <RequirementSatisfactionPanel />
+                </div>
               </div>
             )}
 

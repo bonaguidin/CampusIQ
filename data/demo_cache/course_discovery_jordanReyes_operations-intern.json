@@ -1,0 +1,18 @@
+{
+  "data": {
+    "career_needs": [],
+    "current_major": "Business Administration (pre-major)",
+    "degree_applicability": "UNKNOWN",
+    "intended_major": "N/A",
+    "offering_status": "UNKNOWN",
+    "prerequisite_blocked": [],
+    "requires_verification": [],
+    "summary": "No trusted locally grounded career-skill needs were available; no courses were proposed.",
+    "target_role": "Operations Intern",
+    "verified_recommendations": []
+  },
+  "errors": [],
+  "feature": "COURSE_DISCOVERY",
+  "status": "success",
+  "summary": "No trusted locally grounded career-skill needs were available; no courses were proposed."
+}

@@ -1,0 +1,99 @@
+{
+  "data": {
+    "career_needs": [
+      {
+        "category": "knowledge",
+        "confidence": 0.88,
+        "evidence_source": "O*NET 17-2141.00 onet",
+        "evidence_state": "VERIFIED_LOCAL",
+        "importance": "required",
+        "need_id": "need_1fc39ab71633",
+        "skill": "Design",
+        "target_role": "Mechanical Analysis Intern"
+      },
+      {
+        "category": "knowledge",
+        "confidence": 0.86,
+        "evidence_source": "O*NET 17-2141.00 onet",
+        "evidence_state": "VERIFIED_LOCAL",
+        "importance": "required",
+        "need_id": "need_78bf24c23211",
+        "skill": "Engineering and Technology",
+        "target_role": "Mechanical Analysis Intern"
+      },
+      {
+        "category": "knowledge",
+        "confidence": 0.84,
+        "evidence_source": "O*NET 17-2141.00 onet",
+        "evidence_state": "VERIFIED_LOCAL",
+        "importance": "required",
+        "need_id": "need_44c624499e18",
+        "skill": "Production and Processing",
+        "target_role": "Mechanical Analysis Intern"
+      },
+      {
+        "category": "knowledge",
+        "confidence": 0.81,
+        "evidence_source": "O*NET 17-2141.00 onet",
+        "evidence_state": "VERIFIED_LOCAL",
+        "importance": "required",
+        "need_id": "need_adfd0d182707",
+        "skill": "Mechanical",
+        "target_role": "Mechanical Analysis Intern"
+      },
+      {
+        "category": "knowledge",
+        "confidence": 0.76,
+        "evidence_source": "O*NET 17-2141.00 onet",
+        "evidence_state": "VERIFIED_LOCAL",
+        "importance": "required",
+        "need_id": "need_85664c565429",
+        "skill": "English Language",
+        "target_role": "Mechanical Analysis Intern"
+      },
+      {
+        "category": "abilities",
+        "confidence": 0.75,
+        "evidence_source": "O*NET 17-2141.00 onet",
+        "evidence_state": "VERIFIED_LOCAL",
+        "importance": "required",
+        "need_id": "need_906d79c5ccf2",
+        "skill": "Deductive Reasoning",
+        "target_role": "Mechanical Analysis Intern"
+      },
+      {
+        "category": "abilities",
+        "confidence": 0.75,
+        "evidence_source": "O*NET 17-2141.00 onet",
+        "evidence_state": "VERIFIED_LOCAL",
+        "importance": "required",
+        "need_id": "need_6644450d9b58",
+        "skill": "Inductive Reasoning",
+        "target_role": "Mechanical Analysis Intern"
+      },
+      {
+        "category": "abilities",
+        "confidence": 0.75,
+        "evidence_source": "O*NET 17-2141.00 onet",
+        "evidence_state": "VERIFIED_LOCAL",
+        "importance": "required",
+        "need_id": "need_6094e3aac6cf",
+        "skill": "Oral Comprehension",
+        "target_role": "Mechanical Analysis Intern"
+      }
+    ],
+    "current_major": "Aerospace Engineering",
+    "degree_applicability": "UNKNOWN",
+    "intended_major": "N/A",
+    "offering_status": "UNKNOWN",
+    "prerequisite_blocked": [],
+    "requires_verification": [],
+    "summary": "Verified 0 institution-scoped course recommendation(s); 0 additional candidate(s) require human verification; 0 candidate(s) blocked by an unmet prerequisite. Degree applicability and future offering remain unknown.",
+    "target_role": "Mechanical Analysis Intern",
+    "verified_recommendations": []
+  },
+  "errors": [],
+  "feature": "COURSE_DISCOVERY",
+  "status": "success",
+  "summary": "Verified 0 institution-scoped course recommendation(s); 0 additional candidate(s) require human verification; 0 candidate(s) blocked by an unmet prerequisite. Degree applicability and future offering remain unknown."
+}

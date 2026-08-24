@@ -54,11 +54,12 @@ def _option(option_id, group_id, index, logic="and"):
     return {"id": option_id, "requirement_group_id": group_id, "option_index": index, "logic": logic}
 
 
-def _option_course(option_id, coursedog_group_id=None, unresolved_course_ref=None):
+def _option_course(option_id, coursedog_group_id=None, unresolved_course_ref=None, course_code=None):
     return {
         "requirement_group_option_id": option_id,
         "coursedog_group_id": coursedog_group_id,
         "unresolved_course_ref": unresolved_course_ref,
+        "course_code": course_code,
     }
 
 
@@ -395,3 +396,138 @@ def test_unresolved_course_ref_never_satisfies_an_and_option():
     leaf = results[0]
     assert leaf.status == RequirementGroupStatus.NOT_STARTED
     assert leaf.matched_course_codes == []
+
+
+# ---------------------------------------------------------------------------
+# 5. course_code resolution path (TAMU, or any future non-Coursedog school)
+#    -- supabase/migrations/20260823140000_requirement_group_option_courses_
+#    course_code.sql
+# ---------------------------------------------------------------------------
+
+
+def test_course_code_resolves_a_plain_single_course():
+    """A TAMU-style row with course_code set (no coursedog_group_id at all)
+    resolves and matches through catalog_by_code exactly like a
+    coursedog_group_id row resolves through catalog_by_gid."""
+    groups = [_group("leaf", "Leaf", "enumerated_all")]
+    options = [_option("opt", "leaf", 0)]
+    option_courses = [_option_course("opt", course_code="CHEM 107")]
+    catalog_by_code = {"CHEM 107": ["CHEM 107"]}
+
+    results = evaluate_requirement_tree(
+        groups, options, option_courses, [_course_record("CHEM 107")], {}, catalog_by_code
+    )
+    leaf = results[0]
+    assert leaf.status == RequirementGroupStatus.SATISFIED
+    assert leaf.matched_course_codes == ["CHEM 107"]
+
+
+def test_course_code_slash_joined_cross_listing_matches_either_half():
+    """"ENGR 216/PHYS 216" is one real course under two department codes --
+    course_catalog stores both as independent rows (confirmed live,
+    2026-08-23), so a transcript entry under EITHER code must satisfy this
+    one option_courses row -- it's the same course, not two courses to
+    complete. catalog_by_code pre-resolves the split (see
+    requirement_satisfaction_fetch.py's _split_course_code), so the
+    evaluator here just needs to accept a match on either resolved code."""
+    groups = [_group("leaf", "Leaf", "enumerated_all")]
+    options = [_option("opt", "leaf", 0)]
+    option_courses = [_option_course("opt", course_code="ENGR 216/PHYS 216")]
+    catalog_by_code = {"ENGR 216/PHYS 216": ["ENGR 216", "PHYS 216"]}
+
+    # Student took it under the PHYS code -- still satisfies.
+    results = evaluate_requirement_tree(
+        groups, options, option_courses, [_course_record("PHYS 216")], {}, catalog_by_code
+    )
+    leaf = results[0]
+    assert leaf.status == RequirementGroupStatus.SATISFIED
+    assert leaf.matched_course_codes == ["PHYS 216"]
+
+    # Student took it under the ENGR code instead -- also satisfies.
+    results = evaluate_requirement_tree(
+        groups, options, option_courses, [_course_record("ENGR 216")], {}, catalog_by_code
+    )
+    leaf = results[0]
+    assert leaf.status == RequirementGroupStatus.SATISFIED
+    assert leaf.matched_course_codes == ["ENGR 216"]
+
+    # Neither code on the transcript -- not started, not a dead reference.
+    results = evaluate_requirement_tree(
+        groups, options, option_courses, [_course_record("UNRELATED 100")], {}, catalog_by_code
+    )
+    leaf = results[0]
+    assert leaf.status == RequirementGroupStatus.NOT_STARTED
+    assert leaf.matched_course_codes == []
+
+
+def test_course_code_and_logic_requires_every_row_not_every_half():
+    """A cross-listed row combined with an ordinary required row under the
+    same "and" option: the cross-listed row needs only ONE of its two
+    codes matched (see above), but the option as a whole still needs BOTH
+    rows satisfied -- confirms the per-row "any code" relaxation doesn't
+    leak into "any row" for and-logic."""
+    groups = [_group("leaf", "Leaf", "enumerated_all")]
+    options = [_option("opt", "leaf", 0, logic="and")]
+    option_courses = [
+        _option_course("opt", course_code="ENGR 216/PHYS 216"),
+        _option_course("opt", course_code="MATH 152"),
+    ]
+    catalog_by_code = {"ENGR 216/PHYS 216": ["ENGR 216", "PHYS 216"], "MATH 152": ["MATH 152"]}
+
+    # Only the cross-listed half is done -- MATH 152 still missing, option
+    # (and thus the enumerated_all leaf, its only option) not satisfied.
+    results = evaluate_requirement_tree(
+        groups, options, option_courses, [_course_record("PHYS 216")], {}, catalog_by_code
+    )
+    leaf = results[0]
+    assert leaf.status == RequirementGroupStatus.IN_PROGRESS
+    assert leaf.matched_course_codes == ["PHYS 216"]
+
+    # Both rows satisfied (cross-listed half + the plain course) -- done.
+    results = evaluate_requirement_tree(
+        groups,
+        options,
+        option_courses,
+        [_course_record("PHYS 216"), _course_record("MATH 152")],
+        {},
+        catalog_by_code,
+    )
+    leaf = results[0]
+    assert leaf.status == RequirementGroupStatus.SATISFIED
+    assert sorted(leaf.matched_course_codes) == ["MATH 152", "PHYS 216"]
+
+
+def test_course_code_unresolved_never_satisfies():
+    """A course_code with no entry in catalog_by_code (course doesn't exist
+    in course_catalog for this institution) behaves like an
+    unresolved_course_ref -- permanently unmatchable, not a crash."""
+    groups = [_group("leaf", "Leaf", "enumerated_all")]
+    options = [_option("opt", "leaf", 0)]
+    option_courses = [_option_course("opt", course_code="MADE UP 999")]
+
+    results = evaluate_requirement_tree(groups, options, option_courses, [_course_record("ANY 100")], {}, {})
+    leaf = results[0]
+    assert leaf.status == RequirementGroupStatus.NOT_STARTED
+    assert leaf.matched_course_codes == []
+
+
+def test_smu_coursedog_path_unaffected_by_catalog_by_code_param():
+    """Explicit proof (per this build's HALT CONDITION) that adding
+    catalog_by_code does not change SMU's coursedog_group_id evaluation --
+    same Statistical Methods or-logic fixture as test 3 above, called both
+    with the new param omitted and with an unrelated catalog_by_code
+    populated, and both produce byte-identical results."""
+    without_param = evaluate_requirement_tree(
+        _STAT_GROUPS, _STAT_OPTIONS, _STAT_OPTION_COURSES, [_course_record("STAT 4340")], _STAT_CATALOG
+    )
+    with_unrelated_param = evaluate_requirement_tree(
+        _STAT_GROUPS,
+        _STAT_OPTIONS,
+        _STAT_OPTION_COURSES,
+        [_course_record("STAT 4340")],
+        _STAT_CATALOG,
+        {"SOME OTHER CODE": ["SOME OTHER CODE"]},
+    )
+    assert without_param == with_unrelated_param
+    assert without_param[0].status == RequirementGroupStatus.SATISFIED
+    assert without_param[0].matched_course_codes == ["STAT 4340"]

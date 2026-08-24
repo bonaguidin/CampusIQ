@@ -66,10 +66,17 @@ export function analyzeCourseDiscovery(identity, targetRole) {
 }
 
 export function analyzeActionPlan(identity, targetRole) {
+  const body = targetRole ? { target_role: targetRole } : undefined;
+  if (identity.slug) {
+    // Demo counterpart to the real /me/action-plan route below. Named
+    // .../analyze/action-plan (not .../action-plan) so it rides the same
+    // slug-addressed /analyze/:feature route analysisPath() already builds.
+    return postAnalysis(
+      `/api/students/${encodeURIComponent(identity.slug)}/analyze/action-plan`,
+      undefined,
+      body,
+    );
+  }
   if (!identity.accessToken) throw new Error('Authenticated analysis requires a session.');
-  return postAnalysis(
-    '/api/v2/student/me/action-plan',
-    identity.accessToken,
-    targetRole ? { target_role: targetRole } : undefined,
-  );
+  return postAnalysis('/api/v2/student/me/action-plan', identity.accessToken, body);
 }

@@ -19,7 +19,7 @@ test('fetchDegreeSchedule calls the authenticated GET route', async (t) => {
     student_id: 'sid', program_id: 'pid', terms: [], unscheduled: [], status: 'SCHEDULED', failure: null,
   }))
 
-  await fetchDegreeSchedule('session-token')
+  await fetchDegreeSchedule({ slug: null, accessToken: 'session-token' })
 
   assert.equal(calls.length, 1)
   assert.equal(calls[0].url, '/api/v2/student/me/schedule')
@@ -42,7 +42,7 @@ test('fetchDegreeSchedule preserves the complete schedule response', async (t) =
   }
   t.mock.method(globalThis, 'fetch', fakeFetch([], 200, payload))
 
-  const result = await fetchDegreeSchedule('session-token')
+  const result = await fetchDegreeSchedule({ slug: null, accessToken: 'session-token' })
 
   assert.deepEqual(result, payload)
   assert.equal(isSkippedDegreeSchedule(result), false)
@@ -54,7 +54,7 @@ test('fetchDegreeSchedule returns a skipped FeatureResult', async (t) => {
   }
   t.mock.method(globalThis, 'fetch', fakeFetch([], 200, skipped))
 
-  const result = await fetchDegreeSchedule('session-token')
+  const result = await fetchDegreeSchedule({ slug: null, accessToken: 'session-token' })
 
   assert.equal(isSkippedDegreeSchedule(result), true)
   assert.equal(result.summary, skipped.summary)
@@ -63,5 +63,20 @@ test('fetchDegreeSchedule returns a skipped FeatureResult', async (t) => {
 test('fetchDegreeSchedule throws with backend detail on HTTP error', async (t) => {
   t.mock.method(globalThis, 'fetch', fakeFetch([], 502, { detail: 'Schedule is unavailable.' }))
 
-  await assert.rejects(() => fetchDegreeSchedule('session-token'), /Schedule is unavailable\./)
+  await assert.rejects(
+    () => fetchDegreeSchedule({ slug: null, accessToken: 'session-token' }),
+    /Schedule is unavailable\./,
+  )
+})
+
+test('fetchDegreeSchedule uses the demo route when a slug identity is supplied, with no Authorization header', async (t) => {
+  const calls = []
+  t.mock.method(globalThis, 'fetch', fakeFetch(calls, 200, {
+    student_id: 'demo:ethanBrooks', program_id: 'local:smu-cs-bs', terms: [], unscheduled: [], status: 'SCHEDULED', failure: null,
+  }))
+
+  await fetchDegreeSchedule({ slug: 'ethanBrooks', accessToken: null })
+
+  assert.equal(calls[0].url, '/api/students/ethanBrooks/schedule')
+  assert.equal(calls[0].init.headers.Authorization, undefined)
 })

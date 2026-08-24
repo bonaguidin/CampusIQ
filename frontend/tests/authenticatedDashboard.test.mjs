@@ -57,6 +57,14 @@ test('authenticated dashboard covers canonical states, routing, themes, errors, 
   const origin = `http://127.0.0.1:${String(address.port)}`
   const browser = await chromium.launch(); t.after(async () => browser.close())
   const page = await browser.newPage()
+  // Fall 2026 (start_date 2026-08-24, below) is fixture data pinned to a real
+  // calendar date, not a moving target -- termStatus() derives 'upcoming' by
+  // comparing it against the live clock, so this test silently breaks the
+  // moment real time reaches that date. Freezing the page clock before any
+  // navigation keeps term-status resolution deterministic regardless of when
+  // the suite actually runs, matching test_api_v2_schedule.py's backend-side
+  // date freeze for the same underlying assumption.
+  await page.clock.setFixedTime(new Date('2026-08-19T12:00:00Z'))
 
   const TAMU_ID = '75d68331-91d2-47e8-9671-2a3b065955d0'
   const SMU_ID = '6b180bbf-66d7-4aef-b8c6-2ae534c78e9a'

@@ -20,9 +20,25 @@
 //
 // The proxy secret is attached to every forwarded request either way.
 
-// POST features run AI work; 'profile' is a plain read and is the only GET.
-const ALLOWED_FEATURES = new Set(['gap', 'fit', 'shift', 'professor-comments', 'chat'])
-const GET_FEATURES = new Set(['profile'])
+// POST features run AI work; the GET_FEATURES below are plain reads.
+const ALLOWED_FEATURES = new Set([
+  'gap',
+  'fit',
+  'shift',
+  'professor-comments',
+  'chat',
+  'course-discovery',
+  'action-plan',
+])
+// Degree planner reads: local (non-Postgres) demo counterparts to the
+// session-scoped me-schedule/me-requirement-satisfaction/me-technical-
+// electives targets below. See GradusIQ_career/demo/local_requirement_tree.py.
+const GET_FEATURES = new Set([
+  'profile',
+  'schedule',
+  'requirement-satisfaction',
+  'technical-electives',
+])
 const STUDENT_SLUG_PATTERN = /^[A-Za-z0-9]{1,64}$/
 const PROXY_SECRET_HEADER = 'X-GradusIQ-Proxy-Secret'
 
@@ -82,8 +98,20 @@ const ME_TARGETS = Object.assign(Object.create(null), {
   'me-planned-courses': { methods: ['GET', 'POST'], needsFeature: false, optionalTermId: true },
   'me-planned-course-remove': { method: 'DELETE', needsFeature: false, needsPlannedRecord: true },
   'me-catalog-search': { method: 'GET', needsFeature: false, needsQuery: true },
+  // Action Plan's real backend route is /api/v2/student/me/action-plan --
+  // NOT under /analyze/, so it cannot ride ME_ANALYZE_FEATURES/meBackendPath's
+  // generic /analyze/:feature fallback the way gap/fit/shift/course-discovery
+  // do. It needs its own target, same as me-terms/me-chat.
+  'me-action-plan': { method: 'POST', needsFeature: false },
+  // Degree planner: schedule, requirement satisfaction, technical electives,
+  // and the opt-in career-ranked schedule preview. Same shape as
+  // me-terms/me-action-plan -- fixed backend path, no extra params.
+  'me-schedule': { method: 'GET', needsFeature: false },
+  'me-requirement-satisfaction': { method: 'GET', needsFeature: false },
+  'me-technical-electives': { method: 'GET', needsFeature: false },
+  'me-schedule-career-optimize': { method: 'POST', needsFeature: false },
 })
-const ME_ANALYZE_FEATURES = new Set(['gap', 'fit', 'shift', 'professor-comments'])
+const ME_ANALYZE_FEATURES = new Set(['gap', 'fit', 'shift', 'professor-comments', 'course-discovery'])
 
 // Must stay in step with TABLE_BY_SEGMENT in GradusIQ_career/resume/review.py.
 const REVIEW_TABLES = new Set([
@@ -124,6 +152,9 @@ function backendPath(student, feature) {
   const slug = encodeURIComponent(student)
   if (feature === 'chat') return `/api/students/${slug}/chat`
   if (feature === 'profile') return `/api/students/${slug}/profile`
+  if (feature === 'schedule') return `/api/students/${slug}/schedule`
+  if (feature === 'requirement-satisfaction') return `/api/students/${slug}/requirement-satisfaction`
+  if (feature === 'technical-electives') return `/api/students/${slug}/degree-plan/technical-electives`
   return `/api/students/${slug}/analyze/${feature}`
 }
 
@@ -143,6 +174,11 @@ function meBackendPath(target, feature, reviewTable, recordId, searchQuery, term
   if (target === 'me-catalog-search') {
     return `/api/v2/student/me/catalog/search?q=${encodeURIComponent(searchQuery)}`
   }
+  if (target === 'me-action-plan') return '/api/v2/student/me/action-plan'
+  if (target === 'me-schedule') return '/api/v2/student/me/schedule'
+  if (target === 'me-requirement-satisfaction') return '/api/v2/student/me/requirement-satisfaction'
+  if (target === 'me-technical-electives') return '/api/v2/student/me/degree-plan/technical-electives'
+  if (target === 'me-schedule-career-optimize') return '/api/v2/student/me/schedule/career-optimize'
   if (target === 'me-chat') return '/api/v2/student/me/chat'
   if (target === 'me-profile') return '/api/v2/student/me/profile'
   if (target === 'me-resume-upload') return '/api/v2/student/me/resume/upload'

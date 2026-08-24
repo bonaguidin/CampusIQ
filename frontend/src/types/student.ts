@@ -154,6 +154,21 @@ export interface ProfileCompleteness {
   };
 }
 
+// ── Illustrative-only (static, not fetched, not editable) ───────────────────
+
+// Static examples of the four course-lifecycle states (planning/lifecycle.py)
+// shown read-only in the demo dashboard. Real students see this as a live,
+// editable planner (TermPlanner.tsx, backed by Postgres); demo students have
+// no term/course-record rows to back that, so this is hand-authored per
+// student instead -- see DemoCourseLifecyclePreview.tsx.
+export interface CourseLifecyclePreviewRow {
+  status: 'planned' | 'in_progress' | 'completed' | 'dropped';
+  course_code: string;
+  title: string;
+  term_label: string;
+  letter_grade?: string | null;
+}
+
 // ── Top-level unified profile ────────────────────────────────────────────────
 
 export interface StudentProfile {
@@ -165,5 +180,6 @@ export interface StudentProfile {
   examTopicTags: ExamTopicTags;
   career: CareerBlock | null;
   profile_completeness: ProfileCompleteness;
+  course_lifecycle_preview?: CourseLifecyclePreviewRow[];
   // _notes, _schema_notes, onboarding_stage intentionally omitted (not shown to user)
 }
