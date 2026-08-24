@@ -26,6 +26,11 @@ export interface TechnicalElectiveCandidate {
   source_last_checked: string;
 }
 
+export interface TechnicalElectiveGroupRef {
+  requirement_group_id: string;
+  requirement_name: string;
+}
+
 export interface TechnicalElectiveCandidateSuccess {
   student_id: string;
   program_id: string;
@@ -33,9 +38,14 @@ export interface TechnicalElectiveCandidateSuccess {
   requirement_name: string;
   credits_required: number;
   review_required: boolean;
-  institution: 'smu';
+  institution: 'smu' | 'tamu';
   catalog_year: string;
   candidates: TechnicalElectiveCandidate[];
+  // Other requirement groups sharing this exact same candidate pool (e.g.
+  // TAMU's 3 elective slots) -- empty for SMU, which matches exactly one
+  // group. See requirement_group_id/requirement_name above for the primary
+  // match this pool's candidates are officially attached to.
+  also_satisfies_requirement_groups: TechnicalElectiveGroupRef[];
   limitations: Array<
     | 'ADVISER_APPROVAL_REQUIRED'
     | 'TRACK_EXCLUSION_NOT_EVALUATED'

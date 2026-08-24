@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { RequirementGroupResult, RequirementGroupStatus } from '../api/requirementSatisfaction.mjs';
-import { TechnicalElectiveCandidates } from './TechnicalElectiveCandidates';
+import { TechnicalElectiveSlot } from './TechnicalElectiveSlot';
 
 const STATUS_LABEL: Record<RequirementGroupStatus, string> = {
   SATISFIED: 'Satisfied',
@@ -65,9 +65,7 @@ export function RequirementGroupNode({ group }: { group: RequirementGroupResult 
         </p>
       )}
 
-      {group.coursedog_rule_id === 'AjzAZTn4' && (
-        <TechnicalElectiveCandidates requirementGroupId={group.id} />
-      )}
+      <TechnicalElectiveSlot groupId={group.id} />
 
       {hasChildren && expanded && (
         <ul className="requirement-group-children">
