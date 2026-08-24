@@ -102,9 +102,8 @@ from GradusIQ_career.course_discovery.scheduler import (
 )
 from GradusIQ_career.course_discovery.scheduler_scope import scope_schedule_input
 from GradusIQ_career.course_discovery.technical_elective_candidates import (
-    TECHNICAL_ELECTIVE_NAME,
-    TECHNICAL_ELECTIVE_RULE_ID,
     generate_technical_elective_candidates,
+    technical_elective_group_matches,
 )
 from GradusIQ_career.course_discovery.requirement_ranker import rank_requirement_candidates
 from GradusIQ_career.degree_plan_career_optimization import (
@@ -2653,6 +2652,31 @@ def _no_program_result() -> FeatureResult:
     )
 
 
+def build_planned_or_selected_codes(state: _AcademicScheduleState) -> set[str]:
+    """Course codes already claimed by another requirement in this plan.
+
+    Union of the winning choice-group selections (state.academic_selection,
+    from select_structured_requirements()'s global cross-requirement
+    optimizer -- "a course may have only one requirement owner") and the
+    no-choice courses already placed on the term-by-term schedule
+    (state.academic_schedule). This was previously inlined only inside
+    get_me_technical_elective_candidates; any future open-elective route
+    (e.g. a TAMU equivalent) needs the exact same exclusion, so it is a
+    shared helper rather than plumbing a new caller would have to
+    rediscover -- and could silently get wrong -- on its own. Deliberately
+    does NOT include state.already_satisfied (completed/in-progress
+    coursework): callers that need that exclusion too pass it separately,
+    same as get_me_technical_elective_candidates already does.
+    """
+    return {
+        course.course_code for course in state.academic_selection.courses
+    } | {
+        course.course_code
+        for term in state.academic_schedule.terms
+        for course in term.courses
+    }
+
+
 def _reconstruct_academic_schedule(request: Request) -> _AcademicScheduleState | FeatureResult:
     """Provider-free authoritative schedule state shared by GET and preview POST."""
     client = _session_client(request)
@@ -2789,42 +2813,58 @@ def get_me_schedule(request: Request) -> dict:
 
 def _technical_elective_candidates_from_state(state: _AcademicScheduleState) -> dict:
     """Shared by the /me and demo technical-electives routes: given an already
-    -built _AcademicScheduleState, find the one freeform technical-elective
-    group and generate its candidate pool. No I/O.
+    -built _AcademicScheduleState, find every matched freeform technical/
+    open-elective group -- one for SMU, three for TAMU (Area elective x2,
+    Engineering elective x1) -- and generate the one candidate pool they all
+    share, with no cross-group narrowing or reservation. No I/O. See
+    technical_elective_group_matches() for the per-institution allowlist.
     """
-    technical_rows = [
-        row for row in state.raw.groups
-        if row.get("coursedog_rule_id") == TECHNICAL_ELECTIVE_RULE_ID
-        and row.get("name") == TECHNICAL_ELECTIVE_NAME
-        and row.get("group_type") == "freeform"
-        and row.get("requires_manual_definition") is True
-    ]
-    if len(technical_rows) != 1 or state.catalog_institution is None:
+    if state.catalog_institution is None:
         return FeatureResult(
             feature="TECHNICAL_ELECTIVE_CANDIDATES",
             status="skipped",
             summary="Technical elective options aren't available for this degree program yet.",
             missing_fields=[],
         ).to_dict()
-    requirement = technical_rows[0]
-    planned_codes = {
-        course.course_code for course in state.academic_selection.courses
-    } | {
-        course.course_code
-        for term in state.academic_schedule.terms
-        for course in term.courses
-    }
+    technical_rows = [
+        row for row in state.raw.groups
+        if technical_elective_group_matches(row, state.catalog_institution)
+    ]
+    if not technical_rows:
+        return FeatureResult(
+            feature="TECHNICAL_ELECTIVE_CANDIDATES",
+            status="skipped",
+            summary="Technical elective options aren't available for this degree program yet.",
+            missing_fields=[],
+        ).to_dict()
+    # Deterministic ordering (by name) rather than raw.groups' incidental
+    # order: content is identical across all matched groups (same pool,
+    # confirmed decision), so which one is "primary" doesn't change what a
+    # caller sees, but the choice must not vary run to run.
+    technical_rows = sorted(technical_rows, key=lambda row: str(row.get("name")))
+    primary = technical_rows[0]
     result = generate_technical_elective_candidates(
         student_id=state.student_id,
         program_id=state.program_id,
-        requirement_group_id=str(requirement["id"]),
-        requirement_name=str(requirement["name"]),
-        catalog_year=str(requirement["catalog_year"]),
+        requirement_group_id=str(primary["id"]),
+        requirement_name=str(primary["name"]),
+        catalog_year=str(primary["catalog_year"]),
+        institution=state.catalog_institution,
         catalog_courses=LocalCatalogRepository().records(state.catalog_institution),
         completed_or_in_progress_codes=state.already_satisfied,
-        planned_or_selected_codes=planned_codes,
+        planned_or_selected_codes=build_planned_or_selected_codes(state),
     )
-    return result.model_dump(mode="json")
+    payload = result.model_dump(mode="json")
+    # Additive only -- every field SMU's response already had is unchanged,
+    # so the existing single-group frontend consumer keeps working
+    # untouched. Always [] for SMU (one match). For TAMU, the other matched
+    # groups share the exact same candidates/stats as `primary` above -- no
+    # separate computation, per the one-shared-pool decision.
+    payload["also_satisfies_requirement_groups"] = [
+        {"requirement_group_id": str(row["id"]), "requirement_name": str(row["name"])}
+        for row in technical_rows[1:]
+    ]
+    return payload
 
 
 @router.get(
@@ -2832,7 +2872,13 @@ def _technical_elective_candidates_from_state(state: _AcademicScheduleState) -> 
     dependencies=[Depends(authorize_proxy_request)],
 )
 def get_me_technical_elective_candidates(request: Request) -> dict:
-    """Read-only provisional SMU CS 3000+ pool for the manual requirement."""
+    """Read-only provisional technical/open-elective pool for the manual
+    freeform requirement(s) -- one group for SMU, three for TAMU (Area
+    elective x2, Engineering elective x1), all three sharing one candidate
+    pool with no cross-group narrowing or reservation: a course suggested
+    for one elective slot may also be suggested for the other two. See
+    technical_elective_group_matches() for the per-institution allowlist.
+    """
     try:
         state = _reconstruct_academic_schedule(request)
         if isinstance(state, FeatureResult):
