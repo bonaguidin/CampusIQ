@@ -1,13 +1,15 @@
 /**
- * Stub handlers for the three term-planning routes the Academic Record tab
- * calls on render.
+ * Stub handlers for the term-planning routes the Academic Record tab (and,
+ * since the year-tabbed redesign, the Degree Schedule panel too) calls on
+ * render.
  *
- * Shared between authenticatedDashboard and transcriptFlow because both drive
- * the real AuthenticatedDashboard, and since the term view replaced the flat
- * course list, neither can reach a course row without these answering. Kept as
- * a fixture rather than copied into both files so the payload shape is stated
- * once -- it mirrors the FastAPI routes in GradusIQ_career/api.py, and a drift
- * between them should be one edit, not two.
+ * Shared between authenticatedDashboard, transcriptFlow, and
+ * careerOptimizationPanel because all three drive the real
+ * AuthenticatedDashboard, and neither the term view nor the Degree Schedule
+ * panel can reach a course row without these answering. Kept as a fixture
+ * rather than copied into each file so the payload shape is stated once --
+ * it mirrors the FastAPI routes in GradusIQ_career/api.py, and a drift
+ * between them should be one edit, not several.
  *
  * Terms default to the same shape the TAMU seed produces, with a `today`
  * caller-controlled so "upcoming" is deterministic rather than dependent on
@@ -41,6 +43,20 @@ export const DEFAULT_TERMS = [
   },
 ]
 
+export const DEFAULT_GRADING_SCHEMA = {
+  institution_id: 'inst-1',
+  uses_plus_minus: true,
+  grades: [
+    { letter: 'A', points: 4.0, counts_toward_gpa: true, counts_toward_credit: true },
+    { letter: 'A-', points: 3.7, counts_toward_gpa: true, counts_toward_credit: true },
+    { letter: 'B+', points: 3.3, counts_toward_gpa: true, counts_toward_credit: true },
+    { letter: 'B', points: 3.0, counts_toward_gpa: true, counts_toward_credit: true },
+    { letter: 'C', points: 2.0, counts_toward_gpa: true, counts_toward_credit: true },
+    { letter: 'D', points: 1.0, counts_toward_gpa: true, counts_toward_credit: true },
+    { letter: 'F', points: 0.0, counts_toward_gpa: true, counts_toward_credit: true },
+  ],
+}
+
 export const DEFAULT_CATALOG = [
   {
     id: 'catalog-1',
@@ -72,6 +88,7 @@ export const DEFAULT_CATALOG = [
 export function planningRoutes({
   terms = DEFAULT_TERMS,
   catalog = DEFAULT_CATALOG,
+  gradingSchema = DEFAULT_GRADING_SCHEMA,
   upcomingTermKey = '2026-Fall',
   state = { planned: [] },
 } = {}) {
@@ -149,6 +166,11 @@ export function planningRoutes({
 
       if (path === '/api/v2/student/me/catalog/search' && method === 'GET') {
         respond(response, { results: catalog, query: '' })
+        return true
+      }
+
+      if (path === '/api/v2/student/me/grading-schema' && method === 'GET') {
+        respond(response, gradingSchema)
         return true
       }
 
