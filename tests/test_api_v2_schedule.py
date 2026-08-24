@@ -181,6 +181,9 @@ def test_ethan_technical_elective_pool_is_read_only_and_catalog_grounded(client,
         "excluded_restriction_or_review": 46,
         "candidate_count": 30,
     }
+    # SMU matches exactly one freeform group -- the new multi-group support
+    # for TAMU must not surface a phantom "also satisfies" entry for SMU.
+    assert body["also_satisfies_requirement_groups"] == []
 
     after = client.get(URL, headers={"Authorization": "Bearer good-token"}).json()
     assert after == before
