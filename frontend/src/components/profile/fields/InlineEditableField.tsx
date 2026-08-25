@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { updateProfile, type ProfileChanges } from '../../../api/profile';
+import type { ProfileChanges } from '../../../api/profile';
 import { EditableSection } from '../../EditableSection';
 
 /**
@@ -29,7 +29,7 @@ export function InlineEditableField<T>({
   value,
   toChanges,
   validate,
-  accessToken,
+  persist,
   onSaved,
   openNonce = null,
   editLabel = 'Edit',
@@ -40,7 +40,11 @@ export function InlineEditableField<T>({
   value: T;
   toChanges(draft: T): ProfileChanges;
   validate?(draft: T): string | null;
-  accessToken: string;
+  /** Persists the diff -- a real PATCH for an authenticated session, or a
+   * local-only merge for a demo identity. Either way this is the only thing
+   * that changes between the two; nothing else in this component knows or
+   * cares which one it's talking to. */
+  persist(changes: ProfileChanges): Promise<void>;
   onSaved(): Promise<void>;
   /**
    * Bumped when something off-page -- the checklist, or a skipped analysis --
@@ -101,7 +105,7 @@ export function InlineEditableField<T>({
     setSaving(true);
     setErrors([]);
     try {
-      await updateProfile(accessToken, changes);
+      await persist(changes);
       await onSaved();
       setEditing(false);
     } catch (error) {

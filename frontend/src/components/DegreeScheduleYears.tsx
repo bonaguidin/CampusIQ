@@ -94,7 +94,7 @@ export function DegreeScheduleYears({ accessToken, scheduleTerms, courses }: Deg
   useEffect(() => {
     let cancelled = false;
     void (async () => {
-      const result = await fetchTerms(accessToken);
+      const result = await fetchTerms({ slug: null, accessToken });
       if (!cancelled) setTerms(result.terms);
     })();
     return () => { cancelled = true; };
@@ -103,7 +103,7 @@ export function DegreeScheduleYears({ accessToken, scheduleTerms, courses }: Deg
   useEffect(() => {
     let cancelled = false;
     void (async () => {
-      const result = await fetchGradingSchema(accessToken);
+      const result = await fetchGradingSchema({ slug: null, accessToken });
       if (!cancelled) setGradingSchema(result.schema);
     })();
     return () => { cancelled = true; };

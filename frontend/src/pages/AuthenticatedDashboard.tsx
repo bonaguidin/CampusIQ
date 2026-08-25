@@ -22,6 +22,7 @@ import { GapAnalysisPanel } from '../components/GapAnalysisPanel';
 import { ShiftAnalysisPanel } from '../components/ShiftAnalysisPanel';
 import { TermPlanner } from '../components/TermPlanner';
 import { CareerProfile, type CareerFieldFocus } from '../components/career/CareerProfile';
+import { updateProfile } from '../api/profile';
 import { ProfileChecklist } from '../components/career/ProfileChecklist';
 import { ProfileCompletionContext, type ProfileFieldRequest } from '../components/profile/ProfileCompletionContext';
 import { buildDashboardViewModel } from '../data/dashboardViewModel';
@@ -568,7 +569,7 @@ export function AuthenticatedDashboard() {
                     {accessToken
                       ? (
                         <TermPlanner
-                          accessToken={accessToken}
+                          identity={{ slug: null, accessToken }}
                           courses={dashboard.courses}
                           onCourseRecordsChanged={() => { void reloadStudentProfile(); }}
                         />
@@ -708,7 +709,7 @@ export function AuthenticatedDashboard() {
                           editing={
                             accessToken
                               ? {
-                                  accessToken,
+                                  persist: async (changes) => { await updateProfile(accessToken, changes); },
                                   onSaved: async () => {
                                     await reloadStudentProfile();
                                     setProfileSaved(true);
