@@ -2552,6 +2552,162 @@ a {
   margin-bottom: var(--sp-1);
 }
 
+.degree-schedule-decisions {
+  display: grid;
+  gap: var(--sp-3);
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--line);
+}
+
+.degree-schedule-decisions h4,
+.degree-schedule-decision-card h5 {
+  margin: 0;
+  text-wrap: balance;
+}
+
+.degree-schedule-decisions h4 {
+  font-size: var(--text-md);
+}
+
+.degree-schedule-decision-list,
+.degree-schedule-candidate-list,
+.degree-schedule-candidate-courses {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.degree-schedule-decision-list,
+.degree-schedule-candidate-list {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.degree-schedule-decision-card {
+  padding: var(--sp-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+}
+
+.degree-schedule-decision-heading,
+.degree-schedule-candidate-header,
+.degree-schedule-candidate-courses > li {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+.degree-schedule-decision-heading > div {
+  display: grid;
+  justify-items: end;
+  gap: var(--sp-1);
+}
+
+.degree-schedule-decision-heading span,
+.degree-schedule-candidate-header span,
+.degree-schedule-candidate-courses > li > span {
+  color: var(--muted);
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.degree-schedule-decision-card > p {
+  margin: var(--sp-2) 0 0;
+  color: var(--muted);
+  font-size: var(--text-sm);
+  text-wrap: pretty;
+}
+
+.degree-schedule-candidate-list {
+  margin-top: var(--sp-3);
+}
+
+.degree-schedule-candidate-path {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--neutral-surface);
+}
+
+.degree-schedule-candidate-path.is-selected {
+  border-color: var(--accent);
+}
+
+.degree-schedule-selected-label {
+  color: var(--text) !important;
+  font-weight: 700;
+}
+
+.degree-schedule-candidate-action {
+  display: flex;
+  justify-content: flex-end;
+  padding: var(--sp-3);
+  border-top: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.degree-schedule-choice-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
+}
+
+.degree-schedule-selected-choices {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.degree-schedule-decision-card.is-locked {
+  border-color: var(--accent);
+}
+
+.degree-schedule-choice-message,
+.degree-schedule-reselection {
+  padding: var(--sp-3);
+  border: 1px solid var(--gold-border);
+  border-radius: var(--radius-sm);
+  background: var(--gold-tint);
+  overflow-wrap: anywhere;
+}
+
+.degree-schedule-reselection p {
+  margin: var(--sp-1) 0 0;
+}
+
+.degree-schedule-candidate-header {
+  padding: var(--sp-2) var(--sp-3);
+  border-bottom: 1px solid var(--line);
+}
+
+.degree-schedule-candidate-courses {
+  background: var(--surface);
+}
+
+.degree-schedule-candidate-courses > li {
+  padding: var(--sp-3);
+  border-top: 1px solid var(--line);
+}
+
+.degree-schedule-candidate-courses > li:first-child {
+  border-top: 0;
+}
+
+.degree-schedule-candidate-courses > li > div {
+  display: grid;
+  min-width: 0;
+  gap: var(--sp-1);
+}
+
+.degree-schedule-candidate-courses > li > div > span {
+  color: var(--muted);
+  font-size: var(--text-sm);
+  overflow-wrap: anywhere;
+  text-wrap: pretty;
+}
+
 /* Degree Schedule: year tabs (reuses .academic-tabs/.academic-tab, the
    segmented underline control from AcademicSnapshot) + two semester
    columns per year. */
@@ -2944,6 +3100,21 @@ a {
     align-items: flex-start;
     flex-direction: column;
     gap: var(--sp-2);
+  }
+
+  .degree-schedule-decision-heading,
+  .degree-schedule-candidate-courses > li {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .degree-schedule-decision-heading > div {
+    justify-items: start;
+  }
+
+  .degree-schedule-candidate-action .btn,
+  .degree-schedule-choice-actions .btn {
+    width: 100%;
   }
 
   .career-optimization-header,

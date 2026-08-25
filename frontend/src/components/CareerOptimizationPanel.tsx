@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { fetchCareerOptimizedSchedule } from '../api/careerOptimizedSchedule.mjs';
+import { CareerOptimizationError, fetchCareerOptimizedSchedule } from '../api/careerOptimizedSchedule.mjs';
 import type { ScheduleResult } from '../api/degreeSchedule.mjs';
 import {
   INITIAL_CAREER_OPTIMIZATION_STATE,
@@ -58,7 +58,9 @@ export function CareerOptimizationPanel({
       .then((result) => setState(completedCareerOptimizationState(result)))
       .catch((error: unknown) => setState({
         phase: 'transport-error',
-        message: error instanceof Error ? error.message : 'Career optimization is unavailable.',
+        message: error instanceof CareerOptimizationError && error.code === 'RESELECTION_REQUIRED'
+          ? 'Resolve your saved course choice before running Career Optimization.'
+          : error instanceof Error ? error.message : 'Career optimization is unavailable.',
       }));
   }, [accessToken, state.phase, targetRole]);
 

@@ -2,6 +2,15 @@ export function isSkippedDegreeSchedule(result) {
   return 'status' in result && result.status === 'skipped';
 }
 
+export class DegreeScheduleChoiceError extends Error {
+  constructor(code, detail = null) {
+    super('Degree schedule choice could not be saved.');
+    this.name = 'DegreeScheduleChoiceError';
+    this.code = code;
+    this.detail = detail;
+  }
+}
+
 // identity.slug present -> the local, non-Postgres demo counterpart (no
 // token sent); otherwise the session-scoped /me route, same identity-branch
 // shape analysisApi.mjs's analysisPath() already uses.
@@ -32,4 +41,29 @@ export async function fetchDegreeSchedule(identity) {
       ? String(body.detail)
       : 'Degree schedule is unavailable.';
   throw new Error(detail);
+}
+
+export async function updateDegreeScheduleChoices(token, { scheduleVersion, selections }) {
+  let response;
+  try {
+    response = await fetch('/api/v2/student/me/schedule/choices', {
+      method: 'PUT',
+      headers: {
+        Accept: 'application/json',
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ schedule_version: scheduleVersion, selections }),
+    });
+  } catch {
+    throw new DegreeScheduleChoiceError('NETWORK_ERROR');
+  }
+  let body = null;
+  try { body = await response.json(); } catch { /* handled below */ }
+  if (response.status === 200 && body && typeof body === 'object') return body;
+  const detail = body && typeof body === 'object' ? body.detail : null;
+  const code = detail && typeof detail === 'object' && typeof detail.code === 'string'
+    ? detail.code
+    : 'UNKNOWN_ERROR';
+  throw new DegreeScheduleChoiceError(code, detail);
 }

@@ -31,6 +31,95 @@ export interface ScheduleFailure {
   safe_message: string;
 }
 
+export type AcademicFeasibility = 'FEASIBLE' | 'EXCLUDED';
+
+export type CandidateExclusionReason =
+  | 'UNRESOLVED_COURSE'
+  | 'RESTRICTION_REQUIRES_REVIEW'
+  | 'PREREQUISITE_NEEDS_REVIEW'
+  | 'DOUBLE_COUNTING_CONFLICT'
+  | 'MISSING_CREDIT_DATA'
+  | 'UNSCHEDULABLE';
+
+export interface CandidateCourseDisplay {
+  course_code: string;
+  title: string | null;
+  credits: number | null;
+}
+
+export interface RequirementCandidate {
+  candidate_id: string;
+  requirement_group_id: string;
+  requirement_name: string;
+  course_codes: string[];
+  unresolved_course_codes: string[];
+  candidate_courses: CandidateCourseDisplay[];
+  existing_contribution: number;
+  additional_course_count: number;
+  additional_credits: number | null;
+  academic_feasibility: AcademicFeasibility;
+  completion_term_index: number | null;
+  limitations: string[];
+  source_order: number[];
+  exclusion_reasons: CandidateExclusionReason[];
+  exclusion_details: string[];
+}
+
+export interface RequirementCandidateSet {
+  requirement_group_id: string;
+  requirement_name: string;
+  feasible_candidates: RequirementCandidate[];
+  excluded_candidates: RequirementCandidate[];
+}
+
+export type RequirementDecisionState =
+  | 'AUTO_SELECTED'
+  | 'LOCKED'
+  | 'CHOICE_REQUIRED'
+  | 'ADVISER_REVIEW'
+  | 'DATA_UNRESOLVED';
+
+export interface RequirementDecision {
+  requirement_group_id: string;
+  requirement_name: string;
+  state: RequirementDecisionState;
+  feasible_candidate_ids: string[];
+  excluded_candidate_ids: string[];
+  selected_candidate_id: string | null;
+}
+
+export type PersistedSelectionStatus = 'NONE' | 'APPLIED' | 'RESELECTION_REQUIRED';
+
+export type LockedSelectionFailureCode =
+  | 'LOCK_DUPLICATE_REQUIREMENT'
+  | 'LOCK_REQUIREMENT_NOT_FOUND'
+  | 'LOCK_CANDIDATE_NOT_FOUND'
+  | 'LOCK_CANDIDATE_EXCLUDED'
+  | 'LOCK_PATH_MISMATCH'
+  | 'LOCK_CHOICE_NO_LONGER_REQUIRED'
+  | 'LOCK_INCOMPATIBLE';
+
+export interface PersistedRequirementSelectionIdentity {
+  requirement_group_id: string;
+  candidate_id: string;
+  course_codes: string[];
+}
+
+export interface PersistedSelectionFailure {
+  code: LockedSelectionFailureCode;
+  requirement_group_id: string | null;
+  candidate_id: string | null;
+  current_course_codes: string[];
+  submitted_course_codes: string[];
+  exclusion_reasons: CandidateExclusionReason[];
+}
+
+export interface PersistedSelectionState {
+  status: PersistedSelectionStatus;
+  selections: PersistedRequirementSelectionIdentity[];
+  failure: PersistedSelectionFailure | null;
+}
+
 export interface ScheduleResult {
   student_id: string;
   program_id: string;
@@ -40,9 +129,40 @@ export interface ScheduleResult {
   failure: ScheduleFailure | null;
 }
 
+export interface DegreeScheduleResult extends ScheduleResult {
+  schedule_version: string;
+  decisions: RequirementDecision[];
+  candidate_sets: RequirementCandidateSet[];
+  selection_state: PersistedSelectionState;
+}
+
 export type DegreeScheduleSkipped = FeatureResult<Record<string, never>>;
-export type DegreeScheduleResponse = ScheduleResult | DegreeScheduleSkipped;
+export type DegreeScheduleResponse = DegreeScheduleResult | DegreeScheduleSkipped;
+
+export type DegreeScheduleChoiceWriteStatus = 'APPLIED' | 'UNCHANGED';
+
+export interface DegreeScheduleChoiceWriteResponse {
+  status: DegreeScheduleChoiceWriteStatus;
+  schedule_version: string;
+  selections: PersistedRequirementSelectionIdentity[];
+}
+
+export interface DegreeScheduleChoiceWriteRequest {
+  scheduleVersion: string;
+  selections: PersistedRequirementSelectionIdentity[];
+}
+
+export declare class DegreeScheduleChoiceError extends Error {
+  code: string;
+  detail: unknown;
+  constructor(code: string, detail?: unknown);
+}
 
 export declare function isSkippedDegreeSchedule(result: DegreeScheduleResponse): result is DegreeScheduleSkipped;
 
 export declare function fetchDegreeSchedule(identity: AnalysisIdentity): Promise<DegreeScheduleResponse>;
+
+export declare function updateDegreeScheduleChoices(
+  token: string,
+  request: DegreeScheduleChoiceWriteRequest,
+): Promise<DegreeScheduleChoiceWriteResponse>;

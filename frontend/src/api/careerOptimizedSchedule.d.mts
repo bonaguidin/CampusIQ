@@ -49,6 +49,11 @@ export interface CareerOptimizeScheduleRequest {
   force_refresh?: boolean;
 }
 
+export declare class CareerOptimizationError extends Error {
+  code: string;
+  constructor(code: string, message?: string);
+}
+
 export declare function isCareerOptimizedScheduleResponse(value: unknown): value is CareerOptimizedScheduleResponse;
 
 export declare function fetchCareerOptimizedSchedule(

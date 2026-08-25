@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 
 import {
+  CareerOptimizationError,
   fetchCareerOptimizedSchedule,
   isCareerOptimizedScheduleResponse,
 } from '../src/api/careerOptimizedSchedule.mjs'
@@ -84,4 +85,14 @@ test('non-200 detail and transport errors are localized', async (t) => {
   t.mock.restoreAll()
   t.mock.method(globalThis, 'fetch', async () => { throw new Error('offline') })
   await assert.rejects(() => fetchCareerOptimizedSchedule('token'), /Career optimization is unavailable/)
+})
+
+test('reselection conflict remains typed and cannot be mistaken for a cached success', async (t) => {
+  t.mock.method(globalThis, 'fetch', fakeFetch([], 409, {
+    detail: { code: 'RESELECTION_REQUIRED', selection_failure: { code: 'LOCK_PATH_MISMATCH' } },
+  }))
+  await assert.rejects(
+    () => fetchCareerOptimizedSchedule('token'),
+    (error) => error instanceof CareerOptimizationError && error.code === 'RESELECTION_REQUIRED',
+  )
 })
