@@ -186,3 +186,8 @@ def fetch_terms_view(
         or []
     )
     return build_terms_view(term_rows, date_rows, today or date.today())
+
+
+def capture_reconstruction_date() -> date:
+    """Capture the runtime-local effective date once at a request boundary."""
+    return date.today()
