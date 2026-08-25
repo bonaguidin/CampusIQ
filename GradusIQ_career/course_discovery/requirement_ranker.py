@@ -18,7 +18,7 @@ from .requirement_candidates import RequirementCandidateSet
 
 
 MODEL_ROLE = "course_discovery"
-REQUIREMENT_RANKING_CONTRACT_VERSION = "1"
+REQUIREMENT_RANKING_CONTRACT_VERSION = "2"
 REQUIREMENT_RANKING_PROMPT_VERSION = "1"
 RANKING_EXTRA_BODY = {"reasoning": {"enabled": False}}
 RANKING_JSON_CONTRACT = (

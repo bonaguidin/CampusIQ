@@ -7,8 +7,11 @@ from GradusIQ_career.course_discovery.catalog import LocalCatalogRepository
 from GradusIQ_career.course_discovery.models import PrerequisiteClause, StructuredPrerequisite
 from GradusIQ_career.course_discovery.models import CatalogInstitution
 from GradusIQ_career.course_discovery.prerequisites import structured_prerequisite
+from GradusIQ_career.course_discovery.requirement_candidates import RequirementDecisionState
 from GradusIQ_career.course_discovery.requirement_satisfaction import evaluate_requirement_tree
 from GradusIQ_career.course_discovery.requirement_selection import (
+    LockedRequirementSelection,
+    LockedSelectionFailureCode,
     select_structured_requirements,
     structured_candidate_codes,
 )
@@ -38,9 +41,16 @@ def course(option_id, gid=None, unresolved=None, code=None):
     }
 
 
-def run(groups, options, option_courses, catalog, credits, *, records=None, prerequisites=None, max_terms=4, career_ranks=None):
+def run(
+    groups, options, option_courses, catalog, credits, *, catalog_by_code=None,
+    records=None, prerequisites=None, max_terms=4, career_ranks=None,
+    locks=None,
+):
     records = records or []
-    evaluated = evaluate_requirement_tree(groups, options, option_courses, records, catalog)
+    catalog_by_code = catalog_by_code or {}
+    evaluated = evaluate_requirement_tree(
+        groups, options, option_courses, records, catalog, catalog_by_code
+    )
     deferred = [
         UnscheduledRequirement(
             requirement_group_id=item.id,
@@ -52,8 +62,10 @@ def run(groups, options, option_courses, catalog, credits, *, records=None, prer
     return select_structured_requirements(
         evaluated, groups, options, option_courses, catalog, credits, [], deferred,
         prerequisites or {}, {r["course_code"] for r in records}, student_id="s", program_id="p",
+        catalog_by_code=catalog_by_code,
         starting_year=2026, starting_season="Fall", max_terms=max_terms,
         career_rank_by_candidate_id=career_ranks,
+        locked_selections=locks or (),
     )
 
 
@@ -61,19 +73,276 @@ def selected(result):
     return [course.course_code for course in result.courses]
 
 
-def test_choose_one_uses_stable_source_order():
+def decision(result, requirement_id):
+    return next(item for item in result.decisions if item.requirement_group_id == requirement_id)
+
+
+def lock_for(result, requirement_id, course_codes):
+    candidate_set = next(
+        item for item in result.candidate_sets
+        if item.requirement_group_id == requirement_id
+    )
+    candidate = next(
+        item for item in candidate_set.feasible_candidates
+        if item.course_codes == course_codes
+    )
+    return LockedRequirementSelection(
+        requirement_group_id=requirement_id,
+        candidate_id=candidate.candidate_id,
+        course_codes=tuple(course_codes),
+    )
+
+
+def two_requirement_fixture():
+    groups = [
+        group("g1", "enumerated_at_least_n", n=1),
+        group("g2", "enumerated_at_least_n", n=1),
+    ]
+    options = [
+        option("g1-shared", "g1", 0), option("g1-own", "g1", 1),
+        option("g2-shared", "g2", 0), option("g2-own", "g2", 1),
+    ]
+    rows = [
+        course("g1-shared", "shared"), course("g1-own", "a"),
+        course("g2-shared", "shared"), course("g2-own", "b"),
+    ]
+    return groups, options, rows, {"shared": "X", "a": "A", "b": "B"}, {"X": 3, "A": 3, "B": 3}
+
+
+def test_lock_schedules_selected_path_and_preserves_alternatives():
+    groups = [group("pick", "enumerated_at_least_n", n=1)]
+    options = [option("oa", "pick", 0), option("ob", "pick", 1)]
+    rows = [course("oa", "a"), course("ob", "b")]
+    args = groups, options, rows, {"a": "A", "b": "B"}, {"A": 3, "B": 3}
+    baseline = run(*args)
+    lock = lock_for(baseline, "pick", ["B"])
+
+    result = run(*args, locks=[lock])
+
+    assert selected(result) == ["B"]
+    assert result.unscheduled == []
+    assert decision(result, "pick").state == RequirementDecisionState.LOCKED
+    assert decision(result, "pick").selected_candidate_id == lock.candidate_id
+    assert len(result.candidate_sets[0].feasible_candidates) == 2
+
+
+def test_multi_course_lock_is_atomic():
+    groups = [group("pick", "enumerated_at_least_n", n=1)]
+    options = [option("bundle", "pick", 0), option("single", "pick", 1)]
+    rows = [course("bundle", "a"), course("bundle", "b"), course("single", "c")]
+    args = groups, options, rows, {"a": "A", "b": "B", "c": "C"}, {"A": 3, "B": 3, "C": 3}
+    baseline = run(*args)
+    lock = lock_for(baseline, "pick", ["A", "B"])
+
+    result = run(*args, locks=[lock])
+
+    assert selected(result) == ["A", "B"]
+    assert decision(result, "pick").state == RequirementDecisionState.LOCKED
+
+
+def test_lock_narrows_another_requirement_and_unlock_restores_choice():
+    args = two_requirement_fixture()
+    baseline = run(*args)
+    lock = lock_for(baseline, "g1", ["X"])
+
+    result = run(*args, locks=[lock])
+
+    assert selected(result) == ["X", "B"]
+    assert decision(result, "g1").state == RequirementDecisionState.LOCKED
+    assert decision(result, "g2").state == RequirementDecisionState.AUTO_SELECTED
+    assert decision(baseline, "g2").state == RequirementDecisionState.CHOICE_REQUIRED
+    assert len(baseline.candidate_sets[1].feasible_candidates) == 2
+
+
+def test_career_rank_cannot_override_a_persisted_lock():
+    groups = [group("pick", "enumerated_at_least_n", n=1)]
+    options = [option("oa", "pick", 0), option("ob", "pick", 1)]
+    rows = [course("oa", "a"), course("ob", "b")]
+    args = groups, options, rows, {"a": "A", "b": "B"}, {"A": 3, "B": 3}
+    baseline = run(*args)
+    lock = lock_for(baseline, "pick", ["A"])
+    ids = {
+        candidate.course_codes[0]: candidate.candidate_id
+        for candidate in baseline.candidate_sets[0].feasible_candidates
+    }
+
+    result = run(*args, locks=[lock], career_ranks={ids["A"]: 100, ids["B"]: 0})
+
+    assert selected(result) == ["A"]
+    assert decision(result, "pick").state == RequirementDecisionState.LOCKED
+
+
+def test_career_rank_preserves_cee_cs_multi_course_lock_atomically():
+    groups = [group("pick", "enumerated_at_least_n", n=1)]
+    options = [option("bundle", "pick", 0), option("alternative", "pick", 1)]
+    rows = [
+        course("bundle", "cee"), course("bundle", "cs"),
+        course("alternative", "alt"),
+    ]
+    args = (
+        groups, options, rows,
+        {"cee": "CEE 2302", "cs": "CS 3377", "alt": "CS 9999"},
+        {"CEE 2302": 3, "CS 3377": 3, "CS 9999": 3},
+    )
+    baseline = run(*args)
+    lock = lock_for(baseline, "pick", ["CEE 2302", "CS 3377"])
+    ranks = {
+        candidate.candidate_id: (
+            100 if candidate.course_codes == ["CEE 2302", "CS 3377"] else 0
+        )
+        for candidate in baseline.candidate_sets[0].feasible_candidates
+    }
+
+    result = run(*args, locks=[lock], career_ranks=ranks)
+
+    assert selected(result) == ["CEE 2302", "CS 3377"]
+    assert decision(result, "pick").state == RequirementDecisionState.LOCKED
+
+
+def test_career_rank_only_chooses_inside_lock_compatible_space():
+    args = two_requirement_fixture()
+    baseline = run(*args)
+    lock = lock_for(baseline, "g1", ["X"])
+    ranks = {
+        candidate.candidate_id: (0 if candidate.course_codes == ["X"] else 100)
+        for candidate_set in baseline.candidate_sets
+        for candidate in candidate_set.feasible_candidates
+    }
+
+    result = run(*args, locks=[lock], career_ranks=ranks)
+
+    assert selected(result) == ["X", "B"]
+    assert decision(result, "g1").state == RequirementDecisionState.LOCKED
+    assert decision(result, "g2").state == RequirementDecisionState.AUTO_SELECTED
+
+
+def test_individually_feasible_locks_can_be_globally_incompatible():
+    args = two_requirement_fixture()
+    baseline = run(*args)
+    locks = [lock_for(baseline, "g1", ["X"]), lock_for(baseline, "g2", ["X"])]
+
+    result = run(*args, locks=locks)
+
+    assert selected(result) == []
+    assert result.locked_selection_failure.code == LockedSelectionFailureCode.INCOMPATIBLE
+
+
+def test_multiple_compatible_locks_are_honored_together():
+    args = two_requirement_fixture()
+    baseline = run(*args)
+    locks = [lock_for(baseline, "g1", ["A"]), lock_for(baseline, "g2", ["B"])]
+
+    result = run(*args, locks=locks)
+
+    assert selected(result) == ["A", "B"]
+    assert [item.state for item in result.decisions] == [
+        RequirementDecisionState.LOCKED,
+        RequirementDecisionState.LOCKED,
+    ]
+
+
+def test_lock_validation_failures_are_typed_and_fail_closed():
+    groups = [group("pick", "enumerated_at_least_n", n=1)]
+    options = [option("oa", "pick", 0), option("ob", "pick", 1)]
+    rows = [course("oa", "a"), course("ob", "b")]
+    args = groups, options, rows, {"a": "A", "b": "B"}, {"A": 3, "B": 3}
+    baseline = run(*args)
+    valid = lock_for(baseline, "pick", ["A"])
+    cases = [
+        (LockedRequirementSelection(requirement_group_id="missing", candidate_id=valid.candidate_id, course_codes=("A",)), LockedSelectionFailureCode.REQUIREMENT_NOT_FOUND),
+        (LockedRequirementSelection(requirement_group_id="pick", candidate_id="missing", course_codes=("A",)), LockedSelectionFailureCode.CANDIDATE_NOT_FOUND),
+        (valid.model_copy(update={"course_codes": ("B",)}), LockedSelectionFailureCode.PATH_MISMATCH),
+    ]
+    for lock, expected in cases:
+        result = run(*args, locks=[lock])
+        assert selected(result) == []
+        assert result.locked_selection_failure.code == expected
+
+    duplicate = run(*args, locks=[valid, valid])
+    assert duplicate.locked_selection_failure.code == LockedSelectionFailureCode.DUPLICATE_REQUIREMENT
+
+
+def test_lock_rejects_excluded_and_no_longer_choice_candidates():
+    groups = [group("pick", "enumerated_at_least_n", n=1)]
+    options = [option("oa", "pick", 0), option("ob", "pick", 1)]
+    rows = [course("oa", "a"), course("ob", "b")]
+    restricted = {"B": StructuredPrerequisite(restrictions=["department approval"])}
+    args = groups, options, rows, {"a": "A", "b": "B"}, {"A": 3, "B": 3}
+    baseline = run(*args)
+    excluded_lock = lock_for(baseline, "pick", ["B"])
+    excluded = run(*args, prerequisites=restricted, locks=[excluded_lock])
+    assert excluded.locked_selection_failure.code == LockedSelectionFailureCode.CANDIDATE_EXCLUDED
+
+    sole_args = ([group("sole", "enumerated_at_least_n", n=1)], [option("oa", "sole", 0)], [course("oa", "a")], {"a": "A"}, {"A": 3})
+    sole = run(*sole_args)
+    stale = lock_for(sole, "sole", ["A"])
+    no_longer_needed = run(*sole_args, locks=[stale])
+    assert no_longer_needed.locked_selection_failure.code == LockedSelectionFailureCode.CHOICE_NO_LONGER_REQUIRED
+
+
+def test_lock_resolves_against_current_path_after_existing_progress():
+    groups = [group("pick", "enumerated_at_least_n", n=2)]
+    options = [option("oa", "pick", 0), option("ob", "pick", 1), option("oc", "pick", 2)]
+    rows = [course("oa", "a"), course("ob", "b"), course("oc", "c")]
+    records = [{"course_code": "A", "status": "completed", "counts_toward_credit": True, "credit_hours": 3}]
+    args = groups, options, rows, {"a": "A", "b": "B", "c": "C"}, {"A": 3, "B": 3, "C": 3}
+    baseline = run(*args, records=records)
+    lock = lock_for(baseline, "pick", ["C"])
+
+    result = run(*args, records=records, locks=[lock])
+
+    assert selected(result) == ["C"]
+    assert decision(result, "pick").state == RequirementDecisionState.LOCKED
+
+
+def test_lock_does_not_bypass_prerequisites_or_horizon():
+    groups = [group("pick", "enumerated_at_least_n", n=1)]
+    options = [option("bundle", "pick", 0), option("single", "pick", 1)]
+    rows = [course("bundle", "a"), course("bundle", "b"), course("single", "c")]
+    args = groups, options, rows, {"a": "A", "b": "B", "c": "C"}, {"A": 3, "B": 3, "C": 3}
+    baseline = run(*args, max_terms=2)
+    lock = lock_for(baseline, "pick", ["A", "B"])
+    prerequisites = {
+        "B": StructuredPrerequisite(
+            requires_all=[PrerequisiteClause(course_codes=["A"])]
+        )
+    }
+
+    result = run(*args, prerequisites=prerequisites, max_terms=1, locks=[lock])
+
+    assert selected(result) == []
+    assert result.locked_selection_failure.code == LockedSelectionFailureCode.CANDIDATE_EXCLUDED
+
+
+def test_lock_retains_excluded_evidence_and_stable_candidate_ids():
+    groups = [group("pick", "enumerated_at_least_n", n=1)]
+    options = [option("oa", "pick", 0), option("ob", "pick", 1), option("oc", "pick", 2)]
+    rows = [course("oa", "a"), course("ob", "b"), course("oc", "c")]
+    restrictions = {"C": StructuredPrerequisite(restrictions=["department approval"])}
+    args = groups, options, rows, {"a": "A", "b": "B", "c": "C"}, {"A": 3, "B": 3, "C": 3}
+    baseline = run(*args, prerequisites=restrictions)
+    lock = lock_for(baseline, "pick", ["A"])
+
+    result = run(*args, prerequisites=restrictions, locks=[lock])
+
+    before = baseline.candidate_sets[0]
+    after = result.candidate_sets[0]
+    assert [item.candidate_id for item in after.feasible_candidates] == [
+        item.candidate_id for item in before.feasible_candidates
+    ]
+    assert [item.candidate_id for item in after.excluded_candidates] == [
+        item.candidate_id for item in before.excluded_candidates
+    ]
+
+
+def test_choose_one_preserves_all_feasible_options_as_student_choice():
     groups = [group("pick", "enumerated_at_least_n", n=1)]
     options = [option(f"o{i}", "pick", i) for i in range(3)]
     rows = [course(f"o{i}", f"g{i}") for i in range(3)]
     result = run(groups, options, rows, {f"g{i}": f"C {i}" for i in range(3)}, {f"C {i}": 3 for i in range(3)})
-    assert selected(result) == ["C 0"]
-    explicit_fallback = run(
-        groups, options, rows,
-        {f"g{i}": f"C {i}" for i in range(3)},
-        {f"C {i}": 3 for i in range(3)},
-        career_ranks=None,
-    )
-    assert explicit_fallback.model_dump(mode="json") == result.model_dump(mode="json")
+    assert selected(result) == []
+    assert decision(result, "pick").state == RequirementDecisionState.CHOICE_REQUIRED
+    assert decision(result, "pick").selected_candidate_id is None
 
 
 def test_career_rank_changes_only_an_academically_tied_choice_and_is_stable():
@@ -116,6 +385,13 @@ def test_career_rank_remains_global_and_cannot_force_double_counting():
     catalog = {"shared": "X", "a": "A", "b": "B"}
     credits = {"X": 3, "A": 3, "B": 3}
     baseline = run(groups, options, rows, catalog, credits)
+    assert selected(baseline) == []
+    assert [item.state for item in baseline.decisions] == [
+        RequirementDecisionState.CHOICE_REQUIRED,
+        RequirementDecisionState.CHOICE_REQUIRED,
+    ]
+    assert [len(item.feasible_candidates) for item in baseline.candidate_sets] == [2, 2]
+    assert baseline.search_stats.candidate_combinations_after_structural_pruning == 3
     ids = {
         (candidate.requirement_group_id, candidate.course_codes[0]): candidate.candidate_id
         for candidate_set in baseline.candidate_sets
@@ -132,49 +408,53 @@ def test_career_rank_remains_global_and_cannot_force_double_counting():
     assert result.search_stats.candidate_combinations_after_structural_pruning == 3
 
 
-def test_choose_n_selects_distinct_options():
+def test_choose_n_preserves_distinct_feasible_options_for_student_choice():
     groups = [group("pick", "enumerated_at_least_n", n=2)]
     options = [option(f"o{i}", "pick", i) for i in range(6)]
     rows = [course(f"o{i}", f"g{i}") for i in range(6)]
     result = run(groups, options, rows, {f"g{i}": f"C {i}" for i in range(6)}, {f"C {i}": 3 for i in range(6)})
-    assert selected(result) == ["C 0", "C 1"]
+    assert selected(result) == []
+    assert decision(result, "pick").state == RequirementDecisionState.CHOICE_REQUIRED
 
 
-def test_or_identity_selects_one_not_all():
+def test_or_identity_requires_choice_instead_of_selecting_source_order():
     groups = [group("or", "enumerated_all")]
     options = [option("o", "or", 0, "or")]
     rows = [course("o", "ga"), course("o", "gb"), course("o", "gc")]
     result = run(groups, options, rows, {"ga": "A", "gb": "B", "gc": "C"}, {"A": 3, "B": 3, "C": 3})
-    assert selected(result) == ["A"]
+    assert selected(result) == []
+    assert decision(result, "or").state == RequirementDecisionState.CHOICE_REQUIRED
 
 
-def test_compound_any_selects_exactly_one_branch():
+def test_compound_any_preserves_feasible_branches_for_student_choice():
     groups = [group("parent", "compound_any"), group("a", "enumerated_all", parent="parent"), group("b", "enumerated_all", parent="parent")]
     options = [option("oa", "a", 0), option("ob", "b", 0)]
     rows = [course("oa", "ga"), course("ob", "gb")]
     result = run(groups, options, rows, {"ga": "A", "gb": "B"}, {"A": 3, "B": 3})
-    assert selected(result) == ["A"]
-    assert result.courses[0].requirement_group_id == "a"
+    assert selected(result) == []
+    assert decision(result, "parent").state == RequirementDecisionState.CHOICE_REQUIRED
 
 
-def test_credit_threshold_chooses_minimum_sufficient_credits():
+def test_credit_threshold_preserves_multiple_sufficient_paths_for_student_choice():
     groups = [group("credits", "enumerated_credit_threshold", credits=7)]
     options = [option("o0", "credits", 0), option("o1", "credits", 1), option("o2", "credits", 2)]
     rows = [course("o0", "g0"), course("o1", "g1"), course("o2", "g2")]
     result = run(groups, options, rows, {"g0": "A", "g1": "B", "g2": "C"}, {"A": 4, "B": 4, "C": 3})
-    assert selected(result) == ["A", "C"]
+    assert selected(result) == []
+    assert decision(result, "credits").state == RequirementDecisionState.CHOICE_REQUIRED
 
 
-def test_existing_progress_reduces_remaining_choice():
+def test_existing_progress_reduces_burden_but_preserves_remaining_choice():
     groups = [group("pick", "enumerated_at_least_n", n=2)]
     options = [option("o0", "pick", 0), option("o1", "pick", 1), option("o2", "pick", 2)]
     rows = [course("o0", "g0"), course("o1", "g1"), course("o2", "g2")]
     records = [{"course_code": "A", "status": "in_progress", "counts_toward_credit": True, "credit_hours": 3}]
     result = run(groups, options, rows, {"g0": "A", "g1": "B", "g2": "C"}, {"A": 3, "B": 3, "C": 3}, records=records)
-    assert selected(result) == ["B"]
+    assert selected(result) == []
+    assert decision(result, "pick").state == RequirementDecisionState.CHOICE_REQUIRED
 
 
-def test_existing_progress_prefers_compound_branch():
+def test_existing_progress_does_not_override_student_compound_branch_choice():
     groups = [
         group("parent", "compound_any"),
         group("partial", "enumerated_all", parent="parent"),
@@ -187,7 +467,8 @@ def test_existing_progress_prefers_compound_branch():
         groups, options, rows, {"ga0": "A0", "ga1": "A1", "gb": "B"},
         {"A0": 3, "A1": 3, "B": 3}, records=records,
     )
-    assert selected(result) == ["A1"]
+    assert selected(result) == []
+    assert decision(result, "parent").state == RequirementDecisionState.CHOICE_REQUIRED
 
 
 def test_infeasible_candidate_loses_to_feasible_alternative():
@@ -248,12 +529,29 @@ def test_ethan_real_tree_resolves_five_structured_groups_globally():
     )
 
     base_codes = {course.course_code for course in base}
-    assert {course.course_code for course in result.courses} - base_codes == {
-        "CS 5323", "ENGR 1199", "CS 4340", "BIOL 1301", "BIOL 1101",
-        "BIOL 1302", "BIOL 1102", "CEE 2302", "CS 3377",
-    }
+    assert {course.course_code for course in result.courses} - base_codes == {"CEE 2302", "CS 3377"}
+    decisions = {item.requirement_name: item for item in result.decisions}
+    candidate_sets = {item.requirement_name: item for item in result.candidate_sets}
+    assert decisions["Engineering Leadership (6 Credit Hours)"].state == RequirementDecisionState.AUTO_SELECTED
+    assert decisions["Engineering Leadership (6 Credit Hours)"].selected_candidate_id is not None
+    assert decisions["Statistical Methods"].state == RequirementDecisionState.CHOICE_REQUIRED
+    assert decisions["Two Courses"].state == RequirementDecisionState.CHOICE_REQUIRED
+    assert (
+        len(candidate_sets["Engineering Leadership (6 Credit Hours)"].feasible_candidates),
+        len(candidate_sets["Engineering Leadership (6 Credit Hours)"].excluded_candidates),
+    ) == (1, 7)
+    assert (
+        len(candidate_sets["Statistical Methods"].feasible_candidates),
+        len(candidate_sets["Statistical Methods"].excluded_candidates),
+    ) == (3, 0)
+    assert (
+        len(candidate_sets["Two Courses"].feasible_candidates),
+        len(candidate_sets["Two Courses"].excluded_candidates),
+    ) == (11, 5)
     assert {entry.name for entry in result.unscheduled} == {
-        "Technical Electives (9 Credit Hours)", "Advanced Major Electives (3-5 Credit Hours)",
+        "Advanced/Domain Specific Use/Design of AI", "Experiential Learning (1-3 Credit Hours)",
+        "Statistical Methods", "Two Courses", "Technical Electives (9 Credit Hours)",
+        "Advanced Major Electives (3-5 Credit Hours)",
     }
     assert result.search_stats.candidate_combinations_before_pruning == 19008
     assert result.search_stats.candidate_combinations_after_structural_pruning == 1080
@@ -263,14 +561,7 @@ def test_ethan_real_tree_resolves_five_structured_groups_globally():
 # ---------------------------------------------------------------------------
 # course_code path (TAMU, or any future non-Coursedog school) --
 # supabase/migrations/20260823140000_requirement_group_option_courses_
-# course_code.sql. structured_candidate_codes() is a clean mirror of the
-# established catalog_by_gid/catalog_by_code pattern; select_structured_
-# requirements()'s internal combinatorial choice generation (_option_
-# variants/_leaf_choices/_choices_for_group) is NOT extended here -- see
-# this build's report for why that cluster needs separate design work
-# (a cross-listed course inside an "and"-logic option needs an
-# equivalence-aware variant/product model, not a mechanical resolve-and-
-# lookup mirror) rather than a forced fit.
+# course_code.sql.
 # ---------------------------------------------------------------------------
 
 
@@ -318,3 +609,148 @@ def test_structured_candidate_codes_coursedog_group_id_path_unaffected():
         {"SOME OTHER CODE": ["SOME OTHER CODE"]},
     )
     assert without_param == with_unrelated_param == {"AAA 100"}
+
+
+def test_tamu_mixed_fixed_and_or_requirement_preserves_complete_candidate_paths():
+    groups = [group("First Year — Fall — Required Courses", "enumerated_all")]
+    options = [
+        option("chem-107", groups[0]["id"], 0),
+        option("chem-117", groups[0]["id"], 1),
+        option("engl", groups[0]["id"], 2, "or"),
+        option("engr-102", groups[0]["id"], 3),
+        option("math-151", groups[0]["id"], 4),
+    ]
+    rows = [
+        course("chem-107", code="CHEM 107"),
+        course("chem-117", code="CHEM 117"),
+        course("engl", code="ENGL 103"),
+        course("engl", code="ENGL 104"),
+        course("engr-102", code="ENGR 102"),
+        course("math-151", code="MATH 151"),
+    ]
+    codes = {row["course_code"] for row in rows}
+    catalog_by_code = {code: [code] for code in codes}
+    result = run(
+        groups, options, rows, {}, {code: 3 for code in codes},
+        catalog_by_code=catalog_by_code,
+    )
+
+    candidates = result.candidate_sets[0]
+    assert len(candidates.feasible_candidates) == 2
+    assert candidates.excluded_candidates == []
+    assert {tuple(candidate.course_codes) for candidate in candidates.feasible_candidates} == {
+        ("CHEM 107", "CHEM 117", "ENGL 103", "ENGR 102", "MATH 151"),
+        ("CHEM 107", "CHEM 117", "ENGL 104", "ENGR 102", "MATH 151"),
+    }
+    assert selected(result) == []
+    assert decision(result, groups[0]["id"]).state == RequirementDecisionState.CHOICE_REQUIRED
+
+
+def test_tamu_mixed_requirement_keeps_cross_listing_atomic_and_applies_prerequisites():
+    groups = [group("Second Year — Fall — Required Courses", "enumerated_all")]
+    group_id = groups[0]["id"]
+    options = [
+        option("csce", group_id, 0), option("ecen", group_id, 1),
+        option("math", group_id, 2, "or"), option("phys", group_id, 3),
+        option("lab", group_id, 4),
+    ]
+    rows = [
+        course("csce", code="CSCE 120"), course("ecen", code="ECEN 248"),
+        course("math", code="MATH 251"), course("math", code="MATH 253"),
+        course("phys", code="PHYS 207"),
+        course("lab", code="PHYS 217/ENGR 217"),
+    ]
+    catalog_by_code = {
+        "CSCE 120": ["CSCE 120"], "ECEN 248": ["ECEN 248"],
+        "MATH 251": ["MATH 251"], "MATH 253": ["MATH 253"],
+        "PHYS 207": ["PHYS 207"],
+        "PHYS 217/ENGR 217": ["PHYS 217", "ENGR 217"],
+    }
+    credits = {code: 3 for values in catalog_by_code.values() for code in values}
+    prerequisites = {
+        "ECEN 248": StructuredPrerequisite(
+            requires_all=[PrerequisiteClause(course_codes=["CSCE 120"])]
+        )
+    }
+    result = run(
+        groups, options, rows, {}, credits, catalog_by_code=catalog_by_code,
+        prerequisites=prerequisites,
+    )
+
+    candidates = result.candidate_sets[0]
+    assert len(candidates.feasible_candidates) == 2
+    assert candidates.excluded_candidates == []
+    for candidate in candidates.feasible_candidates:
+        assert {"CSCE 120", "ECEN 248", "PHYS 207", "ENGR 217"} <= set(candidate.course_codes)
+        assert len({"PHYS 217", "ENGR 217"} & set(candidate.course_codes)) == 1
+    assert {candidate.course_codes[-2] for candidate in candidates.feasible_candidates} == {"MATH 251", "MATH 253"}
+
+
+def test_direct_course_code_or_produces_both_feasible_candidates():
+    groups = [group("pick", "enumerated_all")]
+    options = [option("direct-or", "pick", 0, "or")]
+    rows = [course("direct-or", code="A"), course("direct-or", code="B")]
+    result = run(
+        groups, options, rows, {}, {"A": 3, "B": 3},
+        catalog_by_code={"A": ["A"], "B": ["B"]},
+    )
+
+    assert [candidate.course_codes for candidate in result.candidate_sets[0].feasible_candidates] == [["A"], ["B"]]
+    assert selected(result) == []
+    assert decision(result, "pick").state == RequirementDecisionState.CHOICE_REQUIRED
+
+
+def test_tamu_sole_feasible_direct_code_is_auto_selected():
+    groups = [group("pick", "enumerated_all")]
+    options = [option("direct-or", "pick", 0, "or")]
+    rows = [course("direct-or", code="A"), course("direct-or", code="B")]
+    result = run(
+        groups, options, rows, {}, {"A": 3, "B": 3},
+        catalog_by_code={"A": ["A"], "B": ["B"]},
+        prerequisites={"B": StructuredPrerequisite(restrictions=["Majors only."])},
+    )
+
+    requirement_decision = decision(result, "pick")
+    assert requirement_decision.state == RequirementDecisionState.AUTO_SELECTED
+    assert requirement_decision.selected_candidate_id is not None
+    assert selected(result) == ["A"]
+    assert len(result.candidate_sets[0].feasible_candidates) == 1
+    assert len(result.candidate_sets[0].excluded_candidates) == 1
+
+
+def test_unresolved_direct_course_code_fails_closed_with_typed_exclusion():
+    groups = [group("pick", "enumerated_at_least_n", n=1)]
+    options = [option("missing", "pick", 0)]
+    result = run(
+        groups, options, [course("missing", code="MISSING 999")], {}, {},
+        catalog_by_code={"MISSING 999": []},
+    )
+
+    candidates = result.candidate_sets[0]
+    assert candidates.feasible_candidates == []
+    assert len(candidates.excluded_candidates) == 1
+    assert candidates.excluded_candidates[0].course_codes == []
+    assert candidates.excluded_candidates[0].unresolved_course_codes == ["MISSING 999"]
+    assert [reason.value for reason in candidates.excluded_candidates[0].exclusion_reasons] == [
+        "UNRESOLVED_COURSE"
+    ]
+    assert selected(result) == []
+    assert [item.requirement_group_id for item in result.unscheduled] == ["pick"]
+    assert decision(result, "pick").state == RequirementDecisionState.DATA_UNRESOLVED
+
+
+def test_zero_feasible_restriction_evidence_requires_adviser_review():
+    groups = [group("pick", "enumerated_all")]
+    options = [option("direct-or", "pick", 0, "or")]
+    rows = [course("direct-or", code="A"), course("direct-or", code="B")]
+    result = run(
+        groups, options, rows, {}, {"A": 3, "B": 3},
+        catalog_by_code={"A": ["A"], "B": ["B"]},
+        prerequisites={
+            "A": StructuredPrerequisite(restrictions=["Majors only."]),
+            "B": StructuredPrerequisite(restrictions=["Department approval."]),
+        },
+    )
+
+    assert selected(result) == []
+    assert decision(result, "pick").state == RequirementDecisionState.ADVISER_REVIEW

@@ -127,6 +127,7 @@ def test_real_exclusions_are_typed_and_unresolved_references_remain_visible():
     ]
     assert len(unresolved) == 2
     assert all(candidate.course_codes == [] and candidate.additional_credits is None for candidate in unresolved)
+    assert all(candidate.unresolved_course_codes for candidate in unresolved)
 
 
 def test_existing_contribution_and_no_double_counting_are_exposed():
