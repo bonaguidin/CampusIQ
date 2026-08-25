@@ -13,17 +13,32 @@ catalog with matching codes).
 
 import json
 from datetime import date
+from itertools import product
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 from fastapi.testclient import TestClient
 
 from GradusIQ_career import api
-from GradusIQ_career.course_discovery.models import CareerSkillNeed, EvidenceState
+from GradusIQ_career.course_discovery.models import CareerSkillNeed, EvidenceState, StructuredPrerequisite
 from GradusIQ_career.course_discovery.requirement_candidate_ranking import (
     RankedRequirementCandidate,
     RequirementCandidateRanking,
 )
+from GradusIQ_career.course_discovery.requirement_candidates import (
+    AcademicFeasibility,
+    CandidateExclusionReason,
+    RequirementCandidate,
+    RequirementCandidateSet,
+    RequirementDecision,
+    RequirementDecisionState,
+)
+from GradusIQ_career.course_discovery.requirement_selection import RequirementSelectionResult
+from GradusIQ_career.course_discovery.requirement_selection import LockedSelectionFailureCode
+from GradusIQ_career.degree_schedule_choice_service import ChoiceWriteOutcome
+from GradusIQ_career.course_discovery.scheduler import ScheduleResult
+from GradusIQ_career.degree_schedule_semantics import DegreeScheduleSemanticSnapshot
 from GradusIQ_career.planning import term_view as term_view_module
 from test_api_v2_me_routes import _canonical_profile
 from test_api_v2_requirement_satisfaction import (
@@ -42,6 +57,7 @@ SCHEDULE_FIXTURE_PATH = Path(__file__).parent / "fixtures" / "ethan_brooks_sched
 URL = "/api/v2/student/me/schedule"
 OPTIMIZE_URL = "/api/v2/student/me/schedule/career-optimize"
 TECHNICAL_ELECTIVES_URL = "/api/v2/student/me/degree-plan/technical-electives"
+CHOICES_URL = "/api/v2/student/me/schedule/choices"
 
 # Real credit_min/credit_max per coursedog_group_id, cross-referenced against
 # every entry in the shared fixture's catalog_by_gid (63 gids, all resolve
@@ -71,6 +87,7 @@ def _schedule_tables(expected_graduation="Spring 2029"):
         {"institution_id": SMU_INSTITUTION_ID, "code": row["code"], "coursedog_group_id": row["coursedog_group_id"], "credit_min": row["credit_min"], "credit_max": row["credit_max"]}
         for row in _REAL_CREDIT_ROWS
     ]
+    tables["degree_requirement_selections"] = []
     return tables, student_id, program_id
 
 
@@ -83,6 +100,123 @@ def _patch_client(monkeypatch, tables):
     fake = FakeClient(tables)
     monkeypatch.setattr(api, "build_client_for_token", lambda token: fake)
     return fake
+
+
+class _RpcResult:
+    def __init__(self, data):
+        self.data = data
+
+    def execute(self):
+        return self
+
+
+class FakeScheduleChoiceServiceClient:
+    def __init__(self, tables, student_id, program_id):
+        self.tables = tables
+        self.student_id = student_id
+        self.program_id = program_id
+        self.student_revision = 1
+        self.program_revision = 1
+        self.institution_revision = 1
+        self.before_cas = None
+        self.sync_count = 0
+        self.cas_calls = 0
+
+    def rpc(self, name, params):
+        if name == "sync_degree_schedule_institution_semantics":
+            self.sync_count += 1
+            return _RpcResult({
+                "status": "UNCHANGED",
+                "institution_revision": self.institution_revision,
+            })
+        if name == "get_degree_schedule_revisions":
+            return _RpcResult({
+                "student_revision": self.student_revision,
+                "program_revision": self.program_revision,
+                "institution_revision": self.institution_revision,
+            })
+        if name != "replace_degree_requirement_selections":
+            raise AssertionError(f"unexpected RPC {name}")
+        self.cas_calls += 1
+        if self.before_cas is not None:
+            hook, self.before_cas = self.before_cas, None
+            hook(self)
+        if (
+            params["p_expected_student_revision"] != self.student_revision
+            or params["p_expected_program_revision"] != self.program_revision
+            or params["p_expected_institution_revision"] != self.institution_revision
+        ):
+            return _RpcResult({"status": "REVISION_CONFLICT"})
+        desired = params["p_selections"]
+        current = sorted(
+            (
+                row["requirement_group_id"], row["candidate_id"], row["course_codes"]
+            )
+            for row in self.tables["degree_requirement_selections"]
+            if row["student_id"] == self.student_id and row["program_id"] == self.program_id
+        )
+        wanted = sorted(
+            (row["requirement_group_id"], row["candidate_id"], row["course_codes"])
+            for row in desired
+        )
+        if current == wanted:
+            return _RpcResult({"status": "UNCHANGED"})
+        self.tables["degree_requirement_selections"][:] = [
+            row for row in self.tables["degree_requirement_selections"]
+            if row["student_id"] != self.student_id or row["program_id"] != self.program_id
+        ] + [
+            {
+                "id": f"stored-{index}",
+                "student_id": self.student_id,
+                "program_id": self.program_id,
+                "requirement_group_id": row["requirement_group_id"],
+                "candidate_id": row["candidate_id"],
+                "course_codes": list(row["course_codes"]),
+                "decision_version": params["p_schedule_version"],
+                "created_at": "now",
+                "updated_at": "now",
+            }
+            for index, row in enumerate(desired)
+        ]
+        self.student_revision += 1
+        return _RpcResult({"status": "APPLIED"})
+
+
+def _choice_test_context(client, monkeypatch):
+    tables, student_id, program_id = _schedule_tables()
+    _patch_client(monkeypatch, tables)
+    _freeze_today(monkeypatch, date(2026, 8, 19))
+    service = FakeScheduleChoiceServiceClient(tables, student_id, program_id)
+    monkeypatch.setattr(api, "build_service_client", lambda: service)
+    schedule = client.get(URL, headers={"Authorization": "Bearer good-token"}).json()
+    sets = {item["requirement_group_id"]: item for item in schedule["candidate_sets"]}
+    choices = [
+        (decision, sets[decision["requirement_group_id"]])
+        for decision in schedule["decisions"]
+        if decision["state"] == "CHOICE_REQUIRED"
+    ]
+    return tables, service, schedule, choices
+
+
+def _selection(candidate_set, index=0):
+    candidate = candidate_set["feasible_candidates"][index]
+    return {
+        "requirement_group_id": candidate_set["requirement_group_id"],
+        "candidate_id": candidate["candidate_id"],
+        "course_codes": candidate["course_codes"],
+    }
+
+
+def _stored_selection(student_id, program_id, selection, suffix="one"):
+    return {
+        "id": f"stored-{suffix}",
+        "student_id": student_id,
+        "program_id": program_id,
+        **selection,
+        "decision_version": "sha256:" + "0" * 64,
+        "created_at": "now",
+        "updated_at": "now",
+    }
 
 
 def _freeze_today(monkeypatch, frozen):
@@ -102,7 +236,628 @@ def _freeze_today(monkeypatch, frozen):
     monkeypatch.setattr(term_view_module, "date", _FrozenDate)
 
 
-# 1. Ethan Brooks -- 200, full ScheduleResult including deterministic
+def test_schedule_reconstruction_captures_one_date_and_never_rechecks_clock(
+    client, monkeypatch
+):
+    tables, _, _ = _schedule_tables()
+    _patch_client(monkeypatch, tables)
+    captured = []
+
+    def capture_once():
+        captured.append(date(2026, 8, 19))
+        return captured[-1]
+
+    class _ClockMustNotBeRead(date):
+        @classmethod
+        def today(cls):
+            raise AssertionError("downstream Degree Schedule code reread the wall clock")
+
+    monkeypatch.setattr(api, "capture_reconstruction_date", capture_once)
+    monkeypatch.setattr(term_view_module, "date", _ClockMustNotBeRead)
+
+    response = client.get(URL, headers={"Authorization": "Bearer good-token"})
+
+    assert response.status_code == 200
+    assert captured == [date(2026, 8, 19)]
+
+
+def test_explicit_dates_across_term_boundary_change_schedule_version(client, monkeypatch):
+    tables, _, _ = _schedule_tables()
+    _patch_client(monkeypatch, tables)
+    monkeypatch.setattr(api, "capture_reconstruction_date", lambda: date(2026, 8, 23))
+    before = client.get(URL, headers={"Authorization": "Bearer good-token"}).json()
+    monkeypatch.setattr(api, "capture_reconstruction_date", lambda: date(2026, 8, 24))
+    after = client.get(URL, headers={"Authorization": "Bearer good-token"}).json()
+
+    assert before["terms"][0]["term_key"] == "2026-Fall"
+    assert after["terms"][0]["term_key"] == "2027-Spring"
+    assert before["schedule_version"] != after["schedule_version"]
+
+
+def test_put_schedule_choices_applies_and_returns_selection_aware_version(client, monkeypatch):
+    tables, service, schedule, choices = _choice_test_context(client, monkeypatch)
+    desired = _selection(choices[0][1])
+    response = client.put(
+        CHOICES_URL,
+        json={"schedule_version": schedule["schedule_version"], "selections": [desired]},
+        headers={"Authorization": "Bearer good-token"},
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["status"] == "APPLIED"
+    assert body["selections"] == [desired]
+    assert body["schedule_version"] != schedule["schedule_version"]
+    assert service.cas_calls == 1
+    assert tables["degree_requirement_selections"][0]["candidate_id"] == desired["candidate_id"]
+    refreshed = client.get(URL, headers={"Authorization": "Bearer good-token"}).json()
+    assert refreshed["schedule_version"] == body["schedule_version"]
+    locked = next(
+        decision for decision in refreshed["decisions"]
+        if decision["requirement_group_id"] == desired["requirement_group_id"]
+    )
+    assert locked["state"] == "LOCKED"
+    assert locked["selected_candidate_id"] == desired["candidate_id"]
+    assert refreshed["selection_state"] == {
+        "status": "APPLIED", "selections": [desired], "failure": None,
+    }
+    scheduled_codes = {
+        course["course_code"]
+        for term in refreshed["terms"]
+        for course in term["courses"]
+    }
+    assert set(desired["course_codes"]) <= scheduled_codes
+
+
+def test_put_multi_course_choice_persists_one_atomic_row(client, monkeypatch):
+    tables, _, schedule, choices = _choice_test_context(client, monkeypatch)
+    candidate_set = next(
+        candidate_set for _, candidate_set in choices
+        if any(len(item["course_codes"]) > 1 for item in candidate_set["feasible_candidates"])
+    )
+    candidate = next(
+        item for item in candidate_set["feasible_candidates"]
+        if len(item["course_codes"]) > 1
+    )
+    desired = {
+        "requirement_group_id": candidate_set["requirement_group_id"],
+        "candidate_id": candidate["candidate_id"],
+        "course_codes": candidate["course_codes"],
+    }
+    response = client.put(
+        CHOICES_URL,
+        json={"schedule_version": schedule["schedule_version"], "selections": [desired]},
+        headers={"Authorization": "Bearer good-token"},
+    )
+
+    assert response.status_code == 200
+    assert len(tables["degree_requirement_selections"]) == 1
+    assert tables["degree_requirement_selections"][0]["course_codes"] == candidate["course_codes"]
+    refreshed = client.get(URL, headers={"Authorization": "Bearer good-token"}).json()
+    decision = next(
+        item for item in refreshed["decisions"]
+        if item["requirement_group_id"] == desired["requirement_group_id"]
+    )
+    assert decision["state"] == "LOCKED"
+    scheduled = {
+        course["course_code"] for term in refreshed["terms"] for course in term["courses"]
+    }
+    assert set(candidate["course_codes"]) <= scheduled
+
+
+def test_put_accepts_a_globally_compatible_multi_requirement_complete_set(client, monkeypatch):
+    tables, _, schedule, choices = _choice_test_context(client, monkeypatch)
+    left, right = choices[0][1], choices[1][1]
+    response = None
+    submitted = None
+    for left_candidate, right_candidate in product(
+        left["feasible_candidates"], right["feasible_candidates"]
+    ):
+        desired = [
+            {
+                "requirement_group_id": left["requirement_group_id"],
+                "candidate_id": left_candidate["candidate_id"],
+                "course_codes": left_candidate["course_codes"],
+            },
+            {
+                "requirement_group_id": right["requirement_group_id"],
+                "candidate_id": right_candidate["candidate_id"],
+                "course_codes": right_candidate["course_codes"],
+            },
+        ]
+        response = client.put(
+            CHOICES_URL,
+            json={"schedule_version": schedule["schedule_version"], "selections": desired},
+            headers={"Authorization": "Bearer good-token"},
+        )
+        if response.status_code == 200:
+            submitted = desired
+            break
+        assert response.json()["detail"]["code"] == "LOCK_INCOMPATIBLE"
+    assert response is not None and response.status_code == 200
+    assert submitted is not None
+    assert len(tables["degree_requirement_selections"]) == 2
+    refreshed = client.get(URL, headers={"Authorization": "Bearer good-token"}).json()
+    assert refreshed["selection_state"]["status"] == "APPLIED"
+    assert {
+        item["requirement_group_id"] for item in refreshed["selection_state"]["selections"]
+    } == {item["requirement_group_id"] for item in submitted}
+
+
+def test_put_replaces_complete_set_and_empty_set_removes_all(client, monkeypatch):
+    tables, _, schedule, choices = _choice_test_context(client, monkeypatch)
+    first_set = choices[0][1]
+    first = _selection(first_set, 0)
+    applied = client.put(
+        CHOICES_URL,
+        json={"schedule_version": schedule["schedule_version"], "selections": [first]},
+        headers={"Authorization": "Bearer good-token"},
+    ).json()
+    replacement = _selection(first_set, 1)
+    replaced = client.put(
+        CHOICES_URL,
+        json={"schedule_version": applied["schedule_version"], "selections": [replacement]},
+        headers={"Authorization": "Bearer good-token"},
+    ).json()
+    removed = client.put(
+        CHOICES_URL,
+        json={"schedule_version": replaced["schedule_version"], "selections": []},
+        headers={"Authorization": "Bearer good-token"},
+    )
+
+    assert replaced["status"] == "APPLIED"
+    assert len(tables["degree_requirement_selections"]) == 0
+    assert removed.status_code == 200
+    assert removed.json()["status"] == "APPLIED"
+    assert removed.json()["selections"] == []
+
+
+def test_refresh_change_and_clear_persisted_choice_lifecycle(client, monkeypatch):
+    _, _, initial, choices = _choice_test_context(client, monkeypatch)
+    first = _selection(choices[0][1], 0)
+    second = _selection(choices[0][1], 1)
+
+    applied = client.put(
+        CHOICES_URL,
+        json={"schedule_version": initial["schedule_version"], "selections": [first]},
+        headers={"Authorization": "Bearer good-token"},
+    ).json()
+    refreshed = client.get(URL, headers={"Authorization": "Bearer good-token"}).json()
+    assert refreshed["schedule_version"] == applied["schedule_version"]
+    assert refreshed["selection_state"]["status"] == "APPLIED"
+    assert next(
+        item for item in refreshed["decisions"]
+        if item["requirement_group_id"] == first["requirement_group_id"]
+    )["selected_candidate_id"] == first["candidate_id"]
+
+    changed = client.put(
+        CHOICES_URL,
+        json={"schedule_version": refreshed["schedule_version"], "selections": [second]},
+        headers={"Authorization": "Bearer good-token"},
+    )
+    assert changed.status_code == 200
+    changed_get = client.get(URL, headers={"Authorization": "Bearer good-token"}).json()
+    assert changed_get["schedule_version"] == changed.json()["schedule_version"]
+    changed_decision = next(
+        item for item in changed_get["decisions"]
+        if item["requirement_group_id"] == second["requirement_group_id"]
+    )
+    assert changed_decision["state"] == "LOCKED"
+    assert changed_decision["selected_candidate_id"] == second["candidate_id"]
+
+    cleared = client.put(
+        CHOICES_URL,
+        json={"schedule_version": changed_get["schedule_version"], "selections": []},
+        headers={"Authorization": "Bearer good-token"},
+    )
+    assert cleared.status_code == 200
+    cleared_get = client.get(URL, headers={"Authorization": "Bearer good-token"}).json()
+    assert cleared_get["selection_state"] == {
+        "status": "NONE", "selections": [], "failure": None,
+    }
+    assert next(
+        item for item in cleared_get["decisions"]
+        if item["requirement_group_id"] == first["requirement_group_id"]
+    )["state"] == "CHOICE_REQUIRED"
+
+
+@pytest.mark.parametrize(
+    ("mutation", "expected_code"),
+    [
+        ("candidate_removed", "LOCK_CANDIDATE_NOT_FOUND"),
+        ("path_changed", "LOCK_PATH_MISMATCH"),
+        ("choice_no_longer_required", "LOCK_CHOICE_NO_LONGER_REQUIRED"),
+    ],
+)
+def test_stale_persisted_choice_falls_back_and_can_be_cleared(
+    client, monkeypatch, mutation, expected_code
+):
+    tables, student_id, program_id = _schedule_tables()
+    _patch_client(monkeypatch, tables)
+    _freeze_today(monkeypatch, date(2026, 8, 19))
+    service = FakeScheduleChoiceServiceClient(tables, student_id, program_id)
+    monkeypatch.setattr(api, "build_service_client", lambda: service)
+    unlocked = client.get(URL, headers={"Authorization": "Bearer good-token"}).json()
+    if mutation == "choice_no_longer_required":
+        decision = next(item for item in unlocked["decisions"] if item["state"] == "AUTO_SELECTED")
+    else:
+        decision = next(item for item in unlocked["decisions"] if item["state"] == "CHOICE_REQUIRED")
+    candidate_set = next(
+        item for item in unlocked["candidate_sets"]
+        if item["requirement_group_id"] == decision["requirement_group_id"]
+    )
+    selection = _selection(candidate_set)
+    if mutation == "candidate_removed":
+        selection["candidate_id"] = "reqcand_removed"
+    elif mutation == "path_changed":
+        selection["course_codes"] = ["STALE 9999"]
+    tables["degree_requirement_selections"] = [
+        _stored_selection(student_id, program_id, selection)
+    ]
+
+    stale = client.get(URL, headers={"Authorization": "Bearer good-token"}).json()
+    assert stale["selection_state"]["status"] == "RESELECTION_REQUIRED"
+    assert stale["selection_state"]["failure"]["code"] == expected_code
+    assert stale["decisions"] == unlocked["decisions"]
+    assert stale["terms"] == unlocked["terms"]
+    repeated = client.get(URL, headers={"Authorization": "Bearer good-token"}).json()
+    assert repeated["schedule_version"] == stale["schedule_version"]
+
+    cleared = client.put(
+        CHOICES_URL,
+        json={"schedule_version": stale["schedule_version"], "selections": []},
+        headers={"Authorization": "Bearer good-token"},
+    )
+    assert cleared.status_code == 200
+    assert client.get(URL, headers={"Authorization": "Bearer good-token"}).json()[
+        "selection_state"
+    ]["status"] == "NONE"
+
+
+def test_excluded_persisted_choice_requires_reselection(client, monkeypatch):
+    tables, student_id, program_id = _schedule_tables()
+    _patch_client(monkeypatch, tables)
+    _freeze_today(monkeypatch, date(2026, 8, 19))
+    unlocked = client.get(URL, headers={"Authorization": "Bearer good-token"}).json()
+    candidate_set = next(item for item in unlocked["candidate_sets"] if item["excluded_candidates"])
+    candidate = candidate_set["excluded_candidates"][0]
+    selection = {
+        "requirement_group_id": candidate_set["requirement_group_id"],
+        "candidate_id": candidate["candidate_id"],
+        "course_codes": candidate["course_codes"],
+    }
+    tables["degree_requirement_selections"] = [
+        _stored_selection(student_id, program_id, selection)
+    ]
+    stale = client.get(URL, headers={"Authorization": "Bearer good-token"}).json()
+    assert stale["selection_state"]["status"] == "RESELECTION_REQUIRED"
+    assert stale["selection_state"]["failure"]["code"] == "LOCK_CANDIDATE_EXCLUDED"
+    assert stale["selection_state"]["failure"]["exclusion_reasons"]
+
+
+def test_stale_persisted_choice_can_be_replaced_directly(client, monkeypatch):
+    tables, student_id, program_id = _schedule_tables()
+    _patch_client(monkeypatch, tables)
+    _freeze_today(monkeypatch, date(2026, 8, 19))
+    service = FakeScheduleChoiceServiceClient(tables, student_id, program_id)
+    monkeypatch.setattr(api, "build_service_client", lambda: service)
+    unlocked = client.get(URL, headers={"Authorization": "Bearer good-token"}).json()
+    candidate_set = next(
+        item for item in unlocked["candidate_sets"]
+        if len(item["feasible_candidates"]) > 1
+    )
+    valid = _selection(candidate_set, 1)
+    stale_selection = {**_selection(candidate_set, 0), "candidate_id": "reqcand_removed"}
+    tables["degree_requirement_selections"] = [
+        _stored_selection(student_id, program_id, stale_selection)
+    ]
+    stale = client.get(URL, headers={"Authorization": "Bearer good-token"}).json()
+    assert stale["selection_state"]["status"] == "RESELECTION_REQUIRED"
+
+    replaced = client.put(
+        CHOICES_URL,
+        json={"schedule_version": stale["schedule_version"], "selections": [valid]},
+        headers={"Authorization": "Bearer good-token"},
+    )
+    assert replaced.status_code == 200
+    refreshed = client.get(URL, headers={"Authorization": "Bearer good-token"}).json()
+    assert refreshed["selection_state"]["status"] == "APPLIED"
+    decision = next(
+        item for item in refreshed["decisions"]
+        if item["requirement_group_id"] == valid["requirement_group_id"]
+    )
+    assert decision["state"] == "LOCKED"
+    assert decision["selected_candidate_id"] == valid["candidate_id"]
+
+
+def test_old_program_selection_is_inactive_and_retained(client, monkeypatch):
+    tables, student_id, _ = _schedule_tables()
+    old = {
+        "requirement_group_id": "99999999-9999-4999-8999-999999999999",
+        "candidate_id": "reqcand_old",
+        "course_codes": ["OLD 1000"],
+    }
+    tables["degree_requirement_selections"] = [
+        _stored_selection(student_id, "20000000-0000-0000-0000-000000000099", old)
+    ]
+    _patch_client(monkeypatch, tables)
+    _freeze_today(monkeypatch, date(2026, 8, 19))
+    response = client.get(URL, headers={"Authorization": "Bearer good-token"}).json()
+    assert response["selection_state"]["status"] == "NONE"
+    assert len(tables["degree_requirement_selections"]) == 1
+
+
+def test_put_same_current_set_is_unchanged_without_revision_advance(client, monkeypatch):
+    tables, service, schedule, choices = _choice_test_context(client, monkeypatch)
+    desired = _selection(choices[0][1])
+    applied = client.put(
+        CHOICES_URL,
+        json={"schedule_version": schedule["schedule_version"], "selections": [desired]},
+        headers={"Authorization": "Bearer good-token"},
+    ).json()
+    revision = service.student_revision
+    repeated = client.put(
+        CHOICES_URL,
+        json={"schedule_version": applied["schedule_version"], "selections": [desired]},
+        headers={"Authorization": "Bearer good-token"},
+    )
+
+    assert repeated.status_code == 200
+    assert repeated.json()["status"] == "UNCHANGED"
+    assert service.student_revision == revision
+
+
+def test_two_tab_selection_only_stale_token_is_schedule_version_conflict(client, monkeypatch):
+    tables, service, schedule, choices = _choice_test_context(client, monkeypatch)
+    first = _selection(choices[0][1], 0)
+    second = _selection(choices[0][1], 1)
+    tab_a = client.put(
+        CHOICES_URL,
+        json={"schedule_version": schedule["schedule_version"], "selections": [first]},
+        headers={"Authorization": "Bearer good-token"},
+    )
+    cas_calls = service.cas_calls
+    tab_b = client.put(
+        CHOICES_URL,
+        json={"schedule_version": schedule["schedule_version"], "selections": [second]},
+        headers={"Authorization": "Bearer good-token"},
+    )
+
+    assert tab_a.status_code == 200
+    assert tab_b.status_code == 409
+    assert tab_b.json()["detail"]["code"] == "SCHEDULE_VERSION_CONFLICT"
+    assert service.cas_calls == cas_calls
+
+
+@pytest.mark.parametrize("revision_name", [
+    "student_revision", "program_revision", "institution_revision",
+])
+def test_put_revision_races_are_academic_revision_conflicts(
+    client, monkeypatch, revision_name
+):
+    tables, service, schedule, choices = _choice_test_context(client, monkeypatch)
+    service.before_cas = lambda current: setattr(
+        current, revision_name, getattr(current, revision_name) + 1
+    )
+    response = client.put(
+        CHOICES_URL,
+        json={
+            "schedule_version": schedule["schedule_version"],
+            "selections": [_selection(choices[0][1])],
+        },
+        headers={"Authorization": "Bearer good-token"},
+    )
+
+    assert response.status_code == 409
+    assert response.json()["detail"]["code"] == "ACADEMIC_REVISION_CONFLICT"
+    assert tables["degree_requirement_selections"] == []
+
+
+def test_put_semantic_resynchronization_race_fails_closed(client, monkeypatch):
+    tables, service, schedule, choices = _choice_test_context(client, monkeypatch)
+    original_rpc = service.rpc
+
+    def rpc(name, params):
+        result = original_rpc(name, params)
+        if name == "sync_degree_schedule_institution_semantics" and service.sync_count == 2:
+            service.institution_revision += 1
+        return result
+
+    service.rpc = rpc
+    response = client.put(
+        CHOICES_URL,
+        json={
+            "schedule_version": schedule["schedule_version"],
+            "selections": [_selection(choices[0][1])],
+        },
+        headers={"Authorization": "Bearer good-token"},
+    )
+    assert response.status_code == 409
+    assert response.json()["detail"]["code"] == "ACADEMIC_REVISION_CONFLICT"
+    assert tables["degree_requirement_selections"] == []
+
+
+def test_put_rejects_unknown_candidate_and_path_mismatch_without_rpc(client, monkeypatch):
+    _, service, schedule, choices = _choice_test_context(client, monkeypatch)
+    valid = _selection(choices[0][1])
+    unknown = {**valid, "candidate_id": "reqcand_missing"}
+    response = client.put(
+        CHOICES_URL,
+        json={"schedule_version": schedule["schedule_version"], "selections": [unknown]},
+        headers={"Authorization": "Bearer good-token"},
+    )
+    assert response.status_code == 409
+    assert response.json()["detail"]["code"] == "LOCK_CANDIDATE_NOT_FOUND"
+    assert service.cas_calls == 0
+
+    mismatch = {**valid, "course_codes": ["WRONG 9999"]}
+    response = client.put(
+        CHOICES_URL,
+        json={"schedule_version": schedule["schedule_version"], "selections": [mismatch]},
+        headers={"Authorization": "Bearer good-token"},
+    )
+    assert response.status_code == 409
+    assert response.json()["detail"]["code"] == "LOCK_PATH_MISMATCH"
+    assert service.cas_calls == 0
+
+
+def test_put_rejects_unknown_requirement_and_excluded_candidate(client, monkeypatch):
+    _, service, schedule, _ = _choice_test_context(client, monkeypatch)
+    unknown = client.put(
+        CHOICES_URL,
+        json={
+            "schedule_version": schedule["schedule_version"],
+            "selections": [{
+                "requirement_group_id": "99999999-9999-4999-8999-999999999999",
+                "candidate_id": "reqcand_missing",
+                "course_codes": ["CS 9999"],
+            }],
+        },
+        headers={"Authorization": "Bearer good-token"},
+    )
+    assert unknown.status_code == 409
+    assert unknown.json()["detail"]["code"] == "LOCK_REQUIREMENT_NOT_FOUND"
+
+    candidate_set = next(
+        item for item in schedule["candidate_sets"] if item["excluded_candidates"]
+    )
+    excluded_candidate = candidate_set["excluded_candidates"][0]
+    excluded = client.put(
+        CHOICES_URL,
+        json={
+            "schedule_version": schedule["schedule_version"],
+            "selections": [{
+                "requirement_group_id": candidate_set["requirement_group_id"],
+                "candidate_id": excluded_candidate["candidate_id"],
+                "course_codes": excluded_candidate["course_codes"],
+            }],
+        },
+        headers={"Authorization": "Bearer good-token"},
+    )
+    assert excluded.status_code == 409
+    assert excluded.json()["detail"]["code"] == "LOCK_CANDIDATE_EXCLUDED"
+    assert excluded.json()["detail"]["exclusion_reasons"]
+    assert service.cas_calls == 0
+
+
+def test_put_rejects_date_boundary_stale_version(client, monkeypatch):
+    _, service, schedule, choices = _choice_test_context(client, monkeypatch)
+    monkeypatch.setattr(api, "capture_reconstruction_date", lambda: date(2026, 8, 24))
+    response = client.put(
+        CHOICES_URL,
+        json={
+            "schedule_version": schedule["schedule_version"],
+            "selections": [_selection(choices[0][1])],
+        },
+        headers={"Authorization": "Bearer good-token"},
+    )
+    assert response.status_code == 409
+    assert response.json()["detail"]["code"] == "SCHEDULE_VERSION_CONFLICT"
+    assert service.cas_calls == 0
+
+
+def test_put_maps_incompatible_complete_set_without_persistence(client, monkeypatch):
+    tables, service, schedule, choices = _choice_test_context(client, monkeypatch)
+    monkeypatch.setattr(
+        api,
+        "write_degree_schedule_choices",
+        lambda **kwargs: ChoiceWriteOutcome(
+            conflict=LockedSelectionFailureCode.INCOMPATIBLE
+        ),
+    )
+    response = client.put(
+        CHOICES_URL,
+        json={
+            "schedule_version": schedule["schedule_version"],
+            "selections": [_selection(choices[0][1])],
+        },
+        headers={"Authorization": "Bearer good-token"},
+    )
+    assert response.status_code == 409
+    assert response.json()["detail"]["code"] == "LOCK_INCOMPATIBLE"
+    assert tables["degree_requirement_selections"] == []
+    assert service.cas_calls == 0
+
+
+def test_put_schedule_choices_is_model_free(client, monkeypatch):
+    _, _, schedule, choices = _choice_test_context(client, monkeypatch)
+    monkeypatch.setattr(
+        api, "build_client",
+        lambda: (_ for _ in ()).throw(AssertionError("model provider called")),
+    )
+    response = client.put(
+        CHOICES_URL,
+        json={
+            "schedule_version": schedule["schedule_version"],
+            "selections": [_selection(choices[0][1])],
+        },
+        headers={"Authorization": "Bearer good-token"},
+    )
+    assert response.status_code == 200
+
+
+def test_put_choice_no_longer_required_and_structural_errors(client, monkeypatch):
+    _, service, schedule, _ = _choice_test_context(client, monkeypatch)
+    auto_decision = next(item for item in schedule["decisions"] if item["state"] == "AUTO_SELECTED")
+    candidate_set = next(
+        item for item in schedule["candidate_sets"]
+        if item["requirement_group_id"] == auto_decision["requirement_group_id"]
+    )
+    response = client.put(
+        CHOICES_URL,
+        json={
+            "schedule_version": schedule["schedule_version"],
+            "selections": [_selection(candidate_set)],
+        },
+        headers={"Authorization": "Bearer good-token"},
+    )
+    assert response.status_code == 409
+    assert response.json()["detail"]["code"] == "LOCK_CHOICE_NO_LONGER_REQUIRED"
+    assert service.cas_calls == 0
+
+    invalid = client.put(
+        CHOICES_URL,
+        json={
+            "schedule_version": "bad",
+            "selections": [{
+                "requirement_group_id": "not-a-uuid",
+                "candidate_id": " ", "course_codes": [],
+            }],
+        },
+        headers={"Authorization": "Bearer good-token"},
+    )
+    assert invalid.status_code == 422
+    duplicate = _selection(candidate_set)
+    duplicate_response = client.put(
+        CHOICES_URL,
+        json={
+            "schedule_version": schedule["schedule_version"],
+            "selections": [duplicate, duplicate],
+        },
+        headers={"Authorization": "Bearer good-token"},
+    )
+    assert duplicate_response.status_code == 422
+
+
+def test_put_requires_authentication_and_accepts_no_identity_spoof_fields(client):
+    unauthorized = client.put(
+        CHOICES_URL,
+        json={"schedule_version": "sha256:" + "a" * 64, "selections": []},
+    )
+    spoofed = client.put(
+        CHOICES_URL,
+        json={
+            "schedule_version": "sha256:" + "a" * 64,
+            "selections": [],
+            "student_id": "10000000-0000-0000-0000-000000000099",
+        },
+        headers={"Authorization": "Bearer good-token"},
+    )
+    assert unauthorized.status_code == 401
+    assert spoofed.status_code == 422
+
+
+# 1. Ethan Brooks -- 200, full ScheduleResult including only sole-feasible
 #    structured choices while preserving the response contract.
 def test_ethan_brooks_returns_full_schedule_result(client, monkeypatch):
     tables, student_id, program_id = _schedule_tables()
@@ -117,40 +872,82 @@ def test_ethan_brooks_returns_full_schedule_result(client, monkeypatch):
     assert body["program_id"] == program_id
     assert body["status"] == "SCHEDULED"
     assert body["failure"] is None
+    assert body["schedule_version"].startswith("sha256:")
+    assert len(body["schedule_version"]) == 71
+
+    decisions = {item["requirement_name"]: item for item in body["decisions"]}
+    candidate_sets = {item["requirement_name"]: item for item in body["candidate_sets"]}
+    leadership_decision = decisions["Engineering Leadership (6 Credit Hours)"]
+    assert leadership_decision["state"] == "AUTO_SELECTED"
+    assert leadership_decision["selected_candidate_id"] == leadership_decision["feasible_candidate_ids"][0]
+    assert len(candidate_sets["Engineering Leadership (6 Credit Hours)"]["feasible_candidates"]) == 1
+    assert len(candidate_sets["Engineering Leadership (6 Credit Hours)"]["excluded_candidates"]) == 7
+
+    statistics_decision = decisions["Statistical Methods"]
+    assert statistics_decision["state"] == "CHOICE_REQUIRED"
+    assert statistics_decision["selected_candidate_id"] is None
+    assert len(candidate_sets["Statistical Methods"]["feasible_candidates"]) == 3
+    assert candidate_sets["Statistical Methods"]["excluded_candidates"] == []
+    statistical_candidate = candidate_sets["Statistical Methods"]["feasible_candidates"][0]
+    assert statistical_candidate["candidate_id"] == "reqcand_76e7fbe959765b5b"
+    assert statistical_candidate["candidate_courses"] == [{
+        "course_code": "CS 4340",
+        "title": "Statistical Methods for Engineers and Applied Scientists",
+        "credits": 3.0,
+    }]
+
+    two_courses_decision = decisions["Two Courses"]
+    assert two_courses_decision["state"] == "CHOICE_REQUIRED"
+    assert two_courses_decision["selected_candidate_id"] is None
+    assert len(candidate_sets["Two Courses"]["feasible_candidates"]) == 11
+    assert len(candidate_sets["Two Courses"]["excluded_candidates"]) == 5
+    assert any(
+        len(candidate["course_codes"]) == 4
+        for candidate in candidate_sets["Two Courses"]["feasible_candidates"]
+    )
+    leadership_candidate = candidate_sets["Engineering Leadership (6 Credit Hours)"]["feasible_candidates"][0]
+    assert leadership_candidate["candidate_courses"] == [
+        {"course_code": "CEE 2302", "title": "Authentic Leadership", "credits": 3.0},
+        {"course_code": "CS 3377", "title": "Ethical Issues in Computing", "credits": 3.0},
+    ]
+    assert leadership_candidate["additional_credits"] == 6.0
 
     assert {u["name"] for u in body["unscheduled"]} == {
+        "Advanced/Domain Specific Use/Design of AI",
+        "Experiential Learning (1-3 Credit Hours)",
+        "Statistical Methods",
+        "Two Courses",
         "Technical Electives (9 Credit Hours)",
         "Advanced Major Electives (3-5 Credit Hours)",
     }
-    assert len(body["unscheduled"]) == 2
+    assert len(body["unscheduled"]) == 6
 
     scheduled_codes = {course["course_code"] for term in body["terms"] for course in term["courses"]}
     schedule_fixture = json.loads(SCHEDULE_FIXTURE_PATH.read_text())
     expected_codes = {row["course_code"] for row in schedule_fixture["courses"]}
-    selected_codes = {
-        "CS 5323", "ENGR 1199", "CS 4340", "BIOL 1301", "BIOL 1101",
-        "BIOL 1302", "BIOL 1102", "CEE 2302", "CS 3377",
-    }
+    selected_codes = {"CEE 2302", "CS 3377"}
     assert scheduled_codes == expected_codes | selected_codes
-    assert len(scheduled_codes) == 22
+    assert len(scheduled_codes) == 15
+    assert {"CEE 2302", "CS 3377"} <= scheduled_codes
+    assert not ({"CS 4340", "STAT 4340", "OREM 3340"} & scheduled_codes)
 
     # Structured selection consumes the existing slack without extending
     # the corrected four-term plan.
     assert len(body["terms"]) == 4
     assert body["terms"][0]["term_key"] == "2026-Fall"
-    by_term = {
-        term["term_key"]: {course["course_code"] for course in term["courses"]}
-        for term in body["terms"]
+    placement = {
+        course["course_code"]: index
+        for index, term in enumerate(body["terms"])
+        for course in term["courses"]
     }
-    assert by_term == {
-        "2026-Fall": {"BIOL 1101", "BIOL 1102", "BIOL 1301", "BIOL 1302", "CEE 2302", "CS 2341", "ENGR 1199"},
-        "2027-Spring": {"CS 2353", "CS 3341", "CS 3377", "CS 4340", "CS 5323"},
-        "2027-Fall": {"CS 3353", "CS 5328", "CS 5330", "CS 5344", "ENGR 2112", "ENGR 3101", "ENGR 4101"},
-        "2028-Spring": {"CS 5343", "CS 5351", "MATH 3304"},
-    }
-    assert {"CS 5328", "CS 5330"} <= by_term["2027-Fall"]
+    assert placement["CS 2341"] < placement["CS 3353"]
+    assert placement["CS 2353"] < placement["CS 3353"]
     for term in body["terms"]:
         assert term["total_credit_hours"] <= 15.0
+
+    repeated = client.get(URL, headers={"Authorization": "Bearer good-token"})
+    assert repeated.status_code == 200
+    assert repeated.json() == body
 
 
 def test_ethan_technical_elective_pool_is_read_only_and_catalog_grounded(client, monkeypatch):
@@ -176,10 +973,10 @@ def test_ethan_technical_elective_pool_is_read_only_and_catalog_grounded(client,
     assert body["stats"] == {
         "catalog_courses_considered": 3249,
         "cs_3000_plus_courses": 87,
-        "excluded_already_used": 10,
+        "excluded_already_used": 8,
         "excluded_zero_credit": 1,
         "excluded_restriction_or_review": 46,
-        "candidate_count": 30,
+        "candidate_count": 32,
     }
     # SMU matches exactly one freeform group -- the new multi-group support
     # for TAMU must not surface a phantom "also satisfies" entry for SMU.
@@ -187,10 +984,10 @@ def test_ethan_technical_elective_pool_is_read_only_and_catalog_grounded(client,
 
     after = client.get(URL, headers={"Authorization": "Bearer good-token"}).json()
     assert after == before
-    assert sum(len(term["courses"]) for term in after["terms"]) == 22
-    assert sum(term["total_credit_hours"] for term in after["terms"]) == 54
+    assert sum(len(term["courses"]) for term in after["terms"]) == 15
+    assert sum(term["total_credit_hours"] for term in after["terms"]) == 39
     assert len(after["terms"]) == 4
-    assert len(after["unscheduled"]) == 2
+    assert len(after["unscheduled"]) == 6
 
 
 def test_technical_elective_endpoint_is_model_free(client, monkeypatch):
@@ -203,7 +1000,7 @@ def test_technical_elective_endpoint_is_model_free(client, monkeypatch):
     )
     response = client.get(TECHNICAL_ELECTIVES_URL, headers={"Authorization": "Bearer good-token"})
     assert response.status_code == 200
-    assert response.json()["stats"]["candidate_count"] == 30
+    assert response.json()["stats"]["candidate_count"] == 32
 
 
 def test_missing_technical_elective_requirement_skips_safely(client, monkeypatch):
@@ -232,6 +1029,133 @@ def test_get_schedule_is_strictly_model_and_optimization_free(client, monkeypatc
     response = client.get(URL, headers={"Authorization": "Bearer good-token"})
     assert response.status_code == 200
     assert len(response.json()["terms"]) == 4
+
+
+def test_schedule_payload_serializes_tamu_choice_and_zero_feasible_evidence():
+    def candidate(candidate_id, requirement_id, code, feasibility, reason=None, unresolved_code=None):
+        return RequirementCandidate(
+            candidate_id=candidate_id,
+            requirement_group_id=requirement_id,
+            requirement_name=requirement_id,
+            course_codes=[code] if code else [],
+            unresolved_course_codes=[unresolved_code] if unresolved_code else [],
+            existing_contribution=0,
+            additional_course_count=1 if code else 0,
+            additional_credits=3 if code else None,
+            academic_feasibility=feasibility,
+            completion_term_index=0 if feasibility == AcademicFeasibility.FEASIBLE else None,
+            exclusion_reasons=[reason] if reason else [],
+        )
+
+    candidate_sets = [
+        RequirementCandidateSet(
+            requirement_group_id="tamu-or", requirement_name="tamu-or",
+            feasible_candidates=[
+                candidate("engl-103", "tamu-or", "ENGL 103", AcademicFeasibility.FEASIBLE),
+                candidate("engl-104", "tamu-or", "ENGL 104", AcademicFeasibility.FEASIBLE),
+            ],
+        ),
+        RequirementCandidateSet(
+            requirement_group_id="unknown", requirement_name="unknown",
+            excluded_candidates=[candidate(
+                "unknown-999", "unknown", None, AcademicFeasibility.EXCLUDED,
+                CandidateExclusionReason.UNRESOLVED_COURSE, "UNKNOWN 999",
+            )],
+        ),
+        RequirementCandidateSet(
+            requirement_group_id="restricted", requirement_name="restricted",
+            excluded_candidates=[candidate(
+                "restricted-a", "restricted", "A", AcademicFeasibility.EXCLUDED,
+                CandidateExclusionReason.RESTRICTION_REQUIRES_REVIEW,
+            )],
+        ),
+        RequirementCandidateSet(
+            requirement_group_id="cross-listed", requirement_name="cross-listed",
+            feasible_candidates=[candidate(
+                "engr-217", "cross-listed", "ENGR 217", AcademicFeasibility.FEASIBLE,
+            )],
+        ),
+    ]
+    decisions = [
+        RequirementDecision(
+            requirement_group_id="tamu-or", requirement_name="tamu-or",
+            state=RequirementDecisionState.CHOICE_REQUIRED,
+            feasible_candidate_ids=["engl-103", "engl-104"],
+        ),
+        RequirementDecision(
+            requirement_group_id="unknown", requirement_name="unknown",
+            state=RequirementDecisionState.DATA_UNRESOLVED,
+            excluded_candidate_ids=["unknown-999"],
+        ),
+        RequirementDecision(
+            requirement_group_id="restricted", requirement_name="restricted",
+            state=RequirementDecisionState.ADVISER_REVIEW,
+            excluded_candidate_ids=["restricted-a"],
+        ),
+        RequirementDecision(
+            requirement_group_id="cross-listed", requirement_name="cross-listed",
+            state=RequirementDecisionState.AUTO_SELECTED,
+            feasible_candidate_ids=["engr-217"], selected_candidate_id="engr-217",
+        ),
+    ]
+    state = SimpleNamespace(
+        student_id="s", program_id="p", starting_year=2026,
+        starting_season="Fall", max_terms=4,
+        academic_schedule=ScheduleResult(student_id="s", program_id="p"),
+        academic_selection=RequirementSelectionResult(
+            candidate_sets=candidate_sets, decisions=decisions,
+        ),
+        catalog_by_code={
+            "ENGL 103": SimpleNamespace(title="Introduction to Rhetoric", credit_min=3),
+            "ENGL 104": SimpleNamespace(title="Composition and Rhetoric", credit_min=3),
+            "A": SimpleNamespace(title="Restricted Course", credit_min=3),
+            "ENGR 217": SimpleNamespace(title="Experimental Physics and Engineering Lab", credit_min=2),
+        },
+        raw=SimpleNamespace(
+            groups=[], options=[], option_courses=[], course_records=[],
+            catalog_credit_by_code={"ENGL 103": 3, "ENGL 104": 3, "A": 3, "ENGR 217": 2},
+        ),
+        prerequisites={
+            code: StructuredPrerequisite()
+            for code in ("ENGL 103", "ENGL 104", "A", "ENGR 217")
+        },
+        semantic_snapshot=DegreeScheduleSemanticSnapshot(
+            planner_contract_version="1",
+            local_catalog_fingerprint="sha256:" + "a" * 64,
+            reconstruction_date=date(2026, 8, 19),
+        ),
+        active_selections=(),
+    )
+
+    payload = api._degree_schedule_payload(state)
+    assert payload["schedule_version"].startswith("sha256:")
+
+    assert [item["state"] for item in payload["decisions"]] == [
+        "CHOICE_REQUIRED", "DATA_UNRESOLVED", "ADVISER_REVIEW", "AUTO_SELECTED",
+    ]
+    assert [item["course_codes"] for item in payload["candidate_sets"][0]["feasible_candidates"]] == [
+        ["ENGL 103"], ["ENGL 104"],
+    ]
+    assert [item["candidate_courses"] for item in payload["candidate_sets"][0]["feasible_candidates"]] == [
+        [{"course_code": "ENGL 103", "title": "Introduction to Rhetoric", "credits": 3.0}],
+        [{"course_code": "ENGL 104", "title": "Composition and Rhetoric", "credits": 3.0}],
+    ]
+    assert payload["candidate_sets"][1]["excluded_candidates"][0]["exclusion_reasons"] == [
+        "UNRESOLVED_COURSE"
+    ]
+    assert payload["candidate_sets"][1]["excluded_candidates"][0]["candidate_courses"] == [{
+        "course_code": "UNKNOWN 999", "title": None, "credits": None,
+    }]
+    assert payload["candidate_sets"][2]["excluded_candidates"][0]["exclusion_reasons"] == [
+        "RESTRICTION_REQUIRES_REVIEW"
+    ]
+    assert payload["candidate_sets"][3]["feasible_candidates"][0]["course_codes"] == ["ENGR 217"]
+    assert payload["candidate_sets"][3]["feasible_candidates"][0]["candidate_courses"] == [{
+        "course_code": "ENGR 217",
+        "title": "Experimental Physics and Engineering Lab",
+        "credits": 2.0,
+    }]
+    json.dumps(payload)
 
 
 def _trusted_need():
@@ -288,7 +1212,8 @@ def test_career_optimize_returns_typed_preview_and_cache_hit(client, monkeypatch
     assert body["fingerprint"] and body["ranking_prompt_version"] == "1"
     assert len(body["academic_schedule"]["terms"]) == 4
     assert len(body["optimized_schedule"]["terms"]) == 4
-    assert len(body["academic_schedule"]["unscheduled"]) == 2
+    assert len(body["academic_schedule"]["unscheduled"]) == 6
+    assert len(body["optimized_schedule"]["unscheduled"]) == 2
     assert len(body["requirement_rankings"]) == len(calls) == 4
     initial_calls = len(calls)
 
@@ -298,6 +1223,187 @@ def test_career_optimize_returns_typed_preview_and_cache_hit(client, monkeypatch
     assert second.status_code == 200
     assert second.json()["cache_status"] == "HIT"
     assert len(calls) == initial_calls
+
+
+def test_career_optimize_honors_persisted_lock_over_provider_preference(
+    client, monkeypatch
+):
+    tables, student_id, program_id = _schedule_tables()
+    _patch_client(monkeypatch, tables)
+    _patch_career_context(monkeypatch)
+    monkeypatch.setattr(api, "build_client", lambda: object())
+    calls = []
+    monkeypatch.setattr(
+        api, "rank_requirement_candidates",
+        lambda *args, **kwargs: calls.append(args[1].requirement_group_id)
+        or _fake_valid_ranker(*args, **kwargs),
+    )
+    baseline = client.get(URL, headers={"Authorization": "Bearer good-token"}).json()
+    statistical = next(
+        item for item in baseline["candidate_sets"]
+        if item["requirement_name"] == "Statistical Methods"
+    )
+    locked = _selection(statistical, 0)
+    provider_preferred = statistical["feasible_candidates"][-1]
+    tables["degree_requirement_selections"] = [
+        _stored_selection(student_id, program_id, locked)
+    ]
+
+    response = client.post(
+        OPTIMIZE_URL, json={"target_role": "Software Engineering Intern"},
+        headers={"Authorization": "Bearer good-token"},
+    )
+    assert response.status_code == 200
+    body = response.json()
+    optimized_codes = {
+        course["course_code"]
+        for term in body["optimized_schedule"]["terms"]
+        for course in term["courses"]
+    }
+    assert set(locked["course_codes"]) <= optimized_codes
+    assert not set(provider_preferred["course_codes"]) <= optimized_codes
+    assert locked["requirement_group_id"] not in calls
+    assert len(body["requirement_rankings"]) == len(calls) == 3
+
+    forced = client.post(
+        OPTIMIZE_URL, json={"force_refresh": True},
+        headers={"Authorization": "Bearer good-token"},
+    )
+    assert forced.status_code == 200
+    assert forced.json()["cache_status"] == "BYPASSED"
+    forced_codes = {
+        course["course_code"]
+        for term in forced.json()["optimized_schedule"]["terms"]
+        for course in term["courses"]
+    }
+    assert set(locked["course_codes"]) <= forced_codes
+
+
+def test_career_optimize_preserves_atomic_multi_course_lock_without_writes(
+    client, monkeypatch
+):
+    tables, student_id, program_id = _schedule_tables()
+    _patch_client(monkeypatch, tables)
+    _patch_career_context(monkeypatch)
+    monkeypatch.setattr(api, "build_client", lambda: object())
+    monkeypatch.setattr(api, "rank_requirement_candidates", _fake_valid_ranker)
+    baseline = client.get(URL, headers={"Authorization": "Bearer good-token"}).json()
+    candidate_set = next(
+        item for item in baseline["candidate_sets"]
+        if any(len(candidate["course_codes"]) > 1 for candidate in item["feasible_candidates"])
+    )
+    candidate = next(
+        item for item in candidate_set["feasible_candidates"]
+        if len(item["course_codes"]) > 1
+    )
+    locked = {
+        "requirement_group_id": candidate_set["requirement_group_id"],
+        "candidate_id": candidate["candidate_id"],
+        "course_codes": candidate["course_codes"],
+    }
+    tables["degree_requirement_selections"] = [
+        _stored_selection(student_id, program_id, locked)
+    ]
+    before_selections = json.loads(json.dumps(tables["degree_requirement_selections"]))
+    before_planned = json.loads(json.dumps(tables.get("planned_courses", [])))
+
+    response = client.post(
+        OPTIMIZE_URL, json={}, headers={"Authorization": "Bearer good-token"},
+    )
+    assert response.status_code == 200
+    optimized_codes = {
+        course["course_code"]
+        for term in response.json()["optimized_schedule"]["terms"]
+        for course in term["courses"]
+    }
+    assert set(candidate["course_codes"]) <= optimized_codes
+    assert tables["degree_requirement_selections"] == before_selections
+    assert tables.get("planned_courses", []) == before_planned
+
+
+def test_career_optimization_cache_changes_with_selection_add_change_and_clear(
+    client, monkeypatch
+):
+    tables, student_id, program_id = _schedule_tables()
+    _patch_client(monkeypatch, tables)
+    _patch_career_context(monkeypatch)
+    monkeypatch.setattr(api, "build_client", lambda: object())
+    calls = []
+    monkeypatch.setattr(
+        api, "rank_requirement_candidates",
+        lambda *args, **kwargs: calls.append(args[1].requirement_group_id)
+        or _fake_valid_ranker(*args, **kwargs),
+    )
+    baseline = client.get(URL, headers={"Authorization": "Bearer good-token"}).json()
+    candidate_set = next(
+        item for item in baseline["candidate_sets"]
+        if item["requirement_name"] == "Statistical Methods"
+    )
+    first, second = _selection(candidate_set, 0), _selection(candidate_set, 1)
+
+    unlocked = client.post(
+        OPTIMIZE_URL, json={}, headers={"Authorization": "Bearer good-token"},
+    ).json()
+    tables["degree_requirement_selections"] = [
+        _stored_selection(student_id, program_id, first)
+    ]
+    locked_first = client.post(
+        OPTIMIZE_URL, json={}, headers={"Authorization": "Bearer good-token"},
+    ).json()
+    tables["degree_requirement_selections"] = [
+        _stored_selection(student_id, program_id, second)
+    ]
+    locked_second = client.post(
+        OPTIMIZE_URL, json={"force_refresh": False},
+        headers={"Authorization": "Bearer good-token"},
+    ).json()
+    tables["degree_requirement_selections"] = []
+    cleared = client.post(
+        OPTIMIZE_URL, json={}, headers={"Authorization": "Bearer good-token"},
+    ).json()
+
+    assert len({
+        unlocked["fingerprint"], locked_first["fingerprint"],
+        locked_second["fingerprint"], cleared["fingerprint"],
+    }) == 3
+    assert locked_first["fingerprint"] != locked_second["fingerprint"]
+    assert locked_second["cache_status"] == "MISS"
+    # Clearing restores the exact unlocked semantic identity, so its safe
+    # prior unlocked result is reusable.
+    assert cleared["fingerprint"] == unlocked["fingerprint"]
+    assert cleared["cache_status"] == "HIT"
+
+
+def test_career_optimize_blocks_stale_selection_before_model_or_cache(
+    client, monkeypatch
+):
+    tables, student_id, program_id = _schedule_tables()
+    _patch_client(monkeypatch, tables)
+    tables["degree_requirement_selections"] = [
+        _stored_selection(student_id, program_id, {
+            "requirement_group_id": tables["requirement_groups"][0]["id"],
+            "candidate_id": "reqcand_removed",
+            "course_codes": ["STALE 9999"],
+        })
+    ]
+    monkeypatch.setattr(
+        api, "get_model_for_role",
+        lambda *_: pytest.fail("stale selection must fail before model resolution"),
+    )
+    monkeypatch.setattr(
+        api, "build_student_intelligence_profile",
+        lambda *_: pytest.fail("stale selection must fail before career profile work"),
+    )
+    monkeypatch.setattr(
+        api, "build_client",
+        lambda: pytest.fail("stale selection must fail before provider work"),
+    )
+    response = client.post(
+        OPTIMIZE_URL, json={}, headers={"Authorization": "Bearer good-token"},
+    )
+    assert response.status_code == 409
+    assert response.json()["detail"]["code"] == "RESELECTION_REQUIRED"
+    assert response.json()["detail"]["selection_failure"]["code"].startswith("LOCK_")
 
 
 def test_career_optimize_force_refresh_and_full_failure_preserve_ethan_baseline(client, monkeypatch):
@@ -318,10 +1424,10 @@ def test_career_optimize_force_refresh_and_full_failure_preserve_ethan_baseline(
     assert body["optimized_schedule"] == body["academic_schedule"]
     schedule = body["academic_schedule"]
     courses = [course for term in schedule["terms"] for course in term["courses"]]
-    assert len(courses) == 22
-    assert sum(course["credit_hours"] for course in courses) == 54
+    assert len(courses) == 15
+    assert sum(course["credit_hours"] for course in courses) == 39
     assert len(schedule["terms"]) == 4
-    assert len(schedule["unscheduled"]) == 2
+    assert len(schedule["unscheduled"]) == 6
 
 
 @pytest.mark.parametrize("roles,body,summary_fragment", [

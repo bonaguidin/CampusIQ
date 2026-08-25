@@ -100,6 +100,7 @@ def build_requirement_ranking_fingerprint(
     candidate_sets: Sequence[RequirementCandidateSet],
     catalog_by_code: Mapping[str, CourseCatalogRecord],
     resolved_model: str,
+    degree_schedule_version: str,
     contract_version: str = REQUIREMENT_RANKING_CONTRACT_VERSION,
     prompt_version: str = REQUIREMENT_RANKING_PROMPT_VERSION,
 ) -> str:
@@ -137,6 +138,7 @@ def build_requirement_ranking_fingerprint(
         "contract_version": contract_version,
         "ranking_prompt_version": prompt_version,
         "resolved_model": resolved_model,
+        "degree_schedule_version": degree_schedule_version,
         "student_id": str(student_id),
         "target_role": " ".join(target_role.split()),
         "career_needs": sorted(

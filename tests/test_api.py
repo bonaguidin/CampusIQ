@@ -182,8 +182,8 @@ def test_cors_allows_exactly_the_methods_the_app_exposes():
     (DELETE /api/v2/student/me/planned-courses/{id}) was added. The assertion
     below is derived from the router rather than restated as a literal, so the
     next route carrying a new method updates it by existing -- which is what
-    this test is actually for. PUT stays in the negative case: no route uses
-    it, so it must stay out.
+    this test is actually for. PUT joined the allowlist with the authenticated
+    Degree Schedule complete-set choice route.
     """
     test_client = TestClient(api.create_app(make_test_config()))
 
@@ -203,7 +203,7 @@ def test_cors_allows_exactly_the_methods_the_app_exposes():
         for method in getattr(route, "methods", set())
         if method not in {"HEAD", "OPTIONS"}
     }
-    assert {"GET", "POST", "PATCH", "DELETE"} <= exposed, (
+    assert {"GET", "POST", "PATCH", "DELETE", "PUT"} <= exposed, (
         f"router no longer exposes the methods this test assumes: {sorted(exposed)}"
     )
 
@@ -213,7 +213,7 @@ def test_cors_allows_exactly_the_methods_the_app_exposes():
         assert method in allowed, f"{method} should be allowed, got {allowed!r}"
 
     # Methods the app exposes no route for stay out.
-    for method in ("PUT", "TRACE"):
+    for method in ("TRACE",):
         assert method not in exposed, f"{method} now has a route; update this test"
         response = preflight(method)
         assert method not in response.headers.get("access-control-allow-methods", "")
