@@ -1,0 +1,133 @@
+{
+  "schema_version": "1",
+  "course": {
+    "course_code": "PHYS 207",
+    "course_title": null,
+    "section": "529",
+    "term": "Fall 2026",
+    "instructor": null
+  },
+  "grading_method": "weighted",
+  "categories": [
+    {
+      "name": "Mid-term Exam",
+      "weight": 35,
+      "count": null,
+      "evidence": {
+        "page": null,
+        "text": "Mid-term Exam: 35%",
+        "confidence": null
+      }
+    },
+    {
+      "name": "Final Exam",
+      "weight": 50,
+      "count": null,
+      "evidence": {
+        "page": null,
+        "text": "Final Exam: 50%",
+        "confidence": null
+      }
+    },
+    {
+      "name": "Lecture Quizzes",
+      "weight": 5,
+      "count": null,
+      "evidence": {
+        "page": null,
+        "text": "Lecture Quizzes: 5%",
+        "confidence": null
+      }
+    },
+    {
+      "name": "Recitation Quizzes",
+      "weight": 10,
+      "count": null,
+      "evidence": {
+        "page": null,
+        "text": "Recitation Quizzes: 10%",
+        "confidence": null
+      }
+    }
+  ],
+  "assessments": [],
+  "grade_thresholds": [
+    {
+      "letter": "A",
+      "minimum": 90,
+      "maximum": 100,
+      "evidence": null
+    },
+    {
+      "letter": "B",
+      "minimum": 80,
+      "maximum": 89,
+      "evidence": null
+    },
+    {
+      "letter": "C",
+      "minimum": 60,
+      "maximum": 79,
+      "evidence": null
+    },
+    {
+      "letter": "D",
+      "minimum": 45,
+      "maximum": 59,
+      "evidence": null
+    },
+    {
+      "letter": "F",
+      "minimum": null,
+      "maximum": 44,
+      "evidence": {
+        "page": null,
+        "text": "F: below 45",
+        "confidence": null
+      }
+    }
+  ],
+  "rules": [
+    {
+      "rule_type": "replacement",
+      "description": "If the Final Exam grade is higher than the Mid-term Exam grade, the Final Exam replaces the Mid-term Exam grade.",
+      "source": "Final Exam",
+      "target": "Mid-term Exam",
+      "condition": "final_score > midterm_score",
+      "evidence": {
+        "page": null,
+        "text": "If the Final Exam grade is higher than the Mid-term Exam grade, the Final Exam replaces the Mid-term Exam grade.",
+        "confidence": null
+      }
+    },
+    {
+      "rule_type": "curve",
+      "description": "Grades may be curved upward, but no deterministic curve formula is given.",
+      "source": null,
+      "target": null,
+      "condition": null,
+      "evidence": {
+        "page": null,
+        "text": "Grades may be curved upward.",
+        "confidence": null
+      }
+    }
+  ],
+  "warnings": [
+    {
+      "type": "unknown_assessment_count",
+      "description": "The exact number of Lecture Quizzes is unknown.",
+      "related_field": "Lecture Quizzes"
+    },
+    {
+      "type": "unknown_assessment_count",
+      "description": "The exact number of Recitation Quizzes is unknown.",
+      "related_field": "Recitation Quizzes"
+    },
+    {
+      "type": "possible_curve",
+      "description": "The syllabus states grades may be curved upward, but no deterministic curve formula is given.",
+      "related_field": null
+    }
+  ]
+}
