@@ -17,7 +17,10 @@ const EXTRACTED_MODEL = {
     { name: 'Recitation Quizzes', weight: 10, count: null, evidence: { page: 2, text: 'Recitation Quizzes: 10%', confidence: 1.0 } },
   ],
   assessments: [],
-  grade_thresholds: [],
+  grade_thresholds: [
+    { letter: 'B', minimum: 80, maximum: 89, evidence: { page: 2, text: 'B: 80-89', confidence: 1.0 } },
+    { letter: 'B+', minimum: 85, maximum: 92, evidence: { page: 2, text: 'B+: 85-92', confidence: 1.0 } },
+  ],
   rules: [
     {
       rule_type: 'replacement', description: 'Final replaces Midterm when higher.',
@@ -35,11 +38,26 @@ const EXTRACTED_MODEL = {
 
 const CONFIRMED_MODEL = { ...EXTRACTED_MODEL, rules: [EXTRACTED_MODEL.rules[0]], warnings: [] }
 
+// field values below use the real backend shapes (reconciliation.py): a
+// per-rule-instance index for non_deterministic_grading_rule (rules[1] is
+// the curve rule, index 1 in EXTRACTED_MODEL.rules), and the letter pair
+// for overlapping_grade_thresholds. Messages are the real backend message
+// templates, not placeholders -- this is what findingCopy()'s per-code
+// templates in GradeCalculatorPanel.tsx actually parse.
 const RECONCILIATION_REVIEW = {
   status: 'needs_student_review',
   findings: [
     { code: 'possible_curve', severity: 'warning', message: 'possible curve', field: null },
-    { code: 'non_deterministic_grading_rule', severity: 'warning', message: 'curve rule is not deterministic', field: 'curve' },
+    {
+      code: 'non_deterministic_grading_rule', severity: 'warning',
+      message: 'curve rule is not structured precisely enough to apply deterministically: Grades may be curved upward.',
+      field: 'rules[1]',
+    },
+    {
+      code: 'overlapping_grade_thresholds', severity: 'error',
+      message: "thresholds 'B' (80-89) and 'B+' (85-92) overlap",
+      field: 'B,B+',
+    },
   ],
   evidence_coverage: { total_claims: 6, supported_claims: 6, coverage_ratio: 1, unsupported_claims: [] },
 }
@@ -205,6 +223,44 @@ test('Grade Calculator: empty state, upload, review, confirm, grade entry, calcu
   await page.getByRole('heading', { name: 'Needs your review' }).waitFor()
   await page.getByText('Your syllabus says grades may be curved').waitFor()
   await page.getByText("The syllabus does not provide enough information").waitFor()
+
+  // --- the old flat findings list is gone entirely ---
+  assert.equal(await page.locator('.grade-findings-list').count(), 0)
+  assert.equal(await page.locator('.grade-finding').count(), 0)
+
+  // --- non_deterministic_grading_rule renders inline on its OWN rule card,
+  //     with the real per-rule detail (not the old blanket generic string) ---
+  const curveCard = page.locator('.grade-rule-card', { hasText: 'Curve' })
+  await curveCard.getByText("CampusIQ can't calculate this curve rule automatically: Grades may be curved upward.").waitFor()
+  assert.equal(
+    await page.getByText("CampusIQ can't calculate this rule automatically.", { exact: true }).count(),
+    0,
+    'the old generic no-detail string must not appear',
+  )
+  // the replacement rule card (deterministic, no matching finding) carries no inline finding
+  const replacementCard = page.locator('.grade-rule-card', { hasText: 'Score replacement' })
+  assert.equal(await replacementCard.locator('.grade-inline-finding').count(), 0)
+
+  // --- overlapping_grade_thresholds has no dedicated row in the review step
+  //     (thresholds aren't rendered there), so it falls back to the General
+  //     section at the top of the review card, with the real letters/ranges ---
+  const general = page.locator('.grade-inline-findings--general')
+  await general.getByText('Letter grades B and B+ have overlapping cutoffs: B is 80–89, B+ is 85–92.').waitFor()
+  await general.getByText('Your syllabus says grades may be curved').waitFor()
+
+  // --- dismiss is session-only: dismissing the threshold finding hides it
+  //     immediately, with no network call, and it comes back on reopen ---
+  const thresholdFinding = general.locator('.grade-inline-finding', { hasText: 'overlapping cutoffs' })
+  await thresholdFinding.getByRole('button', { name: 'Dismiss this finding' }).click()
+  assert.equal(await general.getByText('overlapping cutoffs').count(), 0)
+  // the curve-rule finding, untouched, is still there
+  await curveCard.getByText("CampusIQ can't calculate this curve rule automatically").waitFor()
+
+  await page.getByRole('button', { name: '← Back to your calculators' }).click()
+  await page.locator('.grade-profile-row-button', { hasText: 'PHYS 207' }).click()
+  await page.getByRole('heading', { name: 'Needs your review' }).waitFor()
+  // reopening re-fetched the same findings and dismissal did not persist
+  await page.locator('.grade-inline-findings--general').getByText('overlapping cutoffs').waitFor()
 
   // --- ignore the curve rule (correction), then confirm ---
   await page.getByRole('button', { name: 'Ignore this rule for What-If calculations' }).click()
