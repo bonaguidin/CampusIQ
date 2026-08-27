@@ -22,21 +22,19 @@ import {
 // Presentation copy for machine-readable reconciliation finding codes. The
 // code itself stays available (data-finding-code) for tests/telemetry; this
 // mapping is the ONLY place backend codes turn into student-facing text.
+//
+// Codes handled below in FINDING_TEMPLATES are deliberately absent here:
+// their backend `message` already carries the one distinguishing detail
+// (which rule, which two letters, which category) that tells two findings
+// of the same code apart, and this flat map has no way to say that.
 const FINDING_COPY: Record<string, string> = {
   possible_curve: 'Your syllabus says grades may be curved, but it does not provide a formula.',
   unknown_weight: "We couldn't determine this category's weight.",
   unknown_assessment_count: "The syllabus doesn't say exactly how many assessments are in this category.",
   ambiguous_rule: "We found a grading rule, but couldn't determine exactly how it works.",
   missing_grade_scale: "This syllabus doesn't specify a letter-grade scale.",
-  unresolved_assessment_category_reference: "This assessment refers to a grading category we couldn't match.",
-  unresolved_rule_reference: "A grading rule refers to a category or assessment we couldn't match.",
   category_weight_validation: 'The category weights in this syllabus may not add up to 100%.',
-  duplicate_category: 'We found what may be the same grading category listed twice.',
-  duplicate_assessment: 'We found what may be the same assessment listed twice.',
-  non_deterministic_grading_rule: "CampusIQ can't calculate this rule automatically.",
   grading_method_unknown: "We couldn't determine how this course is graded.",
-  overlapping_grade_thresholds: 'The letter-grade cutoffs in this syllabus overlap.',
-  grade_threshold_ordering_anomaly: 'The letter-grade cutoffs in this syllabus look out of order.',
   missing_claim_evidence: "We found this value, but couldn't confirm it against the syllabus text.",
   partial_claim_evidence: "We found this value, but couldn't confirm it against the syllabus text.",
   claim_evidence_value_mismatch: 'This value may not match what the syllabus actually says.',
@@ -44,8 +42,93 @@ const FINDING_COPY: Record<string, string> = {
   evidence_page_out_of_range: "This citation doesn't match the syllabus pages we reviewed.",
 };
 
+// Per-code templates that parse the backend's specific `message` (which
+// already names the rule/letters/category involved) into short,
+// friendly text -- instead of the one-generic-sentence-per-code approach
+// above, which made every occurrence of a code read identically even when
+// each one was about a different rule or a different pair of letters.
+const FINDING_TEMPLATES: Record<string, (finding: SyllabusFinding) => string | null> = {
+  non_deterministic_grading_rule: (finding) => {
+    const m = /^(\S+) rule is not structured precisely enough to apply deterministically: (.*)$/.exec(finding.message);
+    if (!m) return null;
+    const label = ruleTypeLabel(m[1] as SyllabusRule['rule_type']).toLowerCase();
+    return `CampusIQ can't calculate this ${label} rule automatically: ${m[2]}`;
+  },
+  overlapping_grade_thresholds: (finding) => {
+    const m = /^thresholds '(.+?)' \(([\d.]+)-([\d.]+)\) and '(.+?)' \(([\d.]+)-([\d.]+)\) overlap$/.exec(finding.message);
+    if (!m) return null;
+    return `Letter grades ${m[1]} and ${m[4]} have overlapping cutoffs: ${m[1]} is ${m[2]}–${m[3]}, ${m[4]} is ${m[5]}–${m[6]}.`;
+  },
+  grade_threshold_ordering_anomaly: (finding) => {
+    const m = /^threshold '(.+?)' has a lower minimum \(([\d.]+)\) than the generally-lower grade '(.+?)' \(([\d.]+)\)$/.exec(finding.message);
+    if (!m) return null;
+    return `${m[1]} (${m[2]}) has a lower cutoff than ${m[3]} (${m[4]}), which is usually the lower grade.`;
+  },
+  unresolved_rule_reference: (finding) => {
+    const m = /^rule (?:source|target)='(.+?)' does not match any known category or assessment$/.exec(finding.message);
+    if (!m) return null;
+    return `A grading rule references "${m[1]}", but CampusIQ couldn't match it to a category or assessment.`;
+  },
+  unresolved_assessment_category_reference: (finding) => {
+    const m = /^assessment '(.+?)' references category '(.+?)', which is not a known category$/.exec(finding.message);
+    if (!m) return null;
+    return `"${m[1]}" references a category ("${m[2]}") CampusIQ couldn't find in this syllabus.`;
+  },
+  duplicate_category: (finding) => {
+    if (!finding.field) return null;
+    return `Multiple categories may be the same ("${finding.field}") — check for a duplicate.`;
+  },
+  duplicate_assessment: (finding) => {
+    if (!finding.field) return null;
+    return `Multiple assessments may be the same ("${finding.field.split(':')[0]}") — check for a duplicate.`;
+  },
+};
+
 function findingCopy(finding: SyllabusFinding): string {
+  const templated = FINDING_TEMPLATES[finding.code]?.(finding);
+  if (templated) return templated;
   return FINDING_COPY[finding.code] ?? finding.message;
+}
+
+// Mirrors the backend's _normalize_name (reconciliation.py): lowercase,
+// collapsed whitespace. Findings whose `field` is a normalized name
+// (duplicate_category) are matched against category rows through this.
+function normalizeName(name: string): string {
+  return name.toLowerCase().split(/\s+/).filter(Boolean).join(' ');
+}
+
+type FindingWithKey = { finding: SyllabusFinding; key: number };
+
+/**
+ * Groups findings by where they should render inline: next to the rule
+ * card they're about (`rule:{index}`), next to the category row they're
+ * about (`category:{name}`), or `general` as a fallback for every finding
+ * whose `field` doesn't identify a row this panel currently renders
+ * (course-level findings, threshold findings -- thresholds have no
+ * dedicated row in the review step -- and evidence-coverage findings).
+ * `key` is the finding's index in the source array, used as a stable,
+ * session-only dismiss key (see dismissedFindingKeys in
+ * GradeCalculatorPanel).
+ */
+function groupFindingsByAnchor(
+  findings: SyllabusFinding[],
+  model: SyllabusGradeModel | null,
+): Map<string, FindingWithKey[]> {
+  const map = new Map<string, FindingWithKey[]>();
+  findings.forEach((finding, key) => {
+    let anchor = 'general';
+    if (finding.code === 'non_deterministic_grading_rule') {
+      const m = /^rules\[(\d+)\]$/.exec(finding.field ?? '');
+      if (m) anchor = `rule:${m[1]}`;
+    } else if (finding.code === 'duplicate_category' && finding.field && model) {
+      const match = model.categories.find((c) => normalizeName(c.name) === finding.field);
+      if (match) anchor = `category:${match.name}`;
+    }
+    const bucket = map.get(anchor);
+    if (bucket) bucket.push({ finding, key });
+    else map.set(anchor, [{ finding, key }]);
+  });
+  return map;
 }
 
 function ruleTypeLabel(ruleType: SyllabusRule['rule_type']): string {
@@ -154,6 +237,16 @@ export function GradeCalculatorPanel({ accessToken }: Props) {
 
   const [busy, setBusy] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+
+  // Dismissed inline findings, session-only: NOT persisted anywhere (no API
+  // call, no backend field). Keyed by the finding's index in its source
+  // findings array, so it resets whenever that array is recreated -- a
+  // fresh page load, or reselecting a calculator -- because a stale index
+  // set is meaningless against a different or re-fetched findings array. If
+  // this ever needs to survive reload, it needs a real backend field (see
+  // the investigation: `findings` has no dismissed/acknowledged concept at
+  // all today), not just re-reading this state.
+  const [dismissedFindingKeys, setDismissedFindingKeys] = useState<Set<number>>(new Set());
 
   const [gradeDraft, setGradeDraft] = useState<GradeStateDraft>({});
   const [calcResult, setCalcResult] = useState<SyllabusCalculationResult | null>(null);
@@ -334,6 +427,27 @@ export function GradeCalculatorPanel({ accessToken }: Props) {
     return names;
   }, [detail]);
 
+  // Reselecting a calculator (or the initial load of one) starts review
+  // findings fresh -- dismissal is session-only and must not leak between
+  // calculators or survive a reopen. See dismissedFindingKeys above.
+  useEffect(() => {
+    setDismissedFindingKeys(new Set());
+  }, [selectedProfileId]);
+
+  const reviewFindings = (detail?.confirmed_reconciliation ?? detail?.reconciliation)?.findings ?? [];
+  const findingsByAnchor = useMemo(
+    () => groupFindingsByAnchor(reviewFindings, detail?.extracted_grade_model ?? null),
+    [reviewFindings, detail],
+  );
+
+  function handleDismissFinding(key: number) {
+    setDismissedFindingKeys((prev) => {
+      const next = new Set(prev);
+      next.add(key);
+      return next;
+    });
+  }
+
   if (!accessToken) {
     return (
       <div className="card grade-calculator-panel">
@@ -373,10 +487,24 @@ export function GradeCalculatorPanel({ accessToken }: Props) {
                 <h3 className="card-heading">
                   {detail.confirmed_reconciliation ? 'Still needs your review' : 'Needs your review'}
                 </h3>
-                <SyllabusGradingBreakdown model={detail.extracted_grade_model} />
-                <SyllabusRulesList model={detail.extracted_grade_model} onIgnoreRule={handleIgnoreRule} busy={busy} />
-                <SyllabusFindingsList
-                  findings={(detail.confirmed_reconciliation ?? detail.reconciliation)?.findings ?? []}
+                <GeneralFindings
+                  findings={findingsByAnchor.get('general') ?? []}
+                  dismissedFindingKeys={dismissedFindingKeys}
+                  onDismissFinding={handleDismissFinding}
+                />
+                <SyllabusGradingBreakdown
+                  model={detail.extracted_grade_model}
+                  findingsByAnchor={findingsByAnchor}
+                  dismissedFindingKeys={dismissedFindingKeys}
+                  onDismissFinding={handleDismissFinding}
+                />
+                <SyllabusRulesList
+                  model={detail.extracted_grade_model}
+                  onIgnoreRule={handleIgnoreRule}
+                  busy={busy}
+                  findingsByAnchor={findingsByAnchor}
+                  dismissedFindingKeys={dismissedFindingKeys}
+                  onDismissFinding={handleDismissFinding}
                 />
                 <button type="button" className="btn btn-primary" onClick={handleConfirm} disabled={busy} aria-busy={busy}>
                   {busy ? 'Confirming…' : 'Confirm'}
@@ -388,7 +516,7 @@ export function GradeCalculatorPanel({ accessToken }: Props) {
               <div className="card grade-review-card">
                 <h3 className="card-heading">Review grading breakdown</h3>
                 <SyllabusGradingBreakdown model={detail.confirmed_grade_model} />
-                <SyllabusRulesList model={detail.confirmed_grade_model} onIgnoreRule={undefined} busy={busy} />
+                <SyllabusRulesList model={detail.confirmed_grade_model} onIgnoreRule={undefined} busy={busy} findingsByAnchor={EMPTY_FINDINGS_BY_ANCHOR} />
                 <button type="button" className="btn btn-primary" onClick={handleConfirm} disabled={busy} aria-busy={busy}>
                   {busy ? 'Confirming…' : 'Confirm'}
                 </button>
@@ -612,7 +740,99 @@ export function GradeCalculatorPanel({ accessToken }: Props) {
   );
 }
 
-function SyllabusGradingBreakdown({ model }: { model: SyllabusGradeModel | null }) {
+const EMPTY_FINDINGS_BY_ANCHOR: Map<string, FindingWithKey[]> = new Map();
+
+/**
+ * One finding, rendered small and inline where it's relevant -- not as a
+ * card in a separate flat list. Styled after the .rv-field/.rv-glyph
+ * provenance pattern (review/FieldRow.tsx): a small marker column plus
+ * compact text. Dismiss reuses the .dash-notice-dismiss "x" pattern
+ * (DashboardSuccessNotice.tsx), scaled down for inline use.
+ */
+function InlineFinding({
+  finding,
+  onDismiss,
+}: {
+  finding: SyllabusFinding;
+  onDismiss: () => void;
+}) {
+  return (
+    <p className={`grade-inline-finding grade-inline-finding--${finding.severity}`} data-finding-code={finding.code}>
+      <span className="grade-inline-finding-glyph" aria-hidden="true">
+        {finding.severity === 'error' ? '!' : '·'}
+      </span>
+      <span className="grade-inline-finding-text">{findingCopy(finding)}</span>
+      <button
+        type="button"
+        className="grade-inline-finding-dismiss"
+        onClick={onDismiss}
+        aria-label="Dismiss this finding"
+      >
+        ×
+      </button>
+    </p>
+  );
+}
+
+function InlineFindings({
+  findings,
+  dismissedFindingKeys,
+  onDismissFinding,
+}: {
+  findings: FindingWithKey[];
+  dismissedFindingKeys: Set<number>;
+  onDismissFinding: (key: number) => void;
+}) {
+  const visible = findings.filter(({ finding, key }) => finding.severity !== 'valid' && !dismissedFindingKeys.has(key));
+  if (visible.length === 0) return null;
+  return (
+    <div className="grade-inline-findings">
+      {visible.map(({ finding, key }) => (
+        <InlineFinding key={key} finding={finding} onDismiss={() => onDismissFinding(key)} />
+      ))}
+    </div>
+  );
+}
+
+/**
+ * Fallback for findings whose `field` doesn't identify a row this panel
+ * currently renders (course-level findings like grading_method_unknown,
+ * threshold findings -- there's no per-threshold row in the review step --
+ * and evidence-coverage findings). Same inline/small-font/dismiss
+ * treatment as InlineFindings, just grouped at the top of the review card
+ * instead of anchored to a specific row.
+ */
+function GeneralFindings({
+  findings,
+  dismissedFindingKeys,
+  onDismissFinding,
+}: {
+  findings: FindingWithKey[];
+  dismissedFindingKeys: Set<number>;
+  onDismissFinding: (key: number) => void;
+}) {
+  const visible = findings.filter(({ finding, key }) => finding.severity !== 'valid' && !dismissedFindingKeys.has(key));
+  if (visible.length === 0) return null;
+  return (
+    <div className="grade-inline-findings grade-inline-findings--general" aria-label="Grading review notes">
+      {visible.map(({ finding, key }) => (
+        <InlineFinding key={key} finding={finding} onDismiss={() => onDismissFinding(key)} />
+      ))}
+    </div>
+  );
+}
+
+function SyllabusGradingBreakdown({
+  model,
+  findingsByAnchor = EMPTY_FINDINGS_BY_ANCHOR,
+  dismissedFindingKeys = new Set(),
+  onDismissFinding = () => {},
+}: {
+  model: SyllabusGradeModel | null;
+  findingsByAnchor?: Map<string, FindingWithKey[]>;
+  dismissedFindingKeys?: Set<number>;
+  onDismissFinding?: (key: number) => void;
+}) {
   if (!model) return null;
   const weighted: SyllabusCategory[] = model.categories.filter((c) => c.weight !== null);
   if (weighted.length === 0) return null;
@@ -621,13 +841,20 @@ function SyllabusGradingBreakdown({ model }: { model: SyllabusGradeModel | null 
     <div className="real-course-table" role="table" aria-label="Grading breakdown">
       <h4 className="card-heading">Grading breakdown</h4>
       {weighted.map((c) => (
-        <div className="real-course-row" role="row" key={c.name}>
-          <span role="cell">{c.name}</span>
-          <span role="cell">{formatPercent(c.weight)}</span>
-          <span role="cell">{c.count === null ? 'Number of assessments: Unknown' : `${c.count} assessments`}</span>
-          <span role="cell" className="grade-evidence-note">
-            {c.evidence?.page ? `Source: page ${c.evidence.page}` : ''}
-          </span>
+        <div className="grade-breakdown-row" key={c.name}>
+          <div className="real-course-row" role="row">
+            <span role="cell">{c.name}</span>
+            <span role="cell">{formatPercent(c.weight)}</span>
+            <span role="cell">{c.count === null ? 'Number of assessments: Unknown' : `${c.count} assessments`}</span>
+            <span role="cell" className="grade-evidence-note">
+              {c.evidence?.page ? `Source: page ${c.evidence.page}` : ''}
+            </span>
+          </div>
+          <InlineFindings
+            findings={findingsByAnchor.get(`category:${c.name}`) ?? []}
+            dismissedFindingKeys={dismissedFindingKeys}
+            onDismissFinding={onDismissFinding}
+          />
         </div>
       ))}
       <div className="real-course-row" role="row">
@@ -642,10 +869,16 @@ function SyllabusRulesList({
   model,
   onIgnoreRule,
   busy,
+  findingsByAnchor = EMPTY_FINDINGS_BY_ANCHOR,
+  dismissedFindingKeys = new Set(),
+  onDismissFinding = () => {},
 }: {
   model: SyllabusGradeModel | null;
   onIgnoreRule: ((ruleIndex: number, warningIndices: number[]) => void) | undefined;
   busy: boolean;
+  findingsByAnchor?: Map<string, FindingWithKey[]>;
+  dismissedFindingKeys?: Set<number>;
+  onDismissFinding?: (key: number) => void;
 }) {
   if (!model || model.rules.length === 0) return null;
   return (
@@ -665,6 +898,11 @@ function SyllabusRulesList({
             {!isDeterministic && (
               <p className="empty-state">The syllabus does not provide enough information for CampusIQ to calculate this rule.</p>
             )}
+            <InlineFindings
+              findings={findingsByAnchor.get(`rule:${index}`) ?? []}
+              dismissedFindingKeys={dismissedFindingKeys}
+              onDismissFinding={onDismissFinding}
+            />
             {!isDeterministic && onIgnoreRule && (
               <button
                 type="button"
@@ -679,19 +917,5 @@ function SyllabusRulesList({
         );
       })}
     </div>
-  );
-}
-
-function SyllabusFindingsList({ findings }: { findings: SyllabusFinding[] }) {
-  const relevant = findings.filter((f) => f.severity !== 'valid');
-  if (relevant.length === 0) return null;
-  return (
-    <ul className="grade-findings-list" aria-label="Grading review notes">
-      {relevant.map((finding, i) => (
-        <li key={i} data-finding-code={finding.code} className={`grade-finding grade-finding--${finding.severity}`}>
-          {findingCopy(finding)}
-        </li>
-      ))}
-    </ul>
   );
 }

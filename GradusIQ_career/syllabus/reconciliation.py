@@ -189,7 +189,12 @@ def _check_duplicate_assessments(grade_model: GradeModel) -> list[Reconciliation
             code="duplicate_assessment",
             severity=ValidationSeverity.ERROR,
             message=f"multiple assessments share the same name and date: {names} (date={date_key!r})",
-            field=normalized_name,
+            # field includes date_key, not just normalized_name: two separate
+            # duplicate groups can share a name and differ only by date (e.g.
+            # "Quiz"/Sep 2 vs "Quiz"/Sep 9, each duplicated on its own date),
+            # and normalized_name alone would collapse those distinct findings
+            # onto the same field value.
+            field=f"{normalized_name}:{date_key}",
         )
         for (normalized_name, date_key), names in groups.items()
         if len(names) > 1
@@ -342,6 +347,10 @@ def _is_rule_deterministic(rule: GradingRule) -> bool:
 
 
 def _check_non_deterministic_rules(grade_model: GradeModel) -> list[ReconciliationFinding]:
+    # field is the rule's own index, not rule.rule_type.value: multiple rules
+    # of the same type (e.g. three "other" rules) previously collapsed onto
+    # an identical field value, making them indistinguishable to any caller
+    # trying to anchor a finding back to the one rule it's about.
     return [
         ReconciliationFinding(
             code="non_deterministic_grading_rule",
@@ -350,9 +359,9 @@ def _check_non_deterministic_rules(grade_model: GradeModel) -> list[Reconciliati
                 f"{rule.rule_type.value} rule is not structured precisely enough to apply "
                 f"deterministically: {rule.description}"
             ),
-            field=rule.rule_type.value,
+            field=f"rules[{index}]",
         )
-        for rule in grade_model.rules
+        for index, rule in enumerate(grade_model.rules)
         if not _is_rule_deterministic(rule)
     ]
 

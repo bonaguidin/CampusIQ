@@ -6552,16 +6552,50 @@ label.profile-form-check { display: flex; flex-direction: row; align-items: cent
 }
 .grade-rule-title { margin: 0 0 var(--sp-2); font-weight: 600; }
 .grade-rule-explanation { color: var(--muted); font-size: var(--text-sm); }
-.grade-findings-list { display: flex; flex-direction: column; gap: var(--sp-2); padding: 0; margin: 0; list-style: none; }
-.grade-finding {
-  padding: var(--sp-3);
-  border: 1px solid var(--line);
-  border-left-width: 4px;
-  border-radius: var(--radius);
-  font-size: var(--text-sm);
+.grade-breakdown-row { display: flex; flex-direction: column; }
+
+/* Inline review findings -- rendered next to the field/row/rule they're
+   about (see InlineFindings/GeneralFindings in GradeCalculatorPanel.tsx),
+   not as a separate flat list. Small marker column + compact text mirrors
+   the .rv-field/.rv-glyph provenance pattern (review/FieldRow.tsx). */
+.grade-inline-findings { display: flex; flex-direction: column; gap: 0.15rem; margin: 0.2rem 0 0.4rem; }
+.grade-inline-findings--general { margin-bottom: var(--sp-3); }
+.grade-inline-finding {
+  display: grid;
+  grid-template-columns: 1rem 1fr auto;
+  align-items: baseline;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0.15rem 0;
+  font-size: var(--text-xs);
+  color: var(--muted);
 }
-.grade-finding--warning { border-left-color: var(--muted); }
-.grade-finding--error { border-left-color: var(--error); }
+.grade-inline-finding-glyph {
+  font-family: var(--font-data);
+  text-align: center;
+  user-select: none;
+}
+.grade-inline-finding--error .grade-inline-finding-glyph { color: var(--error); }
+.grade-inline-finding-text { line-height: 1.4; }
+.grade-inline-finding--error .grade-inline-finding-text { color: var(--ink); }
+.grade-inline-finding-dismiss {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: none;
+  font-size: var(--text-sm);
+  line-height: 1;
+  color: var(--muted);
+  cursor: pointer;
+}
+.grade-inline-finding-dismiss:hover { border-color: var(--line); color: var(--ink); }
+.grade-inline-finding-dismiss:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
 .grade-evidence-note { color: var(--muted); font-size: var(--text-xs); }
 .grade-target-result { padding: var(--sp-3); border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
 
