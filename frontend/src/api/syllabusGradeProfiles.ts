@@ -204,7 +204,13 @@ async function readJson(response: Response): Promise<unknown> {
 function detailMessage(body: unknown, fallback: string): { message: string; code: string | null } {
   if (body && typeof body === 'object' && 'detail' in body) {
     const detail = (body as { detail: unknown }).detail;
-    if (typeof detail === 'string') return { message: detail, code: null };
+    if (typeof detail === 'string') {
+      const normalized = detail.trim().toLowerCase();
+      if (normalized === 'not found' || normalized === 'internal server error') {
+        return { message: fallback, code: null };
+      }
+      return { message: detail, code: null };
+    }
     if (detail && typeof detail === 'object') {
       const record = detail as Record<string, unknown>;
       const message = typeof record.message === 'string' ? record.message : fallback;
@@ -240,7 +246,7 @@ export async function listSyllabusGradeProfiles(accessToken: string): Promise<Sy
   const data = await request<{ syllabus_grade_profiles: SyllabusProfileSummary[] }>(
     BASE_URL,
     { method: 'GET', headers: authHeaders(accessToken) },
-    'Could not load your grade calculators.',
+    "We couldn't load your saved grade calculators. Try again.",
   );
   return data.syllabus_grade_profiles;
 }

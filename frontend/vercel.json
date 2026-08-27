@@ -99,6 +99,38 @@
       "destination": "/api/proxy?target=me-technical-electives"
     },
     {
+      "source": "/api/v2/student/me/syllabus-grade-profiles/ingest",
+      "destination": "/api/proxy?target=me-syllabus-ingest"
+    },
+    {
+      "source": "/api/v2/student/me/syllabus-grade-profiles/:id/corrections",
+      "destination": "/api/proxy?target=me-syllabus-corrections&id=:id"
+    },
+    {
+      "source": "/api/v2/student/me/syllabus-grade-profiles/:id/confirm",
+      "destination": "/api/proxy?target=me-syllabus-confirm&id=:id"
+    },
+    {
+      "source": "/api/v2/student/me/syllabus-grade-profiles/:id/grade-state",
+      "destination": "/api/proxy?target=me-syllabus-grade-state&id=:id"
+    },
+    {
+      "source": "/api/v2/student/me/syllabus-grade-profiles/:id/calculate",
+      "destination": "/api/proxy?target=me-syllabus-calculate&id=:id"
+    },
+    {
+      "source": "/api/v2/student/me/syllabus-grade-profiles/:id/solve-target",
+      "destination": "/api/proxy?target=me-syllabus-solve-target&id=:id"
+    },
+    {
+      "source": "/api/v2/student/me/syllabus-grade-profiles/:id",
+      "destination": "/api/proxy?target=me-syllabus-profile&id=:id"
+    },
+    {
+      "source": "/api/v2/student/me/syllabus-grade-profiles",
+      "destination": "/api/proxy?target=me-syllabus-profiles"
+    },
+    {
       "source": "/api/v2/student/me/planned-courses/:id",
       "destination": "/api/proxy?target=me-planned-course-remove&id=:id"
     },

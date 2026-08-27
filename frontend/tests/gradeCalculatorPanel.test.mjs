@@ -189,6 +189,8 @@ test('Grade Calculator: empty state, upload, review, confirm, grade entry, calcu
 
   // --- empty state ---
   await page.getByText('See what you need to reach your target grade').waitFor()
+  assert.equal(await page.locator('.grade-calculator-panel [role="alert"]').count(), 0)
+  assert.equal(await page.getByText('Not Found', { exact: true }).count(), 0)
   await page.getByRole('button', { name: 'Upload syllabus' }).click()
 
   // --- upload ---
@@ -233,4 +235,42 @@ test('Grade Calculator: empty state, upload, review, confirm, grade entry, calcu
       `horizontal overflow at ${width}px`,
     )
   }
+})
+
+test('Grade Calculator replaces a framework 404 with friendly list-load copy', { timeout: 30_000 }, async (t) => {
+  const planning = planningRoutes({ terms: [] })
+  const apiPlugin = {
+    name: 'grade-calculator-list-error',
+    configureServer(server) {
+      server.middlewares.use((request, response, next) => {
+        const path = request.url?.split('?')[0]
+        if (planning.handle(path, request.method, request, response)) return undefined
+        if (path === '/api/v2/student/me/requirement-satisfaction') return json(response, 404, { detail: 'Not found.' })
+        if (path?.startsWith('/api/v2/student/me/analysis-cache/')) return json(response, 404, { detail: 'Not found.' })
+        if (path === '/api/v2/student/me/syllabus-grade-profiles' && request.method === 'GET') {
+          return json(response, 404, { detail: 'Not Found' })
+        }
+        next()
+      })
+    },
+  }
+  const server = await createServer({
+    root: new URL('..', import.meta.url).pathname,
+    cacheDir: new URL('../node_modules/.vite-grade-calculator-list-error', import.meta.url).pathname,
+    logLevel: 'silent',
+    plugins: [apiPlugin],
+    server: { host: '127.0.0.1' },
+  })
+  await server.listen()
+  t.after(async () => server.close())
+  const address = server.httpServer?.address()
+  assert.ok(address && typeof address === 'object')
+  const browser = await chromium.launch()
+  t.after(async () => browser.close())
+  const page = await browser.newPage()
+  await page.goto(`http://127.0.0.1:${address.port}/authenticated-dashboard-preview.html?mode=complete`)
+  await page.getByRole('button', { name: 'Academic' }).click()
+  await page.getByRole('button', { name: 'Grade Calculator', exact: true }).click()
+  await page.getByRole('alert').getByText("We couldn't load your saved grade calculators. Try again.").waitFor()
+  assert.equal(await page.getByText('Not Found', { exact: true }).count(), 0)
 })
