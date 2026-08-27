@@ -364,6 +364,27 @@ def test_assessments_with_same_name_and_date_are_duplicates():
     assert any(f.code == "duplicate_assessment" for f in result.findings)
 
 
+def test_duplicate_assessment_field_is_unique_across_groups_with_the_same_name():
+    """Two separate duplicate-groups can share a name and differ only by
+    date (each "Quiz" duplicated on its own date) -- field must include the
+    date, or both findings collapse onto the same field value even though
+    they're about two different pairs of assessments.
+    """
+    model = GradeModel(
+        assessments=[
+            Assessment(name="Quiz", date="Sep 2"),
+            Assessment(name="quiz", date="Sep 2"),
+            Assessment(name="Quiz", date="Sep 9"),
+            Assessment(name="quiz", date="Sep 9"),
+        ],
+    )
+    result = reconcile_grade_model(model, content_from_pages([page(1, "x")]))
+    findings = [f for f in result.findings if f.code == "duplicate_assessment"]
+    assert len(findings) == 2
+    fields = {f.field for f in findings}
+    assert len(fields) == 2
+
+
 # --- conflicting threshold (section 28) --------------------------------------------
 
 
@@ -510,6 +531,28 @@ def test_extra_credit_rule_is_non_deterministic():
     )
     result = reconcile_grade_model(model, content_from_pages([page(1, "x")]))
     assert any(f.code == "non_deterministic_grading_rule" for f in result.findings)
+
+
+def test_non_deterministic_rule_field_is_unique_per_rule_instance():
+    """field must be the rule's own index, not its rule_type -- multiple
+    rules of the same type used to collapse onto an identical field value
+    (e.g. three "other" rules all reporting field="other"), which made them
+    indistinguishable to any caller (the frontend) trying to anchor a
+    finding back to the one specific rule it's about.
+    """
+    model = GradeModel(
+        rules=[
+            GradingRule(rule_type=GradingRuleType.OTHER, description="First unclear rule."),
+            GradingRule(rule_type=GradingRuleType.OTHER, description="Second unclear rule."),
+            GradingRule(rule_type=GradingRuleType.OTHER, description="Third unclear rule."),
+        ]
+    )
+    result = reconcile_grade_model(model, content_from_pages([page(1, "x")]))
+    findings = [f for f in result.findings if f.code == "non_deterministic_grading_rule"]
+    assert len(findings) == 3
+    fields = [f.field for f in findings]
+    assert fields == ["rules[0]", "rules[1]", "rules[2]"]
+    assert len(set(fields)) == 3
 
 
 # --- assessment-category reference --------------------------------------------------
