@@ -103,8 +103,18 @@ function json(response, status, body) {
 }
 
 test('Grade Calculator: empty state, upload, review, confirm, grade entry, calculate, target solve', { timeout: 45_000 }, async (t) => {
-  const planning = planningRoutes({ terms: [] })
+  // term id 'term-2' deliberately matches authenticatedDashboardPreview.tsx's
+  // ?currentTerm=inprogress fixture (CS 221 / MATH 251, both in_progress),
+  // so the eligible-course dropdown genuinely merges two sources under one
+  // term: in-progress courses from the `courses` prop (CS 221, MATH 251)
+  // and planned courses from this mock (PHYS 207) -- not just the latter.
+  const planning = planningRoutes({
+    terms: [{ key: '2026-Fall', id: 'term-2', label: 'Fall 2026', year: 2026, season: 'Fall', sequence: 1, start_date: '2026-08-24', end_date: '2026-12-10', enrolled: false, is_upcoming: true }],
+    upcomingTermKey: '2026-Fall',
+    state: { planned: [{ id: 'planned-phys', term_id: 'term-2', course_code: 'PHYS 207', title: 'Electricity and Magnetism', credit_hours: 4, catalog_course_id: null, created_at: null, kind: 'planned' }] },
+  })
   let state = 'empty' // empty -> reviewing -> corrected -> confirmed
+  let capturedIngestBody = null
 
   const apiPlugin = {
     name: 'grade-calculator-api',
@@ -119,7 +129,10 @@ test('Grade Calculator: empty state, upload, review, confirm, grade entry, calcu
           return json(response, 200, { syllabus_grade_profiles: [] })
         }
         if (path === '/api/v2/student/me/syllabus-grade-profiles/ingest' && request.method === 'POST') {
-          await readBody(request)
+          // Captured (not asserted here): an assertion failure thrown inside
+          // this middleware would reject the in-flight upload request rather
+          // than fail the test cleanly. Asserted after the upload completes.
+          capturedIngestBody = await readBody(request)
           state = 'reviewing'
           return json(response, 200, detail())
         }
@@ -200,7 +213,7 @@ test('Grade Calculator: empty state, upload, review, confirm, grade entry, calcu
   const browser = await chromium.launch()
   t.after(async () => browser.close())
   const page = await browser.newPage()
-  await page.goto(`${origin}/authenticated-dashboard-preview.html?mode=complete`)
+  await page.goto(`${origin}/authenticated-dashboard-preview.html?mode=complete&currentTerm=inprogress`)
 
   await page.getByRole('button', { name: 'Academic' }).click()
   await page.getByRole('button', { name: 'Grade Calculator', exact: true }).click()
@@ -215,12 +228,25 @@ test('Grade Calculator: empty state, upload, review, confirm, grade entry, calcu
   await page.setInputFiles('#syllabus-file', {
     name: 'syllabus.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-1.4 fake'),
   })
-  await page.fill('#syllabus-course-code', 'PHYS 207')
-  await page.fill('#syllabus-term', 'Fall 2026')
+  await page.selectOption('#syllabus-term', { label: 'Fall 2026' })
+  // --- the course dropdown genuinely merges eligibleCoursesByTerm from two
+  //     sources for this term: CS 221 comes ONLY from the `courses` prop
+  //     (an in_progress course, via ?currentTerm=inprogress), not from the
+  //     fetchPlannedCourses mock -- proving the prop is actually wired in,
+  //     not just passed through unused ---
+  const courseOptionsText = await page.locator('#syllabus-course-code option').allTextContents()
+  assert.ok(courseOptionsText.some((t) => t.includes('CS 221')), 'in_progress course from the courses prop must be selectable')
+  assert.ok(courseOptionsText.some((t) => t.includes('PHYS 207')), 'planned course must still be selectable alongside it')
+  await page.selectOption('#syllabus-course-code', 'PHYS 207')
   await page.getByRole('button', { name: 'Upload syllabus' }).click()
 
-  // --- review-required state with findings + curve rule ---
+  // --- institutionName actually reaches the ingest request body, not just
+  //     the component's own props ---
   await page.getByRole('heading', { name: 'Needs your review' }).waitFor()
+  assert.ok(capturedIngestBody, 'ingest request body was captured')
+  assert.match(capturedIngestBody, /name="institution"\r\n\r\nTexas A&M University\r\n/)
+
+  // --- review-required state with findings + curve rule ---
   await page.getByText('Your syllabus says grades may be curved').waitFor()
   await page.getByText("The syllabus does not provide enough information").waitFor()
 
