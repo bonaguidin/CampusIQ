@@ -1,4 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
+import { fetchPlannedCourses, fetchTerms } from '../api/planning';
+import type { PlannedCourse, PlanningTerm } from '../lib/termPlanning.mjs';
+import type { AcademicCourse } from '../types/studentIntelligenceProfile';
 import {
   SyllabusApiError,
   calculateSyllabusGrade,
@@ -137,9 +140,16 @@ function actualOnlyState(draft: GradeStateDraft) {
 
 interface Props {
   accessToken: string | null;
+  courses: AcademicCourse[];
+  institutionName: string | null;
 }
 
-export function GradeCalculatorPanel({ accessToken }: Props) {
+interface EligibleCourse {
+  code: string;
+  title: string | null;
+}
+
+export function GradeCalculatorPanel({ accessToken, courses, institutionName }: Props) {
   const [profiles, setProfiles] = useState<SyllabusProfileSummary[] | null>(null);
   const [listError, setListError] = useState<string | null>(null);
   const [selectedProfileId, setSelectedProfileId] = useState<string | null>(null);
@@ -151,6 +161,9 @@ export function GradeCalculatorPanel({ accessToken }: Props) {
   const [fields, setFields] = useState<UploadFields>({ institution: '', courseCode: '', term: '', section: '' });
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [academicTerms, setAcademicTerms] = useState<PlanningTerm[]>([]);
+  const [plannedCourses, setPlannedCourses] = useState<PlannedCourse[]>([]);
+  const [academicDataLoaded, setAcademicDataLoaded] = useState(false);
 
   const [busy, setBusy] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -178,6 +191,78 @@ export function GradeCalculatorPanel({ accessToken }: Props) {
       });
     return () => { cancelled = true; };
   }, [accessToken]);
+
+  useEffect(() => {
+    if (!accessToken || !showUpload) return;
+    let cancelled = false;
+    setAcademicDataLoaded(false);
+    void Promise.all([
+      fetchTerms({ slug: null, accessToken }),
+      fetchPlannedCourses({ slug: null, accessToken }),
+    ]).then(([termResult, plannedResult]) => {
+      if (cancelled) return;
+      setAcademicTerms(termResult.terms);
+      setPlannedCourses(plannedResult.plannedCourses);
+      setAcademicDataLoaded(true);
+    });
+    return () => { cancelled = true; };
+  }, [accessToken, showUpload]);
+
+  const eligibleCoursesByTerm = useMemo(() => {
+    const byTerm = new Map<string, Map<string, EligibleCourse>>();
+    const add = (termId: string | null, code: string, title: string | null) => {
+      if (!termId || !code.trim()) return;
+      const normalizedCode = code.trim().toUpperCase();
+      const termCourses = byTerm.get(termId) ?? new Map<string, EligibleCourse>();
+      const existing = termCourses.get(normalizedCode);
+      termCourses.set(normalizedCode, {
+        code: existing?.code ?? code.trim(),
+        title: existing?.title ?? title,
+      });
+      byTerm.set(termId, termCourses);
+    };
+    courses.filter((course) => course.status === 'in_progress')
+      .forEach((course) => add(course.term_id, course.course_code, course.title));
+    plannedCourses.forEach((course) => add(course.term_id, course.course_code, course.title));
+    return byTerm;
+  }, [courses, plannedCourses]);
+
+  const eligibleTerms = useMemo(() => {
+    const inProgressTermIds = new Set(
+      courses.filter((course) => course.status === 'in_progress').map((course) => course.term_id),
+    );
+    const byLabel = new Map<string, PlanningTerm>();
+    for (const term of academicTerms) {
+      if (term.id !== null && eligibleCoursesByTerm.has(term.id) && !byLabel.has(term.label)) {
+        byLabel.set(term.label, term);
+      }
+    }
+    return [...byLabel.values()].sort((a, b) => {
+      const relevance = (term: PlanningTerm) => term.id && inProgressTermIds.has(term.id) ? 0 : term.is_upcoming ? 1 : 2;
+      const relevanceDelta = relevance(a) - relevance(b);
+      if (relevanceDelta !== 0) return relevanceDelta;
+      if (a.year !== b.year) return b.year - a.year;
+      return (b.sequence ?? 0) - (a.sequence ?? 0) || a.label.localeCompare(b.label);
+    });
+  }, [academicTerms, courses, eligibleCoursesByTerm]);
+
+  const selectedTerm = eligibleTerms.find((term) => term.label === fields.term) ?? null;
+  const selectedTermCourses = useMemo(() => {
+    if (!selectedTerm?.id) return [];
+    return [...(eligibleCoursesByTerm.get(selectedTerm.id)?.values() ?? [])]
+      .sort((a, b) => a.code.localeCompare(b.code));
+  }, [eligibleCoursesByTerm, selectedTerm]);
+
+  useEffect(() => {
+    if (!showUpload || fields.term || eligibleTerms.length === 0) return;
+    const inProgressTermIds = new Set(
+      courses.filter((course) => course.status === 'in_progress').map((course) => course.term_id),
+    );
+    const defaultTerm = eligibleTerms.find((term) => term.id && inProgressTermIds.has(term.id))
+      ?? eligibleTerms.find((term) => term.is_upcoming)
+      ?? eligibleTerms[0];
+    setFields((current) => ({ ...current, term: defaultTerm.label, courseCode: '' }));
+  }, [courses, eligibleTerms, fields.term, showUpload]);
 
   function loadDetail(profileId: string) {
     if (!accessToken) return;
@@ -211,7 +296,7 @@ export function GradeCalculatorPanel({ accessToken }: Props) {
     setUploadError(null);
     try {
       const created = await ingestSyllabus(accessToken, file, {
-        institution: fields.institution || undefined,
+        institution: institutionName || fields.institution || undefined,
         course_code: fields.courseCode || undefined,
         term: fields.term || undefined,
         section: fields.section || undefined,
@@ -586,10 +671,38 @@ export function GradeCalculatorPanel({ accessToken }: Props) {
             className="form-input"
             onChange={(e) => setFile(e.target.files?.[0] ?? null)}
           />
-          <label className="form-label" htmlFor="syllabus-course-code">Course code</label>
-          <input id="syllabus-course-code" className="form-input" value={fields.courseCode} onChange={(e) => setFields((f) => ({ ...f, courseCode: e.target.value }))} placeholder="e.g. PHYS 207" />
           <label className="form-label" htmlFor="syllabus-term">Term</label>
-          <input id="syllabus-term" className="form-input" value={fields.term} onChange={(e) => setFields((f) => ({ ...f, term: e.target.value }))} placeholder="e.g. Fall 2026" />
+          <select
+            id="syllabus-term"
+            className="form-input"
+            value={fields.term}
+            onChange={(e) => setFields((f) => ({ ...f, term: e.target.value, courseCode: '' }))}
+            disabled={!academicDataLoaded || eligibleTerms.length === 0}
+          >
+            <option value="">Select a term</option>
+            {eligibleTerms.map((term) => <option key={term.key} value={term.label}>{term.label}</option>)}
+          </select>
+          <label className="form-label" htmlFor="syllabus-course-code">Course</label>
+          <select
+            id="syllabus-course-code"
+            className="form-input"
+            value={fields.courseCode}
+            onChange={(e) => setFields((f) => ({ ...f, courseCode: e.target.value }))}
+            disabled={!selectedTerm || selectedTermCourses.length === 0}
+          >
+            <option value="">Select a course</option>
+            {selectedTermCourses.map((course) => (
+              <option key={course.code.toUpperCase()} value={course.code}>
+                {course.code}{course.title ? ` — ${course.title}` : ''}
+              </option>
+            ))}
+          </select>
+          {academicDataLoaded && eligibleTerms.length === 0 && (
+            <p className="empty-state">No current or planned courses are available. Add your courses in Academic before uploading a syllabus.</p>
+          )}
+          {selectedTerm && selectedTermCourses.length === 0 && (
+            <p className="empty-state">No courses are available for this term.</p>
+          )}
 
           {uploading && (
             <p role="status" aria-live="polite">
@@ -599,7 +712,7 @@ export function GradeCalculatorPanel({ accessToken }: Props) {
           {uploadError && <p className="login-error" role="alert">{uploadError}</p>}
 
           <div className="grade-entry-actions">
-            <button type="submit" className="btn btn-primary" disabled={!file || uploading} aria-busy={uploading}>
+            <button type="submit" className="btn btn-primary" disabled={!file || !selectedTerm || !fields.courseCode || uploading} aria-busy={uploading}>
               {uploading ? 'Processing…' : 'Upload syllabus'}
             </button>
             <button type="button" className="btn btn-ghost" onClick={() => setShowUpload(false)} disabled={uploading}>

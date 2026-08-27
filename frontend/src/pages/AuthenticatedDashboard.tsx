@@ -606,7 +606,11 @@ export function AuthenticatedDashboard() {
 
             {activeSection === 'academic' && academicSubTab === 'grade-calculator' && (
               <div className="stage-section">
-                <GradeCalculatorPanel accessToken={accessToken} />
+                <GradeCalculatorPanel
+                  accessToken={accessToken}
+                  courses={dashboard.courses}
+                  institutionName={dashboard.institutionName}
+                />
               </div>
             )}
 
