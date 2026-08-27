@@ -143,12 +143,12 @@ test('authenticated dashboard covers canonical states, routing, themes, errors, 
   await page.getByRole('button', { name: 'Academic' }).click()
 
   // The top-level Academic item is itself the overview -- clicking it lands
-  // on Academic Overview, expands exactly two nested children, and neither
-  // child is named "Overview" (that state is internal, not a visible tab).
+  // on Academic Overview, expands exactly three nested children, and none
+  // is named "Overview" (that state is internal, not a visible tab).
   await page.getByRole('heading', { name: 'Academic Overview' }).waitFor()
   assert.deepEqual(
     await page.locator('.rail-subitem').allTextContents(),
-    ['GPA Calculator', 'Course Discovery'],
+    ['GPA Calculator', 'Grade Calculator', 'Course Discovery'],
   )
   assert.equal(await page.locator('.rail-subitem', { hasText: 'Overview' }).count(), 0)
   await page.getByText('Official GPA').first().waitFor()
