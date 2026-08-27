@@ -15,6 +15,7 @@ import json
 import logging
 import os
 import re
+import tempfile
 import threading
 import time
 from collections import deque
@@ -24,10 +25,10 @@ from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Any, Iterator, Literal, Mapping
 from uuid import UUID
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator, model_validator
 
 from dotenv import load_dotenv
-from fastapi import APIRouter, Depends, FastAPI, File, HTTPException, Request, UploadFile
+from fastapi import APIRouter, Depends, FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 
 from GradusIQ_career.academics.gpa import CourseRecord, GradeMapRow, Institution, compute_both
@@ -58,6 +59,35 @@ from GradusIQ_career.planning.planned import (
     list_planned,
     remove_planned,
 )
+from GradusIQ_career.syllabus import read as syllabus_read
+from GradusIQ_career.syllabus import service as syllabus_service
+from GradusIQ_career.syllabus import store as syllabus_store
+from GradusIQ_career.syllabus.calculator import (
+    AssessmentScoreInput,
+    CategoryScoreInput,
+    GradeCalculationError,
+    GradeModelNotReadyError,
+    StudentGradeState,
+    calculate_grade_projection,
+    solve_required_score,
+)
+from GradusIQ_career.syllabus.corrections import CorrectionApplicationError, GradeModelCorrection
+from GradusIQ_career.syllabus.extraction import (
+    SYLLABUS_EXTRACTION_PROMPT_VERSION,
+    SyllabusExtractionEmptyContentError,
+    SyllabusExtractionFailedError,
+    extract_grade_model,
+)
+from GradusIQ_career.syllabus.parsing import (
+    SyllabusEmptyDocumentError,
+    SyllabusEncryptedPDFError,
+    SyllabusInvalidPDFError,
+    SyllabusNoExtractableTextError,
+    parse_syllabus_pdf,
+)
+from GradusIQ_career.syllabus.reconciliation import reconcile_grade_model
+from GradusIQ_career.syllabus.relevance import select_relevant_syllabus_content
+from GradusIQ_career.syllabus.store import GradeStateConflictError
 from GradusIQ_career.planning.requirement_selections import (
     RequirementSelectionIdentity,
     load_requirement_selection_identities,
@@ -2218,6 +2248,515 @@ def patch_me_transcript_review(request: Request, row_id: str, body: dict) -> dic
         raise
     except Exception as exc:  # noqa: BLE001 -- RLS denial or transport
         raise HTTPException(status_code=502, detail="Could not update the course record.") from exc
+
+
+# ── Syllabus grade profiles (What-If Calculator) ──────────────────────────────
+#
+# Thin wrapper over GradusIQ_career/syllabus/{parsing,relevance,extraction,
+# reconciliation,corrections,service,read,calculator}.py -- no parsing,
+# extraction, reconciliation, or calculator logic is reimplemented here. Every
+# route resolves the caller's own student_id via _session_client/
+# _resolve_session_student_id (never trusts a client-supplied id), then
+# resolves any {profile_id} path parameter through a student-scoped read
+# (syllabus_store.get_profile(..., student_id=...)) before touching it, so a
+# profile_id for another student's row 404s exactly like a nonexistent one --
+# RLS backs this up, this is defense in depth, not a substitute for it.
+
+MAX_SYLLABUS_BYTES = 15 * 1024 * 1024
+
+
+def _syllabus_profile_summary(profile_row: dict) -> dict:
+    return {
+        "id": profile_row["id"],
+        "institution": profile_row.get("institution"),
+        "course_code": profile_row.get("course_code"),
+        "term": profile_row.get("term"),
+        "section": profile_row.get("section"),
+        "review_state": profile_row.get("review_state"),
+        "created_at": profile_row.get("created_at"),
+        "updated_at": profile_row.get("updated_at"),
+    }
+
+
+def _syllabus_revision_summary(revision_row: dict | None) -> dict | None:
+    if revision_row is None:
+        return None
+    return {
+        "id": revision_row["id"],
+        "source_filename": revision_row.get("source_filename"),
+        "source_page_count": revision_row.get("source_page_count"),
+        "reconciliation_status": revision_row.get("reconciliation_status"),
+        "confirmed_reconciliation_status": revision_row.get("confirmed_reconciliation_status"),
+        "confirmed_at": revision_row.get("confirmed_at"),
+        "created_at": revision_row.get("created_at"),
+    }
+
+
+def _syllabus_profile_detail_response(assembled: dict) -> dict:
+    reconciliation = assembled["reconciliation"]
+    grade_state = assembled["grade_state"]
+    current_revision = assembled["current_revision"]
+
+    # assembled["reconciliation"] is always the ORIGINAL extraction's result
+    # (service.get_syllabus_grade_profile never reconstructs the confirmed
+    # candidate's). Once corrections have been applied, the candidate's OWN
+    # re-reconciliation is what the review UI actually needs to show --
+    # reconstruct it here rather than exposing only the pre-correction status.
+    confirmed_reconciliation = None
+    if current_revision is not None and current_revision.get("confirmed_grade_model") is not None:
+        confirmed_reconciliation = syllabus_read.reconciliation_result_from_row(current_revision, confirmed=True)
+
+    return {
+        "id": assembled["profile"]["id"],
+        "course": {
+            "institution": assembled["profile"].get("institution"),
+            "course_code": assembled["profile"].get("course_code"),
+            "term": assembled["profile"].get("term"),
+            "section": assembled["profile"].get("section"),
+        },
+        "review_state": assembled["profile"].get("review_state"),
+        "calculator_ready": assembled["calculator_ready"],
+        "current_revision": _syllabus_revision_summary(current_revision),
+        "extracted_grade_model": (
+            assembled["extracted_grade_model"].model_dump(mode="json")
+            if assembled["extracted_grade_model"]
+            else None
+        ),
+        "confirmed_grade_model": (
+            assembled["confirmed_grade_model"].model_dump(mode="json")
+            if assembled["confirmed_grade_model"]
+            else None
+        ),
+        "reconciliation": reconciliation.model_dump(mode="json") if reconciliation else None,
+        "confirmed_reconciliation": (
+            confirmed_reconciliation.model_dump(mode="json") if confirmed_reconciliation else None
+        ),
+        "corrections": current_revision.get("corrections", []) if current_revision else [],
+        "grade_state": grade_state.model_dump(mode="json") if grade_state else None,
+        "grade_state_revision": assembled["grade_state_revision"],
+    }
+
+
+def _syllabus_grade_state_from_body(
+    category_scores: list["SyllabusCategoryScoreBody"],
+    assessment_scores: list["SyllabusAssessmentScoreBody"],
+) -> StudentGradeState:
+    try:
+        return StudentGradeState(
+            category_scores=[CategoryScoreInput.model_validate(c.model_dump()) for c in category_scores],
+            assessment_scores=[AssessmentScoreInput.model_validate(a.model_dump()) for a in assessment_scores],
+        )
+    except ValidationError as exc:
+        raise HTTPException(
+            status_code=422, detail={"error": "invalid_grade_state", "message": str(exc)}
+        ) from exc
+
+
+def _get_owned_syllabus_profile(client, profile_id: str, student_id: str) -> dict:
+    profile = syllabus_store.get_profile(client, profile_id=profile_id, student_id=student_id)
+    if profile is None:
+        raise HTTPException(status_code=404, detail="Syllabus grade profile not found.")
+    return profile
+
+
+class SyllabusCorrectionBody(BaseModel):
+    target_type: str
+    operation: str
+    category_name: str | None = None
+    assessment_name: str | None = None
+    threshold_letter: str | None = None
+    rule_index: int | None = None
+    warning_index: int | None = None
+    value: Any = None
+
+
+class SyllabusCorrectionsRequest(BaseModel):
+    corrections: list[SyllabusCorrectionBody] = Field(default_factory=list)
+
+
+class SyllabusCategoryScoreBody(BaseModel):
+    category_name: str
+    actual_score: float | None = None
+    projected_score: float | None = None
+
+
+class SyllabusAssessmentScoreBody(BaseModel):
+    assessment_name: str
+    actual_score: float | None = None
+    projected_score: float | None = None
+    earned_points: float | None = None
+    possible_points: float | None = None
+    points_status: str | None = None
+
+
+class SyllabusGradeStateRequest(BaseModel):
+    category_scores: list[SyllabusCategoryScoreBody] = Field(default_factory=list)
+    assessment_scores: list[SyllabusAssessmentScoreBody] = Field(default_factory=list)
+    expected_revision: int | None = None
+
+
+class SyllabusCalculateRequest(BaseModel):
+    category_scores: list[SyllabusCategoryScoreBody] = Field(default_factory=list)
+    assessment_scores: list[SyllabusAssessmentScoreBody] = Field(default_factory=list)
+
+
+class SyllabusTargetRequest(BaseModel):
+    category_scores: list[SyllabusCategoryScoreBody] = Field(default_factory=list)
+    assessment_scores: list[SyllabusAssessmentScoreBody] = Field(default_factory=list)
+    target_component: str
+    target_grade: float | None = None
+    target_letter: str | None = None
+
+
+@router.get(
+    "/api/v2/student/me/syllabus-grade-profiles",
+    dependencies=[Depends(authorize_proxy_request)],
+)
+def get_me_syllabus_grade_profiles(request: Request) -> dict:
+    """Cheap list: reads persisted rows only. Never parses, calls the
+    relevance selector, or calls an LLM.
+    """
+    client = _session_client(request)
+    student_id = _resolve_session_student_id(client)
+    profiles = syllabus_store.list_profiles(client, student_id=student_id)
+
+    items = []
+    for profile in profiles:
+        current_revision = None
+        if profile.get("current_revision_id") is not None:
+            current_revision = syllabus_store.get_revision(
+                client, revision_id=profile["current_revision_id"], student_id=student_id
+            )
+        summary = _syllabus_profile_summary(profile)
+        summary["calculator_ready"] = syllabus_read.calculator_ready(profile, current_revision)
+
+        # Current grade is computed from already-saved state only (pure
+        # Python calculator, no LLM/parsing) -- never recomputed via ingestion.
+        summary["current_grade"] = None
+        if summary["calculator_ready"]:
+            grade_state_row = syllabus_store.get_grade_state(client, profile_id=profile["id"], student_id=student_id)
+            if grade_state_row is not None:
+                try:
+                    reconciliation = syllabus_read.reconciliation_result_from_row(current_revision, confirmed=True)
+                    grade_state = syllabus_read.grade_state_from_row(grade_state_row)
+                    result = calculate_grade_projection(reconciliation, grade_state)
+                    summary["current_grade"] = result.current_grade
+                except (syllabus_read.PersistedRecordInvalidError, GradeCalculationError):
+                    summary["current_grade"] = None
+        items.append(summary)
+
+    return {"syllabus_grade_profiles": items}
+
+
+@router.get(
+    "/api/v2/student/me/syllabus-grade-profiles/{profile_id}",
+    dependencies=[Depends(authorize_proxy_request)],
+)
+def get_me_syllabus_grade_profile(request: Request, profile_id: str) -> dict:
+    client = _session_client(request)
+    student_id = _resolve_session_student_id(client)
+    assembled = syllabus_service.get_syllabus_grade_profile(client, profile_id=profile_id, student_id=student_id)
+    if assembled is None:
+        raise HTTPException(status_code=404, detail="Syllabus grade profile not found.")
+    try:
+        return _syllabus_profile_detail_response(assembled)
+    except syllabus_read.PersistedRecordInvalidError as exc:
+        raise HTTPException(status_code=502, detail="Could not read this syllabus grade profile.") from exc
+
+
+@router.post(
+    "/api/v2/student/me/syllabus-grade-profiles/ingest",
+    dependencies=[Depends(authorize_proxy_request)],
+)
+def post_me_syllabus_grade_profile_ingest(
+    request: Request,
+    file: UploadFile = File(...),
+    institution: str | None = Form(None),
+    course_code: str | None = Form(None),
+    term: str | None = Form(None),
+    section: str | None = Form(None),
+    profile_id: str | None = Form(None),
+) -> dict:
+    client = _session_client(request)
+    student_id = _resolve_session_student_id(client)
+
+    try:
+        file_bytes = file.file.read(MAX_SYLLABUS_BYTES + 1)
+    except Exception as exc:  # noqa: BLE001 -- a truncated upload stream
+        raise HTTPException(status_code=400, detail="Could not read the uploaded file.") from exc
+    finally:
+        file.file.close()
+
+    if len(file_bytes) > MAX_SYLLABUS_BYTES:
+        raise HTTPException(
+            status_code=413,
+            detail=f"Syllabus exceeds the {MAX_SYLLABUS_BYTES // (1024 * 1024)} MB limit.",
+        )
+    if not file_bytes:
+        raise HTTPException(status_code=422, detail="Uploaded file is empty.")
+
+    content_type = (file.content_type or "").split(";")[0].strip().lower()
+    filename = file.filename or ""
+    if content_type not in ("application/pdf", "application/x-pdf") and not filename.lower().endswith(".pdf"):
+        raise HTTPException(status_code=415, detail="Only PDF syllabi are supported. Scanned PDFs are not yet supported.")
+
+    with tempfile.NamedTemporaryFile(suffix=".pdf") as tmp:
+        tmp.write(file_bytes)
+        tmp.flush()
+        try:
+            parsed_document = parse_syllabus_pdf(tmp.name)
+        except SyllabusEncryptedPDFError as exc:
+            raise HTTPException(
+                status_code=422, detail={"error": "encrypted_pdf", "message": str(exc)}
+            ) from exc
+        except SyllabusNoExtractableTextError as exc:
+            raise HTTPException(
+                status_code=422,
+                detail={
+                    "error": "no_extractable_text",
+                    "message": "This looks like a scanned PDF. Scanned syllabi aren't supported yet -- try a digital PDF.",
+                },
+            ) from exc
+        except (SyllabusInvalidPDFError, SyllabusEmptyDocumentError) as exc:
+            raise HTTPException(status_code=422, detail={"error": "invalid_pdf", "message": str(exc)}) from exc
+
+    content = select_relevant_syllabus_content(parsed_document)
+    if content.selected_page_count == 0:
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "error": "no_relevant_content",
+                "message": "CampusIQ couldn't find grading information in this syllabus.",
+            },
+        )
+
+    try:
+        with request.app.state.ai_concurrency.slot():
+            grade_model = extract_grade_model(content, build_client())
+    except HTTPException:
+        raise
+    except (
+        AIConfigError,
+        AIRequestError,
+        AIResponseParseError,
+        SyllabusExtractionEmptyContentError,
+        SyllabusExtractionFailedError,
+    ) as exc:
+        raise HTTPException(
+            status_code=502,
+            detail={
+                "error": "extraction_failed",
+                "message": "CampusIQ couldn't read the grading structure from this syllabus.",
+            },
+        ) from exc
+
+    reconciliation = reconcile_grade_model(grade_model, content)
+
+    existing_matches = syllabus_store.find_profiles(
+        client, student_id=student_id, institution=institution, course_code=course_code, term=term
+    )
+
+    if profile_id:
+        profile = _get_owned_syllabus_profile(client, profile_id, student_id)
+    else:
+        profile = syllabus_store.create_profile(
+            client, student_id=student_id, institution=institution, course_code=course_code, term=term, section=section
+        )
+
+    try:
+        _, created = syllabus_service.ingest_syllabus_extraction(
+            client,
+            profile_id=profile["id"],
+            student_id=student_id,
+            source_bytes=file_bytes,
+            source_filename=file.filename,
+            content=content,
+            reconciliation=reconciliation,
+            parsed_document_schema_version=parsed_document.schema_version,
+            extraction_prompt_version=SYLLABUS_EXTRACTION_PROMPT_VERSION,
+        )
+    except HTTPException:
+        raise
+    except Exception as exc:  # noqa: BLE001 -- RLS denial, constraint, transport
+        raise HTTPException(status_code=502, detail="Could not save the parsed syllabus.") from exc
+
+    assembled = syllabus_service.get_syllabus_grade_profile(client, profile_id=profile["id"], student_id=student_id)
+    response = _syllabus_profile_detail_response(assembled)
+    response["revision_created"] = created
+    response["possible_duplicate_profiles"] = [
+        _syllabus_profile_summary(p) for p in existing_matches if p["id"] != profile["id"]
+    ]
+    return response
+
+
+@router.post(
+    "/api/v2/student/me/syllabus-grade-profiles/{profile_id}/corrections",
+    dependencies=[Depends(authorize_proxy_request)],
+)
+def post_me_syllabus_grade_profile_corrections(
+    request: Request, profile_id: str, body: SyllabusCorrectionsRequest
+) -> dict:
+    client = _session_client(request)
+    student_id = _resolve_session_student_id(client)
+    profile = _get_owned_syllabus_profile(client, profile_id, student_id)
+    if profile.get("current_revision_id") is None:
+        raise HTTPException(status_code=404, detail="No syllabus has been ingested for this profile yet.")
+
+    try:
+        corrections = [GradeModelCorrection.model_validate(c.model_dump()) for c in body.corrections]
+    except ValidationError as exc:
+        raise HTTPException(status_code=422, detail={"error": "invalid_correction", "message": str(exc)}) from exc
+
+    try:
+        syllabus_service.apply_student_corrections(
+            client, revision_id=profile["current_revision_id"], student_id=student_id, corrections=corrections
+        )
+    except syllabus_service.SyllabusRevisionNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except CorrectionApplicationError as exc:
+        raise HTTPException(status_code=422, detail={"error": "invalid_correction", "message": str(exc)}) from exc
+    except HTTPException:
+        raise
+    except Exception as exc:  # noqa: BLE001 -- RLS denial, constraint, transport
+        raise HTTPException(status_code=502, detail="Could not save your corrections.") from exc
+
+    assembled = syllabus_service.get_syllabus_grade_profile(client, profile_id=profile_id, student_id=student_id)
+    return _syllabus_profile_detail_response(assembled)
+
+
+@router.post(
+    "/api/v2/student/me/syllabus-grade-profiles/{profile_id}/confirm",
+    dependencies=[Depends(authorize_proxy_request)],
+)
+def post_me_syllabus_grade_profile_confirm(request: Request, profile_id: str) -> dict:
+    client = _session_client(request)
+    student_id = _resolve_session_student_id(client)
+    profile = _get_owned_syllabus_profile(client, profile_id, student_id)
+    if profile.get("current_revision_id") is None:
+        raise HTTPException(status_code=404, detail="No syllabus has been ingested for this profile yet.")
+
+    try:
+        syllabus_service.confirm_grade_model(
+            client, revision_id=profile["current_revision_id"], student_id=student_id
+        )
+    except syllabus_service.SyllabusRevisionNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except syllabus_service.GradeModelNotAcceptedError as exc:
+        raise HTTPException(status_code=409, detail={"error": "not_accepted", "message": str(exc)}) from exc
+    except HTTPException:
+        raise
+    except Exception as exc:  # noqa: BLE001 -- RLS denial, constraint, transport
+        raise HTTPException(status_code=502, detail="Could not confirm this grading model.") from exc
+
+    assembled = syllabus_service.get_syllabus_grade_profile(client, profile_id=profile_id, student_id=student_id)
+    return _syllabus_profile_detail_response(assembled)
+
+
+@router.put(
+    "/api/v2/student/me/syllabus-grade-profiles/{profile_id}/grade-state",
+    dependencies=[Depends(authorize_proxy_request)],
+)
+def put_me_syllabus_grade_profile_grade_state(
+    request: Request, profile_id: str, body: SyllabusGradeStateRequest
+) -> dict:
+    client = _session_client(request)
+    student_id = _resolve_session_student_id(client)
+    _get_owned_syllabus_profile(client, profile_id, student_id)
+
+    grade_state = _syllabus_grade_state_from_body(body.category_scores, body.assessment_scores)
+
+    try:
+        row = syllabus_service.save_student_grade_state(
+            client,
+            profile_id=profile_id,
+            student_id=student_id,
+            grade_state=grade_state,
+            expected_revision=body.expected_revision,
+        )
+    except GradeStateConflictError as exc:
+        raise HTTPException(status_code=409, detail={"error": "stale_revision", "message": str(exc)}) from exc
+    except HTTPException:
+        raise
+    except Exception as exc:  # noqa: BLE001 -- RLS denial, constraint, transport
+        raise HTTPException(status_code=502, detail="Could not save your grades.") from exc
+
+    return {
+        "revision": row["revision"],
+        "category_scores": row.get("category_scores", []),
+        "assessment_scores": row.get("assessment_scores", []),
+    }
+
+
+@router.post(
+    "/api/v2/student/me/syllabus-grade-profiles/{profile_id}/calculate",
+    dependencies=[Depends(authorize_proxy_request)],
+)
+def post_me_syllabus_grade_profile_calculate(
+    request: Request, profile_id: str, body: SyllabusCalculateRequest
+) -> dict:
+    client = _session_client(request)
+    student_id = _resolve_session_student_id(client)
+    assembled = syllabus_service.get_syllabus_grade_profile(client, profile_id=profile_id, student_id=student_id)
+    if assembled is None:
+        raise HTTPException(status_code=404, detail="Syllabus grade profile not found.")
+    if not assembled["calculator_ready"]:
+        raise HTTPException(
+            status_code=409,
+            detail={"error": "not_calculator_ready", "message": "Confirm your grading model before calculating."},
+        )
+
+    grade_state = _syllabus_grade_state_from_body(body.category_scores, body.assessment_scores)
+    confirmed_reconciliation = syllabus_read.reconciliation_result_from_row(
+        assembled["current_revision"], confirmed=True
+    )
+
+    try:
+        result = calculate_grade_projection(confirmed_reconciliation, grade_state)
+    except GradeModelNotReadyError as exc:
+        raise HTTPException(status_code=409, detail={"error": "not_calculator_ready", "message": str(exc)}) from exc
+    except GradeCalculationError as exc:
+        raise HTTPException(status_code=422, detail={"error": "calculation_failed", "message": str(exc)}) from exc
+
+    return result.model_dump(mode="json")
+
+
+@router.post(
+    "/api/v2/student/me/syllabus-grade-profiles/{profile_id}/solve-target",
+    dependencies=[Depends(authorize_proxy_request)],
+)
+def post_me_syllabus_grade_profile_solve_target(
+    request: Request, profile_id: str, body: SyllabusTargetRequest
+) -> dict:
+    client = _session_client(request)
+    student_id = _resolve_session_student_id(client)
+    assembled = syllabus_service.get_syllabus_grade_profile(client, profile_id=profile_id, student_id=student_id)
+    if assembled is None:
+        raise HTTPException(status_code=404, detail="Syllabus grade profile not found.")
+    if not assembled["calculator_ready"]:
+        raise HTTPException(
+            status_code=409,
+            detail={"error": "not_calculator_ready", "message": "Confirm your grading model before calculating."},
+        )
+
+    grade_state = _syllabus_grade_state_from_body(body.category_scores, body.assessment_scores)
+    confirmed_reconciliation = syllabus_read.reconciliation_result_from_row(
+        assembled["current_revision"], confirmed=True
+    )
+
+    try:
+        result = solve_required_score(
+            confirmed_reconciliation,
+            grade_state,
+            target_component=body.target_component,
+            target_grade=body.target_grade,
+            target_letter=body.target_letter,
+        )
+    except GradeModelNotReadyError as exc:
+        raise HTTPException(status_code=409, detail={"error": "not_calculator_ready", "message": str(exc)}) from exc
+    except GradeCalculationError as exc:
+        raise HTTPException(status_code=422, detail={"error": "invalid_target", "message": str(exc)}) from exc
+
+    return result.model_dump(mode="json")
 
 
 # ── v2: term-organized academic planning ─────────────────────────────────────

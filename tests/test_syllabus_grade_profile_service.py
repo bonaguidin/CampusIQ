@@ -1,0 +1,503 @@
+"""Service-level Phase 7 tests: ingest -> correct -> confirm -> read, against
+an in-memory fake Supabase client (PostgREST's chainable .table().select()/
+.insert()/.update().eq().execute() shape only -- no RLS/constraint
+enforcement here; those are covered by the real local-Postgres migration
+test in test_syllabus_grade_profiles_migration.py).
+"""
+
+import uuid as uuid_lib
+
+import pytest
+
+from GradusIQ_career.syllabus import service
+from GradusIQ_career.syllabus.calculator import (
+    AssessmentScoreInput,
+    CategoryScoreInput,
+    GradeModelNotReadyError,
+    ScoreStatus,
+    StudentGradeState,
+    calculate_grade_projection,
+)
+from GradusIQ_career.syllabus.corrections import (
+    CorrectionApplicationError,
+    CorrectionOperation,
+    CorrectionTargetType,
+    GradeModelCorrection,
+)
+from GradusIQ_career.syllabus.models import (
+    Assessment,
+    GradeCategory,
+    GradeModel,
+    GradeThreshold,
+    GradingMethod,
+    GradingRule,
+    GradingRuleType,
+    SourceEvidence,
+)
+from GradusIQ_career.syllabus.reconciliation import ReconciliationStatus, reconcile_grade_model
+from GradusIQ_career.syllabus.relevance import RelevantPage, RelevantSyllabusContent
+from GradusIQ_career.syllabus.store import GradeStateConflictError
+from GradusIQ_career.syllabus.store_helpers import now_iso
+
+STUDENT_A = "10000000-0000-0000-0000-000000000001"
+STUDENT_B = "10000000-0000-0000-0000-000000000002"
+
+
+# --- in-memory fake Supabase client -------------------------------------------------
+
+
+class _FakeResponse:
+    def __init__(self, data):
+        self.data = data
+
+
+class _FakeQuery:
+    def __init__(self, table, op, payload=None):
+        self.table = table
+        self.op = op
+        self.payload = payload
+        self.filters = []
+        self._order = None
+
+    def eq(self, col, val):
+        self.filters.append((col, val))
+        return self
+
+    def order(self, col, desc=False):
+        self._order = (col, desc)
+        return self
+
+    def execute(self):
+        return self.table._execute(self)
+
+
+class _FakeTable:
+    def __init__(self, client, name):
+        self.client = client
+        self.name = name
+
+    def select(self, *_args):
+        return _FakeQuery(self, "select")
+
+    def insert(self, payload):
+        return _FakeQuery(self, "insert", payload)
+
+    def update(self, payload):
+        return _FakeQuery(self, "update", payload)
+
+    def _rows(self):
+        return self.client.data.setdefault(self.name, [])
+
+    def _matched(self, query):
+        return [r for r in self._rows() if all(r.get(c) == v for c, v in query.filters)]
+
+    def _execute(self, query):
+        if query.op == "select":
+            matched = self._matched(query)
+            if query._order:
+                col, desc = query._order
+                matched = sorted(matched, key=lambda r: r.get(col) or "", reverse=desc)
+            return _FakeResponse([dict(r) for r in matched])
+        if query.op == "insert":
+            row = dict(query.payload)
+            row.setdefault("id", str(uuid_lib.uuid4()))
+            row.setdefault("created_at", now_iso())
+            row.setdefault("updated_at", now_iso())
+            if self.name == "syllabus_grade_revisions":
+                row.setdefault("corrections", [])
+                row.setdefault("confirmed_grade_model", None)
+                row.setdefault("confirmed_reconciliation_status", None)
+                row.setdefault("confirmed_at", None)
+            if self.name == "syllabus_grade_profiles":
+                row.setdefault("current_revision_id", None)
+            self._rows().append(row)
+            return _FakeResponse([dict(row)])
+        if query.op == "update":
+            matched = self._matched(query)
+            for row in matched:
+                row.update(query.payload)
+            return _FakeResponse([dict(r) for r in matched])
+        raise NotImplementedError(query.op)
+
+
+class FakeSupabaseClient:
+    def __init__(self):
+        self.data: dict[str, list[dict]] = {}
+
+    def table(self, name):
+        return _FakeTable(self, name)
+
+
+@pytest.fixture
+def client():
+    return FakeSupabaseClient()
+
+
+# --- fixtures ------------------------------------------------------------------------
+
+
+def evidence(page_number: int, text: str) -> SourceEvidence:
+    return SourceEvidence(page=page_number, text=text, confidence=1.0)
+
+
+def content_for(*texts: str) -> RelevantSyllabusContent:
+    pages = [RelevantPage(page_number=i + 1, markdown=text, relevance_score=5.0) for i, text in enumerate(texts)]
+    combined = "\n\n".join(f"<!-- page: {p.page_number} -->\n\n{p.markdown}" for p in pages)
+    return RelevantSyllabusContent(
+        selected_pages=pages, selected_sections=[], markdown=combined, source_page_count=len(pages), selected_page_count=len(pages)
+    )
+
+
+def clean_model() -> GradeModel:
+    return GradeModel(
+        grading_method=GradingMethod.WEIGHTED,
+        categories=[
+            GradeCategory(name="Midterm", weight=30, evidence=evidence(1, "Midterm: 30%")),
+            GradeCategory(name="Final", weight=40, evidence=evidence(1, "Final: 40%")),
+            GradeCategory(name="Project", weight=30, evidence=evidence(1, "Project: 30%")),
+        ],
+        grade_thresholds=[
+            GradeThreshold(letter="A", minimum=90, maximum=100, evidence=evidence(1, "A: 90-100")),
+            GradeThreshold(letter="F", maximum=59, evidence=evidence(1, "F: below 60")),
+        ],
+    )
+
+
+CLEAN_CONTENT = content_for("Midterm: 30% Final: 40% Project: 30% A: 90-100 F: below 60")
+
+
+def phys_207_with_curve() -> GradeModel:
+    return GradeModel(
+        grading_method=GradingMethod.WEIGHTED,
+        categories=[
+            GradeCategory(name="Mid-term Exam", weight=35, evidence=evidence(1, "Mid-term Exam: 35%")),
+            GradeCategory(name="Final Exam", weight=50, evidence=evidence(1, "Final Exam: 50%")),
+            GradeCategory(name="Lecture Quizzes", weight=5, evidence=evidence(1, "Lecture Quizzes: 5%")),
+            GradeCategory(name="Recitation Quizzes", weight=10, evidence=evidence(1, "Recitation Quizzes: 10%")),
+        ],
+        rules=[
+            GradingRule(
+                rule_type=GradingRuleType.CURVE,
+                description="Grades may be curved upward.",
+                evidence=evidence(1, "Grades may be curved upward."),
+            )
+        ],
+    )
+
+
+PHYS_207_CONTENT = content_for(
+    "Mid-term Exam: 35% Final Exam: 50% Lecture Quizzes: 5% Recitation Quizzes: 10% Grades may be curved upward."
+)
+
+
+def ingest(client, model, content, *, source_bytes=b"syllabus-bytes", profile_kwargs=None):
+    profile = service.get_or_create_profile(
+        client,
+        student_id=STUDENT_A,
+        institution="tamu",
+        course_code=(profile_kwargs or {}).get("course_code", "PHYS 207"),
+        term="Fall 2026",
+    )
+    reconciliation = reconcile_grade_model(model, content)
+    revision, created = service.ingest_syllabus_extraction(
+        client,
+        profile_id=profile["id"],
+        student_id=STUDENT_A,
+        source_bytes=source_bytes,
+        source_filename="syllabus.pdf",
+        content=content,
+        reconciliation=reconciliation,
+        parsed_document_schema_version="1",
+        extraction_prompt_version="1",
+    )
+    return profile, revision, created, reconciliation
+
+
+# --- Test 31: clean accepted model round trip ----------------------------------------
+
+
+def test_clean_accepted_model_round_trips_and_calculator_ready(client):
+    profile, revision, created, reconciliation = ingest(client, clean_model(), CLEAN_CONTENT)
+    assert created is True
+    assert reconciliation.status == ReconciliationStatus.ACCEPTED
+
+    service.confirm_grade_model(client, revision_id=revision["id"], student_id=STUDENT_A)
+
+    assembled = service.get_syllabus_grade_profile(client, profile_id=profile["id"], student_id=STUDENT_A)
+    assert assembled["calculator_ready"] is True
+    assert assembled["confirmed_grade_model"] == assembled["extracted_grade_model"]
+
+    result_before = calculate_grade_projection(reconciliation, StudentGradeState(
+        category_scores=[
+            CategoryScoreInput(category_name="Midterm", actual_score=90),
+            CategoryScoreInput(category_name="Final", actual_score=90),
+            CategoryScoreInput(category_name="Project", actual_score=90),
+        ]
+    ))
+    result_after = calculate_grade_projection(assembled["reconciliation"], StudentGradeState(
+        category_scores=[
+            CategoryScoreInput(category_name="Midterm", actual_score=90),
+            CategoryScoreInput(category_name="Final", actual_score=90),
+            CategoryScoreInput(category_name="Project", actual_score=90),
+        ]
+    ))
+    assert result_before.projected_grade == result_after.projected_grade == 90.0
+
+
+# --- Test 32: PHYS 207 review workflow ------------------------------------------------
+
+
+def test_phys_207_with_curve_needs_review_then_correction_reaches_accepted(client):
+    profile, revision, _, reconciliation = ingest(client, phys_207_with_curve(), PHYS_207_CONTENT)
+    assert reconciliation.status == ReconciliationStatus.NEEDS_STUDENT_REVIEW
+
+    assembled = service.get_syllabus_grade_profile(client, profile_id=profile["id"], student_id=STUDENT_A)
+    assert assembled["calculator_ready"] is False
+    assert any(r.rule_type == GradingRuleType.CURVE for r in assembled["extracted_grade_model"].rules)
+
+    with pytest.raises(service.GradeModelNotAcceptedError):
+        service.confirm_grade_model(client, revision_id=revision["id"], student_id=STUDENT_A)
+
+    # Student resolves the curve: remove it from the operational model,
+    # but the ORIGINAL extraction (with the curve) must remain untouched.
+    updated = service.apply_student_corrections(
+        client,
+        revision_id=revision["id"],
+        student_id=STUDENT_A,
+        corrections=[
+            GradeModelCorrection(target_type=CorrectionTargetType.RULE, operation=CorrectionOperation.REMOVE_RULE, rule_index=0)
+        ],
+    )
+    assert updated["confirmed_reconciliation_status"] == "accepted"
+
+    confirmed = service.confirm_grade_model(client, revision_id=revision["id"], student_id=STUDENT_A)
+    assert confirmed["confirmed_at"] is not None
+
+    final = service.get_syllabus_grade_profile(client, profile_id=profile["id"], student_id=STUDENT_A)
+    assert final["calculator_ready"] is True
+    assert any(r.rule_type == GradingRuleType.CURVE for r in final["extracted_grade_model"].rules)
+    assert final["confirmed_grade_model"].rules == []
+
+
+# --- Test 33: original extraction immutable -------------------------------------------
+
+
+def test_original_extraction_immutable_after_correction(client):
+    profile, revision, _, _ = ingest(client, clean_model(), CLEAN_CONTENT)
+
+    service.apply_student_corrections(
+        client,
+        revision_id=revision["id"],
+        student_id=STUDENT_A,
+        corrections=[
+            GradeModelCorrection(
+                target_type=CorrectionTargetType.CATEGORY,
+                operation=CorrectionOperation.SET_WEIGHT,
+                category_name="Midterm",
+                value=25,
+            ),
+            GradeModelCorrection(
+                target_type=CorrectionTargetType.CATEGORY,
+                operation=CorrectionOperation.SET_WEIGHT,
+                category_name="Project",
+                value=35,
+            ),
+        ],
+    )
+
+    assembled = service.get_syllabus_grade_profile(client, profile_id=profile["id"], student_id=STUDENT_A)
+    extracted_midterm = next(c for c in assembled["extracted_grade_model"].categories if c.name == "Midterm")
+    confirmed_midterm = next(c for c in assembled["confirmed_grade_model"].categories if c.name == "Midterm")
+    assert extracted_midterm.weight == 30
+    assert confirmed_midterm.weight == 25
+    assert assembled["current_revision"]["corrections"][0]["value"] == 25
+
+
+# --- Test 34: grade-state round trip --------------------------------------------------
+
+
+def test_grade_state_round_trip_preserves_actual_vs_projected(client):
+    profile, revision, _, _ = ingest(client, phys_207_with_curve(), PHYS_207_CONTENT)
+    state = StudentGradeState(
+        category_scores=[
+            CategoryScoreInput(category_name="Mid-term Exam", actual_score=78),
+            CategoryScoreInput(category_name="Final Exam", projected_score=88),
+            CategoryScoreInput(category_name="Lecture Quizzes", actual_score=92),
+        ]
+    )
+    service.save_student_grade_state(client, profile_id=profile["id"], student_id=STUDENT_A, grade_state=state)
+
+    assembled = service.get_syllabus_grade_profile(client, profile_id=profile["id"], student_id=STUDENT_A)
+    reloaded = assembled["grade_state"]
+    by_name = {c.category_name: c for c in reloaded.category_scores}
+    assert by_name["Mid-term Exam"].actual_score == 78
+    assert by_name["Mid-term Exam"].projected_score is None
+    assert by_name["Final Exam"].projected_score == 88
+    assert by_name["Final Exam"].actual_score is None
+    assert "Recitation Quizzes" not in by_name  # never converted to zero
+
+
+def test_grade_state_optimistic_concurrency(client):
+    profile, revision, _, _ = ingest(client, clean_model(), CLEAN_CONTENT)
+    state1 = StudentGradeState(category_scores=[CategoryScoreInput(category_name="Midterm", actual_score=80)])
+    row1 = service.save_student_grade_state(client, profile_id=profile["id"], student_id=STUDENT_A, grade_state=state1)
+    assert row1["revision"] == 1
+
+    state2 = StudentGradeState(category_scores=[CategoryScoreInput(category_name="Midterm", actual_score=85)])
+    row2 = service.save_student_grade_state(
+        client, profile_id=profile["id"], student_id=STUDENT_A, grade_state=state2, expected_revision=1
+    )
+    assert row2["revision"] == 2
+
+    # Stale expected_revision (still 1) must be rejected, not silently overwrite.
+    with pytest.raises(GradeStateConflictError):
+        service.save_student_grade_state(
+            client, profile_id=profile["id"], student_id=STUDENT_A, grade_state=state2, expected_revision=1
+        )
+
+
+# --- Test 35: source revision ----------------------------------------------------------
+
+
+def test_new_source_does_not_inherit_old_confirmation(client):
+    profile, revision_a, _, _ = ingest(client, clean_model(), CLEAN_CONTENT, source_bytes=b"source-a")
+    service.confirm_grade_model(client, revision_id=revision_a["id"], student_id=STUDENT_A)
+
+    assembled = service.get_syllabus_grade_profile(client, profile_id=profile["id"], student_id=STUDENT_A)
+    assert assembled["profile"]["review_state"] == "confirmed"
+    assert assembled["calculator_ready"] is True
+
+    # A materially new source for the SAME profile.
+    revised_model = clean_model()
+    revised_model.categories[0].weight = 25
+    revised_model.categories[2].weight = 35
+    new_content = content_for("Midterm: 25% Final: 40% Project: 35% A: 90-100 F: below 60")
+    revision_b, created_b = service.ingest_syllabus_extraction(
+        client,
+        profile_id=profile["id"],
+        student_id=STUDENT_A,
+        source_bytes=b"source-b",
+        source_filename="syllabus_v2.pdf",
+        content=new_content,
+        reconciliation=reconcile_grade_model(revised_model, new_content),
+    )
+    assert created_b is True
+
+    reloaded_profile = next(row for row in client.data["syllabus_grade_profiles"] if row["id"] == profile["id"])
+    assert reloaded_profile["review_state"] == "reconfirm_required"
+
+    # Old revision A is untouched.
+    old_row = next(r for r in client.data["syllabus_grade_revisions"] if r["id"] == revision_a["id"])
+    assert old_row["confirmed_at"] is not None
+    assert old_row["extracted_grade_model"]["categories"][0]["weight"] == 30
+
+
+# --- Test 36: idempotent same source ---------------------------------------------------
+
+
+def test_ingesting_identical_source_twice_is_idempotent(client):
+    profile, revision_1, created_1, _ = ingest(client, clean_model(), CLEAN_CONTENT, source_bytes=b"same-bytes")
+    profile_2, revision_2, created_2, _ = ingest(client, clean_model(), CLEAN_CONTENT, source_bytes=b"same-bytes")
+    assert created_1 is True
+    assert created_2 is False
+    assert revision_1["id"] == revision_2["id"]
+    assert len(client.data["syllabus_grade_revisions"]) == 1
+
+
+# --- Test 38: invalid correction --------------------------------------------------------
+
+
+def test_invalid_correction_is_rejected_and_not_partially_applied(client):
+    profile, revision, _, _ = ingest(client, clean_model(), CLEAN_CONTENT)
+    with pytest.raises(CorrectionApplicationError):
+        service.apply_student_corrections(
+            client,
+            revision_id=revision["id"],
+            student_id=STUDENT_A,
+            corrections=[
+                GradeModelCorrection(
+                    target_type=CorrectionTargetType.CATEGORY,
+                    operation=CorrectionOperation.SET_WEIGHT,
+                    category_name="Midterm",
+                    value=10,
+                ),
+                GradeModelCorrection(
+                    target_type=CorrectionTargetType.CATEGORY,
+                    operation=CorrectionOperation.SET_WEIGHT,
+                    category_name="Nonexistent Category",
+                    value=5,
+                ),
+            ],
+        )
+    # No revision update was persisted -- the whole correction list failed atomically.
+    row = next(r for r in client.data["syllabus_grade_revisions"] if r["id"] == revision["id"])
+    assert row["confirmed_grade_model"] is None
+
+
+def test_negative_weight_correction_rejected(client):
+    profile, revision, _, _ = ingest(client, clean_model(), CLEAN_CONTENT)
+    with pytest.raises(CorrectionApplicationError):
+        service.apply_student_corrections(
+            client,
+            revision_id=revision["id"],
+            student_id=STUDENT_A,
+            corrections=[
+                GradeModelCorrection(
+                    target_type=CorrectionTargetType.CATEGORY,
+                    operation=CorrectionOperation.SET_WEIGHT,
+                    category_name="Midterm",
+                    value=-5,
+                )
+            ],
+        )
+
+
+def test_invalid_grading_method_correction_rejected(client):
+    profile, revision, _, _ = ingest(client, clean_model(), CLEAN_CONTENT)
+    with pytest.raises(CorrectionApplicationError):
+        service.apply_student_corrections(
+            client,
+            revision_id=revision["id"],
+            student_id=STUDENT_A,
+            corrections=[
+                GradeModelCorrection(
+                    target_type=CorrectionTargetType.GRADING_METHOD,
+                    operation=CorrectionOperation.SET_GRADING_METHOD,
+                    value="curved",
+                )
+            ],
+        )
+
+
+# --- Test 39: correction cannot bypass Phase 5 ------------------------------------------
+
+
+def test_correction_producing_120_percent_stays_needs_review(client):
+    profile, revision, _, _ = ingest(client, clean_model(), CLEAN_CONTENT)
+    updated = service.apply_student_corrections(
+        client,
+        revision_id=revision["id"],
+        student_id=STUDENT_A,
+        corrections=[
+            GradeModelCorrection(target_type=CorrectionTargetType.CATEGORY, operation=CorrectionOperation.SET_WEIGHT, category_name="Midterm", value=40),
+            GradeModelCorrection(target_type=CorrectionTargetType.CATEGORY, operation=CorrectionOperation.SET_WEIGHT, category_name="Final", value=40),
+            GradeModelCorrection(target_type=CorrectionTargetType.CATEGORY, operation=CorrectionOperation.SET_WEIGHT, category_name="Project", value=40),
+        ],
+    )
+    assert updated["confirmed_reconciliation_status"] == "needs_student_review"
+
+    assembled = service.get_syllabus_grade_profile(client, profile_id=profile["id"], student_id=STUDENT_A)
+    assert assembled["calculator_ready"] is False
+
+    with pytest.raises(service.GradeModelNotAcceptedError):
+        service.confirm_grade_model(client, revision_id=revision["id"], student_id=STUDENT_A)
+
+
+# --- trust gate: NEEDS_STUDENT_REVIEW still blocks the calculator ----------------------
+
+
+def test_needs_review_reconciliation_still_blocks_calculator(client):
+    profile, revision, _, reconciliation = ingest(client, phys_207_with_curve(), PHYS_207_CONTENT)
+    assert reconciliation.status == ReconciliationStatus.NEEDS_STUDENT_REVIEW
+    with pytest.raises(GradeModelNotReadyError):
+        calculate_grade_projection(reconciliation, StudentGradeState())

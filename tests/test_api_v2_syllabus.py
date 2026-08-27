@@ -1,0 +1,672 @@
+"""Tests for /api/v2/student/me/syllabus-grade-profiles/*.
+
+No network: OpenRouter is a fake client, Supabase is a small in-memory
+double. Mirrors tests/test_api_v2_resume.py's fixture shape.
+"""
+
+import io
+import json
+
+import pytest
+from fastapi.testclient import TestClient
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas as rl_canvas
+
+from GradusIQ_career import api
+from GradusIQ_career.ai.types import AIResponse
+
+TEST_PROXY_SECRET = "test-proxy-secret"
+PROXY_HEADERS = {api.PROXY_SECRET_HEADER: TEST_PROXY_SECRET}
+AUTH = {"Authorization": "Bearer real-session-jwt"}
+HEADERS = {**PROXY_HEADERS, **AUTH}
+
+STUDENT_A = "8f14e45f-ceea-467a-9f0e-1c2d3e4f5a6b"
+STUDENT_B = "1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d"
+
+LIST_URL = "/api/v2/student/me/syllabus-grade-profiles"
+INGEST_URL = "/api/v2/student/me/syllabus-grade-profiles/ingest"
+
+
+def profile_url(profile_id: str) -> str:
+    return f"{LIST_URL}/{profile_id}"
+
+
+# --- PDF fixtures (mirrors tests/test_syllabus_parsing.py's builder) ----------------
+
+
+def _build_pdf(pages: list[list[tuple[str, int, bool]]]) -> bytes:
+    buf = io.BytesIO()
+    canvas = rl_canvas.Canvas(buf, pagesize=letter)
+    for page in pages:
+        y = 750
+        for text, size, bold in page:
+            canvas.setFont("Helvetica-Bold" if bold else "Helvetica", size)
+            canvas.drawString(72, y, text)
+            y -= size + 10
+        canvas.showPage()
+    canvas.save()
+    return buf.getvalue()
+
+
+def phys_207_pdf() -> bytes:
+    return _build_pdf(
+        [
+            [("PHYS 207", 10, False), ("Fall 2026", 10, False)],
+            [
+                ("Grading Policy", 14, True),
+                ("Mid-term Exam: 35%", 10, False),
+                ("Final Exam: 50%", 10, False),
+                ("Lecture Quizzes: 5%", 10, False),
+                ("Recitation Quizzes: 10%", 10, False),
+                ("Final replaces Midterm when higher.", 10, False),
+                ("Grades may be curved upward.", 10, False),
+            ],
+        ]
+    )
+
+
+def clean_model_pdf() -> bytes:
+    return _build_pdf([[("Midterm: 30%", 10, False), ("Final: 40%", 10, False), ("Project: 30%", 10, False)]])
+
+
+def blank_pdf() -> bytes:
+    buf = io.BytesIO()
+    canvas = rl_canvas.Canvas(buf, pagesize=letter)
+    canvas.showPage()
+    canvas.save()
+    return buf.getvalue()
+
+
+# --- fake AI -------------------------------------------------------------------------
+
+PHYS_207_MODEL_RESPONSE = {
+    "course": {"course_code": "PHYS 207", "term": "Fall 2026"},
+    "grading_method": "weighted",
+    "categories": [
+        {"name": "Mid-term Exam", "weight": 35, "count": None, "evidence": {"page": 2, "text": "Mid-term Exam: 35%", "confidence": 1.0}},
+        {"name": "Final Exam", "weight": 50, "count": None, "evidence": {"page": 2, "text": "Final Exam: 50%", "confidence": 1.0}},
+        {"name": "Lecture Quizzes", "weight": 5, "count": None, "evidence": {"page": 2, "text": "Lecture Quizzes: 5%", "confidence": 1.0}},
+        {"name": "Recitation Quizzes", "weight": 10, "count": None, "evidence": {"page": 2, "text": "Recitation Quizzes: 10%", "confidence": 1.0}},
+    ],
+    "assessments": [],
+    "grade_thresholds": [],
+    "rules": [
+        {
+            "rule_type": "replacement",
+            "description": "Final replaces Midterm when higher.",
+            "source": "Final Exam",
+            "target": "Mid-term Exam",
+            "condition": "final_score > midterm_score",
+            "evidence": {"page": 2, "text": "Final replaces Midterm when higher.", "confidence": 1.0},
+        },
+        {
+            "rule_type": "curve",
+            "description": "Grades may be curved upward.",
+            "evidence": {"page": 2, "text": "Grades may be curved upward.", "confidence": 1.0},
+        },
+    ],
+    "warnings": [
+        {"type": "possible_curve", "description": "No deterministic curve formula is given."},
+    ],
+}
+
+CLEAN_MODEL_RESPONSE = {
+    "course": {"course_code": "TEST 100"},
+    "grading_method": "weighted",
+    "categories": [
+        {"name": "Midterm", "weight": 30, "count": None, "evidence": {"page": 1, "text": "Midterm: 30%", "confidence": 1.0}},
+        {"name": "Final", "weight": 40, "count": None, "evidence": {"page": 1, "text": "Final: 40%", "confidence": 1.0}},
+        {"name": "Project", "weight": 30, "count": None, "evidence": {"page": 1, "text": "Project: 30%", "confidence": 1.0}},
+    ],
+    "assessments": [],
+    "grade_thresholds": [],
+    "rules": [],
+    "warnings": [],
+}
+
+
+class FakeAI:
+    def __init__(self, text=None):
+        self.text = json.dumps(PHYS_207_MODEL_RESPONSE) if text is None else text
+        self.calls = []
+
+    def complete(self, **kwargs):
+        self.calls.append(kwargs)
+        return AIResponse(text=self.text, raw={"choices": []}, model="fake-parsing-model")
+
+
+class ExplodingAI:
+    def complete(self, **kwargs):
+        raise AssertionError("the AI client must not be called on this path")
+
+
+# --- fake Supabase ---------------------------------------------------------------------
+
+
+class FakeDB:
+    def __init__(self):
+        self.tables = {
+            "students": [],
+            "syllabus_grade_profiles": [],
+            "syllabus_grade_revisions": [],
+            "syllabus_grade_states": [],
+        }
+        self._next = 0
+
+    def new_id(self, prefix):
+        self._next += 1
+        return f"{prefix}-{self._next:04d}"
+
+    def add_student(self, student_id):
+        self.tables["students"].append({"id": student_id, "name": f"Student {student_id[:4]}"})
+
+
+class _Result:
+    def __init__(self, data):
+        self.data = data
+
+
+class FakeQuery:
+    def __init__(self, db, table, student_id):
+        self.db = db
+        self.table_name = table
+        self.student_id = student_id
+        self.op = None
+        self.payload = None
+        self.filters = []
+        self._order = None
+
+    def select(self, *a, **k):
+        self.op = "select"
+        return self
+
+    def insert(self, payload, **k):
+        self.op = "insert"
+        self.payload = payload
+        return self
+
+    def update(self, payload, **k):
+        self.op = "update"
+        self.payload = payload
+        return self
+
+    def eq(self, column, value):
+        self.filters.append((column, value))
+        return self
+
+    def order(self, column, desc=False):
+        self._order = (column, desc)
+        return self
+
+    def _visible(self):
+        rows = self.db.tables[self.table_name]
+        if self.table_name == "students":
+            return [r for r in rows if r["id"] == self.student_id]
+        return [r for r in rows if r.get("student_id") == self.student_id]
+
+    def _matched(self):
+        return [r for r in self._visible() if all(r.get(c) == v for c, v in self.filters)]
+
+    def execute(self):
+        if self.op == "select":
+            matched = self._matched()
+            if self._order:
+                col, desc = self._order
+                matched = sorted(matched, key=lambda r: r.get(col) or "", reverse=desc)
+            return _Result([dict(r) for r in matched])
+        if self.op == "insert":
+            row = dict(self.payload)
+            row.setdefault("id", self.db.new_id(self.table_name[:4]))
+            row.setdefault("created_at", "2026-01-01T00:00:00Z")
+            row.setdefault("updated_at", "2026-01-01T00:00:00Z")
+            if self.table_name == "syllabus_grade_revisions":
+                row.setdefault("corrections", [])
+                row.setdefault("confirmed_grade_model", None)
+                row.setdefault("confirmed_reconciliation_status", None)
+                row.setdefault("confirmed_at", None)
+            if self.table_name == "syllabus_grade_profiles":
+                row.setdefault("current_revision_id", None)
+            self.db.tables[self.table_name].append(row)
+            return _Result([dict(row)])
+        if self.op == "update":
+            matched = self._matched()
+            for row in matched:
+                row.update(self.payload)
+            return _Result([dict(r) for r in matched])
+        raise AssertionError(f"unsupported op {self.op}")
+
+
+class FakeSupabase:
+    def __init__(self, db, student_id):
+        self.db = db
+        self.student_id = student_id
+
+    def table(self, name):
+        return FakeQuery(self.db, name, self.student_id)
+
+
+# --- wiring --------------------------------------------------------------------------
+
+
+def make_test_config(**overrides):
+    values = {
+        "proxy_secret": TEST_PROXY_SECRET,
+        "allowed_origins": ("https://frontend.example",),
+        "rate_limit_requests": 200,
+        "rate_limit_window_seconds": 60.0,
+        "max_concurrent_ai_requests": 2,
+    }
+    values.update(overrides)
+    return api.APIConfig(**values)
+
+
+@pytest.fixture
+def db():
+    store = FakeDB()
+    store.add_student(STUDENT_A)
+    store.add_student(STUDENT_B)
+    return store
+
+
+@pytest.fixture
+def client():
+    return TestClient(api.create_app(make_test_config()), headers=PROXY_HEADERS)
+
+
+def patch_session(monkeypatch, db, student_id=STUDENT_A):
+    monkeypatch.setattr(api, "build_client_for_token", lambda token: FakeSupabase(db, student_id))
+
+
+def ingest(client, *, pdf_bytes=None, ai_text=None, filename="syllabus.pdf", course_code="PHYS 207", term="Fall 2026"):
+    return client.post(
+        INGEST_URL,
+        headers=HEADERS,
+        files={"file": (filename, pdf_bytes or phys_207_pdf(), "application/pdf")},
+        data={"institution": "tamu", "course_code": course_code, "term": term},
+    )
+
+
+# --- list / read ------------------------------------------------------------------------
+
+
+def test_list_profiles_empty(client, db, monkeypatch):
+    patch_session(monkeypatch, db)
+    response = client.get(LIST_URL, headers=HEADERS)
+    assert response.status_code == 200
+    assert response.json() == {"syllabus_grade_profiles": []}
+
+
+def test_list_profiles_does_not_call_ai(client, db, monkeypatch):
+    patch_session(monkeypatch, db)
+    monkeypatch.setattr(api, "build_client", lambda: ExplodingAI())
+    response = client.get(LIST_URL, headers=HEADERS)
+    assert response.status_code == 200
+
+
+def test_read_owned_profile(client, db, monkeypatch):
+    patch_session(monkeypatch, db)
+    monkeypatch.setattr(api, "build_client", lambda: FakeAI())
+    created = ingest(client).json()
+    response = client.get(profile_url(created["id"]), headers=HEADERS)
+    assert response.status_code == 200
+    assert response.json()["id"] == created["id"]
+    assert "student_id" not in response.json()
+
+
+def test_cannot_read_another_students_profile(client, db, monkeypatch):
+    patch_session(monkeypatch, db, student_id=STUDENT_A)
+    monkeypatch.setattr(api, "build_client", lambda: FakeAI())
+    created = ingest(client).json()
+
+    patch_session(monkeypatch, db, student_id=STUDENT_B)
+    response = client.get(profile_url(created["id"]), headers=HEADERS)
+    assert response.status_code == 404
+
+
+def test_read_nonexistent_profile_404(client, db, monkeypatch):
+    patch_session(monkeypatch, db)
+    response = client.get(profile_url("nonexistent-id"), headers=HEADERS)
+    assert response.status_code == 404
+
+
+def test_cross_student_mutation_and_calculation_paths_404(client, db, monkeypatch):
+    """Student B must not be able to touch Student A's syllabus profile via
+    any mutating/compute route -- not just GET. Each of these resolves
+    profile_id through a student-scoped lookup (student_id from the
+    session, never the request body), so a cross-student profile_id must
+    404 exactly like a nonexistent one, never leak a 403 (which would
+    confirm the row exists) or succeed.
+    """
+    patch_session(monkeypatch, db, student_id=STUDENT_A)
+    monkeypatch.setattr(api, "build_client", lambda: FakeAI())
+    created = ingest(client).json()
+    profile_id = created["id"]
+
+    patch_session(monkeypatch, db, student_id=STUDENT_B)
+
+    corrections_response = client.post(
+        f"{profile_url(profile_id)}/corrections",
+        headers=HEADERS,
+        json={"corrections": [{"target_type": "rule", "operation": "remove_rule", "rule_index": 1}]},
+    )
+    assert corrections_response.status_code == 404
+
+    confirm_response = client.post(f"{profile_url(profile_id)}/confirm", headers=HEADERS)
+    assert confirm_response.status_code == 404
+
+    grade_state_response = client.put(
+        f"{profile_url(profile_id)}/grade-state",
+        headers=HEADERS,
+        json={"category_scores": [{"category_name": "Mid-term Exam", "actual_score": 99}]},
+    )
+    assert grade_state_response.status_code == 404
+
+    calculate_response = client.post(f"{profile_url(profile_id)}/calculate", headers=HEADERS, json={})
+    assert calculate_response.status_code == 404
+
+    solve_response = client.post(
+        f"{profile_url(profile_id)}/solve-target",
+        headers=HEADERS,
+        json={"target_component": "Final Exam", "target_grade": 80},
+    )
+    assert solve_response.status_code == 404
+
+    # Confirm Student A's profile was genuinely untouched by the rejected
+    # cross-student attempts.
+    patch_session(monkeypatch, db, student_id=STUDENT_A)
+    still_a = client.get(profile_url(profile_id), headers=HEADERS).json()
+    assert still_a["review_state"] == "needs_review"
+    assert still_a["grade_state"] is None
+
+
+# --- ingestion -------------------------------------------------------------------------
+
+
+def test_valid_pdf_ingestion_review_required(client, db, monkeypatch):
+    patch_session(monkeypatch, db)
+    monkeypatch.setattr(api, "build_client", lambda: FakeAI())
+    response = ingest(client)
+    assert response.status_code == 200
+    body = response.json()
+    assert body["reconciliation"]["status"] == "needs_student_review"
+    assert body["calculator_ready"] is False
+    assert body["extracted_grade_model"]["categories"][0]["name"] == "Mid-term Exam"
+
+
+def test_valid_pdf_ingestion_persists(client, db, monkeypatch):
+    patch_session(monkeypatch, db)
+    monkeypatch.setattr(api, "build_client", lambda: FakeAI())
+    ingest(client)
+    assert len(db.tables["syllabus_grade_profiles"]) == 1
+    assert len(db.tables["syllabus_grade_revisions"]) == 1
+
+
+def test_invalid_pdf_rejected(client, db, monkeypatch):
+    patch_session(monkeypatch, db)
+    response = ingest(client, pdf_bytes=b"not a pdf at all")
+    assert response.status_code == 422
+    assert response.json()["detail"]["error"] == "invalid_pdf"
+
+
+def test_no_text_pdf_rejected(client, db, monkeypatch):
+    patch_session(monkeypatch, db)
+    response = ingest(client, pdf_bytes=blank_pdf())
+    assert response.status_code == 422
+    assert response.json()["detail"]["error"] == "no_extractable_text"
+
+
+def test_non_pdf_content_type_rejected(client, db, monkeypatch):
+    patch_session(monkeypatch, db)
+    response = client.post(
+        INGEST_URL,
+        headers=HEADERS,
+        files={"file": ("notes.txt", b"hello", "text/plain")},
+        data={},
+    )
+    assert response.status_code == 415
+
+
+def test_extraction_failure_mapped_to_502(client, db, monkeypatch):
+    patch_session(monkeypatch, db)
+    monkeypatch.setattr(api, "build_client", lambda: FakeAI(text="not valid json {{{"))
+    response = ingest(client)
+    assert response.status_code == 502
+    assert response.json()["detail"]["error"] == "extraction_failed"
+    # nothing persisted on failure
+    assert db.tables["syllabus_grade_revisions"] == []
+
+
+def test_duplicate_course_signal(client, db, monkeypatch):
+    patch_session(monkeypatch, db)
+    monkeypatch.setattr(api, "build_client", lambda: FakeAI())
+    first = ingest(client).json()
+    second = ingest(client, pdf_bytes=phys_207_pdf()).json()
+    assert first["id"] != second["id"]
+    duplicate_ids = {p["id"] for p in second["possible_duplicate_profiles"]}
+    assert first["id"] in duplicate_ids
+
+
+# --- corrections / confirmation ---------------------------------------------------------
+
+
+def test_correction_and_confirm_reaches_calculator_ready(client, db, monkeypatch):
+    patch_session(monkeypatch, db)
+    monkeypatch.setattr(api, "build_client", lambda: FakeAI())
+    created = ingest(client).json()
+    assert created["reconciliation"]["status"] == "needs_student_review"
+
+    corrected = client.post(
+        f"{profile_url(created['id'])}/corrections",
+        headers=HEADERS,
+        json={
+            "corrections": [
+                {"target_type": "rule", "operation": "remove_rule", "rule_index": 1},
+                {"target_type": "warning", "operation": "dismiss_warning", "warning_index": 0},
+            ]
+        },
+    )
+    assert corrected.status_code == 200
+    assert corrected.json()["confirmed_reconciliation"]["status"] == "accepted"
+    # the ORIGINAL extraction's reconciliation is untouched by the correction
+    assert corrected.json()["reconciliation"]["status"] == "needs_student_review"
+
+    confirm_before = client.post(f"{profile_url(created['id'])}/calculate", headers=HEADERS, json={})
+    assert confirm_before.status_code == 409
+
+    confirmed = client.post(f"{profile_url(created['id'])}/confirm", headers=HEADERS)
+    assert confirmed.status_code == 200
+    assert confirmed.json()["calculator_ready"] is True
+    # original extracted curve preserved
+    assert any(r["rule_type"] == "curve" for r in confirmed.json()["extracted_grade_model"]["rules"])
+    confirmed_rules = confirmed.json()["confirmed_grade_model"]["rules"]
+    assert not any(r["rule_type"] == "curve" for r in confirmed_rules)
+    assert any(r["rule_type"] == "replacement" for r in confirmed_rules)
+
+
+def test_invalid_correction_rejected(client, db, monkeypatch):
+    patch_session(monkeypatch, db)
+    monkeypatch.setattr(api, "build_client", lambda: FakeAI())
+    created = ingest(client).json()
+    response = client.post(
+        f"{profile_url(created['id'])}/corrections",
+        headers=HEADERS,
+        json={"corrections": [{"target_type": "category", "operation": "set_weight", "category_name": "Nonexistent", "value": 5}]},
+    )
+    assert response.status_code == 422
+
+
+def test_confirm_without_correction_when_accepted(client, db, monkeypatch):
+    patch_session(monkeypatch, db)
+    monkeypatch.setattr(api, "build_client", lambda: FakeAI(text=json.dumps(CLEAN_MODEL_RESPONSE)))
+    created = ingest(client, pdf_bytes=clean_model_pdf(), course_code="TEST 100", term="Spring 2027").json()
+    assert created["reconciliation"]["status"] == "accepted"
+    confirmed = client.post(f"{profile_url(created['id'])}/confirm", headers=HEADERS)
+    assert confirmed.status_code == 200
+    assert confirmed.json()["calculator_ready"] is True
+
+
+def test_confirm_when_not_accepted_returns_409(client, db, monkeypatch):
+    patch_session(monkeypatch, db)
+    monkeypatch.setattr(api, "build_client", lambda: FakeAI())
+    created = ingest(client).json()
+    response = client.post(f"{profile_url(created['id'])}/confirm", headers=HEADERS)
+    assert response.status_code == 409
+
+
+# --- grade state -------------------------------------------------------------------------
+
+
+def _confirmed_phys_profile(client, db, monkeypatch):
+    monkeypatch.setattr(api, "build_client", lambda: FakeAI())
+    created = ingest(client).json()
+    client.post(
+        f"{profile_url(created['id'])}/corrections",
+        headers=HEADERS,
+        json={
+            "corrections": [
+                {"target_type": "rule", "operation": "remove_rule", "rule_index": 1},
+                {"target_type": "warning", "operation": "dismiss_warning", "warning_index": 0},
+            ]
+        },
+    )
+    client.post(f"{profile_url(created['id'])}/confirm", headers=HEADERS)
+    return created["id"]
+
+
+def test_grade_state_round_trip(client, db, monkeypatch):
+    patch_session(monkeypatch, db)
+    profile_id = _confirmed_phys_profile(client, db, monkeypatch)
+
+    response = client.put(
+        f"{profile_url(profile_id)}/grade-state",
+        headers=HEADERS,
+        json={"category_scores": [{"category_name": "Mid-term Exam", "actual_score": 78}]},
+    )
+    assert response.status_code == 200
+    assert response.json()["revision"] == 1
+
+    updated = client.put(
+        f"{profile_url(profile_id)}/grade-state",
+        headers=HEADERS,
+        json={"category_scores": [{"category_name": "Mid-term Exam", "actual_score": 80}], "expected_revision": 1},
+    )
+    assert updated.status_code == 200
+    assert updated.json()["revision"] == 2
+
+
+def test_stale_grade_state_revision_returns_409(client, db, monkeypatch):
+    patch_session(monkeypatch, db)
+    profile_id = _confirmed_phys_profile(client, db, monkeypatch)
+    client.put(
+        f"{profile_url(profile_id)}/grade-state",
+        headers=HEADERS,
+        json={"category_scores": [{"category_name": "Mid-term Exam", "actual_score": 78}]},
+    )
+    stale = client.put(
+        f"{profile_url(profile_id)}/grade-state",
+        headers=HEADERS,
+        json={"category_scores": [{"category_name": "Mid-term Exam", "actual_score": 90}], "expected_revision": 1},
+    )
+    assert stale.status_code == 200  # first stale attempt at revision=1 while stored=1 succeeds
+    conflict = client.put(
+        f"{profile_url(profile_id)}/grade-state",
+        headers=HEADERS,
+        json={"category_scores": [{"category_name": "Mid-term Exam", "actual_score": 95}], "expected_revision": 1},
+    )
+    assert conflict.status_code == 409
+    assert conflict.json()["detail"]["error"] == "stale_revision"
+
+
+# --- calculate / solve-target -----------------------------------------------------------
+
+
+def test_calculate_before_confirm_returns_409(client, db, monkeypatch):
+    patch_session(monkeypatch, db)
+    monkeypatch.setattr(api, "build_client", lambda: FakeAI())
+    created = ingest(client).json()
+    response = client.post(f"{profile_url(created['id'])}/calculate", headers=HEADERS, json={})
+    assert response.status_code == 409
+    assert response.json()["detail"]["error"] == "not_calculator_ready"
+
+
+def test_calculate_phys_207_current_grade(client, db, monkeypatch):
+    patch_session(monkeypatch, db)
+    profile_id = _confirmed_phys_profile(client, db, monkeypatch)
+
+    response = client.post(
+        f"{profile_url(profile_id)}/calculate",
+        headers=HEADERS,
+        json={
+            "category_scores": [
+                {"category_name": "Mid-term Exam", "actual_score": 78},
+                {"category_name": "Lecture Quizzes", "actual_score": 92},
+                {"category_name": "Recitation Quizzes", "actual_score": 88},
+            ]
+        },
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert body["current_grade"] == 81.4
+    assert body["completed_weight"] == 50.0
+    assert body["projected_grade"] is None
+
+
+def test_calculate_hypothetical_does_not_persist(client, db, monkeypatch):
+    patch_session(monkeypatch, db)
+    profile_id = _confirmed_phys_profile(client, db, monkeypatch)
+    client.put(
+        f"{profile_url(profile_id)}/grade-state",
+        headers=HEADERS,
+        json={
+            "category_scores": [
+                {"category_name": "Mid-term Exam", "actual_score": 78},
+                {"category_name": "Lecture Quizzes", "actual_score": 92},
+                {"category_name": "Recitation Quizzes", "actual_score": 88},
+            ]
+        },
+    )
+    response = client.post(
+        f"{profile_url(profile_id)}/calculate",
+        headers=HEADERS,
+        json={
+            "category_scores": [
+                {"category_name": "Mid-term Exam", "actual_score": 78},
+                {"category_name": "Lecture Quizzes", "actual_score": 92},
+                {"category_name": "Recitation Quizzes", "actual_score": 88},
+                {"category_name": "Final Exam", "projected_score": 88},
+            ]
+        },
+    )
+    assert response.status_code == 200
+    assert response.json()["projected_grade"] is not None
+    # persisted grade-state row is untouched by the transient calculate call
+    saved = client.get(profile_url(profile_id), headers=HEADERS).json()
+    final_saved = [c for c in saved["grade_state"]["category_scores"] if c["category_name"] == "Final Exam"]
+    assert final_saved == []
+
+
+def test_solve_target_b_and_a(client, db, monkeypatch):
+    patch_session(monkeypatch, db)
+    profile_id = _confirmed_phys_profile(client, db, monkeypatch)
+    state = {
+        "category_scores": [
+            {"category_name": "Mid-term Exam", "actual_score": 78},
+            {"category_name": "Lecture Quizzes", "actual_score": 92},
+            {"category_name": "Recitation Quizzes", "actual_score": 88},
+        ]
+    }
+    b = client.post(
+        f"{profile_url(profile_id)}/solve-target",
+        headers=HEADERS,
+        json={**state, "target_component": "Final Exam", "target_grade": 80},
+    )
+    assert b.status_code == 200
+    assert abs(b.json()["required_score"] - 78.35) < 0.01
+
+    a = client.post(
+        f"{profile_url(profile_id)}/solve-target",
+        headers=HEADERS,
+        json={**state, "target_component": "Final Exam", "target_grade": 90},
+    )
+    assert a.status_code == 200
+    assert abs(a.json()["required_score"] - 90.12) < 0.01
