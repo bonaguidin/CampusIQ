@@ -680,10 +680,37 @@ function roleOptionsPlugin(roles) {
     name: 'role-options-api',
     configureServer(server) {
       server.middlewares.use((request, response, next) => {
-        if (request.url?.split('?')[0] === '/api/v2/student/me/career-role-options' && request.method === 'GET') {
+        const path = request.url?.split('?')[0]
+        if (path === '/api/v2/student/me/career-role-options' && request.method === 'GET') {
           response.statusCode = 200
           response.setHeader('content-type', 'application/json')
           response.end(JSON.stringify({ roles }))
+          return
+        }
+        // RequirementSatisfactionPanel (mounted alongside Course Discovery)
+        // fires both of these unconditionally on mount, same as it always
+        // fetched requirement-satisfaction alone before the technical-
+        // electives fetch was lifted up to share this panel's mount. Neither
+        // route is what this test exercises, but leaving them unstubbed
+        // means Vite's own unhandled-request fallback path answers instead
+        // -- slower and non-deterministic enough to have flipped the role-
+        // selector assertion below into a real, reproducible flake once a
+        // second such request was added. Fast, minimal "skipped" responses
+        // here are just noise-cancellation for a page this test needs to
+        // load quickly, not a claim about what either route should return.
+        if (path === '/api/v2/student/me/requirement-satisfaction' && request.method === 'GET') {
+          response.statusCode = 200
+          response.setHeader('content-type', 'application/json')
+          response.end(JSON.stringify({ student_id: 'sid', program_id: 'pid', groups: [] }))
+          return
+        }
+        if (path === '/api/v2/student/me/degree-plan/technical-electives' && request.method === 'GET') {
+          response.statusCode = 200
+          response.setHeader('content-type', 'application/json')
+          response.end(JSON.stringify({
+            feature: 'TECHNICAL_ELECTIVE_CANDIDATES', status: 'skipped', summary: '',
+            data: {}, errors: [], missing_fields: [],
+          }))
           return
         }
         next()

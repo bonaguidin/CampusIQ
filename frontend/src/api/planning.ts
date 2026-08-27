@@ -22,6 +22,15 @@ import type {
   NormalizedSearch,
   NormalizedTerms,
 } from '../lib/termPlanning.mjs';
+import type { AnalysisIdentity } from './analysisApi.mjs';
+import { buildDemoGradingSchema, buildDemoTerms, searchDemoCatalog } from '../data/demoTermFixtures';
+import {
+  addDemoPlannedCourse,
+  editDemoCourseRecord,
+  getDemoInstitution,
+  removeDemoPlannedCourse,
+  snapshotDemoPlannedCourses,
+} from '../data/demoPlanningStore';
 
 /**
  * Same shape as api/transcript.ts's send, minus the timeout parameter: none of
@@ -42,18 +51,33 @@ async function send(url: string, init: RequestInit): Promise<{ status: number; b
 
 const auth = (token: string) => ({ Accept: 'application/json', Authorization: `Bearer ${token}` });
 
-export async function fetchTerms(token: string): Promise<NormalizedTerms> {
-  const { status, body } = await send(TERMS_URL, { method: 'GET', headers: auth(token) });
+// identity.slug present -> every function below reads/writes only local,
+// in-memory demo state (frontend/src/data/demoPlanningStore.ts,
+// demoTermFixtures.ts) -- no fetch at all, so GPA Calculator never touches
+// the network for a demo identity, matching "changes are local, never
+// permanent" for reads as well as writes. Real accounts (no slug) are
+// unchanged from before.
+
+export async function fetchTerms(identity: AnalysisIdentity): Promise<NormalizedTerms> {
+  if (identity.slug) {
+    const terms = buildDemoTerms(new Date());
+    const upcoming = terms.find((term) => term.is_upcoming);
+    return normalizeTermsPayload(200, { terms, upcoming_term_key: upcoming?.key ?? null });
+  }
+  const { status, body } = await send(TERMS_URL, { method: 'GET', headers: auth(identity.accessToken ?? '') });
   return normalizeTermsPayload(status, body);
 }
 
 export async function fetchPlannedCourses(
-  token: string,
+  identity: AnalysisIdentity,
   termId?: string | null,
 ): Promise<NormalizedPlanned> {
+  if (identity.slug) {
+    return normalizePlannedPayload(200, { planned_courses: snapshotDemoPlannedCourses(identity.slug) });
+  }
   const { status, body } = await send(plannedListUrl(termId), {
     method: 'GET',
-    headers: auth(token),
+    headers: auth(identity.accessToken ?? ''),
   });
   return normalizePlannedPayload(status, body);
 }
@@ -74,15 +98,26 @@ export interface AddPlannedCourseInput {
  * window, a course_records row written directly as in-progress
  * (kind: 'in_progress') -- see lifecycle.add_course_respecting_activation.
  * The key name stays 'planned_course' on the wire (the route is still "plan a
- * course"); only the payload shape branches on `kind`.
+ * course"); only the payload shape branches on `kind`. The demo branch never
+ * produces 'in_progress' -- see demoPlanningStore.ts's own note on why that
+ * edge case is out of scope for a local-only store.
  */
 export async function addPlannedCourse(
-  token: string,
+  identity: AnalysisIdentity,
   input: AddPlannedCourseInput,
 ): Promise<{ ok: boolean; course: AddedCourseResult | null; message: string | null }> {
+  if (identity.slug) {
+    const course = addDemoPlannedCourse(identity.slug, {
+      course_code: input.course_code,
+      title: input.title,
+      credit_hours: input.credit_hours,
+      catalog_course_id: input.catalog_course_id,
+    });
+    return { ok: true, course, message: null };
+  }
   const { status, body } = await send(PLANNED_COURSES_URL, {
     method: 'POST',
-    headers: { ...auth(token), 'Content-Type': 'application/json' },
+    headers: { ...auth(identity.accessToken ?? ''), 'Content-Type': 'application/json' },
     body: JSON.stringify(input),
   });
   if (status === 200 && body && typeof body === 'object' && 'planned_course' in body) {
@@ -99,42 +134,73 @@ export async function addPlannedCourse(
   return { ok: false, course: null, message: detail };
 }
 
-export async function removePlannedCourse(token: string, id: string): Promise<{ ok: boolean }> {
-  const { status } = await send(plannedRemoveUrl(id), { method: 'DELETE', headers: auth(token) });
+export async function removePlannedCourse(
+  identity: AnalysisIdentity,
+  id: string,
+): Promise<{ ok: boolean }> {
+  if (identity.slug) {
+    removeDemoPlannedCourse(identity.slug, id);
+    return { ok: true };
+  }
+  const { status } = await send(plannedRemoveUrl(id), {
+    method: 'DELETE',
+    headers: auth(identity.accessToken ?? ''),
+  });
   // 404 counts as removed: the row is gone either way, and surfacing an error
   // for "it was already not there" would be a worse answer to the same state.
   return { ok: status === 200 || status === 404 };
 }
 
-export async function searchCatalog(token: string, query: string): Promise<NormalizedSearch> {
+export async function searchCatalog(identity: AnalysisIdentity, query: string): Promise<NormalizedSearch> {
+  if (identity.slug) {
+    return normalizeSearchPayload(200, { results: searchDemoCatalog(getDemoInstitution(identity.slug), query) });
+  }
   const { status, body } = await send(catalogSearchUrl(query), {
     method: 'GET',
-    headers: auth(token),
+    headers: auth(identity.accessToken ?? ''),
   });
   return normalizeSearchPayload(status, body);
 }
 
-export async function fetchGradingSchema(token: string): Promise<NormalizedGradingSchema> {
-  const { status, body } = await send(GRADING_SCHEMA_URL, { method: 'GET', headers: auth(token) });
+export async function fetchGradingSchema(identity: AnalysisIdentity): Promise<NormalizedGradingSchema> {
+  if (identity.slug) {
+    return normalizeGradingSchemaPayload(200, buildDemoGradingSchema(getDemoInstitution(identity.slug)));
+  }
+  const { status, body } = await send(GRADING_SCHEMA_URL, {
+    method: 'GET',
+    headers: auth(identity.accessToken ?? ''),
+  });
   return normalizeGradingSchemaPayload(status, body);
 }
 
-export async function fetchPendingFinalGrades(token: string): Promise<NormalizedPendingFinalGrades> {
+export async function fetchPendingFinalGrades(
+  identity: AnalysisIdentity,
+): Promise<NormalizedPendingFinalGrades> {
+  if (identity.slug) {
+    // Demo never has a term that "just ended" with a still-in-progress
+    // course to reconcile -- the "How did last semester go?" banner never
+    // has anything to show, which is a fine simplification for a demo.
+    return normalizePendingFinalGradesPayload(200, { pending_final_grades: [] });
+  }
   const { status, body } = await send(PENDING_FINAL_GRADES_URL, {
     method: 'GET',
-    headers: auth(token),
+    headers: auth(identity.accessToken ?? ''),
   });
   return normalizePendingFinalGradesPayload(status, body);
 }
 
 export async function finalizeCourseGrade(
-  token: string,
+  identity: AnalysisIdentity,
   courseId: string,
   letterGrade: string,
 ): Promise<{ ok: boolean; message: string | null }> {
+  if (identity.slug) {
+    const ok = editDemoCourseRecord(identity.slug, courseId, { letter_grade: letterGrade });
+    return ok ? { ok: true, message: null } : { ok: false, message: 'Could not save that grade.' };
+  }
   const { status, body } = await send(finalizeCourseUrl(courseId), {
     method: 'POST',
-    headers: { ...auth(token), 'Content-Type': 'application/json' },
+    headers: { ...auth(identity.accessToken ?? ''), 'Content-Type': 'application/json' },
     body: JSON.stringify({ letter_grade: letterGrade }),
   });
   if (status === 200) return { ok: true, message: null };
@@ -155,13 +221,20 @@ export interface EditInProgressCourseInput {
 }
 
 export async function editInProgressCourse(
-  token: string,
+  identity: AnalysisIdentity,
   courseId: string,
   input: EditInProgressCourseInput,
 ): Promise<{ ok: boolean; message: string | null }> {
+  if (identity.slug) {
+    const ok = editDemoCourseRecord(identity.slug, courseId, {
+      letter_grade: input.letter_grade,
+      status: input.status,
+    });
+    return ok ? { ok: true, message: null } : { ok: false, message: 'Could not update that course.' };
+  }
   const { status, body } = await send(courseRecordUrl(courseId), {
     method: 'PATCH',
-    headers: { ...auth(token), 'Content-Type': 'application/json' },
+    headers: { ...auth(identity.accessToken ?? ''), 'Content-Type': 'application/json' },
     body: JSON.stringify(input),
   });
   if (status === 200) return { ok: true, message: null };

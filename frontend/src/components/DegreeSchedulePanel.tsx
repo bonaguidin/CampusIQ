@@ -1,15 +1,26 @@
-import { Fragment, useCallback, useEffect } from 'react';
-import { fetchDegreeSchedule, isSkippedDegreeSchedule, type DegreeScheduleResponse } from '../api/degreeSchedule.mjs';
+import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
+import {
+  DegreeScheduleChoiceError,
+  fetchDegreeSchedule,
+  isSkippedDegreeSchedule,
+  updateDegreeScheduleChoices,
+  type DegreeScheduleResponse,
+  type RequirementCandidate,
+} from '../api/degreeSchedule.mjs';
 import { useAuth } from '../auth/useAuth';
 import { useAnalysisRun } from '../hooks/useAnalysisRun';
 import {
-  DEFERRED_REASON_DESCRIPTION,
-  DEFERRED_REASON_LABEL,
   degreeScheduleContentState,
 } from '../lib/degreeSchedulePresentation.mjs';
 import { CareerOptimizationPanel } from './CareerOptimizationPanel';
 import { DegreeScheduleTerms } from './DegreeScheduleTerms';
 import { DegreeScheduleYears } from './DegreeScheduleYears';
+import { DegreeScheduleDecisionSection } from './DegreeScheduleDecisionSection';
+import {
+  choiceConflictMessage,
+  removeRequirementSelection,
+  replaceRequirementSelection,
+} from '../lib/degreeScheduleSelections.mjs';
 
 interface CourseRecordLike {
   id: string;
@@ -41,7 +52,14 @@ export function DegreeSchedulePanel({
   const accessToken = session?.access_token ?? null;
   const identity = { slug, accessToken };
   const load = useCallback(() => fetchDegreeSchedule(identity), [slug, accessToken]);
-  const { state, trigger } = useAnalysisRun(load);
+  const { state, trigger, replaceResult } = useAnalysisRun(load);
+  const [choiceMutation, setChoiceMutation] = useState<{
+    requirementGroupId: string;
+    action: 'choose' | 'change' | 'clear';
+    candidateId?: string;
+  } | null>(null);
+  const [choiceMessage, setChoiceMessage] = useState<string | null>(null);
+  const mutationInFlight = useRef(false);
 
   useEffect(() => { trigger(); }, [trigger]);
 
@@ -53,7 +71,65 @@ export function DegreeSchedulePanel({
   const schedule = state.phase === 'done' && !isSkippedDegreeSchedule(state.result) ? state.result : null;
   const contentState = state.phase === 'done' ? degreeScheduleContentState(state.result) : null;
   const infeasible = contentState === 'infeasible';
-  const deferred = schedule?.status === 'SCHEDULED' ? schedule.unscheduled : [];
+
+  const refreshSchedule = useCallback(async () => {
+    const refreshed = await fetchDegreeSchedule(identity);
+    replaceResult(refreshed);
+    return refreshed;
+  }, [slug, accessToken, replaceResult]);
+
+  const saveChoices = useCallback(async (
+    requirementGroupId: string,
+    action: 'choose' | 'change' | 'clear',
+    selections: NonNullable<typeof schedule>['selection_state']['selections'],
+    candidateId?: string,
+  ) => {
+    if (!schedule || !accessToken || mutationInFlight.current) return;
+    mutationInFlight.current = true;
+    setChoiceMutation({ requirementGroupId, action, candidateId });
+    setChoiceMessage(null);
+    try {
+      await updateDegreeScheduleChoices(accessToken, {
+        scheduleVersion: schedule.schedule_version,
+        selections,
+      });
+      await refreshSchedule();
+    } catch (error) {
+      const code = error instanceof DegreeScheduleChoiceError ? error.code : 'UNKNOWN_ERROR';
+      try { await refreshSchedule(); } catch { /* retain the current rendered schedule */ }
+      setChoiceMessage(choiceConflictMessage(code));
+    } finally {
+      mutationInFlight.current = false;
+      setChoiceMutation(null);
+    }
+  }, [schedule, accessToken, choiceMutation, refreshSchedule]);
+
+  const chooseCandidate = useCallback((
+    requirementGroupId: string,
+    candidate: RequirementCandidate,
+    action: 'choose' | 'change' | 'clear',
+  ) => {
+    if (!schedule) return;
+    void saveChoices(
+      requirementGroupId,
+      action,
+      replaceRequirementSelection(
+        schedule.selection_state.selections,
+        requirementGroupId,
+        candidate,
+      ),
+      candidate.candidate_id,
+    );
+  }, [schedule, saveChoices]);
+
+  const clearChoice = useCallback((requirementGroupId: string) => {
+    if (!schedule) return;
+    void saveChoices(
+      requirementGroupId,
+      'clear',
+      removeRequirementSelection(schedule.selection_state.selections, requirementGroupId),
+    );
+  }, [schedule, saveChoices]);
 
   return (
     <Fragment>
@@ -122,26 +198,8 @@ export function DegreeSchedulePanel({
             <DegreeScheduleYears accessToken={accessToken ?? ''} scheduleTerms={schedule.terms} courses={courses} />
           )}
 
-          <section className="degree-schedule-deferred" aria-labelledby="degree-schedule-deferred-title">
-            <h4 id="degree-schedule-deferred-title">Requirements not scheduled yet</h4>
-            {deferred.length === 0 ? (
-              <p className="empty-state">No requirements are waiting on course selection or adviser review.</p>
-            ) : (
-              <ul>
-                {deferred.map((requirement) => (
-                  <li key={requirement.requirement_group_id}>
-                    <div>
-                      <strong>{requirement.name}</strong>
-                      <span className={`degree-schedule-reason degree-schedule-reason--${requirement.reason.toLowerCase().replace(/_/g, '-')}`}>
-                        {DEFERRED_REASON_LABEL[requirement.reason]}
-                      </span>
-                    </div>
-                    <p>{DEFERRED_REASON_DESCRIPTION[requirement.reason]}</p>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
+          <DegreeScheduleDecisionSection schedule={schedule} mutation={choiceMutation}
+            message={choiceMessage} interactive={!identity.slug} onChoose={chooseCandidate} onClear={clearChoice} />
         </>
       )}
       </section>

@@ -56,6 +56,8 @@ function careerResponse(status = 'OPTIMIZED', { noChange = false } = {}) {
 test('Career Optimize stays opt-in and preserves the academic plan through every result state', { timeout: 60_000 }, async (t) => {
   const planning = planningRoutes({ terms: [] })
   const posts = []
+  let resolvePostReceived
+  const postReceived = new Promise((resolve) => { resolvePostReceived = resolve })
   let response = { status: 200, body: careerResponse() }
   let releaseFirst
   let delayNext = true
@@ -82,6 +84,7 @@ test('Career Optimize stays opt-in and preserves the academic plan through every
           request.on('data', (chunk) => { raw += chunk })
           request.on('end', async () => {
             posts.push(JSON.parse(raw))
+            resolvePostReceived()
             if (delayNext) { delayNext = false; await firstGate }
             serverResponse.statusCode = response.status
             serverResponse.setHeader('content-type', 'application/json')
@@ -128,6 +131,7 @@ test('Career Optimize stays opt-in and preserves the academic plan through every
   await careerPanel.getByText('Finding career-aligned choices…').waitFor()
   assert.equal(await optimize.isDisabled(), true)
   assert.equal(await degreePanel.getByText('CS 5323').count() > 0, true, 'academic plan remains visible while loading')
+  await postReceived
   assert.equal(posts.length, 1)
   assert.deepEqual(posts[0], { force_refresh: false })
   releaseFirst()

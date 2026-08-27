@@ -29,12 +29,17 @@ import { SkillCloud } from './SkillCloud';
 /**
  * What a field needs to save itself, or null when nothing here can be edited.
  *
- * Null is the honest state for a session with no bearer token: without one a
- * PATCH cannot be sent, so no Edit button is rendered rather than one that
- * would fail. The page falls back to exactly the read-only surface it had.
+ * Null is the honest state for a session with no bearer token and no demo
+ * identity: without either, a change has nowhere to go, so no Edit button is
+ * rendered rather than one that would fail. The page falls back to exactly
+ * the read-only surface it had.
+ *
+ * `persist` is the one seam between an authenticated save (a real PATCH to
+ * /me/profile) and a demo save (a local-only merge, never sent anywhere) --
+ * everything else in this file and its children is identical either way.
  */
 export interface CareerEditing {
-  accessToken: string;
+  persist(changes: ProfileChanges): Promise<void>;
   onSaved(): Promise<void>;
 }
 
@@ -512,7 +517,7 @@ function FieldSlot<T>({
         value={value}
         toChanges={toChanges}
         validate={validate}
-        accessToken={editing.accessToken}
+        persist={editing.persist}
         onSaved={editing.onSaved}
         openNonce={nonce}
         editLabel={editLabel}

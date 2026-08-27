@@ -10,6 +10,7 @@ validated career ranks as a subordinate tie-break, but remains provider-independ
 from __future__ import annotations
 
 from dataclasses import dataclass
+from enum import Enum
 from itertools import combinations, product
 import re
 from typing import Any, Iterable, Mapping
@@ -22,6 +23,8 @@ from .requirement_candidates import (
     CandidateExclusionReason,
     RequirementCandidate,
     RequirementCandidateSet,
+    RequirementDecision,
+    RequirementDecisionState,
     stable_candidate_id,
 )
 from .requirement_candidate_ranking import normalized_career_rank_map
@@ -42,11 +45,38 @@ class SelectionSearchStats(StrictModel):
     candidate_combinations_evaluated: int = 0
 
 
+class LockedSelectionFailureCode(str, Enum):
+    DUPLICATE_REQUIREMENT = "LOCK_DUPLICATE_REQUIREMENT"
+    REQUIREMENT_NOT_FOUND = "LOCK_REQUIREMENT_NOT_FOUND"
+    CANDIDATE_NOT_FOUND = "LOCK_CANDIDATE_NOT_FOUND"
+    CANDIDATE_EXCLUDED = "LOCK_CANDIDATE_EXCLUDED"
+    PATH_MISMATCH = "LOCK_PATH_MISMATCH"
+    CHOICE_NO_LONGER_REQUIRED = "LOCK_CHOICE_NO_LONGER_REQUIRED"
+    INCOMPATIBLE = "LOCK_INCOMPATIBLE"
+
+
+class LockedRequirementSelection(StrictModel):
+    requirement_group_id: str = Field(min_length=1)
+    candidate_id: str = Field(min_length=1)
+    course_codes: tuple[str, ...] = Field(min_length=1)
+
+
+class LockedSelectionFailure(StrictModel):
+    code: LockedSelectionFailureCode
+    requirement_group_id: str | None = None
+    candidate_id: str | None = None
+    current_course_codes: list[str] = Field(default_factory=list)
+    submitted_course_codes: list[str] = Field(default_factory=list)
+    exclusion_reasons: list[CandidateExclusionReason] = Field(default_factory=list)
+
+
 class RequirementSelectionResult(StrictModel):
     courses: list[CourseToSchedule] = Field(default_factory=list)
     unscheduled: list[UnscheduledRequirement] = Field(default_factory=list)
     search_stats: SelectionSearchStats = Field(default_factory=SelectionSearchStats)
     candidate_sets: list[RequirementCandidateSet] = Field(default_factory=list)
+    decisions: list[RequirementDecision] = Field(default_factory=list)
+    locked_selection_failure: LockedSelectionFailure | None = None
 
 
 @dataclass(frozen=True)
@@ -57,6 +87,7 @@ class _Choice:
     option_order: tuple[int, ...]
     limitations: tuple[str, ...] = ()
     existing_contribution: int = 0
+    unresolved_course_codes: tuple[str, ...] = ()
 
 @dataclass
 class _CandidateEvidence:
@@ -75,6 +106,15 @@ class _CandidateEvidence:
             self.exclusion_details = set()
 
 
+@dataclass(frozen=True)
+class _ValidCombination:
+    score: tuple[Any, ...]
+    choices: tuple[_Choice, ...]
+    schedule: ScheduleResult
+    candidate_ids: tuple[str, ...]
+    completion_terms: tuple[int, ...]
+
+
 def _candidate(
     evidence: _CandidateEvidence, feasibility: AcademicFeasibility
 ) -> RequirementCandidate:
@@ -89,6 +129,7 @@ def _candidate(
         requirement_group_id=evidence.requirement_group_id,
         requirement_name=evidence.requirement_name,
         course_codes=list(choice.courses),
+        unresolved_course_codes=list(choice.unresolved_course_codes),
         existing_contribution=choice.existing_contribution,
         additional_course_count=len(choice.courses),
         additional_credits=evidence.credits,
@@ -139,6 +180,52 @@ def _candidate_sets(
     return sets
 
 
+_DATA_EXCLUSION_REASONS = {
+    CandidateExclusionReason.UNRESOLVED_COURSE,
+    CandidateExclusionReason.MISSING_CREDIT_DATA,
+}
+
+
+def _requirement_decisions(
+    candidate_sets: list[RequirementCandidateSet],
+) -> list[RequirementDecision]:
+    """Apply baseline 0/1/2+ semantics after global feasibility is final."""
+    decisions: list[RequirementDecision] = []
+    for candidate_set in candidate_sets:
+        feasible_ids = [candidate.candidate_id for candidate in candidate_set.feasible_candidates]
+        excluded_ids = [candidate.candidate_id for candidate in candidate_set.excluded_candidates]
+        if len(feasible_ids) == 1:
+            state = RequirementDecisionState.AUTO_SELECTED
+            selected = feasible_ids[0]
+        elif len(feasible_ids) > 1:
+            state = RequirementDecisionState.CHOICE_REQUIRED
+            selected = None
+        else:
+            exclusion_reasons = {
+                reason
+                for candidate in candidate_set.excluded_candidates
+                for reason in candidate.exclusion_reasons
+            }
+            # Missing evidence and mixed data/manual causes both fail closed as
+            # DATA_UNRESOLVED: the system cannot prove that adviser action,
+            # rather than catalog/import repair, is the appropriate remedy.
+            state = (
+                RequirementDecisionState.DATA_UNRESOLVED
+                if not exclusion_reasons or exclusion_reasons & _DATA_EXCLUSION_REASONS
+                else RequirementDecisionState.ADVISER_REVIEW
+            )
+            selected = None
+        decisions.append(RequirementDecision(
+            requirement_group_id=candidate_set.requirement_group_id,
+            requirement_name=candidate_set.requirement_name,
+            state=state,
+            feasible_candidate_ids=feasible_ids,
+            excluded_candidate_ids=excluded_ids,
+            selected_candidate_id=selected,
+        ))
+    return decisions
+
+
 def _index_rows(
     options: Iterable[Mapping[str, Any]], option_courses: Iterable[Mapping[str, Any]]
 ) -> tuple[dict[str, list[dict[str, Any]]], dict[str, list[dict[str, Any]]]]:
@@ -157,16 +244,47 @@ def _option_variants(
     option: Mapping[str, Any],
     courses_by_option: Mapping[str, list[dict[str, Any]]],
     catalog_by_gid: Mapping[str, str],
+    catalog_by_code: Mapping[str, list[str]],
+    credits: Mapping[str, float],
 ) -> tuple[list[tuple[str, ...]], bool]:
+    """Resolve one option into academically equivalent course paths.
+
+    Each option-course row names one course identity.  SMU rows resolve that
+    identity through ``coursedog_group_id``; TAMU rows resolve it through the
+    direct ``course_code`` mapping.  A direct row may map to multiple catalog
+    codes when it is cross-listed, but it still represents one course: an AND
+    option therefore takes one code from each row rather than flattening every
+    alias into separately required courses.
+    """
     rows = courses_by_option.get(str(option["id"]), [])
-    codes = [catalog_by_gid.get(str(row["coursedog_group_id"])) for row in rows if row.get("coursedog_group_id")]
-    unresolved = len(codes) != len(rows) or any(code is None for code in codes)
-    resolved = tuple(str(code) for code in codes if code)
-    if not resolved:
+    resolved_rows: list[tuple[str, ...]] = []
+    unresolved = False
+    for row in rows:
+        gid = row.get("coursedog_group_id")
+        course_code = row.get("course_code")
+        if gid:
+            resolved = (str(catalog_by_gid[str(gid)]),) if str(gid) in catalog_by_gid else ()
+        elif course_code:
+            resolved = tuple(str(code) for code in catalog_by_code.get(str(course_code), []) if code)
+            if len(resolved) > 1:
+                # A slash-joined direct code is one cross-listed course, not
+                # several separately selectable alternatives. Match
+                # scheduler_scope's canonical representative rule: prefer
+                # the first lexical alias with usable credit data.
+                usable = sorted(code for code in resolved if float(credits.get(code, 0)) > 0)
+                resolved = (usable[0] if usable else sorted(resolved)[0],)
+        else:
+            resolved = ()
+        if not resolved:
+            unresolved = True
+            continue
+        resolved_rows.append(tuple(dict.fromkeys(resolved)))
+
+    if not resolved_rows:
         return [], unresolved
     if option.get("logic") == "or":
-        return [(code,) for code in resolved], unresolved
-    return [resolved], unresolved
+        return [(code,) for codes in resolved_rows for code in codes], unresolved
+    return [tuple(picked) for picked in product(*resolved_rows)], unresolved
 
 
 def _leaf_choices(
@@ -175,13 +293,16 @@ def _leaf_choices(
     options_by_group: Mapping[str, list[dict[str, Any]]],
     courses_by_option: Mapping[str, list[dict[str, Any]]],
     catalog_by_gid: Mapping[str, str],
+    catalog_by_code: Mapping[str, list[str]],
     credits: Mapping[str, float],
     satisfied: set[str],
 ) -> list[_Choice]:
     opts = options_by_group.get(group.id, [])
     variants: list[tuple[dict[str, Any], list[tuple[str, ...]], bool]] = []
     for option in opts:
-        option_variants, unresolved = _option_variants(option, courses_by_option, catalog_by_gid)
+        option_variants, unresolved = _option_variants(
+            option, courses_by_option, catalog_by_gid, catalog_by_code, credits
+        )
         variants.append((option, option_variants, unresolved))
 
     satisfied_options: set[str] = set()
@@ -253,6 +374,7 @@ def _choices_for_group(
     options_by_group: Mapping[str, list[dict[str, Any]]],
     courses_by_option: Mapping[str, list[dict[str, Any]]],
     catalog_by_gid: Mapping[str, str],
+    catalog_by_code: Mapping[str, list[str]],
     credits: Mapping[str, float],
     satisfied: set[str],
 ) -> list[_Choice]:
@@ -263,18 +385,23 @@ def _choices_for_group(
         choices: list[_Choice] = []
         for child in group.children:
             for choice in _choices_for_group(
-                child, raw_by_id, options_by_group, courses_by_option, catalog_by_gid, credits, satisfied
+                child, raw_by_id, options_by_group, courses_by_option,
+                catalog_by_gid, catalog_by_code, credits, satisfied
             ):
                 choices.append(
                     _Choice(
                         child.id, child.name, choice.courses, choice.option_order,
                         choice.limitations, choice.existing_contribution,
+                        choice.unresolved_course_codes,
                     )
                 )
         return choices
     if group.children:
         return []
-    return _leaf_choices(group, raw, options_by_group, courses_by_option, catalog_by_gid, credits, satisfied)
+    return _leaf_choices(
+        group, raw, options_by_group, courses_by_option,
+        catalog_by_gid, catalog_by_code, credits, satisfied
+    )
 
 
 def structured_candidate_codes(
@@ -316,6 +443,61 @@ def structured_candidate_codes(
     return codes
 
 
+def _validate_locks(
+    locks: Mapping[str, LockedRequirementSelection],
+    current_requirement_ids: set[str],
+    candidate_sets: list[RequirementCandidateSet],
+    decisions: list[RequirementDecision],
+) -> LockedSelectionFailure | None:
+    sets_by_id = {item.requirement_group_id: item for item in candidate_sets}
+    decisions_by_id = {item.requirement_group_id: item for item in decisions}
+    for requirement_id, lock in locks.items():
+        candidate_set = sets_by_id.get(requirement_id)
+        if candidate_set is None:
+            code = (
+                LockedSelectionFailureCode.CHOICE_NO_LONGER_REQUIRED
+                if requirement_id in current_requirement_ids
+                else LockedSelectionFailureCode.REQUIREMENT_NOT_FOUND
+            )
+            return LockedSelectionFailure(
+                code=code, requirement_group_id=requirement_id,
+                candidate_id=lock.candidate_id,
+            )
+        feasible = {item.candidate_id: item for item in candidate_set.feasible_candidates}
+        excluded = {item.candidate_id: item for item in candidate_set.excluded_candidates}
+        if lock.candidate_id in excluded:
+            candidate = excluded[lock.candidate_id]
+            return LockedSelectionFailure(
+                code=LockedSelectionFailureCode.CANDIDATE_EXCLUDED,
+                requirement_group_id=requirement_id, candidate_id=lock.candidate_id,
+                current_course_codes=candidate.course_codes,
+                submitted_course_codes=list(lock.course_codes),
+                exclusion_reasons=candidate.exclusion_reasons,
+            )
+        candidate = feasible.get(lock.candidate_id)
+        if candidate is None:
+            return LockedSelectionFailure(
+                code=LockedSelectionFailureCode.CANDIDATE_NOT_FOUND,
+                requirement_group_id=requirement_id, candidate_id=lock.candidate_id,
+                submitted_course_codes=list(lock.course_codes),
+            )
+        if tuple(candidate.course_codes) != lock.course_codes:
+            return LockedSelectionFailure(
+                code=LockedSelectionFailureCode.PATH_MISMATCH,
+                requirement_group_id=requirement_id, candidate_id=lock.candidate_id,
+                current_course_codes=candidate.course_codes,
+                submitted_course_codes=list(lock.course_codes),
+            )
+        if decisions_by_id[requirement_id].state != RequirementDecisionState.CHOICE_REQUIRED:
+            return LockedSelectionFailure(
+                code=LockedSelectionFailureCode.CHOICE_NO_LONGER_REQUIRED,
+                requirement_group_id=requirement_id, candidate_id=lock.candidate_id,
+                current_course_codes=candidate.course_codes,
+                submitted_course_codes=list(lock.course_codes),
+            )
+    return None
+
+
 def select_structured_requirements(
     evaluated_groups: list[RequirementGroupResult],
     raw_groups: list[Mapping[str, Any]],
@@ -328,6 +510,7 @@ def select_structured_requirements(
     prerequisites: Mapping[str, StructuredPrerequisite],
     already_satisfied: Iterable[str],
     *,
+    catalog_by_code: Mapping[str, list[str]] | None = None,
     student_id: str,
     program_id: str,
     starting_year: int,
@@ -335,6 +518,7 @@ def select_structured_requirements(
     max_terms: int,
     credit_hour_cap: float = 15.0,
     career_rank_by_candidate_id: Mapping[str, int] | None = None,
+    locked_selections: Iterable[LockedRequirementSelection] = (),
 ) -> RequirementSelectionResult:
     """Globally select among structured deferred requirements.
 
@@ -345,6 +529,21 @@ def select_structured_requirements(
     no prerequisite limitations inside the graduation horizon.
     """
     career_ranks = normalized_career_rank_map(career_rank_by_candidate_id)
+    locks = tuple(locked_selections)
+    locks_by_requirement: dict[str, LockedRequirementSelection] = {}
+    for lock in locks:
+        if lock.requirement_group_id in locks_by_requirement:
+            return RequirementSelectionResult(
+                courses=base_courses,
+                unscheduled=unscheduled,
+                locked_selection_failure=LockedSelectionFailure(
+                    code=LockedSelectionFailureCode.DUPLICATE_REQUIREMENT,
+                    requirement_group_id=lock.requirement_group_id,
+                    candidate_id=lock.candidate_id,
+                ),
+            )
+        locks_by_requirement[lock.requirement_group_id] = lock
+    catalog_by_code = catalog_by_code or {}
     raw_by_id = {str(group["id"]): group for group in raw_groups}
     options_by_group, courses_by_option = _index_rows(options, option_courses)
     by_id: dict[str, RequirementGroupResult] = {}
@@ -370,7 +569,7 @@ def select_structured_requirements(
     for deferred in structured:
         choices = _choices_for_group(
             by_id[deferred.requirement_group_id], raw_by_id, options_by_group, courses_by_option,
-            catalog_by_gid, catalog_credit_by_code, satisfied,
+            catalog_by_gid, catalog_by_code, catalog_credit_by_code, satisfied,
         )
         raw_count *= max(1, len(choices))
         safe = []
@@ -419,7 +618,8 @@ def select_structured_requirements(
         for group_id in sorted(relevant_group_ids):
             for option in options_by_group.get(group_id, []):
                 variants, unresolved = _option_variants(
-                    option, courses_by_option, catalog_by_gid
+                    option, courses_by_option, catalog_by_gid, catalog_by_code,
+                    catalog_credit_by_code
                 )
                 if not unresolved or variants:
                     continue
@@ -429,6 +629,11 @@ def select_structured_requirements(
                     (),
                     (int(option["option_index"]),),
                     existing_contribution=len(by_id[group_id].matched_course_codes),
+                    unresolved_course_codes=tuple(
+                        str(row.get("course_code") or row.get("unresolved_course_ref"))
+                        for row in courses_by_option.get(str(option["id"]), [])
+                        if row.get("course_code") or row.get("unresolved_course_ref")
+                    ),
                 )
                 candidate_id = stable_candidate_id(
                     deferred.requirement_group_id,
@@ -452,11 +657,18 @@ def select_structured_requirements(
 
     manual.extend(retained_structured)
     if not choices_by_requirement:
+        candidate_sets = _candidate_sets(requirement_order, evidence_by_requirement)
+        decisions = _requirement_decisions(candidate_sets)
+        failure = _validate_locks(
+            locks_by_requirement, set(by_id), candidate_sets, decisions
+        )
         return RequirementSelectionResult(
             courses=base_courses,
             unscheduled=unscheduled,
             search_stats=SelectionSearchStats(candidate_combinations_before_pruning=raw_count),
-            candidate_sets=_candidate_sets(requirement_order, evidence_by_requirement),
+            candidate_sets=candidate_sets,
+            decisions=decisions,
+            locked_selection_failure=failure,
         )
 
     base_codes = {course.course_code for course in base_courses}
@@ -479,7 +691,7 @@ def select_structured_requirements(
             continue
         structurally_valid.append(combination)
 
-    best: tuple[tuple[Any, ...], tuple[_Choice, ...], ScheduleResult] | None = None
+    valid_combinations: list[_ValidCombination] = []
     evaluated = 0
     for combination in structurally_valid:
         selected_courses = [
@@ -515,6 +727,7 @@ def select_structured_requirements(
             for course in term.courses
         }
         selected_completion_terms = [placement[course.course_code] for course in selected_courses]
+        combination_completion_terms: list[int] = []
         for deferred, choice in zip((item for item, _ in choices_by_requirement), combination):
             candidate_id = stable_candidate_id(
                 deferred.requirement_group_id,
@@ -526,6 +739,7 @@ def select_structured_requirements(
             candidate_completion = max(
                 (placement[code] for code in choice.courses), default=0
             )
+            combination_completion_terms.append(candidate_completion)
             if (
                 evidence.completion_term_index is None
                 or candidate_completion < evidence.completion_term_index
@@ -576,9 +790,90 @@ def select_structured_requirements(
             career_rank_tuple,
             tuple((choice.option_order, choice.courses) for choice in combination),
         )
-        if best is None or score < best[0]:
-            best = (score, combination, result)
+        valid_combinations.append(_ValidCombination(
+            score=score,
+            choices=combination,
+            schedule=result,
+            candidate_ids=tuple(combination_candidate_ids),
+            completion_terms=tuple(combination_completion_terms),
+        ))
 
+    unconstrained_candidate_sets = _candidate_sets(requirement_order, evidence_by_requirement)
+    unconstrained_decisions = _requirement_decisions(unconstrained_candidate_sets)
+    lock_failure = _validate_locks(
+        locks_by_requirement, set(by_id), unconstrained_candidate_sets,
+        unconstrained_decisions,
+    )
+    if lock_failure is not None:
+        return RequirementSelectionResult(
+            courses=base_courses,
+            unscheduled=unscheduled,
+            search_stats=SelectionSearchStats(
+                candidate_combinations_before_pruning=raw_count,
+                candidate_combinations_after_structural_pruning=len(structurally_valid),
+                candidate_combinations_evaluated=evaluated,
+            ),
+            candidate_sets=unconstrained_candidate_sets,
+            decisions=unconstrained_decisions,
+            locked_selection_failure=lock_failure,
+        )
+
+    constrained = valid_combinations
+    if locks_by_requirement:
+        choice_indexes = {
+            deferred.requirement_group_id: index
+            for index, (deferred, _) in enumerate(choices_by_requirement)
+        }
+        constrained = [
+            item for item in valid_combinations
+            if all(
+                item.candidate_ids[choice_indexes[requirement_id]] == lock.candidate_id
+                for requirement_id, lock in locks_by_requirement.items()
+            )
+        ]
+        if not constrained:
+            return RequirementSelectionResult(
+                courses=base_courses,
+                unscheduled=unscheduled,
+                search_stats=SelectionSearchStats(
+                    candidate_combinations_before_pruning=raw_count,
+                    candidate_combinations_after_structural_pruning=len(structurally_valid),
+                    candidate_combinations_evaluated=evaluated,
+                ),
+                candidate_sets=unconstrained_candidate_sets,
+                decisions=unconstrained_decisions,
+                locked_selection_failure=LockedSelectionFailure(
+                    code=LockedSelectionFailureCode.INCOMPATIBLE,
+                ),
+            )
+
+        # Feasibility for unlocked requirements is contextual: candidates
+        # must participate in a complete schedule consistent with every lock.
+        # Locked requirements retain their unconstrained alternatives so a
+        # future change-choice UI can show the current academic option space.
+        for requirement_id, evidence_items in evidence_by_requirement.items():
+            if requirement_id in locks_by_requirement:
+                continue
+            for evidence in evidence_items.values():
+                if evidence.completion_term_index is not None:
+                    evidence.completion_term_index = None
+                    evidence.exclusion_reasons.add(CandidateExclusionReason.UNSCHEDULABLE)
+                    evidence.exclusion_details.add(
+                        "candidate is incompatible with the current locked selections"
+                    )
+        for item in constrained:
+            for index, (deferred, _) in enumerate(choices_by_requirement):
+                if deferred.requirement_group_id in locks_by_requirement:
+                    continue
+                candidate_id = item.candidate_ids[index]
+                evidence = evidence_by_requirement[deferred.requirement_group_id][candidate_id]
+                completion = item.completion_terms[index]
+                if evidence.completion_term_index is None or completion < evidence.completion_term_index:
+                    evidence.completion_term_index = completion
+                evidence.exclusion_reasons.clear()
+                evidence.exclusion_details.clear()
+
+    best = min(constrained, key=lambda item: item.score) if constrained else None
     if best is None:
         return RequirementSelectionResult(
             courses=base_courses,
@@ -588,10 +883,43 @@ def select_structured_requirements(
                 candidate_combinations_after_structural_pruning=len(structurally_valid),
                 candidate_combinations_evaluated=evaluated,
             ),
-            candidate_sets=_candidate_sets(requirement_order, evidence_by_requirement),
+            candidate_sets=unconstrained_candidate_sets,
+            decisions=unconstrained_decisions,
         )
 
-    _, winning, _ = best
+    winning = best.choices
+    candidate_sets = _candidate_sets(requirement_order, evidence_by_requirement)
+    decisions = _requirement_decisions(candidate_sets)
+    if locks_by_requirement:
+        decisions = [
+            RequirementDecision(
+                requirement_group_id=item.requirement_group_id,
+                requirement_name=item.requirement_name,
+                state=RequirementDecisionState.LOCKED,
+                feasible_candidate_ids=item.feasible_candidate_ids,
+                excluded_candidate_ids=item.excluded_candidate_ids,
+                selected_candidate_id=locks_by_requirement[
+                    item.requirement_group_id
+                ].candidate_id,
+            )
+            if item.requirement_group_id in locks_by_requirement
+            else item
+            for item in decisions
+        ]
+    auto_selected_ids = {
+        decision.requirement_group_id
+        for decision in decisions
+        if decision.state == RequirementDecisionState.AUTO_SELECTED
+    }
+    resolved_requirement_ids = auto_selected_ids | set(locks_by_requirement)
+    # Career Optimization deliberately retains its existing behavior: after
+    # academic feasibility has been established it may select the ranked full
+    # combination. Baseline reconstruction selects only sole-feasible paths.
+    choices_to_schedule = winning if career_rank_by_candidate_id is not None else tuple(
+        choice
+        for (deferred, _), choice in zip(choices_by_requirement, winning)
+        if deferred.requirement_group_id in resolved_requirement_ids
+    )
     selected = [
         CourseToSchedule(
             course_code=code,
@@ -600,16 +928,22 @@ def select_structured_requirements(
             requirement_group_name=choice.owner_group_name,
             selection_limitations=list(choice.limitations),
         )
-        for choice in winning
+        for choice in choices_to_schedule
         for code in choice.courses
+    ]
+    final_unscheduled = manual if career_rank_by_candidate_id is not None else [
+        item
+        for item in unscheduled
+        if item.requirement_group_id not in resolved_requirement_ids
     ]
     return RequirementSelectionResult(
         courses=base_courses + selected,
-        unscheduled=manual,
+        unscheduled=final_unscheduled,
         search_stats=SelectionSearchStats(
             candidate_combinations_before_pruning=raw_count,
             candidate_combinations_after_structural_pruning=len(structurally_valid),
             candidate_combinations_evaluated=evaluated,
         ),
-        candidate_sets=_candidate_sets(requirement_order, evidence_by_requirement),
+        candidate_sets=candidate_sets,
+        decisions=decisions,
     )

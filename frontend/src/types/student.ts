@@ -21,6 +21,7 @@ export interface Course {
   name: string;
   course_code: string;
   workflow_state: string;
+  credit_hours: number;
 }
 
 export interface EnrollmentGrades {

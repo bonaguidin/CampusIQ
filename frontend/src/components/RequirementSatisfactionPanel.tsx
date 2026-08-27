@@ -5,8 +5,10 @@ import {
   isSkippedRequirementSatisfaction,
   type RequirementSatisfactionResponse,
 } from '../api/requirementSatisfaction.mjs';
+import { fetchTechnicalElectiveCandidates } from '../api/technicalElectives.mjs';
 import { useAnalysisRun } from '../hooks/useAnalysisRun';
 import { RequirementGroupNode } from './RequirementGroupNode';
+import { TechnicalElectiveContext } from './TechnicalElectiveContext';
 
 // Sits directly under CourseDiscoveryPanel in the same Course Discovery
 // sub-tab (see AuthenticatedDashboard.tsx) rather than a separate tab --
@@ -28,13 +30,36 @@ export function RequirementSatisfactionPanel({
     [slug, accessToken],
   );
   const { state, trigger } = useAnalysisRun(load);
-  const started = useRef(false);
 
+  // Fetched once here rather than per-node (TechnicalElectiveSlot, mounted
+  // under every group in the tree below): which group(s) this pool belongs
+  // to is only knowable from the fetched result itself (institution-specific
+  // matching happens server-side), so nodes cannot each decide independently
+  // without each re-fetching the identical answer. Loading/error states are
+  // handled here, not per-node -- see TechnicalElectiveSlot's own comment.
+  const loadTechnicalElectives = useCallback(
+    () => fetchTechnicalElectiveCandidates({ slug, accessToken }),
+    [slug, accessToken],
+  );
+  const technicalElectives = useAnalysisRun(loadTechnicalElectives);
+
+  const technicalElectivesTrigger = technicalElectives.trigger;
+  const started = useRef(false);
   useEffect(() => {
     if (started.current) return;
     started.current = true;
     trigger();
-  }, [trigger]);
+    technicalElectivesTrigger();
+  }, [trigger, technicalElectivesTrigger]);
+
+  // The panel's existing refresh button now retries both fetches together --
+  // one control, not two, and it means a failed technical-electives fetch
+  // is recoverable the same way a failed requirement-satisfaction fetch
+  // already was, without a second retry affordance buried in the tree.
+  const refresh = useCallback(() => {
+    trigger();
+    technicalElectivesTrigger();
+  }, [trigger, technicalElectivesTrigger]);
 
   useEffect(() => {
     if (state.phase === 'done') onResult?.(state.result);
@@ -51,7 +76,7 @@ export function RequirementSatisfactionPanel({
           <h3 id="degree-requirements-title" className="editable-section-title">Degree Requirements</h3>
           <p className="requirement-satisfaction-subtitle">Completed and in-progress coursework counted toward your degree.</p>
         </div>
-        <button type="button" className="btn btn-ghost btn-sm" onClick={trigger} disabled={state.phase === 'loading'} aria-busy={state.phase === 'loading'}>
+        <button type="button" className="btn btn-ghost btn-sm" onClick={refresh} disabled={state.phase === 'loading'} aria-busy={state.phase === 'loading'}>
           {state.phase === 'loading' ? 'Checking…' : 'Refresh degree progress'}
         </button>
       </div>
@@ -71,11 +96,13 @@ export function RequirementSatisfactionPanel({
 
       {state.phase === 'done' && !isSkippedRequirementSatisfaction(state.result) && (
         state.result.groups.length > 0 ? (
-          <ul className="requirement-tree">
-            {state.result.groups.map((group) => (
-              <RequirementGroupNode key={group.id} group={group} />
-            ))}
-          </ul>
+          <TechnicalElectiveContext.Provider value={technicalElectives.state}>
+            <ul className="requirement-tree">
+              {state.result.groups.map((group) => (
+                <RequirementGroupNode key={group.id} group={group} />
+              ))}
+            </ul>
+          </TechnicalElectiveContext.Provider>
         ) : (
           <p className="empty-state">No requirement groups are on record for your program yet.</p>
         )

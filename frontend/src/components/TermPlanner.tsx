@@ -31,6 +31,7 @@ import {
   removePlannedCourse,
   searchCatalog,
 } from '../api/planning';
+import type { AnalysisIdentity } from '../api/analysisApi.mjs';
 
 /**
  * The Academic Record's term view: a term dropdown, that term's coursework, and
@@ -60,7 +61,7 @@ import {
  */
 
 interface TermPlannerProps {
-  accessToken: string;
+  identity: AnalysisIdentity;
   /** course_records rows the dashboard already loaded, for the selected term. */
   courses: Array<{
     id: string;
@@ -81,7 +82,7 @@ interface TermPlannerProps {
   onCourseRecordsChanged: () => void;
 }
 
-export function TermPlanner({ accessToken, courses, onCourseRecordsChanged }: TermPlannerProps) {
+export function TermPlanner({ identity, courses, onCourseRecordsChanged }: TermPlannerProps) {
   const [terms, setTerms] = useState<PlanningTerm[]>([]);
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [planned, setPlanned] = useState<PlannedCourse[]>([]);
@@ -104,7 +105,7 @@ export function TermPlanner({ accessToken, courses, onCourseRecordsChanged }: Te
   useEffect(() => {
     let cancelled = false;
     void (async () => {
-      const result = await fetchTerms(accessToken);
+      const result = await fetchTerms(identity);
       if (cancelled) return;
       setTerms(result.terms);
       setSelectedKey(
@@ -113,15 +114,15 @@ export function TermPlanner({ accessToken, courses, onCourseRecordsChanged }: Te
       setTermsLoaded(true);
     })();
     return () => { cancelled = true; };
-  }, [accessToken]);
+  }, [identity]);
 
   // Every planned course for the student, not per-term: the payload is small,
   // and refetching on each dropdown change would make switching terms flicker
   // through an empty list.
   const loadPlanned = useCallback(async () => {
-    const result = await fetchPlannedCourses(accessToken);
+    const result = await fetchPlannedCourses(identity);
     setPlanned(result.plannedCourses);
-  }, [accessToken]);
+  }, [identity]);
 
   useEffect(() => { void loadPlanned(); }, [loadPlanned]);
 
@@ -133,11 +134,11 @@ export function TermPlanner({ accessToken, courses, onCourseRecordsChanged }: Te
   useEffect(() => {
     let cancelled = false;
     void (async () => {
-      const result = await fetchGradingSchema(accessToken);
+      const result = await fetchGradingSchema(identity);
       if (!cancelled) setGradingSchema(result.schema);
     })();
     return () => { cancelled = true; };
-  }, [accessToken]);
+  }, [identity]);
 
   const currentGradeLetters = useMemo(() => currentGradeOptions(gradingSchema), [gradingSchema]);
   const finalGradeLetters = useMemo(() => finalGradeOptions(gradingSchema), [gradingSchema]);
@@ -148,9 +149,9 @@ export function TermPlanner({ accessToken, courses, onCourseRecordsChanged }: Te
   // get_me_profile) already promoted anything due, so this list only shrinks
   // as the student finalizes grades below, never needs polling.
   const loadPendingGrades = useCallback(async () => {
-    const result = await fetchPendingFinalGrades(accessToken);
+    const result = await fetchPendingFinalGrades(identity);
     setPendingGrades(result.pendingFinalGrades);
-  }, [accessToken]);
+  }, [identity]);
 
   useEffect(() => { void loadPendingGrades(); }, [loadPendingGrades]);
 
@@ -159,7 +160,7 @@ export function TermPlanner({ accessToken, courses, onCourseRecordsChanged }: Te
     if (!grade) return;
     setFinalizeBusyId(courseId);
     setError(null);
-    const response = await finalizeCourseGrade(accessToken, courseId, grade);
+    const response = await finalizeCourseGrade(identity, courseId, grade);
     setFinalizeBusyId(null);
     if (!response.ok) {
       setError(response.message);
@@ -177,7 +178,7 @@ export function TermPlanner({ accessToken, courses, onCourseRecordsChanged }: Te
   async function handleCurrentGradeChange(courseId: string, grade: string) {
     setCourseBusyId(courseId);
     setError(null);
-    const response = await editInProgressCourse(accessToken, courseId, {
+    const response = await editInProgressCourse(identity, courseId, {
       letter_grade: grade || null,
     });
     setCourseBusyId(null);
@@ -191,7 +192,7 @@ export function TermPlanner({ accessToken, courses, onCourseRecordsChanged }: Te
   async function handleDrop(courseId: string) {
     setCourseBusyId(courseId);
     setError(null);
-    const response = await editInProgressCourse(accessToken, courseId, { status: 'dropped' });
+    const response = await editInProgressCourse(identity, courseId, { status: 'dropped' });
     setCourseBusyId(null);
     if (!response.ok) {
       setError(response.message);
@@ -337,19 +338,19 @@ export function TermPlanner({ accessToken, courses, onCourseRecordsChanged }: Te
     setSearching(true);
     searchTimer.current = setTimeout(() => {
       void (async () => {
-        const result = await searchCatalog(accessToken, trimmed);
+        const result = await searchCatalog(identity, trimmed);
         setResults(result.results);
         setSearching(false);
       })();
     }, SEARCH_DEBOUNCE_MS);
     return () => { if (searchTimer.current) clearTimeout(searchTimer.current); };
-  }, [query, accessToken]);
+  }, [query, identity]);
 
   async function handleAdd(result: CatalogSearchResult) {
     if (!selectedTerm) return;
     setBusyCode(result.code);
     setError(null);
-    const response = await addPlannedCourse(accessToken, {
+    const response = await addPlannedCourse(identity, {
       course_code: result.code,
       year: selectedTerm.year,
       season: selectedTerm.season,
@@ -382,14 +383,14 @@ export function TermPlanner({ accessToken, courses, onCourseRecordsChanged }: Te
       onCourseRecordsChanged();
     }
     if (selectedTerm.id === null) {
-      const refreshed = await fetchTerms(accessToken);
+      const refreshed = await fetchTerms(identity);
       setTerms(refreshed.terms);
     }
   }
 
   async function handleRemove(id: string) {
     setError(null);
-    const response = await removePlannedCourse(accessToken, id);
+    const response = await removePlannedCourse(identity, id);
     if (!response.ok) {
       setError('Could not remove that course.');
       return;

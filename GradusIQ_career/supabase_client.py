@@ -41,3 +41,16 @@ def build_client_for_token(access_token: str) -> Client:
     client = create_client(url, publishable_key)
     client.postgrest.auth(access_token)
     return client
+
+
+def build_service_client() -> Client:
+    """Trusted backend client for service-role-only transactional RPCs.
+
+    Request handlers must still resolve student identity through a caller-scoped
+    client first. This client is never returned to a browser and must not be
+    used as a substitute for RLS-scoped reads.
+    """
+    return create_client(
+        _required_env("SUPABASE_URL"),
+        _required_env("SUPABASE_SECRET_KEY"),
+    )

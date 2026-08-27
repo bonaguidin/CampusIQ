@@ -88,6 +88,17 @@ def _catalogs() -> dict[CatalogInstitution, tuple[CourseCatalogRecord, ...]]:
     return loaded
 
 
+@lru_cache(maxsize=None)
+def _semantic_fingerprint(institution: CatalogInstitution) -> str:
+    # Local import keeps catalog loading independent while ensuring the cached
+    # fingerprint is derived from the exact process-cached parsed records.
+    from GradusIQ_career.degree_schedule_semantics import (  # noqa: PLC0415
+        local_catalog_semantics_fingerprint,
+    )
+
+    return local_catalog_semantics_fingerprint(institution, _catalogs()[institution])
+
+
 class LocalCatalogRepository:
     """Read-only repository; catalog JSON is parsed once per process."""
 
@@ -105,6 +116,9 @@ class LocalCatalogRepository:
     def records(self, institution: CatalogInstitution) -> tuple[CourseCatalogRecord, ...]:
         """Return the immutable institution snapshot for deterministic audits."""
         return self._records[institution]
+
+    def semantic_fingerprint(self, institution: CatalogInstitution) -> str:
+        return _semantic_fingerprint(institution)
 
     def prerequisite_coverage(self, institution: CatalogInstitution) -> PrerequisiteCoverage:
         records = self._records[institution]

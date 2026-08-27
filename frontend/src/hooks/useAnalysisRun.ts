@@ -61,5 +61,9 @@ export function useAnalysisRun<TResult>(run: () => Promise<TResult>) {
       });
   }, [run]);
 
-  return { state, trigger };
+  const replaceResult = useCallback((result: TResult) => {
+    setState({ phase: 'done', result });
+  }, []);
+
+  return { state, trigger, replaceResult };
 }

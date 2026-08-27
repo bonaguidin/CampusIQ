@@ -75,6 +75,7 @@ def _fingerprint(**overrides):
     values = dict(
         student_id="student", target_role="Backend Engineer", career_needs=[_need()],
         candidate_sets=[_set()], catalog_by_code=_catalog(), resolved_model="model-1",
+        degree_schedule_version="sha256:" + "a" * 64,
     )
     values.update(overrides)
     return build_requirement_ranking_fingerprint(**values)
@@ -117,7 +118,7 @@ def test_fingerprint_is_canonical_and_order_independent():
 @pytest.mark.parametrize("change", [
     "target_role", "career_need", "candidate_id", "course_membership", "credits",
     "completion", "limitation", "title", "description", "catalog_year",
-    "prompt_version", "contract_version", "resolved_model",
+        "prompt_version", "contract_version", "resolved_model", "degree_schedule_version",
 ])
 def test_fingerprint_changes_for_every_ranking_semantic_input(change):
     baseline = _fingerprint()
@@ -142,6 +143,8 @@ def test_fingerprint_changes_for_every_ranking_semantic_input(change):
         update = {change: "changed"}
         catalog["CS 1000"] = record.model_copy(update=update)
         kwargs["catalog_by_code"] = catalog
+    elif change == "contract_version":
+        kwargs[change] = "3"
     else:
         kwargs[change] = "2"
     assert _fingerprint(**kwargs) != baseline

@@ -55,6 +55,18 @@ if (mode === 'academic' || mode === 'minimal') {
 }
 if (mode !== 'complete') profile.completeness.overall = mode === 'minimal' ? 'minimal' : 'partial';
 
+// Additive and opt-in via ?currentTerm=inprogress, same pattern as ?career=
+// below -- every mode above still renders exactly as it did without this
+// param. Adds a second, in-progress term/course on top of whatever `mode`
+// already set up, for Overview's current-term card.
+if (new URLSearchParams(location.search).get('currentTerm') === 'inprogress') {
+  profile.academics.terms.push({ id: 'term-2', institution_id: 'institution-real', label: 'Fall 2026', year: 2026, season: 'fall', sequence: 2 });
+  profile.academics.courses.push(
+    { id: 'course-2', term_id: 'term-2', institution_id: 'institution-real', course_code: 'CS 221', title: 'Data Structures and Algorithms', credit_hours: 4, letter_grade: null, credit_type: 'resident', status: 'in_progress', source: 'transcript_parse' },
+    { id: 'course-3', term_id: 'term-2', institution_id: 'institution-real', course_code: 'MATH 251', title: 'Engineering Mathematics III', credit_hours: 3, letter_grade: null, credit_type: 'resident', status: 'in_progress', source: 'transcript_parse' },
+  );
+}
+
 // ── Career fixtures for the Phase 3 redesign ──────────────────────────────
 // Additive and opt-in via ?career=, so every existing mode above renders
 // exactly what it did before and the assertions written against them stand.

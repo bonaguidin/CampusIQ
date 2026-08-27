@@ -32,6 +32,14 @@ class CandidateExclusionReason(str, Enum):
     UNSCHEDULABLE = "UNSCHEDULABLE"
 
 
+class RequirementDecisionState(str, Enum):
+    AUTO_SELECTED = "AUTO_SELECTED"
+    LOCKED = "LOCKED"
+    CHOICE_REQUIRED = "CHOICE_REQUIRED"
+    ADVISER_REVIEW = "ADVISER_REVIEW"
+    DATA_UNRESOLVED = "DATA_UNRESOLVED"
+
+
 def stable_candidate_id(
     requirement_group_id: str,
     source_order: tuple[int, ...],
@@ -58,6 +66,7 @@ class RequirementCandidate(StrictModel):
     requirement_group_id: str = Field(min_length=1)
     requirement_name: str = Field(min_length=1)
     course_codes: list[str] = Field(default_factory=list)
+    unresolved_course_codes: list[str] = Field(default_factory=list)
     existing_contribution: int = Field(ge=0)
     additional_course_count: int = Field(ge=0)
     additional_credits: float | None = Field(default=None, ge=0)
@@ -99,4 +108,36 @@ class RequirementCandidateSet(StrictModel):
         ]
         if len(ids) != len(set(ids)):
             raise ValueError("candidate IDs must be unique within a requirement")
+        return self
+
+
+class RequirementDecision(StrictModel):
+    requirement_group_id: str = Field(min_length=1)
+    requirement_name: str = Field(min_length=1)
+    state: RequirementDecisionState
+    feasible_candidate_ids: list[str] = Field(default_factory=list)
+    excluded_candidate_ids: list[str] = Field(default_factory=list)
+    selected_candidate_id: str | None = None
+
+    @model_validator(mode="after")
+    def selection_contract(self):
+        if self.state == RequirementDecisionState.AUTO_SELECTED:
+            if len(self.feasible_candidate_ids) != 1:
+                raise ValueError("AUTO_SELECTED requires exactly one feasible candidate")
+            if self.selected_candidate_id != self.feasible_candidate_ids[0]:
+                raise ValueError("AUTO_SELECTED must select its sole feasible candidate")
+        elif self.state == RequirementDecisionState.LOCKED:
+            if self.selected_candidate_id is None:
+                raise ValueError("LOCKED requires a selected candidate")
+            if self.selected_candidate_id not in self.feasible_candidate_ids:
+                raise ValueError("LOCKED must select a currently feasible candidate")
+        elif self.selected_candidate_id is not None:
+            raise ValueError("only AUTO_SELECTED or LOCKED may carry a selected candidate")
+        if self.state == RequirementDecisionState.CHOICE_REQUIRED and len(self.feasible_candidate_ids) < 2:
+            raise ValueError("CHOICE_REQUIRED requires at least two feasible candidates")
+        if self.state in {
+            RequirementDecisionState.ADVISER_REVIEW,
+            RequirementDecisionState.DATA_UNRESOLVED,
+        } and self.feasible_candidate_ids:
+            raise ValueError("an unresolved decision cannot carry feasible candidates")
         return self
