@@ -11,7 +11,6 @@ import {
   listSyllabusGradeProfiles,
   saveSyllabusGradeState,
   solveSyllabusTarget,
-  submitSyllabusCorrections,
   type SyllabusCalculationResult,
   type SyllabusCategory,
   type SyllabusFinding,
@@ -446,23 +445,6 @@ export function GradeCalculatorPanel({ accessToken, courses, institutionName }: 
     }
   }
 
-  async function handleIgnoreRule(ruleIndex: number, warningIndices: number[]) {
-    if (!accessToken || !selectedProfileId) return;
-    setBusy(true);
-    setActionError(null);
-    try {
-      await submitSyllabusCorrections(accessToken, selectedProfileId, [
-        { target_type: 'rule', operation: 'remove_rule', rule_index: ruleIndex },
-        ...warningIndices.map((warning_index) => ({ target_type: 'warning' as const, operation: 'dismiss_warning', warning_index })),
-      ]);
-      await refreshDetail();
-    } catch (err) {
-      setActionError(err instanceof SyllabusApiError ? err.message : 'Could not save your correction.');
-    } finally {
-      setBusy(false);
-    }
-  }
-
   async function handleConfirm() {
     if (!accessToken || !selectedProfileId) return;
     setBusy(true);
@@ -622,8 +604,6 @@ export function GradeCalculatorPanel({ accessToken, courses, institutionName }: 
                 />
                 <SyllabusRulesList
                   model={detail.extracted_grade_model}
-                  onIgnoreRule={handleIgnoreRule}
-                  busy={busy}
                   findingsByAnchor={findingsByAnchor}
                   dismissedFindingKeys={dismissedFindingKeys}
                   onDismissFinding={handleDismissFinding}
@@ -638,7 +618,7 @@ export function GradeCalculatorPanel({ accessToken, courses, institutionName }: 
               <div className="card grade-review-card">
                 <h3 className="card-heading">Review grading breakdown</h3>
                 <SyllabusGradingBreakdown model={detail.confirmed_grade_model} />
-                <SyllabusRulesList model={detail.confirmed_grade_model} onIgnoreRule={undefined} busy={busy} findingsByAnchor={EMPTY_FINDINGS_BY_ANCHOR} />
+                <SyllabusRulesList model={detail.confirmed_grade_model} findingsByAnchor={EMPTY_FINDINGS_BY_ANCHOR} />
                 <button type="button" className="btn btn-primary" onClick={handleConfirm} disabled={busy} aria-busy={busy}>
                   {busy ? 'Confirming…' : 'Confirm'}
                 </button>
@@ -1019,15 +999,11 @@ function SyllabusGradingBreakdown({
 
 function SyllabusRulesList({
   model,
-  onIgnoreRule,
-  busy,
   findingsByAnchor = EMPTY_FINDINGS_BY_ANCHOR,
   dismissedFindingKeys = new Set(),
   onDismissFinding = () => {},
 }: {
   model: SyllabusGradeModel | null;
-  onIgnoreRule: ((ruleIndex: number, warningIndices: number[]) => void) | undefined;
-  busy: boolean;
   findingsByAnchor?: Map<string, FindingWithKey[]>;
   dismissedFindingKeys?: Set<number>;
   onDismissFinding?: (key: number) => void;
@@ -1038,10 +1014,6 @@ function SyllabusRulesList({
       <h4 className="card-heading">Special grading rules</h4>
       {model.rules.map((rule, index) => {
         const isDeterministic = rule.rule_type === 'replacement' && rule.source && rule.target;
-        const relatedWarningIndices = model.warnings
-          .map((w, wi) => ({ w, wi }))
-          .filter(({ w }) => w.type === 'possible_curve' || w.type === 'ambiguous_rule')
-          .map(({ wi }) => wi);
         return (
           <div className="grade-rule-card" key={index}>
             <p className="grade-rule-title">{ruleTypeLabel(rule.rule_type)}</p>
@@ -1055,16 +1027,6 @@ function SyllabusRulesList({
               dismissedFindingKeys={dismissedFindingKeys}
               onDismissFinding={onDismissFinding}
             />
-            {!isDeterministic && onIgnoreRule && (
-              <button
-                type="button"
-                className="btn btn-ghost btn-sm"
-                disabled={busy}
-                onClick={() => onIgnoreRule(index, relatedWarningIndices)}
-              >
-                Ignore this rule for What-If calculations
-              </button>
-            )}
           </div>
         );
       })}
