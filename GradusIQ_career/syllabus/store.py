@@ -48,8 +48,12 @@ def find_profiles(
     """Non-unique lookup -- see migration module docstring on why course
     identity has no uniqueness constraint (GradeModel.course fields are
     free-text/nullable, unlike a validated catalog course row).
+
+    Soft-deleted profiles are excluded: a course the student removed must
+    not resurface as a duplicate-match candidate or be silently reused as
+    the target of a re-upload.
     """
-    query = client.table(PROFILES_TABLE).select("*").eq("student_id", student_id)
+    query = client.table(PROFILES_TABLE).select("*").eq("student_id", student_id).is_("deleted_at", "null")
     if institution is not None:
         query = query.eq("institution", institution)
     if course_code is not None:
@@ -60,8 +64,17 @@ def find_profiles(
 
 
 def list_profiles(client: Any, *, student_id: str) -> list[dict]:
-    """All profiles for a student -- cheap, read-only, no parsing/LLM."""
-    response = client.table(PROFILES_TABLE).select("*").eq("student_id", student_id).execute()
+    """All non-deleted profiles for a student -- cheap, read-only, no
+    parsing/LLM. This is the query behind the Grade Calculator list screen;
+    soft-deleted profiles (deleted_at set) never appear.
+    """
+    response = (
+        client.table(PROFILES_TABLE)
+        .select("*")
+        .eq("student_id", student_id)
+        .is_("deleted_at", "null")
+        .execute()
+    )
     return rows_of(response)
 
 
@@ -117,6 +130,30 @@ def update_profile_state(
     if not rows:
         raise RuntimeError(f"syllabus_grade_profiles update affected no row for id={profile_id}")
     return rows[0]
+
+
+def soft_delete_profile(client: Any, *, profile_id: str, student_id: str) -> dict | None:
+    """Mark one profile removed by setting deleted_at. Not a hard delete:
+    the immutable revision history and any saved StudentGradeState stay put.
+
+    Returns the updated row, or None when nothing matched -- no such
+    profile, or it belongs to another student (RLS + the explicit
+    student_id filter both enforce ownership). The caller maps None to 404,
+    matching remove_planned / the transcript review routes: a 403 would
+    confirm the row exists.
+
+    Idempotent: re-deleting an already-deleted profile just rewrites
+    deleted_at and still returns the row.
+    """
+    response = (
+        client.table(PROFILES_TABLE)
+        .update({"deleted_at": now_iso(), "updated_at": now_iso()})
+        .eq("id", profile_id)
+        .eq("student_id", student_id)
+        .execute()
+    )
+    rows = rows_of(response)
+    return rows[0] if rows else None
 
 
 # ---------------------------------------------------------------------------

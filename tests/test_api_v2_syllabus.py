@@ -185,6 +185,7 @@ class FakeQuery:
         self.op = None
         self.payload = None
         self.filters = []
+        self.null_filters = []
         self._order = None
 
     def select(self, *a, **k):
@@ -205,6 +206,12 @@ class FakeQuery:
         self.filters.append((column, value))
         return self
 
+    def is_(self, column, value):
+        # Only the "<column> IS NULL" form is used (soft-delete filters).
+        assert value == "null", f"FakeQuery.is_ only supports 'null', got {value!r}"
+        self.null_filters.append(column)
+        return self
+
     def order(self, column, desc=False):
         self._order = (column, desc)
         return self
@@ -216,7 +223,12 @@ class FakeQuery:
         return [r for r in rows if r.get("student_id") == self.student_id]
 
     def _matched(self):
-        return [r for r in self._visible() if all(r.get(c) == v for c, v in self.filters)]
+        return [
+            r
+            for r in self._visible()
+            if all(r.get(c) == v for c, v in self.filters)
+            and all(r.get(c) is None for c in self.null_filters)
+        ]
 
     def execute(self):
         if self.op == "select":
@@ -237,6 +249,7 @@ class FakeQuery:
                 row.setdefault("confirmed_at", None)
             if self.table_name == "syllabus_grade_profiles":
                 row.setdefault("current_revision_id", None)
+                row.setdefault("deleted_at", None)
             self.db.tables[self.table_name].append(row)
             return _Result([dict(row)])
         if self.op == "update":
@@ -337,6 +350,57 @@ def test_cannot_read_another_students_profile(client, db, monkeypatch):
 def test_read_nonexistent_profile_404(client, db, monkeypatch):
     patch_session(monkeypatch, db)
     response = client.get(profile_url("nonexistent-id"), headers=HEADERS)
+    assert response.status_code == 404
+
+
+# --- soft delete ---------------------------------------------------------------------
+
+
+def test_soft_deleted_profile_disappears_from_list(client, db, monkeypatch):
+    patch_session(monkeypatch, db)
+    monkeypatch.setattr(api, "build_client", lambda: FakeAI())
+    created = ingest(client).json()
+    profile_id = created["id"]
+
+    assert [p["id"] for p in client.get(LIST_URL, headers=HEADERS).json()["syllabus_grade_profiles"]] == [profile_id]
+
+    delete_response = client.delete(profile_url(profile_id), headers=HEADERS)
+    assert delete_response.status_code == 200
+    assert delete_response.json() == {"removed": profile_id}
+
+    # Gone from the list; the underlying rows (revision history, grade state)
+    # are untouched -- this is a soft delete, not a cascade.
+    assert client.get(LIST_URL, headers=HEADERS).json() == {"syllabus_grade_profiles": []}
+    assert len(db.tables["syllabus_grade_revisions"]) == 1
+    profile_row = db.tables["syllabus_grade_profiles"][0]
+    assert profile_row["deleted_at"] is not None
+
+    # A re-upload of the same course does not resurface or reuse the
+    # soft-deleted profile.
+    recreated = ingest(client).json()
+    assert recreated["id"] != profile_id
+    assert recreated["possible_duplicate_profiles"] == []
+
+
+def test_cannot_soft_delete_another_students_profile(client, db, monkeypatch):
+    patch_session(monkeypatch, db, student_id=STUDENT_A)
+    monkeypatch.setattr(api, "build_client", lambda: FakeAI())
+    created = ingest(client).json()
+    profile_id = created["id"]
+
+    patch_session(monkeypatch, db, student_id=STUDENT_B)
+    response = client.delete(profile_url(profile_id), headers=HEADERS)
+    assert response.status_code == 404
+
+    # Student A's profile is untouched and still listed for them.
+    patch_session(monkeypatch, db, student_id=STUDENT_A)
+    assert db.tables["syllabus_grade_profiles"][0]["deleted_at"] is None
+    assert [p["id"] for p in client.get(LIST_URL, headers=HEADERS).json()["syllabus_grade_profiles"]] == [profile_id]
+
+
+def test_soft_delete_nonexistent_profile_404(client, db, monkeypatch):
+    patch_session(monkeypatch, db)
+    response = client.delete(profile_url("nonexistent-id"), headers=HEADERS)
     assert response.status_code == 404
 
 

@@ -2464,6 +2464,30 @@ def get_me_syllabus_grade_profile(request: Request, profile_id: str) -> dict:
         raise HTTPException(status_code=502, detail="Could not read this syllabus grade profile.") from exc
 
 
+@router.delete(
+    "/api/v2/student/me/syllabus-grade-profiles/{profile_id}",
+    dependencies=[Depends(authorize_proxy_request)],
+)
+def delete_me_syllabus_grade_profile(request: Request, profile_id: str) -> dict:
+    """Soft delete: the profile drops off the student's list, but its
+    immutable revision history and saved grade state are left intact.
+    """
+    client = _session_client(request)
+    student_id = _resolve_session_student_id(client)
+
+    try:
+        removed = syllabus_store.soft_delete_profile(client, profile_id=profile_id, student_id=student_id)
+    except Exception as exc:  # noqa: BLE001 -- RLS denial or transport
+        raise HTTPException(status_code=502, detail="Could not remove this grade calculator.") from exc
+
+    if removed is None:
+        # 404 for both "no such profile" and "another student's profile":
+        # RLS makes them indistinguishable and a 403 would confirm the row
+        # exists. Same shape as delete_me_planned_course.
+        raise HTTPException(status_code=404, detail="No such grade calculator.")
+    return {"removed": profile_id}
+
+
 @router.post(
     "/api/v2/student/me/syllabus-grade-profiles/ingest",
     dependencies=[Depends(authorize_proxy_request)],

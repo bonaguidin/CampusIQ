@@ -57,10 +57,16 @@ class _FakeQuery:
         self.op = op
         self.payload = payload
         self.filters = []
+        self.null_filters = []
         self._order = None
 
     def eq(self, col, val):
         self.filters.append((col, val))
+        return self
+
+    def is_(self, col, val):
+        assert val == "null", f"_FakeQuery.is_ only supports 'null', got {val!r}"
+        self.null_filters.append(col)
         return self
 
     def order(self, col, desc=False):
@@ -89,7 +95,12 @@ class _FakeTable:
         return self.client.data.setdefault(self.name, [])
 
     def _matched(self, query):
-        return [r for r in self._rows() if all(r.get(c) == v for c, v in query.filters)]
+        return [
+            r
+            for r in self._rows()
+            if all(r.get(c) == v for c, v in query.filters)
+            and all(r.get(c) is None for c in query.null_filters)
+        ]
 
     def _execute(self, query):
         if query.op == "select":
