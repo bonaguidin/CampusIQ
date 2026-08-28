@@ -4,6 +4,7 @@ No network: OpenRouter is a fake client, Supabase is a small in-memory
 double. Mirrors tests/test_api_v2_resume.py's fixture shape.
 """
 
+import copy
 import io
 import json
 
@@ -123,6 +124,16 @@ CLEAN_MODEL_RESPONSE = {
     "rules": [],
     "warnings": [],
 }
+
+# A model that genuinely needs student review for a reason unrelated to any
+# informational (curve/late-work/makeup) rule: the replacement rule's
+# target names a category that does not exist -> unresolved_rule_reference
+# (blocking). Built from the PHYS 207 response so every evidence string
+# still appears verbatim in phys_207_pdf() (Phase 4 verification). The
+# curve rule rides along and, post-reclassification, is non-blocking on its
+# own -- so removing just the broken replacement rule reaches ACCEPTED.
+REVIEW_REQUIRED_MODEL_RESPONSE = copy.deepcopy(PHYS_207_MODEL_RESPONSE)
+REVIEW_REQUIRED_MODEL_RESPONSE["rules"][0]["target"] = "Makeup Exam"
 
 
 class FakeAI:
@@ -384,13 +395,30 @@ def test_cross_student_mutation_and_calculation_paths_404(client, db, monkeypatc
 
 def test_valid_pdf_ingestion_review_required(client, db, monkeypatch):
     patch_session(monkeypatch, db)
-    monkeypatch.setattr(api, "build_client", lambda: FakeAI())
+    monkeypatch.setattr(api, "build_client", lambda: FakeAI(text=json.dumps(REVIEW_REQUIRED_MODEL_RESPONSE)))
     response = ingest(client)
     assert response.status_code == 200
     body = response.json()
     assert body["reconciliation"]["status"] == "needs_student_review"
     assert body["calculator_ready"] is False
     assert body["extracted_grade_model"]["categories"][0]["name"] == "Mid-term Exam"
+
+
+def test_curve_syllabus_reaches_calculator_ready_without_correction(client, db, monkeypatch):
+    # A correctly-extracted curve is informational, not a blocker
+    # (syllabus-review redesign §2C / §5): ingest lands ACCEPTED and the
+    # student confirms without removing the curve.
+    patch_session(monkeypatch, db)
+    monkeypatch.setattr(api, "build_client", lambda: FakeAI())
+    created = ingest(client).json()
+    assert created["reconciliation"]["status"] == "accepted"
+    assert created["calculator_ready"] is False
+
+    confirmed = client.post(f"{profile_url(created['id'])}/confirm", headers=HEADERS)
+    assert confirmed.status_code == 200
+    assert confirmed.json()["calculator_ready"] is True
+    assert any(r["rule_type"] == "curve" for r in confirmed.json()["extracted_grade_model"]["rules"])
+    assert any(r["rule_type"] == "curve" for r in confirmed.json()["confirmed_grade_model"]["rules"])
 
 
 def test_valid_pdf_ingestion_persists(client, db, monkeypatch):
@@ -451,19 +479,16 @@ def test_duplicate_course_signal(client, db, monkeypatch):
 
 def test_correction_and_confirm_reaches_calculator_ready(client, db, monkeypatch):
     patch_session(monkeypatch, db)
-    monkeypatch.setattr(api, "build_client", lambda: FakeAI())
+    monkeypatch.setattr(api, "build_client", lambda: FakeAI(text=json.dumps(REVIEW_REQUIRED_MODEL_RESPONSE)))
     created = ingest(client).json()
     assert created["reconciliation"]["status"] == "needs_student_review"
 
+    # Remove only the broken replacement rule (index 0); the curve rule
+    # (index 1) stays and is non-blocking on its own.
     corrected = client.post(
         f"{profile_url(created['id'])}/corrections",
         headers=HEADERS,
-        json={
-            "corrections": [
-                {"target_type": "rule", "operation": "remove_rule", "rule_index": 1},
-                {"target_type": "warning", "operation": "dismiss_warning", "warning_index": 0},
-            ]
-        },
+        json={"corrections": [{"target_type": "rule", "operation": "remove_rule", "rule_index": 0}]},
     )
     assert corrected.status_code == 200
     assert corrected.json()["confirmed_reconciliation"]["status"] == "accepted"
@@ -476,11 +501,12 @@ def test_correction_and_confirm_reaches_calculator_ready(client, db, monkeypatch
     confirmed = client.post(f"{profile_url(created['id'])}/confirm", headers=HEADERS)
     assert confirmed.status_code == 200
     assert confirmed.json()["calculator_ready"] is True
-    # original extracted curve preserved
-    assert any(r["rule_type"] == "curve" for r in confirmed.json()["extracted_grade_model"]["rules"])
+    # original extracted (broken) rule preserved; gone from the confirmed model
+    assert any(r["target"] == "Makeup Exam" for r in confirmed.json()["extracted_grade_model"]["rules"])
     confirmed_rules = confirmed.json()["confirmed_grade_model"]["rules"]
-    assert not any(r["rule_type"] == "curve" for r in confirmed_rules)
-    assert any(r["rule_type"] == "replacement" for r in confirmed_rules)
+    assert not any(r["target"] == "Makeup Exam" for r in confirmed_rules)
+    # the informational curve rule is retained -- it never needed removing
+    assert any(r["rule_type"] == "curve" for r in confirmed_rules)
 
 
 def test_invalid_correction_rejected(client, db, monkeypatch):
@@ -507,7 +533,7 @@ def test_confirm_without_correction_when_accepted(client, db, monkeypatch):
 
 def test_confirm_when_not_accepted_returns_409(client, db, monkeypatch):
     patch_session(monkeypatch, db)
-    monkeypatch.setattr(api, "build_client", lambda: FakeAI())
+    monkeypatch.setattr(api, "build_client", lambda: FakeAI(text=json.dumps(REVIEW_REQUIRED_MODEL_RESPONSE)))
     created = ingest(client).json()
     response = client.post(f"{profile_url(created['id'])}/confirm", headers=HEADERS)
     assert response.status_code == 409

@@ -129,12 +129,17 @@ def phys_207_grade_model(*, include_curve: bool) -> GradeModel:
     )
 
 
-# --- PHYS 207: with curve -> NEEDS_STUDENT_REVIEW --------------------------------
+# --- PHYS 207: with curve -> ACCEPTED, curve findings surfaced not blocking -----
 
 
-def test_phys_207_with_curve_needs_student_review():
+def test_phys_207_with_curve_is_accepted_curve_findings_non_blocking():
+    # A correctly-extracted curve is informational, not an ambiguity to
+    # resolve (syllabus-review redesign, planning-docs/
+    # syllabus-review-redesign-spec.md §2C / §5). The findings are still
+    # produced -- the UI shows the rule as a Professor's Rule -- they just
+    # no longer force NEEDS_STUDENT_REVIEW.
     result = reconcile_grade_model(phys_207_grade_model(include_curve=True), PHYS_207_CONTENT)
-    assert result.status == ReconciliationStatus.NEEDS_STUDENT_REVIEW
+    assert result.status == ReconciliationStatus.ACCEPTED
     codes = {f.code for f in result.findings}
     assert "possible_curve" in codes
     assert "non_deterministic_grading_rule" in codes
@@ -495,7 +500,60 @@ def test_curve_rule_is_always_non_deterministic():
     result = reconcile_grade_model(model, content_from_pages([page(1, "x")]))
     finding = next(f for f in result.findings if f.code == "non_deterministic_grading_rule")
     assert finding.severity.value == "warning"
+    # non_deterministic_grading_rule no longer forces review on its own; this
+    # bare model still needs review, but only because grading_method is
+    # UNKNOWN (see test below for the isolated non-blocking case).
     assert result.status == ReconciliationStatus.NEEDS_STUDENT_REVIEW
+    assert any(f.code == "grading_method_unknown" for f in result.findings)
+
+
+def test_informational_rules_alone_do_not_force_review():
+    """Curve / late-work / makeup rules, correctly extracted, are facts the
+    student should see while calculating -- not ambiguities or missing data.
+    Reclassified as non-blocking per the syllabus-review redesign
+    (planning-docs/syllabus-review-redesign-spec.md §2C / §5). The findings
+    are still emitted so the UI can render the Professor's Rules panel.
+    """
+    model = GradeModel(
+        grading_method=GradingMethod.WEIGHTED,
+        categories=[GradeCategory(name="Exam", weight=100, evidence=evidence(1, "Exam: 100%"))],
+        rules=[
+            GradingRule(
+                rule_type=GradingRuleType.CURVE,
+                description="Grades may be curved.",
+                evidence=evidence(1, "Grades may be curved."),
+            ),
+            GradingRule(
+                rule_type=GradingRuleType.LATE_WORK,
+                description="No late homework accepted.",
+                evidence=evidence(1, "No late homework accepted."),
+            ),
+            GradingRule(
+                rule_type=GradingRuleType.MAKEUP,
+                description="Makeup work only for excused absences.",
+                evidence=evidence(1, "Makeup work only for excused absences."),
+            ),
+        ],
+        warnings=[
+            ExtractionWarning(type=ExtractionWarningType.POSSIBLE_CURVE, description="No curve formula is given."),
+            ExtractionWarning(type=ExtractionWarningType.AMBIGUOUS_RULE, description="Late-work policy phrasing is loose."),
+        ],
+    )
+    content = content_from_pages(
+        [
+            page(
+                1,
+                "Exam: 100%\nGrades may be curved.\nNo late homework accepted.\n"
+                "Makeup work only for excused absences.",
+            )
+        ]
+    )
+    result = reconcile_grade_model(model, content)
+    assert result.status == ReconciliationStatus.ACCEPTED
+    codes = {f.code for f in result.findings}
+    assert "non_deterministic_grading_rule" in codes
+    assert "possible_curve" in codes
+    assert "ambiguous_rule" in codes
 
 
 def test_replacement_rule_with_source_and_target_is_deterministic():

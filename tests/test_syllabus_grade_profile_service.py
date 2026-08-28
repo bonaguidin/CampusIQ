@@ -190,6 +190,33 @@ PHYS_207_CONTENT = content_for(
 )
 
 
+def needs_review_model() -> GradeModel:
+    """A model that genuinely needs student review for a reason unrelated to
+    any informational (curve/late-work/makeup) rule: a replacement rule
+    whose target names a category that does not exist.
+    """
+    return GradeModel(
+        grading_method=GradingMethod.WEIGHTED,
+        categories=[
+            GradeCategory(name="Midterm", weight=50, evidence=evidence(1, "Midterm: 50%")),
+            GradeCategory(name="Final", weight=50, evidence=evidence(1, "Final: 50%")),
+        ],
+        rules=[
+            GradingRule(
+                rule_type=GradingRuleType.REPLACEMENT,
+                description="Final replaces the makeup exam when higher.",
+                source="Final",
+                target="Makeup Exam",
+                condition="final_score > makeup_score",
+                evidence=evidence(1, "Final replaces the makeup exam when higher."),
+            )
+        ],
+    )
+
+
+NEEDS_REVIEW_CONTENT = content_for("Midterm: 50% Final: 50% Final replaces the makeup exam when higher.")
+
+
 def ingest(client, model, content, *, source_bytes=b"syllabus-bytes", profile_kwargs=None):
     profile = service.get_or_create_profile(
         client,
@@ -247,19 +274,32 @@ def test_clean_accepted_model_round_trips_and_calculator_ready(client):
 # --- Test 32: PHYS 207 review workflow ------------------------------------------------
 
 
-def test_phys_207_with_curve_needs_review_then_correction_reaches_accepted(client):
+def test_phys_207_with_curve_is_accepted_curve_removal_optional(client):
+    # A correctly-extracted curve no longer forces review (syllabus-review
+    # redesign §2C / §5): ingest lands ACCEPTED and the student can confirm
+    # without removing the curve.
     profile, revision, _, reconciliation = ingest(client, phys_207_with_curve(), PHYS_207_CONTENT)
-    assert reconciliation.status == ReconciliationStatus.NEEDS_STUDENT_REVIEW
+    assert reconciliation.status == ReconciliationStatus.ACCEPTED
 
     assembled = service.get_syllabus_grade_profile(client, profile_id=profile["id"], student_id=STUDENT_A)
-    assert assembled["calculator_ready"] is False
+    assert assembled["calculator_ready"] is False  # not yet confirmed
     assert any(r.rule_type == GradingRuleType.CURVE for r in assembled["extracted_grade_model"].rules)
 
-    with pytest.raises(service.GradeModelNotAcceptedError):
-        service.confirm_grade_model(client, revision_id=revision["id"], student_id=STUDENT_A)
+    confirmed = service.confirm_grade_model(client, revision_id=revision["id"], student_id=STUDENT_A)
+    assert confirmed["confirmed_at"] is not None
 
-    # Student resolves the curve: remove it from the operational model,
-    # but the ORIGINAL extraction (with the curve) must remain untouched.
+    final = service.get_syllabus_grade_profile(client, profile_id=profile["id"], student_id=STUDENT_A)
+    assert final["calculator_ready"] is True
+    # Nothing removed the curve: it is preserved in both the immutable
+    # extraction and the confirmed operational model.
+    assert any(r.rule_type == GradingRuleType.CURVE for r in final["extracted_grade_model"].rules)
+    assert any(r.rule_type == GradingRuleType.CURVE for r in final["confirmed_grade_model"].rules)
+
+
+def test_curve_removal_via_correction_is_still_available(client):
+    # Removing the curve remains a valid path -- it is just no longer
+    # required to reach calculator_ready.
+    profile, revision, _, _ = ingest(client, phys_207_with_curve(), PHYS_207_CONTENT)
     updated = service.apply_student_corrections(
         client,
         revision_id=revision["id"],
@@ -270,11 +310,10 @@ def test_phys_207_with_curve_needs_review_then_correction_reaches_accepted(clien
     )
     assert updated["confirmed_reconciliation_status"] == "accepted"
 
-    confirmed = service.confirm_grade_model(client, revision_id=revision["id"], student_id=STUDENT_A)
-    assert confirmed["confirmed_at"] is not None
-
+    service.confirm_grade_model(client, revision_id=revision["id"], student_id=STUDENT_A)
     final = service.get_syllabus_grade_profile(client, profile_id=profile["id"], student_id=STUDENT_A)
     assert final["calculator_ready"] is True
+    # ORIGINAL extraction keeps the curve; the operational model drops it.
     assert any(r.rule_type == GradingRuleType.CURVE for r in final["extracted_grade_model"].rules)
     assert final["confirmed_grade_model"].rules == []
 
@@ -497,7 +536,7 @@ def test_correction_producing_120_percent_stays_needs_review(client):
 
 
 def test_needs_review_reconciliation_still_blocks_calculator(client):
-    profile, revision, _, reconciliation = ingest(client, phys_207_with_curve(), PHYS_207_CONTENT)
+    profile, revision, _, reconciliation = ingest(client, needs_review_model(), NEEDS_REVIEW_CONTENT)
     assert reconciliation.status == ReconciliationStatus.NEEDS_STUDENT_REVIEW
     with pytest.raises(GradeModelNotReadyError):
         calculate_grade_projection(reconciliation, StudentGradeState())

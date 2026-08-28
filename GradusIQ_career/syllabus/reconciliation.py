@@ -75,10 +75,24 @@ RECONCILIATION_SCHEMA_VERSION = "1"
 #   syllabus/models.py's ExtractionWarningType) that the calculator can
 #   operate around -- an unknown quiz count doesn't block computing a
 #   weighted grade from the categories that ARE known.
+#
+# non_deterministic_grading_rule / possible_curve / ambiguous_rule: a
+#   correctly-extracted informational grading policy (a curve, a late-work
+#   rule, a makeup-work rule) that has no deterministic formula the
+#   calculator could execute -- see _is_rule_deterministic. Per the
+#   syllabus-review redesign (planning-docs/syllabus-review-redesign-spec.md
+#   §2C / §5), these are facts the student should SEE while calculating,
+#   not ambiguities to resolve or block on: the calculator already leaves
+#   the affected scores unmodified (calculator/rules.py) and simply
+#   surfaces the rule text. They stay in `findings` for display; they no
+#   longer force NEEDS_STUDENT_REVIEW on their own.
 NON_BLOCKING_WARNING_CODES: frozenset[str] = frozenset(
     {
         "unknown_assessment_count",
         "missing_grade_scale",
+        "non_deterministic_grading_rule",
+        "possible_curve",
+        "ambiguous_rule",
     }
 )
 
