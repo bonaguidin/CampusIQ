@@ -6,6 +6,7 @@ import {
   SyllabusApiError,
   calculateSyllabusGrade,
   confirmSyllabusGradeModel,
+  deleteSyllabusGradeProfile,
   getSyllabusGradeProfile,
   ingestSyllabus,
   listSyllabusGradeProfiles,
@@ -298,6 +299,8 @@ export function GradeCalculatorPanel({ accessToken, courses, institutionName }: 
   const [targetResult, setTargetResult] = useState<SyllabusTargetResult | null>(null);
   const [targetError, setTargetError] = useState<string | null>(null);
 
+  const [removingId, setRemovingId] = useState<string | null>(null);
+
   useEffect(() => {
     if (!accessToken) return;
     let cancelled = false;
@@ -399,6 +402,26 @@ export function GradeCalculatorPanel({ accessToken, courses, institutionName }: 
       .catch((err: unknown) => {
         setDetailError(err instanceof SyllabusApiError ? err.message : 'Could not load this grade calculator.');
       });
+  }
+
+  async function handleRemoveProfile(profileId: string, label: string) {
+    if (!accessToken) return;
+    // Destructive from the student's perspective (the calculator and any
+    // grades they entered vanish from their list) even though the backend
+    // keeps the row -- so gate it behind a confirm.
+    if (!window.confirm(`Remove the grade calculator for ${label}? You can re-upload the syllabus later to start over.`)) {
+      return;
+    }
+    setRemovingId(profileId);
+    setListError(null);
+    try {
+      await deleteSyllabusGradeProfile(accessToken, profileId);
+      setProfiles((prev) => (prev ?? []).filter((p) => p.id !== profileId));
+    } catch (err) {
+      setListError(err instanceof SyllabusApiError ? err.message : 'Could not remove this grade calculator.');
+    } finally {
+      setRemovingId(null);
+    }
   }
 
   async function refreshDetail() {
@@ -788,11 +811,20 @@ export function GradeCalculatorPanel({ accessToken, courses, institutionName }: 
             <>
               <div className="real-course-table" role="table" aria-label="Your grade calculators">
                 {profiles.map((p) => (
-                  <div className="real-course-row" role="row" key={p.id}>
+                  <div className="real-course-row grade-profile-row" role="row" key={p.id}>
                     <button type="button" className="grade-profile-row-button" onClick={() => loadDetail(p.id)}>
                       <span role="cell"><strong>{p.course_code ?? 'Untitled course'}</strong><small>{p.term ?? ''}</small></span>
                       <span role="cell">{p.review_state === 'confirmed' ? 'Confirmed' : p.review_state === 'reconfirm_required' ? 'Needs reconfirmation' : 'Review needed'}</span>
                       <span role="cell">{p.current_grade !== null && p.current_grade !== undefined ? `${p.current_grade}%` : '—'}</span>
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-ghost btn-sm grade-profile-remove"
+                      onClick={() => handleRemoveProfile(p.id, p.course_code ?? 'this course')}
+                      disabled={removingId === p.id}
+                      aria-label={`Remove grade calculator for ${p.course_code ?? 'this course'}`}
+                    >
+                      {removingId === p.id ? 'Removing…' : 'Remove'}
                     </button>
                   </div>
                 ))}

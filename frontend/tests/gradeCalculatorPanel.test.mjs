@@ -393,3 +393,74 @@ test('Grade Calculator replaces a framework 404 with friendly list-load copy', {
   await page.getByRole('alert').getByText("We couldn't load your saved grade calculators. Try again.").waitFor()
   assert.equal(await page.getByText('Not Found', { exact: true }).count(), 0)
 })
+
+test('Grade Calculator: remove a calculator from the list (confirm-gated soft delete)', { timeout: 30_000 }, async (t) => {
+  const planning = planningRoutes({ terms: [] })
+  const PROFILE = {
+    id: PROFILE_ID, institution: 'tamu', course_code: 'ECEN 248', term: 'Fall 2026', section: '501',
+    review_state: 'needs_review', created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z',
+    calculator_ready: false, current_grade: null,
+  }
+  let listRows = [PROFILE]
+  let deleteCount = 0
+
+  const apiPlugin = {
+    name: 'grade-calculator-remove',
+    configureServer(server) {
+      server.middlewares.use((request, response, next) => {
+        const path = request.url?.split('?')[0]
+        if (planning.handle(path, request.method, request, response)) return undefined
+        if (path === '/api/v2/student/me/requirement-satisfaction') return json(response, 404, { detail: 'Not found.' })
+        if (path?.startsWith('/api/v2/student/me/analysis-cache/')) return json(response, 404, { detail: 'Not found.' })
+        if (path === '/api/v2/student/me/syllabus-grade-profiles' && request.method === 'GET') {
+          return json(response, 200, { syllabus_grade_profiles: listRows })
+        }
+        if (path === `/api/v2/student/me/syllabus-grade-profiles/${PROFILE_ID}` && request.method === 'DELETE') {
+          deleteCount += 1
+          listRows = []
+          return json(response, 200, { removed: PROFILE_ID })
+        }
+        next()
+      })
+    },
+  }
+  const server = await createServer({
+    root: new URL('..', import.meta.url).pathname,
+    cacheDir: new URL('../node_modules/.vite-grade-calculator-remove', import.meta.url).pathname,
+    logLevel: 'silent',
+    plugins: [apiPlugin],
+    server: { host: '127.0.0.1' },
+  })
+  await server.listen()
+  t.after(async () => server.close())
+  const address = server.httpServer?.address()
+  assert.ok(address && typeof address === 'object')
+  const browser = await chromium.launch()
+  t.after(async () => browser.close())
+  const page = await browser.newPage()
+  await page.goto(`http://127.0.0.1:${address.port}/authenticated-dashboard-preview.html?mode=complete`)
+  await page.getByRole('button', { name: 'Academic' }).click()
+  await page.getByRole('button', { name: 'Grade Calculator', exact: true }).click()
+
+  const row = page.locator('.grade-profile-row', { hasText: 'ECEN 248' })
+  await row.waitFor()
+  const removeButton = row.getByRole('button', { name: /Remove grade calculator for ECEN 248/ })
+
+  // --- cancelling the confirm does nothing ---
+  page.once('dialog', (d) => d.dismiss())
+  await removeButton.click()
+  await page.waitForTimeout(100)
+  assert.equal(deleteCount, 0, 'dismissing the confirm must not call DELETE')
+  await row.waitFor()
+
+  // --- accepting the confirm removes the row ---
+  page.once('dialog', (d) => {
+    assert.match(d.message(), /Remove the grade calculator for ECEN 248\?/)
+    d.accept()
+  })
+  await removeButton.click()
+
+  await page.locator('.grade-profile-row', { hasText: 'ECEN 248' }).waitFor({ state: 'detached' })
+  assert.equal(deleteCount, 1, 'accepting the confirm calls DELETE exactly once')
+  await page.getByText('See what you need to reach your target grade').waitFor()
+})

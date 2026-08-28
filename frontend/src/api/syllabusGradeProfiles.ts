@@ -299,6 +299,14 @@ export async function confirmSyllabusGradeModel(accessToken: string, profileId: 
   );
 }
 
+export async function deleteSyllabusGradeProfile(accessToken: string, profileId: string): Promise<void> {
+  await request<{ removed: string }>(
+    `${BASE_URL}/${encodeURIComponent(profileId)}`,
+    { method: 'DELETE', headers: authHeaders(accessToken) },
+    'Could not remove this grade calculator.',
+  );
+}
+
 export async function saveSyllabusGradeState(
   accessToken: string,
   profileId: string,

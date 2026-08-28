@@ -6532,6 +6532,15 @@ label.profile-form-check { display: flex; flex-direction: row; align-items: cent
   text-align: left;
   cursor: pointer;
 }
+/* Row + per-row Remove affordance: the clickable row keeps its full 3-column
+   layout, the Remove button tucks to the far right. */
+.grade-profile-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+.grade-profile-row .grade-profile-row-button { flex: 1 1 auto; }
+.grade-profile-remove { flex: 0 0 auto; }
 .grade-review-card { display: flex; flex-direction: column; gap: var(--sp-4); }
 .grade-entry-row {
   display: grid;
