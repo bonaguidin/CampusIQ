@@ -6554,6 +6554,21 @@ label.profile-form-check { display: flex; flex-direction: row; align-items: cent
 .grade-rule-explanation { color: var(--muted); font-size: var(--text-sm); }
 .grade-breakdown-row { display: flex; flex-direction: column; }
 
+/* Professor's rules -- persistent reference panel next to the calculator
+   (ProfessorsRules in GradeCalculatorPanel.tsx). Informational only: no
+   dismiss control, no blocking affordance. */
+.professors-rules { display: flex; flex-direction: column; gap: var(--sp-3); }
+.professors-rule {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding-bottom: var(--sp-3);
+  border-bottom: 1px solid var(--line);
+}
+.professors-rule:last-child { padding-bottom: 0; border-bottom: 0; }
+.professors-rule-type { margin: 0; font-weight: 600; font-size: var(--text-sm); }
+.professors-rule-text { margin: 0; color: var(--muted); font-size: var(--text-sm); }
+
 /* Inline review findings -- rendered next to the field/row/rule they're
    about (see InlineFindings/GeneralFindings in GradeCalculatorPanel.tsx),
    not as a separate flat list. Small marker column + compact text mirrors

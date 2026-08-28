@@ -157,6 +157,21 @@ function formatPercent(value: number | null | undefined): string {
   return value === null || value === undefined ? '—' : `${value}%`;
 }
 
+// Rule types that carry an informational grading policy -- a curve, a
+// late-work / makeup rule, an extra-credit or catch-all "other" -- rather
+// than a formula the calculator can execute. These feed the persistent
+// "Professor's rules" panel next to the calculator. Deterministic
+// replacement/drop rules are executed by the calculator itself and stay
+// out of it; a malformed replacement/drop (missing source/target) is a
+// broken deterministic rule, not a professor policy, so it's excluded too.
+const PROFESSOR_RULE_TYPES: ReadonlySet<SyllabusRule['rule_type']> = new Set([
+  'curve',
+  'extra_credit',
+  'late_work',
+  'makeup',
+  'other',
+]);
+
 interface UploadFields {
   institution: string;
   courseCode: string;
@@ -610,6 +625,8 @@ export function GradeCalculatorPanel({ accessToken, courses, institutionName }: 
 
             {detail.calculator_ready && (
               <>
+                <ProfessorsRules model={detail.confirmed_grade_model ?? detail.extracted_grade_model} />
+
                 <div className="card">
                   <h3 className="card-heading">Enter your grades</h3>
                   <p className="empty-state">Leave a field blank if you don't know it yet — blank never counts as zero.</p>
@@ -1029,6 +1046,34 @@ function SyllabusRulesList({
           </div>
         );
       })}
+    </div>
+  );
+}
+
+/**
+ * Persistent "Professor's rules" reference panel, shown beside the What-If
+ * calculator. Renders the informational grading policies (curve, late
+ * work, makeup, extra credit, other) straight from the grade model's
+ * rules[] -- NOT from the reconciliation findings array. Per the
+ * syllabus-review redesign (planning-docs/syllabus-review-redesign-spec.md
+ * §2C): these are facts to see while running scenarios, never things to
+ * resolve or dismiss, so there's no dismiss control and no blocking
+ * behavior. Deterministic replacement/drop rules are executed by the
+ * calculator and reported in its own output, so they're not repeated here.
+ */
+function ProfessorsRules({ model }: { model: SyllabusGradeModel | null }) {
+  const rules = (model?.rules ?? []).filter((rule) => PROFESSOR_RULE_TYPES.has(rule.rule_type));
+  if (rules.length === 0) return null;
+  return (
+    <div className="card professors-rules" data-testid="professors-rules" aria-label="Professor's rules">
+      <h3 className="card-heading">Professor's rules</h3>
+      {rules.map((rule, index) => (
+        <div className="professors-rule" key={index}>
+          <p className="professors-rule-type">{ruleTypeLabel(rule.rule_type)}</p>
+          <p className="professors-rule-text">{rule.description}</p>
+          {rule.evidence?.page && <p className="grade-evidence-note">Source: page {rule.evidence.page}</p>}
+        </div>
+      ))}
     </div>
   );
 }
