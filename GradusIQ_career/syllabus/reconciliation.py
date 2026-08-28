@@ -101,7 +101,11 @@ _POINTS_RE = re.compile(r"(\d+(?:\.\d+)?)\s*(?:points|pts)\b", re.IGNORECASE)
 _RANGE_RE = re.compile(r"(\d+(?:\.\d+)?)\s*(?:-|–|—|to)\s*(\d+(?:\.\d+)?)")
 _VALUE_TOLERANCE = 0.01
 
-_CANONICAL_LETTER_RANK = {"A": 0, "B": 1, "C": 2, "D": 3, "F": 4}
+# Canonical A-F letter-grade ordering (lower rank == higher grade). Public
+# because cutoff_resolution.py's "higher grade wins the tie" function is
+# defined over this same ordering; kept here as the single source of truth.
+CANONICAL_LETTER_RANK = {"A": 0, "B": 1, "C": 2, "D": 3, "F": 4}
+_CANONICAL_LETTER_RANK = CANONICAL_LETTER_RANK  # backward-compatible alias
 
 
 class ReconciliationStatus(str, Enum):
