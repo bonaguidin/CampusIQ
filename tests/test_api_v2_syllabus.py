@@ -404,6 +404,38 @@ def test_soft_delete_nonexistent_profile_404(client, db, monkeypatch):
     assert response.status_code == 404
 
 
+def test_soft_deleted_profile_404s_on_direct_access(client, db, monkeypatch):
+    """Removing a profile hides it everywhere, not just from the list: the
+    detail read and every mutating/compute route resolve it through the
+    same get_profile lookup, which now excludes soft-deleted rows.
+    """
+    patch_session(monkeypatch, db)
+    monkeypatch.setattr(api, "build_client", lambda: FakeAI())
+    created = ingest(client).json()
+    profile_id = created["id"]
+
+    assert client.delete(profile_url(profile_id), headers=HEADERS).status_code == 200
+
+    assert client.get(profile_url(profile_id), headers=HEADERS).status_code == 404
+    assert client.post(f"{profile_url(profile_id)}/confirm", headers=HEADERS).status_code == 404
+    assert client.post(f"{profile_url(profile_id)}/calculate", headers=HEADERS, json={}).status_code == 404
+    assert client.post(
+        f"{profile_url(profile_id)}/corrections",
+        headers=HEADERS,
+        json={"corrections": [{"target_type": "rule", "operation": "remove_rule", "rule_index": 1}]},
+    ).status_code == 404
+    assert client.put(
+        f"{profile_url(profile_id)}/grade-state",
+        headers=HEADERS,
+        json={"category_scores": [{"category_name": "Mid-term Exam", "actual_score": 88}]},
+    ).status_code == 404
+    assert client.post(
+        f"{profile_url(profile_id)}/solve-target",
+        headers=HEADERS,
+        json={"target_component": "Final Exam", "target_grade": 90},
+    ).status_code == 404
+
+
 def test_cross_student_mutation_and_calculation_paths_404(client, db, monkeypatch):
     """Student B must not be able to touch Student A's syllabus profile via
     any mutating/compute route -- not just GET. Each of these resolves

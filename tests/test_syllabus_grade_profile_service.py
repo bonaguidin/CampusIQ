@@ -121,6 +121,7 @@ class _FakeTable:
                 row.setdefault("confirmed_at", None)
             if self.name == "syllabus_grade_profiles":
                 row.setdefault("current_revision_id", None)
+                row.setdefault("deleted_at", None)
             self._rows().append(row)
             return _FakeResponse([dict(row)])
         if query.op == "update":

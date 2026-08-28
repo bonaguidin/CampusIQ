@@ -79,8 +79,22 @@ def list_profiles(client: Any, *, student_id: str) -> list[dict]:
 
 
 def get_profile(client: Any, *, profile_id: str, student_id: str) -> dict | None:
+    """Fetch one owned, non-deleted profile.
+
+    Excludes soft-deleted rows: this is the single lookup behind the detail
+    read (service.get_syllabus_grade_profile) and every mutating/compute
+    route (_get_owned_syllabus_profile), so a removed profile 404s on
+    direct access, not just in the list. The soft-delete write itself does
+    not go through here (see soft_delete_profile), so re-deleting stays
+    idempotent.
+    """
     response = (
-        client.table(PROFILES_TABLE).select("*").eq("id", profile_id).eq("student_id", student_id).execute()
+        client.table(PROFILES_TABLE)
+        .select("*")
+        .eq("id", profile_id)
+        .eq("student_id", student_id)
+        .is_("deleted_at", "null")
+        .execute()
     )
     rows = rows_of(response)
     return rows[0] if rows else None
