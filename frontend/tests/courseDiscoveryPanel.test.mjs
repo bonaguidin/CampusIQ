@@ -4,6 +4,20 @@ import { chromium } from 'playwright'
 import { createServer } from 'vite'
 import { planningRoutes } from './fixtures/planningRoutes.mjs'
 
+/**
+ * Polls `condition` until it's true, instead of a flat sleep that either
+ * wastes time when the condition is already met or races it under load.
+ * Throws with `description` if it never becomes true within `timeoutMs`,
+ * so a genuine hang fails loudly rather than silently reading stale state.
+ */
+async function waitForCondition(condition, description, timeoutMs = 5000) {
+  const deadline = Date.now() + timeoutMs
+  while (!condition()) {
+    if (Date.now() >= deadline) throw new Error(`Timed out waiting for ${description}`)
+    await new Promise((resolve) => setTimeout(resolve, 5))
+  }
+}
+
 const need = (skill, needId) => ({
   need_id: needId,
   skill,
@@ -285,8 +299,17 @@ test('Course Discovery panel: CTA, loading, three typed outcomes, empty/failure 
   assert.deepEqual(options, ['AI Engineer', 'ML Engineer', 'Robotics Engineer'])
   await roleSelect.selectOption('Robotics Engineer')
   const multiRolePanel = page.locator('.card.analysis-panel', { has: page.getByRole('heading', { name: 'Course Discovery' }) })
+  const requestCountBeforeClick = requestBodies.length
   await multiRolePanel.getByRole('button', { name: 'Run analysis' }).click()
-  await page.waitForTimeout(50)
+  // A flat waitForTimeout(50) here raced two earlier "Re-run analysis"
+  // clicks in this same test (above) that also push onto requestBodies:
+  // under load, 50ms wasn't always enough for THIS click's POST to land
+  // before the read, so the assertion sometimes parsed a stale (bodyless)
+  // entry from one of those earlier clicks instead -- producing "Unexpected
+  // end of JSON input" rather than a real mismatch. Polling for the array to
+  // actually grow past its pre-click length guarantees we read the request
+  // this click produced, not a leftover one.
+  await waitForCondition(() => requestBodies.length > requestCountBeforeClick, 'the Robotics Engineer analysis request to be captured')
   const lastRequest = requestBodies.at(-1)
   assert.deepEqual(JSON.parse(lastRequest.raw), { target_role: 'Robotics Engineer' })
 
