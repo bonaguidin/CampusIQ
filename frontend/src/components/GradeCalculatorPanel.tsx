@@ -172,6 +172,18 @@ const PROFESSOR_RULE_TYPES: ReadonlySet<SyllabusRule['rule_type']> = new Set([
   'other',
 ]);
 
+// Reconciliation finding codes that became informational-only when PR #61
+// moved them into NON_BLOCKING_WARNING_CODES: a correctly-extracted curve /
+// late-work / makeup rule has no deterministic formula, but it's a fact to
+// see while calculating, not an ambiguity to resolve. The backend still
+// emits them for display; the calculator surfaces them in the Professor's
+// rules panel, so they're filtered out of the "Needs your review" list.
+const RULE_INFO_FINDING_CODES: ReadonlySet<string> = new Set([
+  'non_deterministic_grading_rule',
+  'possible_curve',
+  'ambiguous_rule',
+]);
+
 interface UploadFields {
   institution: string;
   courseCode: string;
@@ -534,7 +546,17 @@ export function GradeCalculatorPanel({ accessToken, courses, institutionName }: 
     setDismissedFindingKeys(new Set());
   }, [selectedProfileId]);
 
-  const reviewFindings = (detail?.confirmed_reconciliation ?? detail?.reconciliation)?.findings ?? [];
+  // Rule-informational findings (curve / late-work / makeup) are shown in
+  // the Professor's rules panel, not here -- filter them out before they
+  // reach the review list. Cutoff-overlap and unknown-assessment-count
+  // findings stay.
+  const reviewFindings = useMemo(
+    () =>
+      ((detail?.confirmed_reconciliation ?? detail?.reconciliation)?.findings ?? []).filter(
+        (finding) => !RULE_INFO_FINDING_CODES.has(finding.code),
+      ),
+    [detail],
+  );
   const findingsByAnchor = useMemo(
     () => groupFindingsByAnchor(reviewFindings, detail?.extracted_grade_model ?? null),
     [reviewFindings, detail],
