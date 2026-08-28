@@ -21,6 +21,7 @@ import { FitAnalysisPanel, FIT_LEVEL_LABEL } from '../components/FitAnalysisPane
 import { GapAnalysisPanel } from '../components/GapAnalysisPanel';
 import { ShiftAnalysisPanel } from '../components/ShiftAnalysisPanel';
 import { TermPlanner } from '../components/TermPlanner';
+import { GradeCalculatorPanel } from '../components/GradeCalculatorPanel';
 import { CareerProfile, type CareerFieldFocus } from '../components/career/CareerProfile';
 import { updateProfile } from '../api/profile';
 import { ProfileChecklist } from '../components/career/ProfileChecklist';
@@ -47,10 +48,11 @@ const CAREER_SUB_TABS: Array<{ key: CareerSubTab; label: string }> = [
 // 'overview' is Academic's own default view -- what the top-level Academic
 // nav item itself renders -- not a visible child tab. Only these two appear
 // as nested nav items under Academic.
-type AcademicSubTab = 'overview' | 'gpa-calculator' | 'course-discovery';
+type AcademicSubTab = 'overview' | 'gpa-calculator' | 'grade-calculator' | 'course-discovery';
 
 const ACADEMIC_SUB_TABS: Array<{ key: AcademicSubTab; label: string }> = [
   { key: 'gpa-calculator', label: 'GPA Calculator' },
+  { key: 'grade-calculator', label: 'Grade Calculator' },
   { key: 'course-discovery', label: 'Course Discovery' },
 ];
 
@@ -530,6 +532,17 @@ export function AuthenticatedDashboard() {
                         </button>
                       )}
                     </section>
+                    <section className="academic-overview-grade-calculator">
+                      <h3 className="term-courses-heading">Grade Calculator</h3>
+                      <p className="empty-state">See what you need to reach your target grade in each course.</p>
+                      <button
+                        type="button"
+                        className="btn btn-ghost btn-sm"
+                        onClick={() => navigateToAcademicSubTab('grade-calculator')}
+                      >
+                        Open Grade Calculator →
+                      </button>
+                    </section>
                     <p className="academic-overview-status">
                       Academic status: {dashboard.completeness.academics.ready_for_academic_features ? 'Ready' : 'Incomplete'}
                     </p>
@@ -588,6 +601,16 @@ export function AuthenticatedDashboard() {
                     {dashboard.repeatExclusions.length > 0 && <p className="real-note">{dashboard.repeatExclusions.length} course attempt(s) excluded from GPA by the institution repeat policy.</p>}
                   </>
                 )}
+              </div>
+            )}
+
+            {activeSection === 'academic' && academicSubTab === 'grade-calculator' && (
+              <div className="stage-section">
+                <GradeCalculatorPanel
+                  accessToken={accessToken}
+                  courses={dashboard.courses}
+                  institutionName={dashboard.institutionName}
+                />
               </div>
             )}
 

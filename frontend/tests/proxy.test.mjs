@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import { readFile } from 'node:fs/promises'
 import test from 'node:test'
 
 import { createProxyHandler } from '../api/proxy.mjs'
@@ -1160,4 +1161,82 @@ test('the target allowlist stays closed after adding the degree planner targets'
     assert.equal(response.status, 400, `expected ${target} to be rejected`)
   }
   assert.equal(seen.length, 0)
+})
+
+test('syllabus targets forward every Grade Calculator route with session auth', async () => {
+  const id = '11111111-1111-4111-8111-111111111111'
+  const cases = [
+    ['me-syllabus-profiles', 'GET', '', '/api/v2/student/me/syllabus-grade-profiles'],
+    ['me-syllabus-profile', 'GET', `&id=${id}`, `/api/v2/student/me/syllabus-grade-profiles/${id}`],
+    ['me-syllabus-corrections', 'POST', `&id=${id}`, `/api/v2/student/me/syllabus-grade-profiles/${id}/corrections`],
+    ['me-syllabus-confirm', 'POST', `&id=${id}`, `/api/v2/student/me/syllabus-grade-profiles/${id}/confirm`],
+    ['me-syllabus-grade-state', 'PUT', `&id=${id}`, `/api/v2/student/me/syllabus-grade-profiles/${id}/grade-state`],
+    ['me-syllabus-calculate', 'POST', `&id=${id}`, `/api/v2/student/me/syllabus-grade-profiles/${id}/calculate`],
+    ['me-syllabus-solve-target', 'POST', `&id=${id}`, `/api/v2/student/me/syllabus-grade-profiles/${id}/solve-target`],
+  ]
+  for (const [target, method, query, backendPath] of cases) {
+    const { handler, seen } = planningHandler()
+    const response = await handler.fetch(
+      new Request(`https://gradusiq.example/api/proxy?target=${target}${query}`, {
+        method,
+        headers: { Authorization: 'Bearer syllabus-session', 'Content-Type': 'application/json' },
+        ...(method === 'GET' ? {} : { body: '{}' }),
+      }),
+    )
+    assert.equal(response.status, 200)
+    assert.equal(seen[0].url, `https://backend.example${backendPath}`)
+    assert.equal(seen[0].method, method)
+    assert.equal(seen[0].headers.Authorization, 'Bearer syllabus-session')
+  }
+})
+
+test('syllabus ingest preserves multipart bytes and invalid profile ids never forward', async () => {
+  const bytes = new Uint8Array([0x25, 0x50, 0x44, 0x46, 0x00, 0xff])
+  let forwarded
+  const handler = createProxyHandler({
+    env: PLANNING_ENV,
+    fetchImpl: async (url, init) => {
+      forwarded = { url: url.toString(), init }
+      return new Response('{}', { status: 200 })
+    },
+  })
+  const response = await handler.fetch(
+    new Request('https://gradusiq.example/api/proxy?target=me-syllabus-ingest', {
+      method: 'POST',
+      headers: {
+        Authorization: 'Bearer syllabus-session',
+        'Content-Type': 'multipart/form-data; boundary=grade-calculator-test',
+      },
+      body: bytes,
+    }),
+  )
+  assert.equal(response.status, 200)
+  assert.equal(forwarded.url, 'https://backend.example/api/v2/student/me/syllabus-grade-profiles/ingest')
+  assert.equal(forwarded.init.headers['Content-Type'], 'multipart/form-data; boundary=grade-calculator-test')
+  assert.deepEqual(new Uint8Array(forwarded.init.body), bytes)
+
+  forwarded = undefined
+  const rejected = await handler.fetch(
+    new Request('https://gradusiq.example/api/proxy?target=me-syllabus-profile&id=not-a-uuid', { method: 'GET' }),
+  )
+  assert.equal(rejected.status, 400)
+  assert.equal(forwarded, undefined)
+})
+
+test('Vercel rewrites cover the complete syllabus Grade Calculator route family', async () => {
+  const config = JSON.parse(await readFile(new URL('../vercel.json', import.meta.url), 'utf8'))
+  const rewrites = new Map(config.rewrites.map(({ source, destination }) => [source, destination]))
+  assert.deepEqual(
+    [...rewrites.entries()].filter(([source]) => source.includes('/syllabus-grade-profiles')),
+    [
+      ['/api/v2/student/me/syllabus-grade-profiles/ingest', '/api/proxy?target=me-syllabus-ingest'],
+      ['/api/v2/student/me/syllabus-grade-profiles/:id/corrections', '/api/proxy?target=me-syllabus-corrections&id=:id'],
+      ['/api/v2/student/me/syllabus-grade-profiles/:id/confirm', '/api/proxy?target=me-syllabus-confirm&id=:id'],
+      ['/api/v2/student/me/syllabus-grade-profiles/:id/grade-state', '/api/proxy?target=me-syllabus-grade-state&id=:id'],
+      ['/api/v2/student/me/syllabus-grade-profiles/:id/calculate', '/api/proxy?target=me-syllabus-calculate&id=:id'],
+      ['/api/v2/student/me/syllabus-grade-profiles/:id/solve-target', '/api/proxy?target=me-syllabus-solve-target&id=:id'],
+      ['/api/v2/student/me/syllabus-grade-profiles/:id', '/api/proxy?target=me-syllabus-profile&id=:id'],
+      ['/api/v2/student/me/syllabus-grade-profiles', '/api/proxy?target=me-syllabus-profiles'],
+    ],
+  )
 })

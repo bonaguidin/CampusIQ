@@ -1,0 +1,681 @@
+import copy
+import json
+from pathlib import Path
+
+import pytest
+from pydantic import ValidationError
+
+from GradusIQ_career.syllabus.models import (
+    Assessment,
+    CourseMetadata,
+    ExtractionWarning,
+    ExtractionWarningType,
+    GradeCategory,
+    GradeModel,
+    GradeThreshold,
+    GradingMethod,
+    GradingRule,
+    GradingRuleType,
+    SourceEvidence,
+)
+from GradusIQ_career.syllabus.reconciliation import (
+    EvidenceCoverage,
+    GradeModelReconciliationResult,
+    ReconciliationStatus,
+    reconcile_grade_model,
+)
+from GradusIQ_career.syllabus.relevance import RelevantPage, RelevantSyllabusContent
+
+FIXTURE_PATH = Path(__file__).parent / "fixtures" / "phys_207_grade_model.json"
+
+
+def page(page_number: int, markdown: str) -> RelevantPage:
+    return RelevantPage(page_number=page_number, markdown=markdown, relevance_score=5.0)
+
+
+def content_from_pages(pages: list[RelevantPage]) -> RelevantSyllabusContent:
+    combined = "\n\n".join(f"<!-- page: {p.page_number} -->\n\n{p.markdown}" for p in pages)
+    return RelevantSyllabusContent(
+        selected_pages=pages,
+        selected_sections=[],
+        markdown=combined,
+        source_page_count=len(pages),
+        selected_page_count=len(pages),
+    )
+
+
+def evidence(page_number: int, text: str, confidence: float | None = 1.0) -> SourceEvidence:
+    return SourceEvidence(page=page_number, text=text, confidence=confidence)
+
+
+# --- PHYS 207 fixtures ---------------------------------------------------------
+
+PHYS_207_PAGES = [
+    page(2, "Mid-term Exam: 35%\nFinal Exam: 50%\nLecture Quizzes: 5%\nRecitation Quizzes: 10%"),
+    page(3, "A: 90-100\nB: 80-89\nC: 60-79\nD: 45-59\nF: below 45"),
+    page(
+        4,
+        "If the Final Exam grade is higher than the Mid-term Exam grade, the "
+        "Final Exam replaces the Mid-term Exam grade.\n\n"
+        "Grades may be curved upward.",
+    ),
+]
+PHYS_207_CONTENT = content_from_pages(PHYS_207_PAGES)
+
+
+def phys_207_grade_model(*, include_curve: bool) -> GradeModel:
+    rules = [
+        GradingRule(
+            rule_type=GradingRuleType.REPLACEMENT,
+            description=(
+                "If the Final Exam grade is higher than the Mid-term Exam grade, "
+                "the Final Exam replaces the Mid-term Exam grade."
+            ),
+            source="Final Exam",
+            target="Mid-term Exam",
+            condition="final_score > midterm_score",
+            evidence=evidence(
+                4,
+                "If the Final Exam grade is higher than the Mid-term Exam grade, "
+                "the Final Exam replaces the Mid-term Exam grade.",
+            ),
+        )
+    ]
+    warnings = [
+        ExtractionWarning(
+            type=ExtractionWarningType.UNKNOWN_ASSESSMENT_COUNT,
+            description="The exact number of Lecture Quizzes is unknown.",
+            related_field="Lecture Quizzes",
+        ),
+        ExtractionWarning(
+            type=ExtractionWarningType.UNKNOWN_ASSESSMENT_COUNT,
+            description="The exact number of Recitation Quizzes is unknown.",
+            related_field="Recitation Quizzes",
+        ),
+    ]
+    if include_curve:
+        rules.append(
+            GradingRule(
+                rule_type=GradingRuleType.CURVE,
+                description="Grades may be curved upward.",
+                evidence=evidence(4, "Grades may be curved upward."),
+            )
+        )
+        warnings.append(
+            ExtractionWarning(
+                type=ExtractionWarningType.POSSIBLE_CURVE,
+                description="Grades may be curved upward, but no deterministic curve formula is given.",
+            )
+        )
+
+    return GradeModel(
+        course=CourseMetadata(course_code="PHYS 207", section="529", term="Fall 2026"),
+        grading_method=GradingMethod.WEIGHTED,
+        categories=[
+            GradeCategory(name="Mid-term Exam", weight=35, evidence=evidence(2, "Mid-term Exam: 35%")),
+            GradeCategory(name="Final Exam", weight=50, evidence=evidence(2, "Final Exam: 50%")),
+            GradeCategory(name="Lecture Quizzes", weight=5, evidence=evidence(2, "Lecture Quizzes: 5%")),
+            GradeCategory(name="Recitation Quizzes", weight=10, evidence=evidence(2, "Recitation Quizzes: 10%")),
+        ],
+        grade_thresholds=[
+            GradeThreshold(letter="A", minimum=90, maximum=100, evidence=evidence(3, "A: 90-100")),
+            GradeThreshold(letter="B", minimum=80, maximum=89, evidence=evidence(3, "B: 80-89")),
+            GradeThreshold(letter="C", minimum=60, maximum=79, evidence=evidence(3, "C: 60-79")),
+            GradeThreshold(letter="D", minimum=45, maximum=59, evidence=evidence(3, "D: 45-59")),
+            GradeThreshold(letter="F", maximum=44, evidence=evidence(3, "F: below 45")),
+        ],
+        rules=rules,
+        warnings=warnings,
+    )
+
+
+# --- PHYS 207: with curve -> NEEDS_STUDENT_REVIEW --------------------------------
+
+
+def test_phys_207_with_curve_needs_student_review():
+    result = reconcile_grade_model(phys_207_grade_model(include_curve=True), PHYS_207_CONTENT)
+    assert result.status == ReconciliationStatus.NEEDS_STUDENT_REVIEW
+    codes = {f.code for f in result.findings}
+    assert "possible_curve" in codes
+    assert "non_deterministic_grading_rule" in codes
+
+
+def test_phys_207_with_curve_weights_and_references_still_pass():
+    result = reconcile_grade_model(phys_207_grade_model(include_curve=True), PHYS_207_CONTENT)
+    weight_findings = [f for f in result.findings if f.code == "category_weight_validation"]
+    assert len(weight_findings) == 1
+    assert weight_findings[0].severity.value == "valid"
+    assert not any(f.code == "unresolved_rule_reference" for f in result.findings)
+    assert not any(f.code == "duplicate_category" for f in result.findings)
+
+
+def test_phys_207_unknown_quiz_counts_are_warnings_not_errors():
+    result = reconcile_grade_model(phys_207_grade_model(include_curve=True), PHYS_207_CONTENT)
+    quiz_findings = [f for f in result.findings if f.code == "unknown_assessment_count"]
+    assert len(quiz_findings) == 2
+    assert all(f.severity.value == "warning" for f in quiz_findings)
+
+
+# --- PHYS 207: without curve -> ACCEPTED reachable --------------------------------
+
+
+def test_phys_207_without_curve_is_accepted():
+    result = reconcile_grade_model(phys_207_grade_model(include_curve=False), PHYS_207_CONTENT)
+    assert result.status == ReconciliationStatus.ACCEPTED
+
+
+# --- clean accepted fixture (section 30) ------------------------------------------
+
+
+def clean_grade_model() -> GradeModel:
+    return GradeModel(
+        course=CourseMetadata(course_code="TEST 100"),
+        grading_method=GradingMethod.WEIGHTED,
+        categories=[
+            GradeCategory(name="Midterm", weight=30, evidence=evidence(1, "Midterm: 30%")),
+            GradeCategory(name="Final", weight=40, evidence=evidence(1, "Final: 40%")),
+            GradeCategory(name="Homework", weight=30, evidence=evidence(1, "Homework: 30%")),
+        ],
+        grade_thresholds=[
+            GradeThreshold(letter="A", minimum=90, maximum=100, evidence=evidence(1, "A: 90-100")),
+            GradeThreshold(letter="B", minimum=80, maximum=89, evidence=evidence(1, "B: 80-89")),
+            GradeThreshold(letter="C", minimum=70, maximum=79, evidence=evidence(1, "C: 70-79")),
+            GradeThreshold(letter="D", minimum=60, maximum=69, evidence=evidence(1, "D: 60-69")),
+            GradeThreshold(letter="F", maximum=59, evidence=evidence(1, "F: below 60")),
+        ],
+        rules=[],
+        warnings=[],
+    )
+
+
+CLEAN_CONTENT = content_from_pages(
+    [
+        page(
+            1,
+            "Midterm: 30%\nFinal: 40%\nHomework: 30%\n"
+            "A: 90-100\nB: 80-89\nC: 70-79\nD: 60-69\nF: below 60",
+        )
+    ]
+)
+
+
+def test_clean_fixture_is_accepted():
+    result = reconcile_grade_model(clean_grade_model(), CLEAN_CONTENT)
+    assert result.status == ReconciliationStatus.ACCEPTED
+    assert result.findings == [] or all(f.severity.value == "valid" for f in result.findings)
+
+
+def test_acceptance_is_reachable_not_impossible():
+    """Proves Phase 5 doesn't force every realistic syllabus into review."""
+    result = reconcile_grade_model(clean_grade_model(), CLEAN_CONTENT)
+    assert result.status == ReconciliationStatus.ACCEPTED
+
+
+# --- evidence inconsistency (section 25) ------------------------------------------
+
+
+def test_category_weight_mismatch_with_real_evidence_needs_review():
+    model = GradeModel(
+        grading_method=GradingMethod.WEIGHTED,
+        categories=[
+            GradeCategory(name="Mid-term Exam", weight=50, evidence=evidence(1, "Mid-term Exam: 35%")),
+        ],
+    )
+    content = content_from_pages([page(1, "Mid-term Exam: 35%")])
+    result = reconcile_grade_model(model, content)
+    assert result.status == ReconciliationStatus.NEEDS_STUDENT_REVIEW
+    mismatch = [f for f in result.findings if f.code == "claim_evidence_value_mismatch"]
+    assert len(mismatch) == 1
+    assert "50" in mismatch[0].message and "35.0" in mismatch[0].message
+
+
+def test_threshold_value_mismatch_needs_review():
+    model = GradeModel(
+        grade_thresholds=[GradeThreshold(letter="A", minimum=90, maximum=100, evidence=evidence(1, "A: 80-90"))],
+    )
+    content = content_from_pages([page(1, "A: 80-90")])
+    result = reconcile_grade_model(model, content)
+    assert result.status == ReconciliationStatus.NEEDS_STUDENT_REVIEW
+    assert any(f.code == "claim_evidence_value_mismatch" for f in result.findings)
+
+
+def test_consistent_evidence_produces_no_mismatch_finding():
+    model = GradeModel(
+        grading_method=GradingMethod.WEIGHTED,
+        categories=[GradeCategory(name="Midterm", weight=35, evidence=evidence(1, "Midterm: 35%"))],
+    )
+    content = content_from_pages([page(1, "Midterm: 35%")])
+    result = reconcile_grade_model(model, content)
+    assert not any(f.code == "claim_evidence_value_mismatch" for f in result.findings)
+
+
+def test_unverifiable_evidence_text_produces_warning_not_mismatch():
+    model = GradeModel(
+        grading_method=GradingMethod.WEIGHTED,
+        categories=[GradeCategory(name="Midterm", weight=35, evidence=evidence(1, "Midterm counts significantly"))],
+    )
+    content = content_from_pages([page(1, "Midterm counts significantly")])
+    result = reconcile_grade_model(model, content)
+    unverifiable = [f for f in result.findings if f.code == "claim_evidence_consistency_unverifiable"]
+    assert len(unverifiable) == 1
+    assert not any(f.code == "claim_evidence_value_mismatch" for f in result.findings)
+
+
+# --- missing evidence (section 26) -------------------------------------------------
+
+
+def test_missing_evidence_on_critical_claim_needs_review():
+    model = GradeModel(
+        grading_method=GradingMethod.WEIGHTED,
+        categories=[GradeCategory(name="Final Exam", weight=50, evidence=None)],
+    )
+    content = content_from_pages([page(1, "Final Exam: 50%")])
+    result = reconcile_grade_model(model, content)
+    assert result.status == ReconciliationStatus.NEEDS_STUDENT_REVIEW
+    missing = [f for f in result.findings if f.code == "missing_claim_evidence"]
+    assert len(missing) == 1
+    assert result.evidence_coverage.supported_claims == 0
+    assert result.evidence_coverage.total_claims == 1
+
+
+def test_null_count_does_not_require_evidence():
+    model = GradeModel(
+        grading_method=GradingMethod.WEIGHTED,
+        categories=[
+            GradeCategory(name="Lecture Quizzes", weight=5, count=None, evidence=evidence(1, "Lecture Quizzes: 5%"))
+        ],
+    )
+    content = content_from_pages([page(1, "Lecture Quizzes: 5%")])
+    result = reconcile_grade_model(model, content)
+    assert not any(f.code == "missing_claim_evidence" and "count" in f.field for f in result.findings)
+    assert result.evidence_coverage.total_claims == 1  # only the weight claim
+
+
+# --- duplicate category (section 27) -----------------------------------------------
+
+
+def test_duplicate_category_needs_review():
+    model = GradeModel(
+        grading_method=GradingMethod.WEIGHTED,
+        categories=[
+            GradeCategory(name="Midterm", weight=35, evidence=evidence(1, "Midterm: 35%")),
+            GradeCategory(name="midterm", weight=35, evidence=evidence(1, "midterm: 35%")),
+        ],
+    )
+    content = content_from_pages([page(1, "Midterm: 35%\nmidterm: 35%")])
+    result = reconcile_grade_model(model, content)
+    assert result.status == ReconciliationStatus.NEEDS_STUDENT_REVIEW
+    duplicates = [f for f in result.findings if f.code == "duplicate_category"]
+    assert len(duplicates) == 1
+
+
+def test_categories_are_not_merged():
+    model = GradeModel(
+        grading_method=GradingMethod.WEIGHTED,
+        categories=[
+            GradeCategory(name="Midterm", weight=35),
+            GradeCategory(name="midterm", weight=35),
+        ],
+    )
+    result = reconcile_grade_model(model, content_from_pages([page(1, "x")]))
+    assert len(result.grade_model.categories) == 2
+
+
+def test_whitespace_variant_duplicate_is_detected():
+    model = GradeModel(
+        grading_method=GradingMethod.WEIGHTED,
+        categories=[
+            GradeCategory(name="Mid-term Exam", weight=35),
+            GradeCategory(name="Mid-term   Exam", weight=35),
+        ],
+    )
+    result = reconcile_grade_model(model, content_from_pages([page(1, "x")]))
+    assert any(f.code == "duplicate_category" for f in result.findings)
+
+
+def test_different_categories_are_not_flagged_as_duplicates():
+    model = GradeModel(
+        grading_method=GradingMethod.WEIGHTED,
+        categories=[GradeCategory(name="Tests", weight=50), GradeCategory(name="Exams", weight=50)],
+    )
+    result = reconcile_grade_model(model, content_from_pages([page(1, "x")]))
+    assert not any(f.code == "duplicate_category" for f in result.findings)
+
+
+def test_assessments_with_different_dates_are_not_duplicates():
+    model = GradeModel(
+        assessments=[
+            Assessment(name="Quiz", date="Sep 2"),
+            Assessment(name="Quiz", date="Sep 9"),
+        ],
+    )
+    result = reconcile_grade_model(model, content_from_pages([page(1, "x")]))
+    assert not any(f.code == "duplicate_assessment" for f in result.findings)
+
+
+def test_assessments_with_same_name_and_date_are_duplicates():
+    model = GradeModel(
+        assessments=[
+            Assessment(name="Quiz", date="Sep 2"),
+            Assessment(name="quiz", date="Sep 2"),
+        ],
+    )
+    result = reconcile_grade_model(model, content_from_pages([page(1, "x")]))
+    assert any(f.code == "duplicate_assessment" for f in result.findings)
+
+
+def test_duplicate_assessment_field_is_unique_across_groups_with_the_same_name():
+    """Two separate duplicate-groups can share a name and differ only by
+    date (each "Quiz" duplicated on its own date) -- field must include the
+    date, or both findings collapse onto the same field value even though
+    they're about two different pairs of assessments.
+    """
+    model = GradeModel(
+        assessments=[
+            Assessment(name="Quiz", date="Sep 2"),
+            Assessment(name="quiz", date="Sep 2"),
+            Assessment(name="Quiz", date="Sep 9"),
+            Assessment(name="quiz", date="Sep 9"),
+        ],
+    )
+    result = reconcile_grade_model(model, content_from_pages([page(1, "x")]))
+    findings = [f for f in result.findings if f.code == "duplicate_assessment"]
+    assert len(findings) == 2
+    fields = {f.field for f in findings}
+    assert len(fields) == 2
+
+
+# --- conflicting threshold (section 28) --------------------------------------------
+
+
+def test_overlapping_thresholds_need_review():
+    model = GradeModel(
+        grade_thresholds=[
+            GradeThreshold(letter="A", minimum=90, maximum=100),
+            GradeThreshold(letter="B", minimum=85, maximum=95),
+        ],
+    )
+    result = reconcile_grade_model(model, content_from_pages([page(1, "x")]))
+    assert result.status == ReconciliationStatus.NEEDS_STUDENT_REVIEW
+    assert any(f.code == "overlapping_grade_thresholds" for f in result.findings)
+
+
+def test_non_overlapping_thresholds_pass():
+    model = GradeModel(
+        grade_thresholds=[
+            GradeThreshold(letter="A", minimum=90, maximum=100),
+            GradeThreshold(letter="B", minimum=80, maximum=89),
+        ],
+    )
+    result = reconcile_grade_model(model, content_from_pages([page(1, "x")]))
+    assert not any(f.code == "overlapping_grade_thresholds" for f in result.findings)
+
+
+def test_unbounded_thresholds_are_allowed():
+    model = GradeModel(
+        grade_thresholds=[
+            GradeThreshold(letter="A", minimum=90),
+            GradeThreshold(letter="F", maximum=44),
+        ],
+    )
+    result = reconcile_grade_model(model, content_from_pages([page(1, "x")]))
+    assert not any(
+        f.code in ("overlapping_grade_thresholds", "reversed_grade_threshold") for f in result.findings
+    )
+
+
+def test_threshold_ordering_anomaly_is_flagged():
+    model = GradeModel(
+        grade_thresholds=[
+            GradeThreshold(letter="A", minimum=80),
+            GradeThreshold(letter="B", minimum=90),
+        ],
+    )
+    result = reconcile_grade_model(model, content_from_pages([page(1, "x")]))
+    assert any(f.code == "grade_threshold_ordering_anomaly" for f in result.findings)
+
+
+def test_non_standard_letters_skip_ordering_check():
+    model = GradeModel(
+        grade_thresholds=[
+            GradeThreshold(letter="Pass", minimum=60),
+            GradeThreshold(letter="Fail", maximum=59),
+        ],
+    )
+    result = reconcile_grade_model(model, content_from_pages([page(1, "x")]))
+    assert not any(f.code == "grade_threshold_ordering_anomaly" for f in result.findings)
+
+
+# --- broken rule reference (section 29) ---------------------------------------------
+
+
+def test_unresolved_rule_reference_needs_review():
+    model = GradeModel(
+        categories=[GradeCategory(name="Final Exam", weight=50)],
+        rules=[
+            GradingRule(
+                rule_type=GradingRuleType.REPLACEMENT,
+                description="Final replaces Exam 1",
+                source="Final Exam",
+                target="Exam 1",
+            )
+        ],
+    )
+    result = reconcile_grade_model(model, content_from_pages([page(1, "x")]))
+    assert result.status == ReconciliationStatus.NEEDS_STUDENT_REVIEW
+    unresolved = [f for f in result.findings if f.code == "unresolved_rule_reference"]
+    assert len(unresolved) == 1
+    assert unresolved[0].field == "Exam 1"
+
+
+def test_resolved_rule_reference_passes():
+    model = GradeModel(
+        categories=[
+            GradeCategory(name="Final Exam", weight=50),
+            GradeCategory(name="Mid-term Exam", weight=35),
+        ],
+        rules=[
+            GradingRule(
+                rule_type=GradingRuleType.REPLACEMENT,
+                description="Final replaces Midterm",
+                source="Final Exam",
+                target="Mid-term Exam",
+            )
+        ],
+    )
+    result = reconcile_grade_model(model, content_from_pages([page(1, "x")]))
+    assert not any(f.code == "unresolved_rule_reference" for f in result.findings)
+
+
+# --- non-deterministic rules --------------------------------------------------------
+
+
+def test_curve_rule_is_always_non_deterministic():
+    model = GradeModel(rules=[GradingRule(rule_type=GradingRuleType.CURVE, description="May be curved.")])
+    result = reconcile_grade_model(model, content_from_pages([page(1, "x")]))
+    finding = next(f for f in result.findings if f.code == "non_deterministic_grading_rule")
+    assert finding.severity.value == "warning"
+    assert result.status == ReconciliationStatus.NEEDS_STUDENT_REVIEW
+
+
+def test_replacement_rule_with_source_and_target_is_deterministic():
+    model = GradeModel(
+        categories=[
+            GradeCategory(name="Final Exam", weight=50),
+            GradeCategory(name="Mid-term Exam", weight=35),
+        ],
+        rules=[
+            GradingRule(
+                rule_type=GradingRuleType.REPLACEMENT,
+                description="Final replaces Midterm",
+                source="Final Exam",
+                target="Mid-term Exam",
+            )
+        ],
+    )
+    result = reconcile_grade_model(model, content_from_pages([page(1, "x")]))
+    assert not any(f.code == "non_deterministic_grading_rule" for f in result.findings)
+
+
+def test_replacement_rule_without_source_or_target_is_non_deterministic():
+    model = GradeModel(
+        rules=[GradingRule(rule_type=GradingRuleType.REPLACEMENT, description="The final may replace another test.")]
+    )
+    result = reconcile_grade_model(model, content_from_pages([page(1, "x")]))
+    assert any(f.code == "non_deterministic_grading_rule" for f in result.findings)
+
+
+def test_extra_credit_rule_is_non_deterministic():
+    model = GradeModel(
+        rules=[GradingRule(rule_type=GradingRuleType.EXTRA_CREDIT, description="Extra credit may be offered.")]
+    )
+    result = reconcile_grade_model(model, content_from_pages([page(1, "x")]))
+    assert any(f.code == "non_deterministic_grading_rule" for f in result.findings)
+
+
+def test_non_deterministic_rule_field_is_unique_per_rule_instance():
+    """field must be the rule's own index, not its rule_type -- multiple
+    rules of the same type used to collapse onto an identical field value
+    (e.g. three "other" rules all reporting field="other"), which made them
+    indistinguishable to any caller (the frontend) trying to anchor a
+    finding back to the one specific rule it's about.
+    """
+    model = GradeModel(
+        rules=[
+            GradingRule(rule_type=GradingRuleType.OTHER, description="First unclear rule."),
+            GradingRule(rule_type=GradingRuleType.OTHER, description="Second unclear rule."),
+            GradingRule(rule_type=GradingRuleType.OTHER, description="Third unclear rule."),
+        ]
+    )
+    result = reconcile_grade_model(model, content_from_pages([page(1, "x")]))
+    findings = [f for f in result.findings if f.code == "non_deterministic_grading_rule"]
+    assert len(findings) == 3
+    fields = [f.field for f in findings]
+    assert fields == ["rules[0]", "rules[1]", "rules[2]"]
+    assert len(set(fields)) == 3
+
+
+# --- assessment-category reference --------------------------------------------------
+
+
+def test_valid_assessment_category_reference_passes():
+    model = GradeModel(
+        categories=[GradeCategory(name="Lecture Quizzes", weight=5)],
+        assessments=[Assessment(name="Quiz 1", category="Lecture Quizzes")],
+    )
+    result = reconcile_grade_model(model, content_from_pages([page(1, "x")]))
+    assert not any(f.code == "unresolved_assessment_category_reference" for f in result.findings)
+
+
+def test_unresolved_assessment_category_reference_needs_review():
+    model = GradeModel(assessments=[Assessment(name="Quiz 1", category="Nonexistent Category")])
+    result = reconcile_grade_model(model, content_from_pages([page(1, "x")]))
+    assert result.status == ReconciliationStatus.NEEDS_STUDENT_REVIEW
+    assert any(f.code == "unresolved_assessment_category_reference" for f in result.findings)
+
+
+# --- extraction warning mapping -----------------------------------------------------
+
+
+def test_unknown_weight_warning_forces_review():
+    model = GradeModel(
+        warnings=[ExtractionWarning(type=ExtractionWarningType.UNKNOWN_WEIGHT, description="Weight not stated.")]
+    )
+    result = reconcile_grade_model(model, content_from_pages([page(1, "x")]))
+    assert result.status == ReconciliationStatus.NEEDS_STUDENT_REVIEW
+
+
+def test_missing_grade_scale_warning_alone_does_not_force_review():
+    model = GradeModel(
+        grading_method=GradingMethod.POINTS,
+        warnings=[
+            ExtractionWarning(type=ExtractionWarningType.MISSING_GRADE_SCALE, description="No grade scale given.")
+        ],
+    )
+    result = reconcile_grade_model(model, content_from_pages([page(1, "x")]))
+    assert result.status == ReconciliationStatus.ACCEPTED
+
+
+# --- grading method coherence --------------------------------------------------------
+
+
+def test_unknown_grading_method_forces_review():
+    model = GradeModel(grading_method=GradingMethod.UNKNOWN)
+    result = reconcile_grade_model(model, content_from_pages([page(1, "x")]))
+    assert result.status == ReconciliationStatus.NEEDS_STUDENT_REVIEW
+    assert any(f.code == "grading_method_unknown" for f in result.findings)
+
+
+def test_unknown_grading_method_is_never_reinterpreted():
+    model = GradeModel(grading_method=GradingMethod.UNKNOWN)
+    result = reconcile_grade_model(model, content_from_pages([page(1, "x")]))
+    assert result.grade_model.grading_method == GradingMethod.UNKNOWN
+
+
+def test_weighted_with_all_null_weights_is_error():
+    model = GradeModel(
+        grading_method=GradingMethod.WEIGHTED,
+        categories=[GradeCategory(name="Midterm", weight=None), GradeCategory(name="Final", weight=None)],
+    )
+    result = reconcile_grade_model(model, content_from_pages([page(1, "x")]))
+    assert result.status == ReconciliationStatus.NEEDS_STUDENT_REVIEW
+    weight_findings = [f for f in result.findings if f.code == "category_weight_validation"]
+    assert weight_findings[0].severity.value == "error"
+
+
+# --- missing course metadata does not gate acceptance (section 21) ------------------
+
+
+def test_missing_course_metadata_does_not_force_review():
+    model = clean_grade_model()
+    model.course = CourseMetadata()  # everything null
+    result = reconcile_grade_model(model, CLEAN_CONTENT)
+    assert result.status == ReconciliationStatus.ACCEPTED
+
+
+# --- contract / strictness -----------------------------------------------------------
+
+
+def test_result_rejects_extra_fields():
+    with pytest.raises(ValidationError):
+        GradeModelReconciliationResult(
+            status=ReconciliationStatus.ACCEPTED,
+            grade_model=GradeModel(),
+            evidence_coverage=EvidenceCoverage(total_claims=0, supported_claims=0, coverage_ratio=1.0),
+            unexpected="oops",
+        )
+
+
+def test_result_preserves_original_grade_model_content():
+    model = clean_grade_model()
+    result = reconcile_grade_model(model, CLEAN_CONTENT)
+    assert result.grade_model == model
+
+
+# --- no mutation (section 33) -------------------------------------------------------
+
+
+def test_reconciliation_does_not_mutate_grade_model():
+    model = phys_207_grade_model(include_curve=True)
+    before = model.model_dump(mode="json")
+    reconcile_grade_model(model, PHYS_207_CONTENT)
+    after = model.model_dump(mode="json")
+    assert before == after
+
+
+def test_reconciliation_does_not_mutate_relevant_content():
+    content = content_from_pages(copy.deepcopy(PHYS_207_PAGES))
+    before = content.model_dump(mode="json")
+    reconcile_grade_model(phys_207_grade_model(include_curve=True), content)
+    after = content.model_dump(mode="json")
+    assert before == after
+
+
+# --- determinism (section 32) ---------------------------------------------------------
+
+
+def test_reconciliation_is_deterministic():
+    model = phys_207_grade_model(include_curve=True)
+    first = reconcile_grade_model(model, PHYS_207_CONTENT)
+    second = reconcile_grade_model(model, PHYS_207_CONTENT)
+    assert first == second

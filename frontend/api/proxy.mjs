@@ -110,6 +110,16 @@ const ME_TARGETS = Object.assign(Object.create(null), {
   'me-requirement-satisfaction': { method: 'GET', needsFeature: false },
   'me-technical-electives': { method: 'GET', needsFeature: false },
   'me-schedule-career-optimize': { method: 'POST', needsFeature: false },
+  // Syllabus What-If Calculator. Ingest is multipart/binary; the remaining
+  // routes are JSON or bodyless reads. Profile-scoped routes require a UUID.
+  'me-syllabus-profiles': { method: 'GET', needsFeature: false },
+  'me-syllabus-ingest': { method: 'POST', needsFeature: false, binary: true },
+  'me-syllabus-profile': { method: 'GET', needsFeature: false, needsSyllabusRecord: true },
+  'me-syllabus-corrections': { method: 'POST', needsFeature: false, needsSyllabusRecord: true },
+  'me-syllabus-confirm': { method: 'POST', needsFeature: false, needsSyllabusRecord: true },
+  'me-syllabus-grade-state': { method: 'PUT', needsFeature: false, needsSyllabusRecord: true },
+  'me-syllabus-calculate': { method: 'POST', needsFeature: false, needsSyllabusRecord: true },
+  'me-syllabus-solve-target': { method: 'POST', needsFeature: false, needsSyllabusRecord: true },
 })
 const ME_ANALYZE_FEATURES = new Set(['gap', 'fit', 'shift', 'professor-comments', 'course-discovery'])
 
@@ -179,6 +189,26 @@ function meBackendPath(target, feature, reviewTable, recordId, searchQuery, term
   if (target === 'me-requirement-satisfaction') return '/api/v2/student/me/requirement-satisfaction'
   if (target === 'me-technical-electives') return '/api/v2/student/me/degree-plan/technical-electives'
   if (target === 'me-schedule-career-optimize') return '/api/v2/student/me/schedule/career-optimize'
+  if (target === 'me-syllabus-profiles') return '/api/v2/student/me/syllabus-grade-profiles'
+  if (target === 'me-syllabus-ingest') return '/api/v2/student/me/syllabus-grade-profiles/ingest'
+  if (target === 'me-syllabus-profile') {
+    return `/api/v2/student/me/syllabus-grade-profiles/${encodeURIComponent(recordId)}`
+  }
+  if (target === 'me-syllabus-corrections') {
+    return `/api/v2/student/me/syllabus-grade-profiles/${encodeURIComponent(recordId)}/corrections`
+  }
+  if (target === 'me-syllabus-confirm') {
+    return `/api/v2/student/me/syllabus-grade-profiles/${encodeURIComponent(recordId)}/confirm`
+  }
+  if (target === 'me-syllabus-grade-state') {
+    return `/api/v2/student/me/syllabus-grade-profiles/${encodeURIComponent(recordId)}/grade-state`
+  }
+  if (target === 'me-syllabus-calculate') {
+    return `/api/v2/student/me/syllabus-grade-profiles/${encodeURIComponent(recordId)}/calculate`
+  }
+  if (target === 'me-syllabus-solve-target') {
+    return `/api/v2/student/me/syllabus-grade-profiles/${encodeURIComponent(recordId)}/solve-target`
+  }
   if (target === 'me-chat') return '/api/v2/student/me/chat'
   if (target === 'me-profile') return '/api/v2/student/me/profile'
   if (target === 'me-resume-upload') return '/api/v2/student/me/resume/upload'
@@ -200,12 +230,13 @@ export function createProxyHandler({ env = process.env, fetchImpl = globalThis.f
   return {
     async fetch(request) {
       const method = request.method
-      if (method !== 'POST' && method !== 'GET' && method !== 'PATCH' && method !== 'DELETE') {
-        return jsonError(405, 'Method not allowed.')
-      }
-
       const requestUrl = new URL(request.url)
       const target = requestUrl.searchParams.get('target') ?? ''
+      const supportedMethod =
+        method === 'POST' || method === 'GET' || method === 'PATCH' || method === 'DELETE' ||
+        (method === 'PUT' && target === 'me-syllabus-grade-state')
+      if (!supportedMethod) return jsonError(405, 'Method not allowed.')
+
       const student = requestUrl.searchParams.get('student') ?? ''
       const feature = requestUrl.searchParams.get('feature') ?? ''
       const reviewTable = requestUrl.searchParams.get('table') ?? ''
@@ -238,6 +269,9 @@ export function createProxyHandler({ env = process.env, fetchImpl = globalThis.f
           return jsonError(400, 'Invalid analysis route.')
         }
         if (spec.needsPlannedRecord && !RECORD_ID_PATTERN.test(recordId)) {
+          return jsonError(400, 'Invalid analysis route.')
+        }
+        if (spec.needsSyllabusRecord && !RECORD_ID_PATTERN.test(recordId)) {
           return jsonError(400, 'Invalid analysis route.')
         }
         if (

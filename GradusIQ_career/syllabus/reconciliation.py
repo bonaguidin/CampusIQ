@@ -1,0 +1,630 @@
+"""Deterministic GradeModel reconciliation and trust classification (Phase 5).
+
+    source-grounded GradeModel -> reconcile_grade_model() -> GradeModelReconciliationResult
+
+Phase 4 already confirmed every cited SourceEvidence's text exists on its
+cited page. Phase 5 asks a different question: given a GradeModel that is
+already source-grounded, is it coherent and complete enough to hand to a
+future grade calculator?
+
+    Phase 4: is this claim grounded in real syllabus text?
+    Phase 5: is this grounded model coherent and trustworthy enough to use?
+
+A claim can be perfectly source-grounded and still not be calculator-ready
+-- "Grades may be curved upward" is real, source-grounded syllabus policy,
+but has no deterministic formula. That uncertainty must survive
+reconciliation, not be silently dropped or "fixed": this module only
+evaluates the supplied GradeModel, it never mutates, repairs, or rewrites
+it. No LLM calls, no network calls, no file I/O -- pure deterministic
+Python over the model's own fields (plus a light defensive cross-check
+against RelevantSyllabusContent.selected_pages; see _evidence_coverage).
+
+Only two decision states exist in Phase 5 (see ReconciliationStatus):
+ACCEPTED or NEEDS_STUDENT_REVIEW. There is no REJECTED state yet -- an
+incomplete or ambiguous but source-grounded model still needs review, not
+discarding.
+
+ACCEPTANCE POLICY
+------------------
+Every check below returns zero or more ReconciliationFinding objects
+(reusing ValidationSeverity from syllabus/validation.py; see the module
+docstring there). The status is derived from those findings in exactly one
+place (_derive_status), never set ad hoc inside an individual check:
+
+    any ERROR-severity finding                         -> NEEDS_STUDENT_REVIEW
+    any WARNING-severity finding NOT in                 -> NEEDS_STUDENT_REVIEW
+        NON_BLOCKING_WARNING_CODES
+    otherwise (only VALID findings, or WARNINGs that
+        are expected/routine incompleteness)            -> ACCEPTED
+
+NON_BLOCKING_WARNING_CODES is the entire policy for which WARNINGs are
+"acceptable" vs "review-required" -- see its definition below for the
+reasoning behind each entry.
+"""
+
+import re
+from enum import Enum
+
+from pydantic import Field
+
+from GradusIQ_career.syllabus.models import (
+    Assessment,
+    GradeCategory,
+    GradeModel,
+    GradeThreshold,
+    GradingMethod,
+    GradingRule,
+    GradingRuleType,
+    SourceEvidence,
+    StrictModel,
+)
+from GradusIQ_career.syllabus.relevance import RelevantSyllabusContent
+from GradusIQ_career.syllabus.validation import ValidationSeverity, validate_grade_model
+
+RECONCILIATION_SCHEMA_VERSION = "1"
+
+# WARNING-severity finding codes that do NOT, by themselves, require
+# student review -- genuine, expected incompleteness that a later
+# calculator/UI can surface without blocking on it. Every other WARNING
+# code (and every ERROR, regardless of code) is review-required. This set
+# is the complete policy for WARNING-severity findings; do not add ad hoc
+# status-changing branches anywhere else in this module.
+#
+# unknown_assessment_count / missing_grade_scale: an ExtractionWarning the
+#   model itself already flagged as routine uncertainty (see
+#   syllabus/models.py's ExtractionWarningType) that the calculator can
+#   operate around -- an unknown quiz count doesn't block computing a
+#   weighted grade from the categories that ARE known.
+NON_BLOCKING_WARNING_CODES: frozenset[str] = frozenset(
+    {
+        "unknown_assessment_count",
+        "missing_grade_scale",
+    }
+)
+
+_PERCENT_RE = re.compile(r"(\d+(?:\.\d+)?)\s*%")
+_POINTS_RE = re.compile(r"(\d+(?:\.\d+)?)\s*(?:points|pts)\b", re.IGNORECASE)
+_RANGE_RE = re.compile(r"(\d+(?:\.\d+)?)\s*(?:-|–|—|to)\s*(\d+(?:\.\d+)?)")
+_VALUE_TOLERANCE = 0.01
+
+_CANONICAL_LETTER_RANK = {"A": 0, "B": 1, "C": 2, "D": 3, "F": 4}
+
+
+class ReconciliationStatus(str, Enum):
+    ACCEPTED = "accepted"
+    NEEDS_STUDENT_REVIEW = "needs_student_review"
+
+
+class ReconciliationFinding(StrictModel):
+    """A single Phase 5 finding.
+
+    Deliberately not syllabus/validation.py's ValidationFinding: this needs
+    a stable machine-readable `code` in addition to severity/message/field,
+    and adding that to ValidationFinding would touch the Phase 1 validation
+    contract for a Phase-5-only need. Reuses ValidationSeverity (the actual
+    shared severity concept) rather than inventing a parallel one.
+    """
+
+    code: str = Field(min_length=1)
+    severity: ValidationSeverity
+    message: str = Field(min_length=1)
+    field: str | None = None
+
+
+class EvidenceCoverage(StrictModel):
+    total_claims: int = Field(ge=0)
+    supported_claims: int = Field(ge=0)
+    coverage_ratio: float = Field(ge=0, le=1)
+    unsupported_claims: list[str] = Field(default_factory=list)
+
+
+class GradeModelReconciliationResult(StrictModel):
+    schema_version: str = RECONCILIATION_SCHEMA_VERSION
+    status: ReconciliationStatus
+    grade_model: GradeModel
+    findings: list[ReconciliationFinding] = Field(default_factory=list)
+    evidence_coverage: EvidenceCoverage
+
+
+def _normalize_name(name: str) -> str:
+    return " ".join(name.lower().split())
+
+
+# ---------------------------------------------------------------------------
+# Existing weight validation (reused, not duplicated)
+# ---------------------------------------------------------------------------
+
+
+def _wrap_weight_validation(grade_model: GradeModel) -> list[ReconciliationFinding]:
+    """Delegate entirely to syllabus/validation.py -- see module docstring
+    there for why a non-100% total is a WARNING (review-worthy) rather than
+    a hard failure, and why an over-100 total is treated the same way
+    (extra credit is a legitimate cause the validator already tolerates).
+    """
+    return [
+        ReconciliationFinding(
+            code="category_weight_validation",
+            severity=finding.severity,
+            message=finding.message,
+            field=finding.field,
+        )
+        for finding in validate_grade_model(grade_model)
+    ]
+
+
+# ---------------------------------------------------------------------------
+# Duplicate detection (report only -- never merge)
+# ---------------------------------------------------------------------------
+
+
+def _check_duplicate_categories(grade_model: GradeModel) -> list[ReconciliationFinding]:
+    groups: dict[str, list[str]] = {}
+    for category in grade_model.categories:
+        groups.setdefault(_normalize_name(category.name), []).append(category.name)
+    return [
+        ReconciliationFinding(
+            code="duplicate_category",
+            severity=ValidationSeverity.ERROR,
+            message=f"multiple categories normalize to the same name: {names}",
+            field=normalized,
+        )
+        for normalized, names in groups.items()
+        if len(names) > 1
+    ]
+
+
+def _check_duplicate_assessments(grade_model: GradeModel) -> list[ReconciliationFinding]:
+    """Conservative: two same-named assessments with different stated dates
+    (e.g. "Quiz" on Sep 2 vs Sep 9) are NOT flagged -- the date genuinely
+    distinguishes them. Only an exact (normalized name, normalized date)
+    match counts as a duplicate.
+    """
+    groups: dict[tuple[str, str | None], list[str]] = {}
+    for assessment in grade_model.assessments:
+        date_key = _normalize_name(assessment.date) if assessment.date is not None else None
+        key = (_normalize_name(assessment.name), date_key)
+        groups.setdefault(key, []).append(assessment.name)
+    return [
+        ReconciliationFinding(
+            code="duplicate_assessment",
+            severity=ValidationSeverity.ERROR,
+            message=f"multiple assessments share the same name and date: {names} (date={date_key!r})",
+            # field includes date_key, not just normalized_name: two separate
+            # duplicate groups can share a name and differ only by date (e.g.
+            # "Quiz"/Sep 2 vs "Quiz"/Sep 9, each duplicated on its own date),
+            # and normalized_name alone would collapse those distinct findings
+            # onto the same field value.
+            field=f"{normalized_name}:{date_key}",
+        )
+        for (normalized_name, date_key), names in groups.items()
+        if len(names) > 1
+    ]
+
+
+# ---------------------------------------------------------------------------
+# Grading-method coherence
+# ---------------------------------------------------------------------------
+
+
+def _check_grading_method_coherence(grade_model: GradeModel) -> list[ReconciliationFinding]:
+    """WEIGHTED-with-no-known-weights is already an ERROR from
+    validate_grade_model (see _wrap_weight_validation) -- not repeated
+    here. POINTS/HYBRID require no additional check (see module docstring
+    on grading-method coherence in the Phase 5 task). UNKNOWN is a valid
+    state that is never reinterpreted into another method, but it is not
+    yet something a calculator can safely act on.
+    """
+    if grade_model.grading_method == GradingMethod.UNKNOWN:
+        return [
+            ReconciliationFinding(
+                code="grading_method_unknown",
+                severity=ValidationSeverity.WARNING,
+                message="grading_method could not be determined from the syllabus",
+                field="grading_method",
+            )
+        ]
+    return []
+
+
+# ---------------------------------------------------------------------------
+# Grade-threshold consistency and ordering
+# ---------------------------------------------------------------------------
+
+
+def _check_grade_thresholds(grade_model: GradeModel) -> list[ReconciliationFinding]:
+    findings: list[ReconciliationFinding] = []
+    thresholds = grade_model.grade_thresholds
+
+    # Phase 1's GradeThreshold model_validator already refuses to construct
+    # minimum > maximum, so this is unreachable for any GradeModel built
+    # through normal validation. Kept as a defensive check for direct or
+    # hand-built callers, per this module's contract with malformed input.
+    for threshold in thresholds:
+        if (
+            threshold.minimum is not None
+            and threshold.maximum is not None
+            and threshold.minimum > threshold.maximum
+        ):
+            findings.append(
+                ReconciliationFinding(
+                    code="reversed_grade_threshold",
+                    severity=ValidationSeverity.ERROR,
+                    message=(
+                        f"threshold '{threshold.letter}' has minimum {threshold.minimum} "
+                        f"greater than maximum {threshold.maximum}"
+                    ),
+                    field=threshold.letter,
+                )
+            )
+
+    bounded = [t for t in thresholds if t.minimum is not None and t.maximum is not None]
+    for i, a in enumerate(bounded):
+        for b in bounded[i + 1 :]:
+            if a.letter == b.letter:
+                continue
+            if max(a.minimum, b.minimum) <= min(a.maximum, b.maximum):
+                findings.append(
+                    ReconciliationFinding(
+                        code="overlapping_grade_thresholds",
+                        severity=ValidationSeverity.ERROR,
+                        message=(
+                            f"thresholds '{a.letter}' ({a.minimum}-{a.maximum}) and '{b.letter}' "
+                            f"({b.minimum}-{b.maximum}) overlap"
+                        ),
+                        field=f"{a.letter},{b.letter}",
+                    )
+                )
+
+    # Ordering is only checked for the canonical A/B/C/D/F letter set --
+    # skipped entirely for any other scale (S/U, numeric, custom labels)
+    # rather than guessing at an order, per this module's conservatism
+    # requirement.
+    letters = {t.letter for t in thresholds}
+    if letters and letters <= set(_CANONICAL_LETTER_RANK):
+        ranked = sorted(
+            (t for t in thresholds if t.minimum is not None),
+            key=lambda t: _CANONICAL_LETTER_RANK[t.letter],
+        )
+        for prev, curr in zip(ranked, ranked[1:]):
+            if prev.minimum < curr.minimum:
+                findings.append(
+                    ReconciliationFinding(
+                        code="grade_threshold_ordering_anomaly",
+                        severity=ValidationSeverity.WARNING,
+                        message=(
+                            f"threshold '{prev.letter}' has a lower minimum ({prev.minimum}) than the "
+                            f"generally-lower grade '{curr.letter}' ({curr.minimum})"
+                        ),
+                        field=f"{prev.letter},{curr.letter}",
+                    )
+                )
+
+    return findings
+
+
+# ---------------------------------------------------------------------------
+# Rule reference validation and non-deterministic rule flagging
+# ---------------------------------------------------------------------------
+
+
+def _known_names(grade_model: GradeModel) -> set[str]:
+    names = {_normalize_name(c.name) for c in grade_model.categories}
+    names |= {_normalize_name(a.name) for a in grade_model.assessments}
+    return names
+
+
+def _check_rule_references(grade_model: GradeModel) -> list[ReconciliationFinding]:
+    """Never auto-creates the missing category/assessment -- only reports."""
+    known = _known_names(grade_model)
+    findings: list[ReconciliationFinding] = []
+    for rule in grade_model.rules:
+        for role, value in (("source", rule.source), ("target", rule.target)):
+            if value is not None and _normalize_name(value) not in known:
+                findings.append(
+                    ReconciliationFinding(
+                        code="unresolved_rule_reference",
+                        severity=ValidationSeverity.WARNING,
+                        message=f"rule {role}='{value}' does not match any known category or assessment",
+                        field=value,
+                    )
+                )
+    return findings
+
+
+def _is_rule_deterministic(rule: GradingRule) -> bool:
+    """A rule is deterministic-enough-to-execute (later, in Phase 6) only
+    when the schema actually captures what it needs to. REPLACEMENT/DROP
+    are executable once both source and target are populated. CURVE,
+    EXTRA_CREDIT, LATE_WORK, MAKEUP, and OTHER have no dedicated structured
+    fields in the Phase 1 schema for the formula/amount/condition a
+    calculator would need (a curve's magnitude, an extra-credit amount, a
+    late penalty curve) -- description/source/target/condition strings are
+    not enough to safely execute these, regardless of which are populated.
+    """
+    if rule.rule_type in (GradingRuleType.REPLACEMENT, GradingRuleType.DROP):
+        return rule.source is not None and rule.target is not None
+    return False
+
+
+def _check_non_deterministic_rules(grade_model: GradeModel) -> list[ReconciliationFinding]:
+    # field is the rule's own index, not rule.rule_type.value: multiple rules
+    # of the same type (e.g. three "other" rules) previously collapsed onto
+    # an identical field value, making them indistinguishable to any caller
+    # trying to anchor a finding back to the one rule it's about.
+    return [
+        ReconciliationFinding(
+            code="non_deterministic_grading_rule",
+            severity=ValidationSeverity.WARNING,
+            message=(
+                f"{rule.rule_type.value} rule is not structured precisely enough to apply "
+                f"deterministically: {rule.description}"
+            ),
+            field=f"rules[{index}]",
+        )
+        for index, rule in enumerate(grade_model.rules)
+        if not _is_rule_deterministic(rule)
+    ]
+
+
+def _check_assessment_category_references(grade_model: GradeModel) -> list[ReconciliationFinding]:
+    known_categories = {_normalize_name(c.name) for c in grade_model.categories}
+    return [
+        ReconciliationFinding(
+            code="unresolved_assessment_category_reference",
+            severity=ValidationSeverity.WARNING,
+            message=(
+                f"assessment '{assessment.name}' references category '{assessment.category}', "
+                "which is not a known category"
+            ),
+            field=assessment.name,
+        )
+        for assessment in grade_model.assessments
+        if assessment.category is not None and _normalize_name(assessment.category) not in known_categories
+    ]
+
+
+# ---------------------------------------------------------------------------
+# Extraction warnings -> reconciliation findings
+# ---------------------------------------------------------------------------
+
+
+def _check_extraction_warnings(grade_model: GradeModel) -> list[ReconciliationFinding]:
+    """Every ExtractionWarning becomes a finding whose `code` is the
+    warning's own type value, so NON_BLOCKING_WARNING_CODES governs both
+    these and this module's own internal WARNING codes uniformly.
+    """
+    return [
+        ReconciliationFinding(
+            code=warning.type.value,
+            severity=ValidationSeverity.WARNING,
+            message=warning.description,
+            field=warning.related_field,
+        )
+        for warning in grade_model.warnings
+    ]
+
+
+# ---------------------------------------------------------------------------
+# Evidence coverage: does every calculator-critical claim have evidence?
+# ---------------------------------------------------------------------------
+
+
+def _critical_claims(grade_model: GradeModel) -> list[tuple[str, SourceEvidence | None]]:
+    """A 'calculator-critical claim' is a quantifiable or structural fact a
+    future grade calculator would need: a known category weight, an
+    assessment carrying a weight/points/date fact, every grade threshold
+    (which always carries at least one bound), and every grading rule.
+    Fields that are explicitly null (e.g. an unknown assessment count) are
+    never claims and never require evidence -- only what was actually
+    asserted does.
+    """
+    claims: list[tuple[str, SourceEvidence | None]] = []
+    for category in grade_model.categories:
+        if category.weight is not None:
+            claims.append((f"category:{category.name}.weight", category.evidence))
+    for assessment in grade_model.assessments:
+        if assessment.weight is not None or assessment.points is not None or assessment.date is not None:
+            claims.append((f"assessment:{assessment.name}", assessment.evidence))
+    for threshold in grade_model.grade_thresholds:
+        claims.append((f"threshold:{threshold.letter}", threshold.evidence))
+    for rule in grade_model.rules:
+        claims.append((f"rule:{rule.rule_type.value}:{rule.description[:40]}", rule.evidence))
+    return claims
+
+
+def _evidence_coverage(
+    grade_model: GradeModel, content: RelevantSyllabusContent
+) -> tuple[EvidenceCoverage, list[ReconciliationFinding]]:
+    claims = _critical_claims(grade_model)
+    known_pages = {page.page_number for page in content.selected_pages}
+
+    supported = 0
+    unsupported_labels: list[str] = []
+    findings: list[ReconciliationFinding] = []
+
+    for label, evidence in claims:
+        if evidence is not None and evidence.text is not None:
+            supported += 1
+            # Phase 4 already verified the cited text is on the cited page
+            # for models it produced. This is a lightweight defensive
+            # sanity check for a GradeModel reconcile_grade_model did not
+            # itself receive through Phase 4 -- not a re-run of Phase 4's
+            # full text-on-page verification (see module docstring).
+            if evidence.page is not None and evidence.page not in known_pages:
+                findings.append(
+                    ReconciliationFinding(
+                        code="evidence_page_out_of_range",
+                        severity=ValidationSeverity.WARNING,
+                        message=f"{label} cites page {evidence.page}, which is not part of the selected syllabus content",
+                        field=label,
+                    )
+                )
+            continue
+
+        unsupported_labels.append(label)
+        if evidence is None:
+            findings.append(
+                ReconciliationFinding(
+                    code="missing_claim_evidence",
+                    severity=ValidationSeverity.WARNING,
+                    message=f"{label} has no evidence at all",
+                    field=label,
+                )
+            )
+        else:
+            findings.append(
+                ReconciliationFinding(
+                    code="partial_claim_evidence",
+                    severity=ValidationSeverity.WARNING,
+                    message=f"{label} has an evidence object but no citable text",
+                    field=label,
+                )
+            )
+
+    total = len(claims)
+    coverage = EvidenceCoverage(
+        total_claims=total,
+        supported_claims=supported,
+        coverage_ratio=(supported / total) if total else 1.0,
+        unsupported_claims=unsupported_labels,
+    )
+    return coverage, findings
+
+
+# ---------------------------------------------------------------------------
+# Claim-to-evidence VALUE consistency (does the citation support the exact
+# structured value, not just "does the citation exist")
+# ---------------------------------------------------------------------------
+
+
+def _mismatch_finding(label: str, claimed: str, cited: str, evidence_text: str) -> ReconciliationFinding:
+    return ReconciliationFinding(
+        code="claim_evidence_value_mismatch",
+        severity=ValidationSeverity.ERROR,
+        message=f"{label} claims {claimed}, but its cited evidence text ('{evidence_text}') states {cited}",
+        field=label,
+    )
+
+
+def _unverifiable_finding(label: str, evidence_text: str) -> ReconciliationFinding:
+    return ReconciliationFinding(
+        code="claim_evidence_consistency_unverifiable",
+        severity=ValidationSeverity.WARNING,
+        message=f"could not deterministically verify {label} against its cited evidence text ('{evidence_text}')",
+        field=label,
+    )
+
+
+def _check_category_weight_consistency(category: GradeCategory) -> ReconciliationFinding | None:
+    if category.weight is None or category.evidence is None or category.evidence.text is None:
+        return None
+    label = f"category:{category.name}.weight"
+    match = _PERCENT_RE.search(category.evidence.text)
+    if match is None:
+        return _unverifiable_finding(label, category.evidence.text)
+    cited = float(match.group(1))
+    if abs(cited - category.weight) > _VALUE_TOLERANCE:
+        return _mismatch_finding(label, str(category.weight), str(cited), category.evidence.text)
+    return None
+
+
+def _check_assessment_points_consistency(assessment: Assessment) -> ReconciliationFinding | None:
+    if assessment.points is None or assessment.evidence is None or assessment.evidence.text is None:
+        return None
+    label = f"assessment:{assessment.name}.points"
+    match = _POINTS_RE.search(assessment.evidence.text)
+    if match is None:
+        return _unverifiable_finding(label, assessment.evidence.text)
+    cited = float(match.group(1))
+    if abs(cited - assessment.points) > _VALUE_TOLERANCE:
+        return _mismatch_finding(label, str(assessment.points), str(cited), assessment.evidence.text)
+    return None
+
+
+def _check_threshold_range_consistency(threshold: GradeThreshold) -> ReconciliationFinding | None:
+    # Only checked when BOTH bounds are stated -- a single-bound threshold
+    # ("A: 90+") has no safe deterministic range pattern to compare against.
+    if threshold.minimum is None or threshold.maximum is None:
+        return None
+    if threshold.evidence is None or threshold.evidence.text is None:
+        return None
+    label = f"threshold:{threshold.letter}"
+    match = _RANGE_RE.search(threshold.evidence.text)
+    if match is None:
+        return _unverifiable_finding(label, threshold.evidence.text)
+    lo, hi = sorted((float(match.group(1)), float(match.group(2))))
+    claimed_lo, claimed_hi = sorted((threshold.minimum, threshold.maximum))
+    if abs(lo - claimed_lo) > _VALUE_TOLERANCE or abs(hi - claimed_hi) > _VALUE_TOLERANCE:
+        return _mismatch_finding(
+            label, f"{threshold.minimum}-{threshold.maximum}", f"{match.group(1)}-{match.group(2)}", threshold.evidence.text
+        )
+    return None
+
+
+def _check_claim_evidence_consistency(grade_model: GradeModel) -> list[ReconciliationFinding]:
+    findings: list[ReconciliationFinding] = []
+    for category in grade_model.categories:
+        finding = _check_category_weight_consistency(category)
+        if finding is not None:
+            findings.append(finding)
+    for assessment in grade_model.assessments:
+        finding = _check_assessment_points_consistency(assessment)
+        if finding is not None:
+            findings.append(finding)
+    for threshold in grade_model.grade_thresholds:
+        finding = _check_threshold_range_consistency(threshold)
+        if finding is not None:
+            findings.append(finding)
+    return findings
+
+
+# ---------------------------------------------------------------------------
+# Status derivation (the ONLY place status is decided)
+# ---------------------------------------------------------------------------
+
+
+def _derive_status(findings: list[ReconciliationFinding]) -> ReconciliationStatus:
+    for finding in findings:
+        if finding.severity == ValidationSeverity.ERROR:
+            return ReconciliationStatus.NEEDS_STUDENT_REVIEW
+        if finding.severity == ValidationSeverity.WARNING and finding.code not in NON_BLOCKING_WARNING_CODES:
+            return ReconciliationStatus.NEEDS_STUDENT_REVIEW
+    return ReconciliationStatus.ACCEPTED
+
+
+# ---------------------------------------------------------------------------
+# Public entry point
+# ---------------------------------------------------------------------------
+
+
+def reconcile_grade_model(
+    grade_model: GradeModel,
+    content: RelevantSyllabusContent,
+) -> GradeModelReconciliationResult:
+    """Evaluate (never repair) a source-grounded GradeModel.
+
+    Deterministic and local only -- no LLM/network/file I/O. Does not
+    mutate `grade_model` or `content`; the returned result carries a deep
+    copy of `grade_model`, never the caller's own instance.
+    """
+    findings: list[ReconciliationFinding] = []
+    findings.extend(_wrap_weight_validation(grade_model))
+    findings.extend(_check_duplicate_categories(grade_model))
+    findings.extend(_check_duplicate_assessments(grade_model))
+    findings.extend(_check_grading_method_coherence(grade_model))
+    findings.extend(_check_grade_thresholds(grade_model))
+    findings.extend(_check_rule_references(grade_model))
+    findings.extend(_check_non_deterministic_rules(grade_model))
+    findings.extend(_check_assessment_category_references(grade_model))
+    findings.extend(_check_extraction_warnings(grade_model))
+    findings.extend(_check_claim_evidence_consistency(grade_model))
+
+    coverage, coverage_findings = _evidence_coverage(grade_model, content)
+    findings.extend(coverage_findings)
+
+    return GradeModelReconciliationResult(
+        status=_derive_status(findings),
+        grade_model=grade_model.model_copy(deep=True),
+        findings=findings,
+        evidence_coverage=coverage,
+    )
