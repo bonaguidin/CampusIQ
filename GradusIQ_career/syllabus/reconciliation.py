@@ -249,9 +249,29 @@ def _check_grading_method_coherence(grade_model: GradeModel) -> list[Reconciliat
 # ---------------------------------------------------------------------------
 
 
-def _check_grade_thresholds(grade_model: GradeModel) -> list[ReconciliationFinding]:
+def _check_grade_thresholds(
+    grade_model: GradeModel,
+    confirmed_cutoff_pairs: set[frozenset[str]] | None = None,
+) -> list[ReconciliationFinding]:
     findings: list[ReconciliationFinding] = []
     thresholds = grade_model.grade_thresholds
+
+    # A student may confirm the "higher grade wins the tie" default for an
+    # overlapping cutoff pair (see cutoff_resolution.py + the
+    # RESOLVE_CUTOFF_OVERLAP correction). We suppress the
+    # overlapping_grade_thresholds ERROR for such a pair, but ONLY after
+    # independently re-deriving that the pair is actually cleanly resolvable
+    # (canonical A-F, rank-adjacent, single shared boundary point) -- the
+    # confirmed set is never trusted blind, so a student cannot confirm past
+    # a genuine multi-way or non-adjacent conflict.
+    suppressible_pairs: set[frozenset[str]] = set()
+    if confirmed_cutoff_pairs:
+        from GradusIQ_career.syllabus.cutoff_resolution import resolve_cutoff_overlaps
+
+        resolvable = {
+            frozenset((r.winner, r.loser)) for r in resolve_cutoff_overlaps(thresholds).resolved
+        }
+        suppressible_pairs = {p for p in confirmed_cutoff_pairs if p in resolvable}
 
     # Phase 1's GradeThreshold model_validator already refuses to construct
     # minimum > maximum, so this is unreachable for any GradeModel built
@@ -281,6 +301,8 @@ def _check_grade_thresholds(grade_model: GradeModel) -> list[ReconciliationFindi
             if a.letter == b.letter:
                 continue
             if max(a.minimum, b.minimum) <= min(a.maximum, b.maximum):
+                if frozenset((a.letter, b.letter)) in suppressible_pairs:
+                    continue
                 findings.append(
                     ReconciliationFinding(
                         code="overlapping_grade_thresholds",
@@ -618,19 +640,26 @@ def _derive_status(findings: list[ReconciliationFinding]) -> ReconciliationStatu
 def reconcile_grade_model(
     grade_model: GradeModel,
     content: RelevantSyllabusContent,
+    confirmed_cutoff_pairs: set[frozenset[str]] | None = None,
 ) -> GradeModelReconciliationResult:
     """Evaluate (never repair) a source-grounded GradeModel.
 
     Deterministic and local only -- no LLM/network/file I/O. Does not
     mutate `grade_model` or `content`; the returned result carries a deep
     copy of `grade_model`, never the caller's own instance.
+
+    `confirmed_cutoff_pairs` is the set of frozenset({winner, loser}) letter
+    pairs a student has confirmed the higher-grade-wins default for. The
+    overlapping_grade_thresholds ERROR is suppressed for such a pair only
+    when it is independently re-derived as cleanly resolvable -- see
+    _check_grade_thresholds.
     """
     findings: list[ReconciliationFinding] = []
     findings.extend(_wrap_weight_validation(grade_model))
     findings.extend(_check_duplicate_categories(grade_model))
     findings.extend(_check_duplicate_assessments(grade_model))
     findings.extend(_check_grading_method_coherence(grade_model))
-    findings.extend(_check_grade_thresholds(grade_model))
+    findings.extend(_check_grade_thresholds(grade_model, confirmed_cutoff_pairs))
     findings.extend(_check_rule_references(grade_model))
     findings.extend(_check_non_deterministic_rules(grade_model))
     findings.extend(_check_assessment_category_references(grade_model))

@@ -268,10 +268,15 @@ def update_revision_confirmation(
     confirmed_grade_model: dict,
     confirmed_reconciliation_status: str,
     confirmed_at: str | None,
+    clarifying_answers: dict | None = None,
 ) -> dict:
     """The only permitted UPDATE on a revision -- never touches
     extracted_grade_model/source_content_hash/reconciliation_status
     (also enforced by a DB trigger; see the migration).
+
+    `clarifying_answers` is a keyed answer log outside that immutability
+    guard; pass it to overwrite the column, omit it to leave the stored
+    value untouched (confirm_grade_model never rewrites it).
     """
     payload = {
         "corrections": corrections,
@@ -280,6 +285,8 @@ def update_revision_confirmation(
         "confirmed_at": confirmed_at,
         "updated_at": now_iso(),
     }
+    if clarifying_answers is not None:
+        payload["clarifying_answers"] = clarifying_answers
     response = (
         client.table(REVISIONS_TABLE)
         .update(payload)

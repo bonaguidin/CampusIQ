@@ -21,7 +21,13 @@ from typing import Any
 from GradusIQ_career.syllabus import read as syllabus_read
 from GradusIQ_career.syllabus import store
 from GradusIQ_career.syllabus.calculator import StudentGradeState
-from GradusIQ_career.syllabus.corrections import GradeModelCorrection, apply_grade_model_corrections
+from GradusIQ_career.syllabus.corrections import (
+    CorrectionOperation,
+    CorrectionTargetType,
+    GradeModelCorrection,
+    apply_grade_model_corrections,
+)
+from GradusIQ_career.syllabus.cutoff_resolution import resolve_cutoff_overlaps
 from GradusIQ_career.syllabus.reconciliation import GradeModelReconciliationResult, ReconciliationStatus, reconcile_grade_model
 from GradusIQ_career.syllabus.relevance import RelevantSyllabusContent
 from GradusIQ_career.syllabus.store_helpers import now_iso
@@ -168,7 +174,27 @@ def apply_student_corrections(
     content = syllabus_read.relevant_content_from_row(revision)
 
     candidate = apply_grade_model_corrections(extracted_model, corrections)
-    candidate_reconciliation = reconcile_grade_model(candidate, content)
+
+    # RESOLVE_CUTOFF_OVERLAP is a no-op on the model; its effect is here --
+    # the confirmed pairs suppress the overlapping_grade_thresholds ERROR on
+    # re-reconciliation (only for pairs reconcile_grade_model itself
+    # re-derives as cleanly resolvable), and each is logged as a keyed
+    # clarifying answer.
+    resolved_cutoffs = _confirmed_cutoff_resolutions(extracted_model, corrections)
+    candidate_reconciliation = reconcile_grade_model(
+        candidate,
+        content,
+        confirmed_cutoff_pairs={frozenset((r.winner, r.loser)) for r in resolved_cutoffs},
+    )
+
+    clarifying_answers = dict(revision.get("clarifying_answers") or {})
+    for r in resolved_cutoffs:
+        clarifying_answers[f"cutoff_overlap:{r.winner},{r.loser}"] = {
+            "answer": "confirm_default",
+            "boundary": r.boundary,
+            "winner": r.winner,
+            "loser": r.loser,
+        }
 
     return store.update_revision_confirmation(
         client,
@@ -178,7 +204,35 @@ def apply_student_corrections(
         confirmed_grade_model=candidate.model_dump(mode="json"),
         confirmed_reconciliation_status=candidate_reconciliation.status.value,
         confirmed_at=None,
+        clarifying_answers=clarifying_answers,
     )
+
+
+def _confirmed_cutoff_resolutions(extracted_model, corrections):
+    """The ResolvedCutoffOverlap entries the RESOLVE_CUTOFF_OVERLAP
+    corrections in this batch point at, re-derived from the extracted
+    model's own thresholds. A correction whose letter doesn't match a
+    resolvable overlap is skipped here -- apply_grade_model_corrections has
+    already raised for it, so this is never reached with an invalid one.
+    """
+    letters = [
+        c.threshold_letter.strip().lower()
+        for c in corrections
+        if c.target_type == CorrectionTargetType.THRESHOLD
+        and c.operation == CorrectionOperation.RESOLVE_CUTOFF_OVERLAP
+        and c.threshold_letter is not None
+    ]
+    if not letters:
+        return []
+    resolved = resolve_cutoff_overlaps(extracted_model.grade_thresholds).resolved
+    out = []
+    for letter in letters:
+        match = next(
+            (r for r in resolved if letter in (r.winner.strip().lower(), r.loser.strip().lower())), None
+        )
+        if match is not None and match not in out:
+            out.append(match)
+    return out
 
 
 def confirm_grade_model(client: Any, *, revision_id: str, student_id: str) -> dict:
