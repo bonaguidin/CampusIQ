@@ -101,6 +101,8 @@ function detail(overrides = {}) {
     reconciliation: RECONCILIATION_REVIEW,
     confirmed_reconciliation: null,
     corrections: [],
+    clarifying_answers: {},
+    cutoff_overlap_resolution: { schema_version: '1', resolved: [], unresolved: [] },
     grade_state: null,
     grade_state_revision: null,
     possible_duplicate_profiles: [],
@@ -489,4 +491,201 @@ test('Grade Calculator: remove a calculator from the list (confirm-gated soft de
   await page.locator('.grade-profile-row', { hasText: 'ECEN 248' }).waitFor({ state: 'detached' })
   assert.equal(deleteCount, 1, 'accepting the confirm calls DELETE exactly once')
   await page.getByText('See what you need to reach your target grade').waitFor()
+})
+
+// --- cutoff-overlap clarifying questions -----------------------------------------
+
+const CUTOFF_MODEL = {
+  ...EXTRACTED_MODEL,
+  grade_thresholds: [
+    { letter: 'A', minimum: 91, maximum: 100, evidence: { page: 2, text: 'A: 91-100', confidence: 1.0 } },
+    { letter: 'B', minimum: 80, maximum: 90, evidence: { page: 2, text: 'B: 80-90', confidence: 1.0 } },
+    { letter: 'C', minimum: 70, maximum: 80, evidence: { page: 2, text: 'C: 70-80', confidence: 1.0 } },
+  ],
+  rules: [],
+  warnings: [],
+}
+
+const RECONCILIATION_BC_OVERLAP = {
+  status: 'needs_student_review',
+  findings: [
+    { code: 'overlapping_grade_thresholds', severity: 'error', message: "thresholds 'B' (80-90) and 'C' (70-80) overlap", field: 'B,C' },
+  ],
+  evidence_coverage: { total_claims: 5, supported_claims: 5, coverage_ratio: 1, unsupported_claims: [] },
+}
+const RESOLUTION_BC = { schema_version: '1', resolved: [{ letters: ['B', 'C'], boundary: 80, winner: 'B', loser: 'C' }], unresolved: [] }
+
+// Boot the panel with a middleware `handle(path, method, request, response)`
+// that returns true when it answered. Navigates into the single profile.
+async function mountCutoffPanel(t, cacheKey, handle) {
+  const planning = planningRoutes({ terms: [] })
+  const apiPlugin = {
+    name: cacheKey,
+    configureServer(server) {
+      server.middlewares.use(async (request, response, next) => {
+        const path = request.url?.split('?')[0]
+        if (planning.handle(path, request.method, request, response)) return undefined
+        if (path === '/api/v2/student/me/requirement-satisfaction') return json(response, 404, { detail: 'Not found.' })
+        if (path?.startsWith('/api/v2/student/me/analysis-cache/')) return json(response, 404, { detail: 'Not found.' })
+        if (path === '/api/v2/student/me/syllabus-grade-profiles' && request.method === 'GET') {
+          return json(response, 200, { syllabus_grade_profiles: [{ id: PROFILE_ID, institution: 'tamu', course_code: 'PHYS 207', term: 'Fall 2026', section: '529', review_state: 'needs_review', created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z', calculator_ready: false, current_grade: null }] })
+        }
+        if (await handle(path, request.method, request, response)) return undefined
+        next()
+      })
+    },
+  }
+  const server = await createServer({
+    root: new URL('..', import.meta.url).pathname,
+    cacheDir: new URL(`../node_modules/.vite-${cacheKey}`, import.meta.url).pathname,
+    logLevel: 'silent',
+    plugins: [apiPlugin],
+    server: { host: '127.0.0.1' },
+  })
+  await server.listen()
+  t.after(async () => server.close())
+  const address = server.httpServer?.address()
+  assert.ok(address && typeof address === 'object')
+  const browser = await chromium.launch()
+  t.after(async () => browser.close())
+  const page = await browser.newPage()
+  await page.goto(`http://127.0.0.1:${address.port}/authenticated-dashboard-preview.html?mode=complete`)
+  await page.getByRole('button', { name: 'Academic' }).click()
+  await page.getByRole('button', { name: 'Grade Calculator', exact: true }).click()
+  await page.locator('.grade-profile-row-button', { hasText: 'PHYS 207' }).click()
+  return page
+}
+
+test('Grade Calculator: cutoff-overlap question — propose, confirm, unblock', { timeout: 45_000 }, async (t) => {
+  let confirmed = false
+  let correctionBody = null
+  const page = await mountCutoffPanel(t, 'grade-calculator-cutoff-confirm', async (path, method, request, response) => {
+    if (path === `/api/v2/student/me/syllabus-grade-profiles/${PROFILE_ID}` && method === 'GET') {
+      json(response, 200, detail({ extracted_grade_model: CUTOFF_MODEL, reconciliation: RECONCILIATION_BC_OVERLAP, cutoff_overlap_resolution: RESOLUTION_BC }))
+      return true
+    }
+    if (path === `/api/v2/student/me/syllabus-grade-profiles/${PROFILE_ID}/corrections` && method === 'POST') {
+      correctionBody = JSON.parse(await readBody(request))
+      confirmed = true
+      json(response, 200, detail({
+        extracted_grade_model: CUTOFF_MODEL,
+        confirmed_grade_model: CUTOFF_MODEL,
+        calculator_ready: true,
+        review_state: 'needs_review',
+        reconciliation: RECONCILIATION_BC_OVERLAP,
+        confirmed_reconciliation: RECONCILIATION_ACCEPTED,
+        corrections: correctionBody.corrections,
+        clarifying_answers: { 'cutoff_overlap:B,C': { answer: 'confirm_default', boundary: 80, winner: 'B', loser: 'C' } },
+        cutoff_overlap_resolution: RESOLUTION_BC,
+      }))
+      return true
+    }
+    return false
+  })
+
+  // the question renders with ranges joined from grade_thresholds
+  const question = page.locator('.grade-cutoff-question[data-cutoff-pair="B,C"]')
+  await question.getByText(/Your syllabus lists B as 80–90 and C as 70–80/).waitFor()
+  await question.getByText(/80 is B, not C\. Sound right\?/).waitFor()
+  // the raw overlapping_grade_thresholds finding is NOT also shown for a resolvable pair
+  assert.equal(await page.locator('.grade-inline-findings--general').getByText(/overlapping cutoffs/).count(), 0)
+
+  await question.getByRole('button', { name: "Yes, that's right" }).click()
+  await page.getByRole('heading', { name: 'Enter your grades' }).waitFor()
+
+  assert.ok(confirmed)
+  assert.deepEqual(correctionBody.corrections, [
+    { target_type: 'threshold', operation: 'resolve_cutoff_overlap', threshold_letter: 'B' },
+  ])
+  // question gone once answered
+  assert.equal(await page.locator('.grade-cutoff-question[data-cutoff-pair="B,C"]').count(), 0)
+})
+
+test('Grade Calculator: unresolved overlap is not an auto-question; manual editor for both entry points', { timeout: 45_000 }, async (t) => {
+  let corrections = []
+  const RESOLUTION_MIXED = {
+    schema_version: '1',
+    resolved: [{ letters: ['B', 'C'], boundary: 80, winner: 'B', loser: 'C' }],
+    unresolved: [{ letters: ['A', 'C'], reason: 'non_adjacent_letters' }],
+  }
+  const RECON_MIXED = {
+    status: 'needs_student_review',
+    findings: [
+      { code: 'overlapping_grade_thresholds', severity: 'error', message: "thresholds 'B' (80-90) and 'C' (70-80) overlap", field: 'B,C' },
+      { code: 'overlapping_grade_thresholds', severity: 'error', message: "thresholds 'A' (75-100) and 'C' (70-80) overlap", field: 'A,C' },
+    ],
+    evidence_coverage: { total_claims: 5, supported_claims: 5, coverage_ratio: 1, unsupported_claims: [] },
+  }
+  const model = { ...CUTOFF_MODEL, grade_thresholds: [
+    { letter: 'A', minimum: 75, maximum: 100, evidence: null },
+    { letter: 'B', minimum: 80, maximum: 90, evidence: null },
+    { letter: 'C', minimum: 70, maximum: 80, evidence: null },
+  ] }
+  const page = await mountCutoffPanel(t, 'grade-calculator-cutoff-manual', async (path, method, request, response) => {
+    if (path === `/api/v2/student/me/syllabus-grade-profiles/${PROFILE_ID}` && method === 'GET') {
+      json(response, 200, detail({ extracted_grade_model: model, reconciliation: RECON_MIXED, cutoff_overlap_resolution: RESOLUTION_MIXED }))
+      return true
+    }
+    if (path === `/api/v2/student/me/syllabus-grade-profiles/${PROFILE_ID}/corrections` && method === 'POST') {
+      corrections = JSON.parse(await readBody(request)).corrections
+      json(response, 200, detail({
+        extracted_grade_model: model, confirmed_grade_model: model, calculator_ready: true,
+        reconciliation: RECON_MIXED, confirmed_reconciliation: RECONCILIATION_ACCEPTED,
+        corrections, cutoff_overlap_resolution: RESOLUTION_MIXED,
+      }))
+      return true
+    }
+    return false
+  })
+
+  // A/C is unresolved: no "Sound right?" proposal, but its raw finding stays,
+  // and there's a "Set the cutoffs" action.
+  const unresolved = page.locator('.grade-cutoff-question[data-cutoff-pair="A,C"]')
+  await unresolved.getByText(/cutoffs for A and C overlap and CampusIQ can't pick a safe default/).waitFor()
+  assert.equal(await unresolved.getByText(/Sound right\?/).count(), 0)
+  await page.locator('.grade-inline-findings--general').getByText("Letter grades A and C have overlapping cutoffs: A is 75–100, C is 70–80.").waitFor()
+
+  // "No, let me set it myself" on the resolvable B/C question opens the editor
+  await page.locator('.grade-cutoff-question[data-cutoff-pair="B,C"]').getByRole('button', { name: 'No, let me set it myself' }).click()
+  await page.locator('[data-testid="cutoff-manual-editor"][data-cutoff-pair="B,C"]').waitFor()
+  await page.fill('#cutoff-C-max', '79')
+  await page.getByRole('button', { name: 'Save cutoffs' }).click()
+  await page.getByRole('heading', { name: 'Enter your grades' }).waitFor()
+  assert.deepEqual(corrections, [{ target_type: 'threshold', operation: 'set_maximum', threshold_letter: 'C', value: 79 }])
+})
+
+test('Grade Calculator: an answered cutoff shows resolved and does not re-ask on reload', { timeout: 45_000 }, async (t) => {
+  // Answered, but still in review because one unrelated finding blocks -- so
+  // the clarifying-questions section stays on screen.
+  const answered = detail({
+    extracted_grade_model: CUTOFF_MODEL,
+    reconciliation: RECONCILIATION_BC_OVERLAP,
+    confirmed_grade_model: CUTOFF_MODEL,
+    calculator_ready: false,
+    corrections: [{ target_type: 'threshold', operation: 'resolve_cutoff_overlap', threshold_letter: 'B' }],
+    clarifying_answers: { 'cutoff_overlap:B,C': { answer: 'confirm_default', boundary: 80, winner: 'B', loser: 'C' } },
+    cutoff_overlap_resolution: RESOLUTION_BC,
+    confirmed_reconciliation: {
+      status: 'needs_student_review',
+      findings: [{ code: 'grading_method_unknown', severity: 'warning', message: 'x', field: 'grading_method' }],
+      evidence_coverage: RECONCILIATION_ACCEPTED.evidence_coverage,
+    },
+  })
+
+  const page = await mountCutoffPanel(t, 'grade-calculator-cutoff-answered', async (path, method, request, response) => {
+    if (path === `/api/v2/student/me/syllabus-grade-profiles/${PROFILE_ID}` && method === 'GET') {
+      json(response, 200, answered)
+      return true
+    }
+    return false
+  })
+
+  await page.locator('.grade-cutoff-resolved[data-cutoff-pair="B,C"]').getByText('80 counts as B, not C').waitFor()
+  assert.equal(await page.locator('.grade-cutoff-question[data-cutoff-pair="B,C"]').count(), 0)
+
+  // navigate away and back — still resolved, still no question
+  await page.getByRole('button', { name: '← Back to your calculators' }).click()
+  await page.locator('.grade-profile-row-button', { hasText: 'PHYS 207' }).click()
+  await page.locator('.grade-cutoff-resolved[data-cutoff-pair="B,C"]').waitFor()
+  assert.equal(await page.locator('.grade-cutoff-question[data-cutoff-pair="B,C"]').count(), 0)
 })
