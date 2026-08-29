@@ -223,6 +223,12 @@ def test_is_dfw_named_locality_beats_remote():
         ("Remote", False, LocationKind.REMOTE_ANYWHERE),
         ("Work from home", False, LocationKind.REMOTE_ANYWHERE),
         ("Seoul, South Korea", False, LocationKind.NON_DFW),
+        # Workday CXS `locationsText` shapes -- "Texas - Dallas" is the common
+        # single-site rendering; "N Locations" is what a multi-site req sends
+        # instead of city names, and with no locality to match it stays out of
+        # the DFW-filtered Workday sweep (absence = false, by design).
+        ("Texas - Dallas", True, LocationKind.DFW_METRO),
+        ("2 Locations", False, LocationKind.NON_DFW),
         ("", False, LocationKind.UNKNOWN),
         (None, False, LocationKind.UNKNOWN),
     ],

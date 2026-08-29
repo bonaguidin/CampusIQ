@@ -135,6 +135,31 @@ def parse_workday_slug(slug: str | None) -> WorkdayBoard | None:
     return None
 
 
+EMPLOYER_CSV = REPO_ROOT / "data" / "job_postings" / "dfw_employers_ats.csv"
+
+
+def usable_workday_boards(csv_path: Path = EMPLOYER_CSV) -> list[tuple[str, WorkdayBoard]]:
+    """(employer, board) for every ats=workday CSV row whose slug builds.
+
+    The single source of truth for which employers the Workday ingest sweeps.
+    Today that is 12 of the 19 ats=workday rows; the other 7 carry a host but
+    no site-path segment, so parse_workday_slug returns None and they are
+    skipped rather than guessed at. Fill their `slug` column and they join the
+    sweep with no code change -- see outstanding-fixes.md.
+    """
+    import csv as _csv
+
+    boards: list[tuple[str, WorkdayBoard]] = []
+    with csv_path.open(encoding="utf-8-sig", newline="") as f:
+        for row in _csv.DictReader(f):
+            if row.get("ats") != "workday":
+                continue
+            board = parse_workday_slug(row.get("slug"))
+            if board is not None:
+                boards.append((row["employer"], board))
+    return boards
+
+
 def _post(url: str, body: dict, *, timeout: float = TIMEOUT_SECONDS) -> Any:
     data = json.dumps(body).encode("utf-8")
     req = urllib.request.Request(
@@ -327,20 +352,19 @@ def main() -> int:
 
     if args.list_boards:
         import csv
-        path = REPO_ROOT / "data" / "job_postings" / "dfw_employers_ats.csv"
-        usable = unusable = 0
-        with path.open(encoding="utf-8-sig", newline="") as f:
+        usable = {name for name, _ in usable_workday_boards()}
+        total = 0
+        with EMPLOYER_CSV.open(encoding="utf-8-sig", newline="") as f:
             for r in csv.DictReader(f):
                 if r.get("ats") != "workday":
                     continue
-                board = parse_workday_slug(r.get("slug"))
-                if board:
-                    usable += 1
+                total += 1
+                if r["employer"] in usable:
+                    board = parse_workday_slug(r.get("slug"))
                     print(f"  OK       {r['employer'][:32]:<34} {board.tenant}/{board.site}")
                 else:
-                    unusable += 1
                     print(f"  NO SITE  {r['employer'][:32]:<34} {r.get('slug')}")
-        print(f"\n{usable} usable, {unusable} missing a site path.")
+        print(f"\n{len(usable)} usable, {total - len(usable)} missing a site path.")
         return 0
 
     if not args.slug:

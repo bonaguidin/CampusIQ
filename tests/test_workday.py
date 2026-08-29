@@ -30,6 +30,7 @@ from workday import (  # noqa: E402
     parse_posted_on,
     parse_workday_slug,
     total_from,
+    usable_workday_boards,
 )
 
 # Captured live, 2026-08-19.
@@ -258,3 +259,33 @@ def test_fetch_board_respects_the_max_pages_cap(monkeypatch):
     rows, _ = fetch_board(ATMOS, "Atmos Energy", live=True, max_pages=3)
 
     assert len(rows) == 60  # exactly max_pages * PAGE_SIZE, then it stops
+
+
+# ---------------------------------------------------------------------------
+# usable_workday_boards -- the CSV rows the ingest actually sweeps
+# ---------------------------------------------------------------------------
+
+def test_usable_workday_boards_are_the_twelve_with_a_site_path():
+    boards = usable_workday_boards()
+    names = {name for name, _ in boards}
+
+    assert len(boards) == 12
+    # Confirmed usable on 2026-08-19 -- host AND site segment present.
+    assert {
+        "Fidelity Investments", "AT&T", "Toyota Motor North America", "Solera",
+        "Vistra Energy", "Atmos Energy", "Parkland Health", "McKesson",
+        "Southwest Airlines", "Kimberly-Clark", "Michaels", "Copart",
+    } == names
+    # The 7 host-only rows must NOT be swept -- their slug builds no board.
+    for excluded in ("Bank of America", "Comerica", "USAA", "Capital One",
+                     "Globe Life", "PwC", "Accenture"):
+        assert excluded not in names
+
+
+def test_usable_workday_boards_returns_real_board_objects():
+    boards = usable_workday_boards()
+    atmos = next(b for name, b in boards if name == "Atmos Energy")
+    assert atmos.jobs_url == (
+        "https://atmosenergy.wd108.myworkdayjobs.com"
+        "/wday/cxs/atmosenergy/External_Career_Site/jobs"
+    )

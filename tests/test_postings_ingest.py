@@ -19,11 +19,14 @@ import pytest
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "scripts" / "job_postings"))
 
+import workday  # noqa: E402
 from ingest import (  # noqa: E402
     DryRunStore,
+    FetchOutcome,
     RunReport,
     load_target_roles,
     resolve_and_attach_identity,
+    run_workday,
 )
 from normalize import (  # noqa: E402
     ADZUNA,
@@ -336,3 +339,129 @@ def test_retention_window_must_be_positive():
     for bad in (0, -1):
         with pytest.raises(ValueError):
             cutoff_for(bad)
+
+
+# ---------------------------------------------------------------------------
+# run_workday -- the (source x employer) driver
+# ---------------------------------------------------------------------------
+
+def _wd_row(job_id: str, location: str) -> dict:
+    """A row shaped like workday.normalize_listing() output."""
+    return {
+        "source": "workday",
+        "source_job_id": job_id,
+        "title": f"Analyst {job_id}",
+        "company": "Atmos Energy",
+        "location": location,
+        "url": f"https://atmosenergy.wd108.myworkdayjobs.com/job/x/Analyst_{job_id}",
+        "posted_date": "2026-08-19",
+        "salary_min": None,
+        "salary_max": None,
+        "raw_payload": {"externalPath": f"/job/x/Analyst_{job_id}"},
+    }
+
+
+@pytest.fixture
+def one_atmos_board(monkeypatch):
+    board = workday.WorkdayBoard(
+        "atmosenergy.wd108.myworkdayjobs.com", "atmosenergy", "External_Career_Site"
+    )
+    monkeypatch.setattr(
+        workday, "usable_workday_boards", lambda: [("Atmos Energy", board)]
+    )
+    return board
+
+
+def test_run_workday_keeps_dfw_rows_and_drops_the_rest(monkeypatch, one_atmos_board):
+    fetched = [
+        _wd_row("JR1", "Texas - Dallas"),      # keep
+        _wd_row("JR2", "Plano, TX"),           # keep
+        _wd_row("JR3", "Atlanta, GA"),         # drop -- non-DFW
+        _wd_row("JR4", "2 Locations"),         # drop -- no locality to match
+        _wd_row("JR5", "Remote - US"),         # drop -- remote, no DFW anchor
+    ]
+    monkeypatch.setattr(workday, "fetch_board", lambda *a, **k: (fetched, []))
+
+    store = DryRunStore()
+    report = run_workday(live=True, write=False, store=store)
+
+    kept = {r["source_job_id"] for r in store.rows}
+    assert kept == {"JR1", "JR2"}
+    assert all(r["is_dfw"] is True for r in store.rows)
+    assert {r["location_kind"] for r in store.rows} == {"dfw_metro"}
+    assert report.rows_upserted == 2
+
+
+def test_run_workday_stamps_target_role_null(monkeypatch, one_atmos_board):
+    monkeypatch.setattr(
+        workday, "fetch_board", lambda *a, **k: ([_wd_row("JR1", "Dallas, TX")], [])
+    )
+    store = DryRunStore()
+    run_workday(live=True, write=False, store=store)
+    assert store.rows[0]["target_role"] is None
+
+
+def test_run_workday_fetch_log_is_employer_keyed_and_satisfies_has_subject(
+    monkeypatch, one_atmos_board
+):
+    # 45 listings seen -> ceil(45/20) = 3 pages -> quota_used proxy = 3.
+    rows = [_wd_row(f"JR{i}", "Dallas, TX") for i in range(45)]
+    monkeypatch.setattr(workday, "fetch_board", lambda *a, **k: (rows, []))
+
+    store = DryRunStore()
+    run_workday(live=True, write=False, store=store)
+
+    assert len(store.log_rows) == 1
+    log = store.log_rows[0]
+    assert log["source"] == "workday"
+    assert log["employer"] == "Atmos Energy"
+    assert log["target_role"] is None
+    # job_posting_fetch_log_has_subject: target_role IS NOT NULL OR employer IS NOT NULL
+    assert (log["target_role"] is not None) or (log["employer"] is not None)
+    assert log["status"] == "success"
+    assert log["quota_used"] == 3
+
+
+def test_run_workday_records_a_failed_board_without_aborting_the_sweep(monkeypatch):
+    good = workday.WorkdayBoard("a.wd1.myworkdayjobs.com", "a", "S")
+    bad = workday.WorkdayBoard("b.wd1.myworkdayjobs.com", "b", "S")
+    monkeypatch.setattr(
+        workday, "usable_workday_boards", lambda: [("Bad Co", bad), ("Good Co", good)]
+    )
+
+    def fake_fetch_board(board, employer, *, live):
+        if employer == "Bad Co":
+            from errors import JobPostingRequestError
+
+            raise JobPostingRequestError("Workday HTTP 503", transient=True)
+        return ([_wd_row("JR9", "Irving, TX")], [])
+
+    monkeypatch.setattr(workday, "fetch_board", fake_fetch_board)
+
+    store = DryRunStore()
+    report = run_workday(live=True, write=False, store=store)
+
+    statuses = {(o.employer, o.status) for o in report.outcomes}
+    assert statuses == {("Bad Co", "error"), ("Good Co", "success")}
+    assert {r["source_job_id"] for r in store.rows} == {"JR9"}
+    assert len(store.log_rows) == 2  # both boards logged
+
+
+def test_run_workday_dry_run_writes_nothing(monkeypatch, one_atmos_board):
+    # live=False: workday.fetch_board returns ([], []) and prints the request.
+    monkeypatch.setattr(workday, "fetch_board", lambda *a, **k: ([], []))
+    store = DryRunStore()
+    report = run_workday(live=False, write=False, store=store)
+    assert store.rows == []
+    assert store.log_rows == []
+    assert report.rows_upserted == 0
+
+
+def test_run_workday_does_not_touch_the_vendor_fetch_log_payload():
+    """Adzuna/JSearch log rows must stay byte-identical -- no employer key."""
+    vendor = FetchOutcome(source="adzuna", target_role="Finance Intern",
+                          results_count=3, quota_used=1)
+    assert "employer" not in vendor.log_row()
+    wd = FetchOutcome(source="workday", employer="Atmos Energy", results_count=3)
+    assert wd.log_row()["employer"] == "Atmos Energy"
+    assert wd.log_row()["target_role"] is None

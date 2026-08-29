@@ -19,6 +19,14 @@ LinkedIn-source confirmation only, after a live 2026-08-17 test returned zero
 results on both vendors for the role it was meant to gap-fill. So JSearch is
 opt-in per run rather than part of the nightly sweep.
 
+WORKDAY IS A DIFFERENT SHAPE. `--source workday` runs run_workday(), which
+loops the DFW employers on Workday rather than target roles: each runs its own
+tenant and workday.fetch_board pulls the whole board in one paged pass, then
+this filters to DFW (the CXS API has no location parameter) and stores rows
+with target_role NULL. No shared quota -- politeness and page volume are the
+only constraints -- so it gets its own workflow job, not a slot in the vendor
+sweep. It reuses run()'s normalize/dedup/upsert tail unchanged.
+
 WHAT THIS CANNOT DO YET
 -----------------------
 The tables do not exist. supabase/migrations/20260817210000 is staged and
@@ -91,10 +99,17 @@ def load_target_roles() -> list[str]:
 
 @dataclass
 class FetchOutcome:
-    """One vendor call. Becomes exactly one job_posting_fetch_log row."""
+    """One fetch call. Becomes exactly one job_posting_fetch_log row.
+
+    A vendor (Adzuna/JSearch) call is per target_role; a Workday call is per
+    employer and carries no role. The fetch_log has_subject CHECK wants at
+    least one of the two, so `employer` is set for the Workday path and
+    `target_role` left None there.
+    """
 
     source: str
-    target_role: str
+    target_role: str | None = None
+    employer: str | None = None
     results_count: int = 0
     quota_used: int = 0
     status: str = "success"
@@ -103,7 +118,7 @@ class FetchOutcome:
     normalization_errors: list[str] = field(default_factory=list)
 
     def log_row(self) -> dict:
-        return {
+        row = {
             "source": self.source,
             "target_role": self.target_role,
             "results_count": self.results_count,
@@ -111,6 +126,11 @@ class FetchOutcome:
             "status": self.status,
             "error_detail": self.error_detail,
         }
+        # Only the Workday path sets this; keep the vendor insert payload
+        # byte-identical to before by omitting the key when unset.
+        if self.employer is not None:
+            row["employer"] = self.employer
+        return row
 
 
 @dataclass
@@ -164,7 +184,8 @@ class RunReport:
         if self.failed:
             lines += ["", f"  !! {len(self.failed)} call(s) failed:"]
             for o in self.failed:
-                lines.append(f"     - {o.source}/{o.target_role}: {o.error_detail}")
+                subject = o.employer or o.target_role
+                lines.append(f"     - {o.source}/{subject}: {o.error_detail}")
         lines.append("=" * 68)
         return "\n".join(lines)
 
@@ -549,14 +570,83 @@ def run(
     return report
 
 
+def run_workday(*, live: bool, write: bool, store: Any = None) -> RunReport:
+    """Workday's (source x employer) sweep -- a separate driver from run().
+
+    run() iterates (vendor x target_role) and calls a client.search(role);
+    Workday has neither shape. Each employer runs its own Workday tenant, and
+    workday.fetch_board pulls that tenant's WHOLE board (searchText: "") in one
+    paged pass with no role concept. So this loops employers, filters to DFW
+    after the fact (the CXS API has no location parameter), stamps target_role
+    NULL, and then hands rows to the SAME shared tail run() uses:
+    resolve_and_attach_identity -> store.upsert_postings -> store.write_log.
+
+    Nothing here touches run(), fetch_one(), build_client(), or normalize.py.
+    """
+    import math
+
+    import workday
+    from identity import classify_location
+
+    report = RunReport(started_at=datetime.now(timezone.utc), dry_run=not live)
+    if store is None:
+        store = SupabaseStore() if write else DryRunStore()
+
+    for employer, board in workday.usable_workday_boards():
+        outcome = FetchOutcome(source="workday", employer=employer)
+        try:
+            raw_rows, outcome.normalization_errors = workday.fetch_board(
+                board, employer, live=live
+            )
+        except JobPostingRequestError as exc:
+            outcome.status = "error"
+            outcome.error_detail = f"request (transient={exc.transient}): {exc}"
+            outcome.quota_used = 1  # a failed call still cost a request
+            report.outcomes.append(outcome)
+            if live:
+                store.write_log(outcome.log_row())
+            continue
+
+        # Workday has no quota to account for. quota_used carries an
+        # HTTP-call proxy instead: one page per PAGE_SIZE listings seen,
+        # counted before the DFW filter drops anything.
+        seen = len(raw_rows) + len(outcome.normalization_errors)
+        outcome.quota_used = math.ceil(seen / workday.PAGE_SIZE) if seen else 0
+
+        rows: list[dict] = []
+        for row in raw_rows:
+            in_dfw, kind = classify_location(row.get("location"))
+            if not in_dfw:
+                continue  # CXS returns the whole national board; keep DFW only
+            row["is_dfw"] = in_dfw
+            row["location_kind"] = kind.value
+            row["target_role"] = None  # whole-board fetch, no role searched for
+            rows.append(row)
+
+        outcome.rows = rows
+        outcome.results_count = len(rows)
+        report.outcomes.append(outcome)
+
+        if rows:
+            resolve_and_attach_identity(rows, store, report)
+            report.rows_upserted += store.upsert_postings(rows)
+
+        if live:
+            store.write_log(outcome.log_row())
+
+    return report
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument(
         "--source",
         action="append",
-        choices=sorted({"adzuna", "jsearch"}),
-        help=f"Vendor to fetch. Repeatable. Defaults to {list(NIGHTLY_SOURCES)} "
-             f"-- JSearch is excluded from the nightly sweep on quota grounds.",
+        choices=sorted({"adzuna", "jsearch", "workday"}),
+        help=f"Source to fetch. Repeatable. Defaults to {list(NIGHTLY_SOURCES)} "
+             f"-- JSearch is excluded from the nightly sweep on quota grounds. "
+             f"'workday' runs the per-employer sweep (run_workday), ignores "
+             f"--role/--where, and can run alongside a vendor in one invocation.",
     )
     p.add_argument("--role", action="append", help="Target role. Repeatable. Defaults to all 14.")
     p.add_argument("--where", default=DEFAULT_WHERE)
@@ -593,9 +683,11 @@ def main() -> int:
         return 2
 
     sources = tuple(args.source) if args.source else NIGHTLY_SOURCES
+    do_workday = "workday" in sources
+    vendor_sources = tuple(s for s in sources if s != "workday")
     roles = args.role if args.role else load_target_roles()
 
-    if "jsearch" in sources and len(roles) > 3 and args.live:
+    if "jsearch" in vendor_sources and len(roles) > 3 and args.live:
         print(
             f"Refusing: {len(roles)} roles x jsearch would spend {len(roles)} of a "
             f"~200/month quota in one run, and the integration spec narrows JSearch "
@@ -604,17 +696,26 @@ def main() -> int:
         )
         return 2
 
-    report = run(
-        sources=sources,
-        roles=roles,
-        live=args.live,
-        write=args.write,
-        page_size=args.page_size,
-        where=args.where,
-        dump_shape=args.dump_shape,
-    )
-    print(report.render())
-    return 1 if report.failed and len(report.failed) == len(report.outcomes) else 0
+    reports: list[RunReport] = []
+    if vendor_sources:
+        reports.append(run(
+            sources=vendor_sources,
+            roles=roles,
+            live=args.live,
+            write=args.write,
+            page_size=args.page_size,
+            where=args.where,
+            dump_shape=args.dump_shape,
+        ))
+    if do_workday:
+        reports.append(run_workday(live=args.live, write=args.write))
+
+    for report in reports:
+        print(report.render())
+
+    outcomes = [o for r in reports for o in r.outcomes]
+    failed = [o for o in outcomes if o.status == "error"]
+    return 1 if failed and len(failed) == len(outcomes) else 0
 
 
 if __name__ == "__main__":
