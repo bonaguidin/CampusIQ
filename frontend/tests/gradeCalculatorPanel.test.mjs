@@ -136,6 +136,7 @@ test('Grade Calculator: empty state, upload, review, confirm, grade entry, calcu
   })
   let state = 'empty' // empty -> reviewing -> corrected -> confirmed
   let capturedIngestBody = null
+  let capturedGradeStateBody = null
 
   const apiPlugin = {
     name: 'grade-calculator-api',
@@ -186,6 +187,7 @@ test('Grade Calculator: empty state, upload, review, confirm, grade entry, calcu
         }
         if (path === `/api/v2/student/me/syllabus-grade-profiles/${PROFILE_ID}/grade-state` && request.method === 'PUT') {
           const body = JSON.parse(await readBody(request))
+          capturedGradeStateBody = body
           return json(response, 200, { revision: 1, category_scores: body.category_scores, assessment_scores: body.assessment_scores })
         }
         if (path === `/api/v2/student/me/syllabus-grade-profiles/${PROFILE_ID}/calculate` && request.method === 'POST') {
@@ -288,6 +290,14 @@ test('Grade Calculator: empty state, upload, review, confirm, grade entry, calcu
   // the "Ignore this rule for What-If calculations" button is gone
   assert.equal(await page.getByRole('button', { name: 'Ignore this rule for What-If calculations' }).count(), 0)
 
+  // --- the grading breakdown no longer shows a per-category assessment
+  //     count: it was never a blocker and it's meaningless to a student
+  //     entering one average per category ---
+  const breakdown = page.locator('[aria-label="Grading breakdown"]')
+  await breakdown.waitFor()
+  assert.equal(await breakdown.getByText('Number of assessments: Unknown').count(), 0)
+  assert.equal(await breakdown.getByText(/\d+ assessments/).count(), 0)
+
   // --- overlapping_grade_thresholds is NOT reclassified: it still shows in
   //     the General section at the top of the review card, with the real
   //     letters/ranges ---
@@ -338,6 +348,22 @@ test('Grade Calculator: empty state, upload, review, confirm, grade entry, calcu
 
   await page.getByText('81.4%').waitFor()
   await page.getByText('Based on 50% of the course completed').waitFor()
+
+  // --- Save grades: the per-category averages the student typed are what
+  //     gets persisted as category_scores[].actual_score (no per-assessment
+  //     breakdown required) ---
+  await page.getByRole('button', { name: 'Save grades' }).click()
+  await page.waitForFunction(() => !document.querySelector('button[aria-busy="true"]'))
+  assert.ok(capturedGradeStateBody, 'Save grades sent a grade-state PUT')
+  assert.deepEqual(
+    [...capturedGradeStateBody.category_scores].sort((a, b) => a.category_name.localeCompare(b.category_name)),
+    [
+      { category_name: 'Lecture Quizzes', actual_score: 92 },
+      { category_name: 'Mid-term Exam', actual_score: 78 },
+      { category_name: 'Recitation Quizzes', actual_score: 88 },
+    ],
+  )
+  assert.deepEqual(capturedGradeStateBody.assessment_scores, [])
 
   // --- target solver ---
   await page.selectOption('#target-component', 'Final Exam')

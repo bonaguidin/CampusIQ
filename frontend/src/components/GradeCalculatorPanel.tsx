@@ -1009,7 +1009,6 @@ function SyllabusGradingBreakdown({
           <div className="real-course-row" role="row">
             <span role="cell">{c.name}</span>
             <span role="cell">{formatPercent(c.weight)}</span>
-            <span role="cell">{c.count === null ? 'Number of assessments: Unknown' : `${c.count} assessments`}</span>
             <span role="cell" className="grade-evidence-note">
               {c.evidence?.page ? `Source: page ${c.evidence.page}` : ''}
             </span>
