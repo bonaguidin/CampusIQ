@@ -689,3 +689,31 @@ test('Grade Calculator: an answered cutoff shows resolved and does not re-ask on
   await page.locator('.grade-cutoff-resolved[data-cutoff-pair="B,C"]').waitFor()
   assert.equal(await page.locator('.grade-cutoff-question[data-cutoff-pair="B,C"]').count(), 0)
 })
+
+test('Grade Calculator: non-blocking informational findings are filtered from the review list', { timeout: 45_000 }, async (t) => {
+  const model = { ...EXTRACTED_MODEL, grade_thresholds: [], rules: [], warnings: [] }
+  const recon = {
+    status: 'needs_student_review',
+    findings: [
+      // non-blocking, no correction path -> must NOT show in the review list
+      { code: 'unknown_assessment_count', severity: 'warning', message: 'The exact number of Lecture Quizzes is unknown.', field: 'Lecture Quizzes' },
+      // genuinely blocking -> must still show
+      { code: 'grading_method_unknown', severity: 'warning', message: 'grading_method could not be determined from the syllabus', field: 'grading_method' },
+    ],
+    evidence_coverage: { total_claims: 4, supported_claims: 4, coverage_ratio: 1, unsupported_claims: [] },
+  }
+  const page = await mountCutoffPanel(t, 'grade-calculator-nonblocking-filter', async (path, method, request, response) => {
+    if (path === `/api/v2/student/me/syllabus-grade-profiles/${PROFILE_ID}` && method === 'GET') {
+      json(response, 200, detail({ extracted_grade_model: model, reconciliation: recon }))
+      return true
+    }
+    return false
+  })
+
+  await page.getByRole('heading', { name: 'Needs your review' }).waitFor()
+  // the blocking finding is still shown, so the review list isn't just empty
+  assert.ok((await page.locator('[data-finding-code="grading_method_unknown"]').count()) >= 1)
+  // unknown_assessment_count is filtered out entirely
+  assert.equal(await page.locator('[data-finding-code="unknown_assessment_count"]').count(), 0)
+  assert.equal(await page.getByText("doesn't say exactly how many assessments are in this category").count(), 0)
+})

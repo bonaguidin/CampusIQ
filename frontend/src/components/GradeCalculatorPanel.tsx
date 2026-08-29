@@ -185,6 +185,19 @@ const RULE_INFO_FINDING_CODES: ReadonlySet<string> = new Set([
   'ambiguous_rule',
 ]);
 
+// Other NON_BLOCKING_WARNING_CODES (reconciliation.py) that are purely
+// informational and have no correction path -- they don't belong in the
+// "Still needs your review" list. unknown_assessment_count in particular is
+// moot since PR #64: the per-category count is never entered or displayed
+// anymore (one average per category). NOT rule findings, so kept separate
+// from RULE_INFO_FINDING_CODES.
+// (missing_grade_scale is also non-blocking but still meaningful -- no
+// letter-grade projection without a scale -- so it stays visible for now;
+// see planning-docs/outstanding-fixes.md.)
+const NON_BLOCKING_INFO_FINDING_CODES: ReadonlySet<string> = new Set([
+  'unknown_assessment_count',
+]);
+
 // Order-independent key for a letter pair, so an overlapping_grade_thresholds
 // finding (field "B,C", threshold-list order) matches a cutoff_overlap_
 // resolution entry ([winner, loser] order).
@@ -625,15 +638,18 @@ export function GradeCalculatorPanel({ accessToken, courses, institutionName }: 
     setManualCutoffPair(null);
   }, [selectedProfileId]);
 
-  // Rule-informational findings (curve / late-work / makeup) go to the
-  // Professor's rules panel; the overlapping_grade_thresholds finding for a
-  // cleanly-resolvable pair is replaced by its propose/confirm question in
-  // CutoffOverlapQuestions. Both are filtered out of the review list here.
-  // Unresolved overlaps keep their raw finding.
+  // Findings that don't belong in the review list:
+  // - RULE_INFO_FINDING_CODES: rule-informational (curve / late-work /
+  //   makeup) -- shown in the Professor's rules panel instead.
+  // - NON_BLOCKING_INFO_FINDING_CODES: non-blocking informational with no
+  //   correction path (unknown_assessment_count).
+  // - overlapping_grade_thresholds for a cleanly-resolvable pair --
+  //   replaced by its propose/confirm question in CutoffOverlapQuestions.
+  //   Unresolved overlaps keep their raw finding.
   const reviewFindings = useMemo(() => {
     const resolvedPairs = resolvedOverlapPairKeys(detail?.cutoff_overlap_resolution);
     return ((detail?.confirmed_reconciliation ?? detail?.reconciliation)?.findings ?? []).filter((finding) => {
-      if (RULE_INFO_FINDING_CODES.has(finding.code)) return false;
+      if (RULE_INFO_FINDING_CODES.has(finding.code) || NON_BLOCKING_INFO_FINDING_CODES.has(finding.code)) return false;
       if (finding.code === 'overlapping_grade_thresholds') {
         const pair = overlapFindingPair(finding);
         if (pair && resolvedPairs.has(cutoffPairKey(pair[0], pair[1]))) return false;
