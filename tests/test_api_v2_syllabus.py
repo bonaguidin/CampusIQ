@@ -70,6 +70,21 @@ def clean_model_pdf() -> bytes:
     return _build_pdf([[("Midterm: 30%", 10, False), ("Final: 40%", 10, False), ("Project: 30%", 10, False)]])
 
 
+def overlapping_cutoffs_pdf() -> bytes:
+    return _build_pdf(
+        [
+            [
+                ("Midterm: 30%", 10, False),
+                ("Final: 40%", 10, False),
+                ("Project: 30%", 10, False),
+                ("A: 91-100", 10, False),
+                ("B: 80-90", 10, False),
+                ("C: 70-80", 10, False),
+            ]
+        ]
+    )
+
+
 def blank_pdf() -> bytes:
     buf = io.BytesIO()
     canvas = rl_canvas.Canvas(buf, pagesize=letter)
@@ -134,6 +149,16 @@ CLEAN_MODEL_RESPONSE = {
 # own -- so removing just the broken replacement rule reaches ACCEPTED.
 REVIEW_REQUIRED_MODEL_RESPONSE = copy.deepcopy(PHYS_207_MODEL_RESPONSE)
 REVIEW_REQUIRED_MODEL_RESPONSE["rules"][0]["target"] = "Makeup Exam"
+
+# Otherwise-clean model whose only blocker is an isolated, cleanly-resolvable
+# B/C cutoff overlap at 80. Threshold evidence strings appear verbatim in
+# overlapping_cutoffs_pdf().
+OVERLAPPING_CUTOFFS_MODEL_RESPONSE = copy.deepcopy(CLEAN_MODEL_RESPONSE)
+OVERLAPPING_CUTOFFS_MODEL_RESPONSE["grade_thresholds"] = [
+    {"letter": "A", "minimum": 91, "maximum": 100, "evidence": {"page": 1, "text": "A: 91-100", "confidence": 1.0}},
+    {"letter": "B", "minimum": 80, "maximum": 90, "evidence": {"page": 1, "text": "B: 80-90", "confidence": 1.0}},
+    {"letter": "C", "minimum": 70, "maximum": 80, "evidence": {"page": 1, "text": "C: 70-80", "confidence": 1.0}},
+]
 
 
 class FakeAI:
@@ -615,6 +640,41 @@ def test_invalid_correction_rejected(client, db, monkeypatch):
         json={"corrections": [{"target_type": "category", "operation": "set_weight", "category_name": "Nonexistent", "value": 5}]},
     )
     assert response.status_code == 422
+
+
+def test_cutoff_overlap_resolution_appears_and_confirming_it_unblocks_calculator_ready(client, db, monkeypatch):
+    patch_session(monkeypatch, db)
+    monkeypatch.setattr(api, "build_client", lambda: FakeAI(text=json.dumps(OVERLAPPING_CUTOFFS_MODEL_RESPONSE)))
+    created = ingest(
+        client, pdf_bytes=overlapping_cutoffs_pdf(), course_code="TEST 100", term="Spring 2027"
+    ).json()
+
+    # the resolution proposal is on the detail response, and the overlap
+    # still blocks until the student confirms it
+    assert created["reconciliation"]["status"] == "needs_student_review"
+    assert created["calculator_ready"] is False
+    resolution = created["cutoff_overlap_resolution"]
+    assert resolution["unresolved"] == []
+    assert [(r["winner"], r["loser"], r["boundary"]) for r in resolution["resolved"]] == [("B", "C", 80.0)]
+    assert created["clarifying_answers"] == {}
+
+    corrected = client.post(
+        f"{profile_url(created['id'])}/corrections",
+        headers=HEADERS,
+        json={"corrections": [{"target_type": "threshold", "operation": "resolve_cutoff_overlap", "threshold_letter": "C"}]},
+    ).json()
+    assert corrected["confirmed_reconciliation"]["status"] == "accepted"
+    assert corrected["clarifying_answers"] == {
+        "cutoff_overlap:B,C": {"answer": "confirm_default", "boundary": 80.0, "winner": "B", "loser": "C"}
+    }
+    # thresholds untouched -- the resolution proposal is unchanged
+    assert corrected["cutoff_overlap_resolution"]["resolved"][0]["loser"] == "C"
+    c_threshold = next(t for t in corrected["confirmed_grade_model"]["grade_thresholds"] if t["letter"] == "C")
+    assert (c_threshold["minimum"], c_threshold["maximum"]) == (70, 80)
+
+    confirmed = client.post(f"{profile_url(created['id'])}/confirm", headers=HEADERS)
+    assert confirmed.status_code == 200
+    assert confirmed.json()["calculator_ready"] is True
 
 
 def test_confirm_without_correction_when_accepted(client, db, monkeypatch):

@@ -229,6 +229,50 @@ def needs_review_model() -> GradeModel:
 NEEDS_REVIEW_CONTENT = content_for("Midterm: 50% Final: 50% Final replaces the makeup exam when higher.")
 
 
+def overlapping_cutoff_model() -> GradeModel:
+    """Otherwise-clean weighted model whose only blocker is an isolated,
+    cleanly-resolvable B/C cutoff overlap at 80 (80 should be a B). A is
+    kept clear of B so the overlap stays a 2-threshold pair. Every
+    threshold carries verbatim evidence text.
+    """
+    return GradeModel(
+        grading_method=GradingMethod.WEIGHTED,
+        categories=[
+            GradeCategory(name="Midterm", weight=50, evidence=evidence(1, "Midterm: 50%")),
+            GradeCategory(name="Final", weight=50, evidence=evidence(1, "Final: 50%")),
+        ],
+        grade_thresholds=[
+            GradeThreshold(letter="A", minimum=91, maximum=100, evidence=evidence(1, "A: 91-100")),
+            GradeThreshold(letter="B", minimum=80, maximum=90, evidence=evidence(1, "B: 80-90")),
+            GradeThreshold(letter="C", minimum=70, maximum=80, evidence=evidence(1, "C: 70-80")),
+        ],
+    )
+
+
+OVERLAPPING_CUTOFF_CONTENT = content_for("Midterm: 50% Final: 50% A: 91-100 B: 80-90 C: 70-80")
+
+
+def non_adjacent_overlap_model() -> GradeModel:
+    """A and C ranges overlap but are not rank-adjacent -- resolve_cutoff_
+    overlaps leaves this unresolved, so RESOLVE_CUTOFF_OVERLAP is refused
+    and it still blocks.
+    """
+    return GradeModel(
+        grading_method=GradingMethod.WEIGHTED,
+        categories=[
+            GradeCategory(name="Midterm", weight=50, evidence=evidence(1, "Midterm: 50%")),
+            GradeCategory(name="Final", weight=50, evidence=evidence(1, "Final: 50%")),
+        ],
+        grade_thresholds=[
+            GradeThreshold(letter="A", minimum=80, maximum=100, evidence=evidence(1, "A: 80-100")),
+            GradeThreshold(letter="C", minimum=70, maximum=85, evidence=evidence(1, "C: 70-85")),
+        ],
+    )
+
+
+NON_ADJACENT_OVERLAP_CONTENT = content_for("Midterm: 50% Final: 50% A: 80-100 C: 70-85")
+
+
 def ingest(client, model, content, *, source_bytes=b"syllabus-bytes", profile_kwargs=None):
     profile = service.get_or_create_profile(
         client,
@@ -552,3 +596,56 @@ def test_needs_review_reconciliation_still_blocks_calculator(client):
     assert reconciliation.status == ReconciliationStatus.NEEDS_STUDENT_REVIEW
     with pytest.raises(GradeModelNotReadyError):
         calculate_grade_projection(reconciliation, StudentGradeState())
+
+
+# --- cutoff-overlap resolution (RESOLVE_CUTOFF_OVERLAP, log-only) -------------------
+
+
+def _resolve_cutoff(letter: str) -> GradeModelCorrection:
+    return GradeModelCorrection(
+        target_type=CorrectionTargetType.THRESHOLD,
+        operation=CorrectionOperation.RESOLVE_CUTOFF_OVERLAP,
+        threshold_letter=letter,
+    )
+
+
+def test_confirming_the_cutoff_default_clears_the_error_and_unblocks_calculator_ready(client):
+    profile, revision, _, reconciliation = ingest(client, overlapping_cutoff_model(), OVERLAPPING_CUTOFF_CONTENT)
+    assert reconciliation.status == ReconciliationStatus.NEEDS_STUDENT_REVIEW
+    assert any(f.code == "overlapping_grade_thresholds" for f in reconciliation.findings)
+
+    updated = service.apply_student_corrections(
+        client, revision_id=revision["id"], student_id=STUDENT_A, corrections=[_resolve_cutoff("C")]
+    )
+    assert updated["confirmed_reconciliation_status"] == "accepted"
+    assert updated["clarifying_answers"] == {
+        "cutoff_overlap:B,C": {"answer": "confirm_default", "boundary": 80.0, "winner": "B", "loser": "C"}
+    }
+
+    service.confirm_grade_model(client, revision_id=revision["id"], student_id=STUDENT_A)
+    assembled = service.get_syllabus_grade_profile(client, profile_id=profile["id"], student_id=STUDENT_A)
+    assert assembled["calculator_ready"] is True
+
+    # thresholds -- and their verbatim evidence -- are completely unchanged:
+    # no narrowing, so no claim_evidence_value_mismatch is ever introduced.
+    confirmed = {
+        t.letter: (t.minimum, t.maximum, t.evidence.text)
+        for t in assembled["confirmed_grade_model"].grade_thresholds
+    }
+    assert confirmed["C"] == (70, 80, "C: 70-80")
+    assert confirmed == {
+        t.letter: (t.minimum, t.maximum, t.evidence.text)
+        for t in assembled["extracted_grade_model"].grade_thresholds
+    }
+
+
+def test_non_adjacent_overlap_cannot_be_confirmed_away_and_still_blocks(client):
+    profile, revision, _, reconciliation = ingest(
+        client, non_adjacent_overlap_model(), NON_ADJACENT_OVERLAP_CONTENT
+    )
+    assert reconciliation.status == ReconciliationStatus.NEEDS_STUDENT_REVIEW
+
+    with pytest.raises(CorrectionApplicationError, match="set_minimum / set_maximum"):
+        service.apply_student_corrections(
+            client, revision_id=revision["id"], student_id=STUDENT_A, corrections=[_resolve_cutoff("A")]
+        )

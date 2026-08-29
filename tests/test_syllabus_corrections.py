@@ -15,6 +15,7 @@ from GradusIQ_career.syllabus.models import (
     GradingMethod,
     GradingRule,
     GradingRuleType,
+    SourceEvidence,
 )
 
 
@@ -148,6 +149,78 @@ def test_unknown_threshold_letter_rejected():
             model,
             [correction(CorrectionTargetType.THRESHOLD, CorrectionOperation.SET_MINIMUM, threshold_letter="Z", value=90)],
         )
+
+
+# --- resolve_cutoff_overlap: a validated no-op on the model --------------------------------
+
+
+def _bc_overlap_model() -> GradeModel:
+    # Isolated, cleanly-resolvable B/C overlap at 80 (A kept clear of B), with
+    # verbatim evidence text on every threshold.
+    def ev(text):
+        return SourceEvidence(page=1, text=text, confidence=1.0)
+
+    return GradeModel(
+        grade_thresholds=[
+            GradeThreshold(letter="A", minimum=91, maximum=100, evidence=ev("A: 91-100")),
+            GradeThreshold(letter="B", minimum=80, maximum=90, evidence=ev("B: 80-90")),
+            GradeThreshold(letter="C", minimum=70, maximum=80, evidence=ev("C: 70-80")),
+        ],
+    )
+
+
+def _resolve(letter):
+    return correction(
+        CorrectionTargetType.THRESHOLD, CorrectionOperation.RESOLVE_CUTOFF_OVERLAP, threshold_letter=letter
+    )
+
+
+def test_resolve_cutoff_overlap_leaves_the_model_completely_unchanged():
+    model = _bc_overlap_model()
+    result = apply_grade_model_corrections(model, [_resolve("C")])
+    assert result.model_dump() == model.model_dump()
+    # in particular the loser's range and its verbatim evidence are untouched
+    c = next(t for t in result.grade_thresholds if t.letter == "C")
+    assert (c.minimum, c.maximum, c.evidence.text) == (70, 80, "C: 70-80")
+
+
+def test_resolve_cutoff_overlap_accepts_either_letter_of_the_pair():
+    assert apply_grade_model_corrections(_bc_overlap_model(), [_resolve("B")]).model_dump() == _bc_overlap_model().model_dump()
+    assert apply_grade_model_corrections(_bc_overlap_model(), [_resolve("C")]).model_dump() == _bc_overlap_model().model_dump()
+
+
+def test_resolve_cutoff_overlap_rejects_a_non_adjacent_overlap():
+    model = GradeModel(
+        grade_thresholds=[
+            GradeThreshold(letter="A", minimum=80, maximum=100),
+            GradeThreshold(letter="C", minimum=70, maximum=85),
+        ],
+    )
+    with pytest.raises(CorrectionApplicationError, match="set_minimum / set_maximum"):
+        apply_grade_model_corrections(model, [_resolve("A")])
+
+
+def test_resolve_cutoff_overlap_rejects_a_multi_way_overlap():
+    model = GradeModel(
+        grade_thresholds=[
+            GradeThreshold(letter="A", minimum=90, maximum=100),
+            GradeThreshold(letter="B", minimum=80, maximum=90),
+            GradeThreshold(letter="C", minimum=70, maximum=80),
+        ],
+    )
+    with pytest.raises(CorrectionApplicationError, match="no cleanly resolvable cutoff overlap"):
+        apply_grade_model_corrections(model, [_resolve("B")])
+
+
+def test_resolve_cutoff_overlap_with_no_overlap_present_is_rejected():
+    model = GradeModel(
+        grade_thresholds=[
+            GradeThreshold(letter="A", minimum=90, maximum=100),
+            GradeThreshold(letter="B", minimum=80, maximum=89),
+        ],
+    )
+    with pytest.raises(CorrectionApplicationError, match="no cleanly resolvable cutoff overlap"):
+        apply_grade_model_corrections(model, [_resolve("A")])
 
 
 # --- rule corrections ----------------------------------------------------------------------

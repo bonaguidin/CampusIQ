@@ -416,6 +416,72 @@ def test_non_overlapping_thresholds_pass():
     assert not any(f.code == "overlapping_grade_thresholds" for f in result.findings)
 
 
+# --- confirmed_cutoff_pairs suppression ----------------------------------------------
+
+
+def _bc_boundary_overlap_model() -> GradeModel:
+    # Isolated, cleanly-resolvable B/C overlap at 80 (A kept clear of B).
+    return GradeModel(
+        grade_thresholds=[
+            GradeThreshold(letter="A", minimum=91, maximum=100),
+            GradeThreshold(letter="B", minimum=80, maximum=90),
+            GradeThreshold(letter="C", minimum=70, maximum=80),
+        ],
+    )
+
+
+def test_confirmed_resolvable_pair_suppresses_the_overlap_error():
+    model = _bc_boundary_overlap_model()
+    result = reconcile_grade_model(
+        model, content_from_pages([page(1, "x")]), confirmed_cutoff_pairs={frozenset(("B", "C"))}
+    )
+    assert not any(f.code == "overlapping_grade_thresholds" for f in result.findings)
+    # thresholds are returned exactly as given -- nothing was narrowed
+    assert [(t.letter, t.minimum, t.maximum) for t in result.grade_model.grade_thresholds] == [
+        ("A", 91, 100),
+        ("B", 80, 90),
+        ("C", 70, 80),
+    ]
+
+
+def test_unconfirmed_overlap_still_errors():
+    result = reconcile_grade_model(_bc_boundary_overlap_model(), content_from_pages([page(1, "x")]))
+    assert any(f.code == "overlapping_grade_thresholds" for f in result.findings)
+    assert result.status == ReconciliationStatus.NEEDS_STUDENT_REVIEW
+
+
+def test_confirming_a_non_adjacent_pair_does_not_suppress_the_error():
+    # A vs C overlap, not rank-adjacent -> resolve_cutoff_overlaps leaves it
+    # unresolved, so the confirmed set is ignored and the ERROR stands.
+    model = GradeModel(
+        grade_thresholds=[
+            GradeThreshold(letter="A", minimum=80, maximum=100),
+            GradeThreshold(letter="C", minimum=70, maximum=85),
+        ],
+    )
+    result = reconcile_grade_model(
+        model, content_from_pages([page(1, "x")]), confirmed_cutoff_pairs={frozenset(("A", "C"))}
+    )
+    assert any(f.code == "overlapping_grade_thresholds" for f in result.findings)
+    assert result.status == ReconciliationStatus.NEEDS_STUDENT_REVIEW
+
+
+def test_confirming_a_multi_way_component_does_not_suppress_the_error():
+    # A/B share 90, B/C share 80 -> 3-threshold connected component -> the
+    # resolver refuses it; confirming (B,C) must not sneak past.
+    model = GradeModel(
+        grade_thresholds=[
+            GradeThreshold(letter="A", minimum=90, maximum=100),
+            GradeThreshold(letter="B", minimum=80, maximum=90),
+            GradeThreshold(letter="C", minimum=70, maximum=80),
+        ],
+    )
+    result = reconcile_grade_model(
+        model, content_from_pages([page(1, "x")]), confirmed_cutoff_pairs={frozenset(("B", "C"))}
+    )
+    assert any(f.code == "overlapping_grade_thresholds" for f in result.findings)
+
+
 def test_unbounded_thresholds_are_allowed():
     model = GradeModel(
         grade_thresholds=[
