@@ -85,6 +85,7 @@ from GradusIQ_career.syllabus.parsing import (
     SyllabusNoExtractableTextError,
     parse_syllabus_pdf,
 )
+from GradusIQ_career.syllabus.cutoff_resolution import resolve_cutoff_overlaps
 from GradusIQ_career.syllabus.reconciliation import reconcile_grade_model
 from GradusIQ_career.syllabus.relevance import select_relevant_syllabus_content
 from GradusIQ_career.syllabus.store import GradeStateConflictError
@@ -2306,6 +2307,18 @@ def _syllabus_profile_detail_response(assembled: dict) -> dict:
     if current_revision is not None and current_revision.get("confirmed_grade_model") is not None:
         confirmed_reconciliation = syllabus_read.reconciliation_result_from_row(current_revision, confirmed=True)
 
+    # Cutoff-overlap resolution proposal, computed from whichever grade
+    # model the client is currently acting on (the corrected candidate once
+    # it exists, else the raw extraction). `resolved` entries are
+    # propose/confirm questions a frontend can render directly; `unresolved`
+    # entries still require the student to set threshold values manually via
+    # a SET_MINIMUM/SET_MAXIMUM correction. Empty arrays when there are no
+    # overlapping thresholds.
+    current_model = assembled["confirmed_grade_model"] or assembled["extracted_grade_model"]
+    cutoff_overlap_resolution = resolve_cutoff_overlaps(
+        current_model.grade_thresholds if current_model else []
+    ).model_dump(mode="json")
+
     return {
         "id": assembled["profile"]["id"],
         "course": {
@@ -2332,6 +2345,8 @@ def _syllabus_profile_detail_response(assembled: dict) -> dict:
             confirmed_reconciliation.model_dump(mode="json") if confirmed_reconciliation else None
         ),
         "corrections": current_revision.get("corrections", []) if current_revision else [],
+        "clarifying_answers": current_revision.get("clarifying_answers", {}) if current_revision else {},
+        "cutoff_overlap_resolution": cutoff_overlap_resolution,
         "grade_state": grade_state.model_dump(mode="json") if grade_state else None,
         "grade_state_revision": assembled["grade_state_revision"],
     }
