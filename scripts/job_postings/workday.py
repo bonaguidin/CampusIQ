@@ -82,7 +82,12 @@ USER_AGENT = "GradusIQ-ATS-Puller/0.1 (labor market research)"
 TIMEOUT_SECONDS = 20.0
 PAGE_SIZE = 20
 DELAY_BETWEEN_PAGES = 1.0
-MAX_PAGES = 25  # 500 postings per employer; Michaels alone reports 2,000
+# Backstop against a board whose `total` is missing or wrong -- a healthy
+# fetch stops early on `offset >= total`. 250 pages x PAGE_SIZE = 5,000
+# postings, ~2.5x the largest verified board (Michaels, 2,000; AT&T, 1,409).
+# Raise this, or pass fetch_board(max_pages=...) per employer, if a board
+# ever legitimately exceeds it.
+MAX_PAGES = 250
 
 SOURCE = "workday"
 

@@ -19,9 +19,12 @@ import pytest
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "scripts" / "job_postings"))
 
+import workday  # noqa: E402
 from workday import (  # noqa: E402
+    MAX_PAGES,
     WorkdayBoard,
     describe_shape,
+    fetch_board,
     listings_from,
     normalize_listing,
     parse_posted_on,
@@ -195,3 +198,63 @@ def test_describe_shape_reports_the_live_response():
 def test_describe_shape_flags_a_missing_field():
     payload = {"jobPostings": [{"title": "A"}], "total": 1}
     assert "MISSING" in describe_shape(payload, ATMOS)
+
+
+# ---------------------------------------------------------------------------
+# Pagination -- fetch_board loops offset until `total`, capped by max_pages
+# ---------------------------------------------------------------------------
+
+def _page(n_items: int, total: int) -> dict:
+    return {
+        "total": total,
+        "jobPostings": [
+            {
+                "title": f"Role {i}",
+                "externalPath": f"/job/Texas---Dallas/Role-{i}_JR{i:05d}",
+                "locationsText": "Texas - Dallas",
+                "postedOn": "Posted Today",
+                "bulletFields": [f"JR{i:05d}"],
+            }
+            for i in range(n_items)
+        ],
+    }
+
+
+def test_max_pages_is_generous_enough_for_the_largest_verified_board():
+    """Michaels reported 2,000 and AT&T 1,409 postings on 2026-08-19. At
+    PAGE_SIZE=20 those need 100 and 71 pages; the cap must clear them with
+    headroom so a real board is never silently truncated."""
+    assert MAX_PAGES * workday.PAGE_SIZE >= 5000
+
+
+def test_fetch_board_pages_through_to_total(monkeypatch):
+    # 3 full pages then a short one: 65 postings across a 65-total board.
+    pages = [_page(20, 65), _page(20, 65), _page(20, 65), _page(5, 65)]
+    calls: list[int] = []
+
+    def fake_fetch_page(board, *, offset=0, limit=workday.PAGE_SIZE):
+        calls.append(offset)
+        return pages[len(calls) - 1]
+
+    monkeypatch.setattr(workday, "fetch_page", fake_fetch_page)
+    monkeypatch.setattr(workday.time, "sleep", lambda *_: None)
+
+    rows, errors = fetch_board(ATMOS, "Atmos Energy", live=True)
+
+    assert len(rows) == 65
+    assert errors == []
+    assert calls == [0, 20, 40, 60]  # stopped once offset >= total, no 5th call
+
+
+def test_fetch_board_respects_the_max_pages_cap(monkeypatch):
+    # A board that never reports a usable `total` would loop forever without
+    # the cap. Force it: every page is full and `total` stays huge.
+    def fake_fetch_page(board, *, offset=0, limit=workday.PAGE_SIZE):
+        return _page(20, 10**9)
+
+    monkeypatch.setattr(workday, "fetch_page", fake_fetch_page)
+    monkeypatch.setattr(workday.time, "sleep", lambda *_: None)
+
+    rows, _ = fetch_board(ATMOS, "Atmos Energy", live=True, max_pages=3)
+
+    assert len(rows) == 60  # exactly max_pages * PAGE_SIZE, then it stops
