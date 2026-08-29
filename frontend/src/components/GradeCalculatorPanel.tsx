@@ -12,6 +12,7 @@ import {
   listSyllabusGradeProfiles,
   saveSyllabusGradeState,
   solveSyllabusTarget,
+  submitSyllabusCorrections,
   type SyllabusCalculationResult,
   type SyllabusCategory,
   type SyllabusFinding,
@@ -184,6 +185,35 @@ const RULE_INFO_FINDING_CODES: ReadonlySet<string> = new Set([
   'ambiguous_rule',
 ]);
 
+// Order-independent key for a letter pair, so an overlapping_grade_thresholds
+// finding (field "B,C", threshold-list order) matches a cutoff_overlap_
+// resolution entry ([winner, loser] order).
+function cutoffPairKey(a: string, b: string): string {
+  return [a.trim(), b.trim()].sort().join('|');
+}
+
+function clarifyingKey(winner: string, loser: string): string {
+  return `cutoff_overlap:${winner},${loser}`;
+}
+
+// Pair keys for cleanly-resolvable overlaps: their raw
+// overlapping_grade_thresholds finding is replaced by the propose/confirm
+// question in CutoffOverlapQuestions, so it's dropped from the review list
+// (same idea as RULE_INFO_FINDING_CODES). Unresolved overlaps keep their
+// raw finding.
+function resolvedOverlapPairKeys(
+  resolution: SyllabusProfileDetail['cutoff_overlap_resolution'] | undefined,
+): Set<string> {
+  const keys = new Set<string>();
+  for (const r of resolution?.resolved ?? []) keys.add(cutoffPairKey(r.winner, r.loser));
+  return keys;
+}
+
+function overlapFindingPair(finding: SyllabusFinding): [string, string] | null {
+  const parts = (finding.field ?? '').split(',').map((s) => s.trim()).filter(Boolean);
+  return parts.length === 2 ? [parts[0], parts[1]] : null;
+}
+
 interface UploadFields {
   institution: string;
   courseCode: string;
@@ -277,6 +307,11 @@ export function GradeCalculatorPanel({ accessToken, courses, institutionName }: 
 
   const [busy, setBusy] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+
+  // The overlapping-threshold pair the student chose to set manually
+  // ("No, let me set it myself", or an unresolved overlap). null = the
+  // inline threshold editor is closed. Reset when switching calculators.
+  const [manualCutoffPair, setManualCutoffPair] = useState<[string, string] | null>(null);
 
   // Dismissed inline findings, session-only: NOT persisted anywhere (no API
   // call, no backend field). Keyed by the finding's index in its source
@@ -483,6 +518,44 @@ export function GradeCalculatorPanel({ accessToken, courses, institutionName }: 
     }
   }
 
+  // Corrections are cumulative on the backend (the candidate is rebuilt
+  // from the extraction + the whole list every time), so always resend the
+  // accumulated list plus the new entries. Returns the updated detail on
+  // success, null on failure.
+  async function submitCorrections(
+    next: SyllabusProfileDetail['corrections'],
+    failureCopy: string,
+  ): Promise<SyllabusProfileDetail | null> {
+    if (!accessToken || !selectedProfileId) return null;
+    setBusy(true);
+    setActionError(null);
+    try {
+      const updated = await submitSyllabusCorrections(accessToken, selectedProfileId, next);
+      setDetail(updated);
+      setGradeDraft((prev) => ({ ...draftFromModel(updated.confirmed_grade_model ?? updated.extracted_grade_model), ...prev }));
+      return updated;
+    } catch (err) {
+      setActionError(err instanceof SyllabusApiError ? err.message : failureCopy);
+      return null;
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function handleConfirmCutoffPair(winner: string) {
+    if (!detail) return;
+    void submitCorrections(
+      [...detail.corrections, { target_type: 'threshold', operation: 'resolve_cutoff_overlap', threshold_letter: winner }],
+      'Could not save your answer.',
+    );
+  }
+
+  async function handleManualThresholdBounds(corrections: SyllabusProfileDetail['corrections']) {
+    if (!detail) return;
+    const updated = await submitCorrections([...detail.corrections, ...corrections], 'Could not save the cutoffs.');
+    if (updated) setManualCutoffPair(null);
+  }
+
   async function handleSaveActualGrades() {
     if (!accessToken || !selectedProfileId || !detail) return;
     setBusy(true);
@@ -549,19 +622,25 @@ export function GradeCalculatorPanel({ accessToken, courses, institutionName }: 
   // calculators or survive a reopen. See dismissedFindingKeys above.
   useEffect(() => {
     setDismissedFindingKeys(new Set());
+    setManualCutoffPair(null);
   }, [selectedProfileId]);
 
-  // Rule-informational findings (curve / late-work / makeup) are shown in
-  // the Professor's rules panel, not here -- filter them out before they
-  // reach the review list. Cutoff-overlap and unknown-assessment-count
-  // findings stay.
-  const reviewFindings = useMemo(
-    () =>
-      ((detail?.confirmed_reconciliation ?? detail?.reconciliation)?.findings ?? []).filter(
-        (finding) => !RULE_INFO_FINDING_CODES.has(finding.code),
-      ),
-    [detail],
-  );
+  // Rule-informational findings (curve / late-work / makeup) go to the
+  // Professor's rules panel; the overlapping_grade_thresholds finding for a
+  // cleanly-resolvable pair is replaced by its propose/confirm question in
+  // CutoffOverlapQuestions. Both are filtered out of the review list here.
+  // Unresolved overlaps keep their raw finding.
+  const reviewFindings = useMemo(() => {
+    const resolvedPairs = resolvedOverlapPairKeys(detail?.cutoff_overlap_resolution);
+    return ((detail?.confirmed_reconciliation ?? detail?.reconciliation)?.findings ?? []).filter((finding) => {
+      if (RULE_INFO_FINDING_CODES.has(finding.code)) return false;
+      if (finding.code === 'overlapping_grade_thresholds') {
+        const pair = overlapFindingPair(finding);
+        if (pair && resolvedPairs.has(cutoffPairKey(pair[0], pair[1]))) return false;
+      }
+      return true;
+    });
+  }, [detail]);
   const findingsByAnchor = useMemo(
     () => groupFindingsByAnchor(reviewFindings, detail?.extracted_grade_model ?? null),
     [reviewFindings, detail],
@@ -614,6 +693,22 @@ export function GradeCalculatorPanel({ accessToken, courses, institutionName }: 
                 <h3 className="card-heading">
                   {detail.confirmed_reconciliation ? 'Still needs your review' : 'Needs your review'}
                 </h3>
+                <CutoffOverlapQuestions
+                  detail={detail}
+                  busy={busy}
+                  onConfirmPair={handleConfirmCutoffPair}
+                  onManualEdit={setManualCutoffPair}
+                />
+                {manualCutoffPair && (
+                  <ManualThresholdEditor
+                    key={manualCutoffPair.join(',')}
+                    pair={manualCutoffPair}
+                    detail={detail}
+                    busy={busy}
+                    onSubmit={handleManualThresholdBounds}
+                    onCancel={() => setManualCutoffPair(null)}
+                  />
+                )}
                 <GeneralFindings
                   findings={findingsByAnchor.get('general') ?? []}
                   dismissedFindingKeys={dismissedFindingKeys}
@@ -982,6 +1077,211 @@ function GeneralFindings({
       {visible.map(({ finding, key }) => (
         <InlineFinding key={key} finding={finding} onDismiss={() => onDismissFinding(key)} />
       ))}
+    </div>
+  );
+}
+
+/**
+ * Clarifying questions for overlapping letter-grade cutoffs (spec §2A),
+ * shown at the top of the review step. A cleanly-resolvable pair
+ * (cutoff_overlap_resolution.resolved) is offered as a propose/confirm
+ * question with the "higher grade wins the tie" default; the raw
+ * overlapping_grade_thresholds finding for it is filtered out of the
+ * review list (see reviewFindings). Once answered (clarifying_answers) it
+ * shows only a one-line confirmation and never asks again. Unresolved
+ * overlaps get an action that routes to the same manual threshold editor
+ * as "No, let me set it myself" -- the backend deliberately never guesses
+ * at those, so there is no default to propose.
+ */
+function CutoffOverlapQuestions({
+  detail,
+  busy,
+  onConfirmPair,
+  onManualEdit,
+}: {
+  detail: SyllabusProfileDetail;
+  busy: boolean;
+  onConfirmPair: (winner: string) => void;
+  onManualEdit: (letters: [string, string]) => void;
+}) {
+  const resolution = detail.cutoff_overlap_resolution ?? { schema_version: '', resolved: [], unresolved: [] };
+  const answers = detail.clarifying_answers ?? {};
+  const model = detail.confirmed_grade_model ?? detail.extracted_grade_model;
+  const rangeOf = (letter: string): string | null => {
+    const t = model?.grade_thresholds.find((th) => th.letter === letter);
+    return t && t.minimum !== null && t.maximum !== null ? `${t.minimum}–${t.maximum}` : null;
+  };
+
+  const open = resolution.resolved.filter((r) => !(clarifyingKey(r.winner, r.loser) in answers));
+  const answered = resolution.resolved.filter((r) => clarifyingKey(r.winner, r.loser) in answers);
+  const unresolved = resolution.unresolved;
+
+  if (open.length === 0 && answered.length === 0 && unresolved.length === 0) return null;
+
+  return (
+    <div className="grade-cutoff-questions" aria-label="Cutoff conflicts">
+      {open.map((r) => {
+        const wRange = rangeOf(r.winner);
+        const lRange = rangeOf(r.loser);
+        return (
+          <div className="grade-cutoff-question" key={`open:${r.winner},${r.loser}`} data-cutoff-pair={`${r.winner},${r.loser}`}>
+            <p className="grade-cutoff-question-text">
+              {wRange && lRange
+                ? `Your syllabus lists ${r.winner} as ${wRange} and ${r.loser} as ${lRange} — these overlap at ${r.boundary}. `
+                : `${r.winner} and ${r.loser} overlap at ${r.boundary}. `}
+              We'll default to the higher grade winning ties, so {r.boundary} is {r.winner}, not {r.loser}. Sound right?
+            </p>
+            <div className="grade-cutoff-question-actions">
+              <button
+                type="button"
+                className="btn btn-primary btn-sm"
+                disabled={busy}
+                aria-busy={busy}
+                onClick={() => onConfirmPair(r.winner)}
+              >
+                Yes, that's right
+              </button>
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm"
+                disabled={busy}
+                onClick={() => onManualEdit([r.winner, r.loser])}
+              >
+                No, let me set it myself
+              </button>
+            </div>
+          </div>
+        );
+      })}
+
+      {answered.map((r) => (
+        <p className="grade-cutoff-resolved" key={`done:${r.winner},${r.loser}`} data-cutoff-pair={`${r.winner},${r.loser}`}>
+          ✓ Cutoff conflict resolved: {r.boundary} counts as {r.winner}, not {r.loser}.
+        </p>
+      ))}
+
+      {unresolved.map((u) => (
+        <div
+          className="grade-cutoff-question grade-cutoff-question--manual"
+          key={`unresolved:${u.letters[0]},${u.letters[1]}`}
+          data-cutoff-pair={`${u.letters[0]},${u.letters[1]}`}
+        >
+          <p className="grade-cutoff-question-text">
+            The cutoffs for {u.letters[0]} and {u.letters[1]} overlap and CampusIQ can't pick a safe default — set them
+            yourself.
+          </p>
+          <div className="grade-cutoff-question-actions">
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm"
+              disabled={busy}
+              onClick={() => onManualEdit([u.letters[0], u.letters[1]])}
+            >
+              Set the cutoffs
+            </button>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/**
+ * Minimal manual editor for the two thresholds of an overlapping pair --
+ * the target of both "No, let me set it myself" (on a resolvable pair) and
+ * "Set the cutoffs" (on an unresolved overlap the backend won't guess at).
+ * Renders both bounds of both thresholds; only fields the student actually
+ * changed become SET_MINIMUM / SET_MAXIMUM corrections.
+ */
+function ManualThresholdEditor({
+  pair,
+  detail,
+  busy,
+  onSubmit,
+  onCancel,
+}: {
+  pair: [string, string];
+  detail: SyllabusProfileDetail;
+  busy: boolean;
+  onSubmit: (corrections: SyllabusProfileDetail['corrections']) => void;
+  onCancel: () => void;
+}) {
+  const model = detail.confirmed_grade_model ?? detail.extracted_grade_model;
+  const thresholdOf = (letter: string) => model?.grade_thresholds.find((t) => t.letter === letter) ?? null;
+
+  const [draft, setDraft] = useState<Record<string, string>>(() => {
+    const d: Record<string, string> = {};
+    for (const letter of pair) {
+      const t = thresholdOf(letter);
+      d[`${letter}:minimum`] = t?.minimum != null ? String(t.minimum) : '';
+      d[`${letter}:maximum`] = t?.maximum != null ? String(t.maximum) : '';
+    }
+    return d;
+  });
+
+  function submit() {
+    const corrections: SyllabusProfileDetail['corrections'] = [];
+    for (const letter of pair) {
+      const t = thresholdOf(letter);
+      for (const bound of ['minimum', 'maximum'] as const) {
+        const raw = (draft[`${letter}:${bound}`] ?? '').trim();
+        if (raw === '') continue;
+        const value = Number(raw);
+        if (Number.isNaN(value)) continue;
+        const current = bound === 'minimum' ? t?.minimum : t?.maximum;
+        if (current != null && current === value) continue;
+        corrections.push({
+          target_type: 'threshold',
+          operation: bound === 'minimum' ? 'set_minimum' : 'set_maximum',
+          threshold_letter: letter,
+          value,
+        });
+      }
+    }
+    if (corrections.length === 0) {
+      onCancel();
+      return;
+    }
+    onSubmit(corrections);
+  }
+
+  return (
+    <div className="grade-cutoff-editor" data-testid="cutoff-manual-editor" data-cutoff-pair={`${pair[0]},${pair[1]}`}>
+      <p className="grade-cutoff-editor-heading">
+        Set the cutoffs for {pair[0]} and {pair[1]}
+      </p>
+      {pair.map((letter) => (
+        <div className="grade-cutoff-editor-row" key={letter}>
+          <span className="grade-cutoff-editor-letter">{letter}</span>
+          <label htmlFor={`cutoff-${letter}-min`} className="sr-only">{letter} minimum</label>
+          <input
+            id={`cutoff-${letter}-min`}
+            type="number"
+            className="form-input"
+            placeholder="min"
+            value={draft[`${letter}:minimum`] ?? ''}
+            onChange={(e) => setDraft((p) => ({ ...p, [`${letter}:minimum`]: e.target.value }))}
+          />
+          <span aria-hidden="true">–</span>
+          <label htmlFor={`cutoff-${letter}-max`} className="sr-only">{letter} maximum</label>
+          <input
+            id={`cutoff-${letter}-max`}
+            type="number"
+            className="form-input"
+            placeholder="max"
+            value={draft[`${letter}:maximum`] ?? ''}
+            onChange={(e) => setDraft((p) => ({ ...p, [`${letter}:maximum`]: e.target.value }))}
+          />
+        </div>
+      ))}
+      <div className="grade-cutoff-question-actions">
+        <button type="button" className="btn btn-primary btn-sm" disabled={busy} aria-busy={busy} onClick={submit}>
+          Save cutoffs
+        </button>
+        <button type="button" className="btn btn-ghost btn-sm" disabled={busy} onClick={onCancel}>
+          Cancel
+        </button>
+      </div>
     </div>
   );
 }
