@@ -11,11 +11,17 @@
 # schedule inside the database; swapping later is cheap, since everything real
 # is in the Python entrypoint rather than here.
 #
-# QUOTA IS THE BINDING CONSTRAINT. Adzuna allows ~1,000 calls/month and this
-# spends 14 a night -- roughly 420, comfortably inside it. JSearch is
-# deliberately NOT in the nightly sweep: at ~200/month, 14 a night would
-# exhaust the quota in a fortnight, and the integration spec narrows it to
+# QUOTA IS THE BINDING CONSTRAINT for the vendor sweep. Adzuna allows ~1,000
+# calls/month and this spends 14 a night -- roughly 420, comfortably inside it.
+# JSearch is deliberately NOT in the nightly sweep: at ~200/month, 14 a night
+# would exhaust the quota in a fortnight, and the integration spec narrows it to
 # LinkedIn-source confirmation anyway. Run it by hand with explicit roles.
+#
+# Two jobs: `ingest` (Adzuna vendor sweep) and `workday-ingest` (the 12 DFW
+# employers on Workday). Workday has no shared quota -- its constraint is page
+# volume and per-tenant politeness -- so it gets its own job, its own longer
+# timeout, and a Supabase-only secret gate. `workday-ingest` runs after
+# `ingest` rather than truly in parallel; see the comment on that job.
 
 name: Postings ingest
 
@@ -28,7 +34,7 @@ on:
   workflow_dispatch:
     inputs:
       live:
-        description: "Actually call the vendors (spends quota)"
+        description: "Actually call the sources (Adzuna spends quota; Workday does not)"
         type: boolean
         default: false
       write:
@@ -37,7 +43,9 @@ on:
         default: false
 
 # One ingest at a time. A second run overlapping the first would double-spend
-# quota to fetch rows the first run is already upserting.
+# quota to fetch rows the first run is already upserting. This group covers the
+# whole workflow, so the workday-ingest job below is serialised against a prior
+# run too.
 concurrency:
   group: postings-ingest
   cancel-in-progress: false
@@ -110,6 +118,78 @@ jobs:
       - name: Age out raw payloads
         # Only after a write actually happened, and never on a dry run --
         # there is nothing to expire and the credentials may not be present.
+        if: github.event_name == 'schedule' && steps.config.outputs.ready == 'true'
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+        run: uv run python scripts/job_postings/retention.py --apply
+
+  # Workday is its own job, not a step in `ingest`: it has no shared quota (so
+  # no Adzuna secrets in its gate), it can run ~10 min for a full 12-tenant
+  # paged sweep of ~5k postings (so its own longer timeout), and it must NOT
+  # write to posting_clusters concurrently with the vendor job -- find-then-
+  # create on a fuzzy key is not atomic, so two runners could fork one cluster.
+  # `needs: ingest` + `if: always()` serialises the two while still letting
+  # Workday run when the vendor job is skipped for missing Adzuna secrets.
+  workday-ingest:
+    needs: ingest
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Sync dependencies
+        run: uv sync --frozen
+
+      - name: Check configuration
+        id: config
+        # Supabase only -- Workday's boards are public, unauthenticated JSON.
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+        run: |
+          set -euo pipefail
+          missing=""
+          [ -z "${SUPABASE_URL:-}" ]        && missing="$missing SUPABASE_URL"
+          [ -z "${SUPABASE_SECRET_KEY:-}" ] && missing="$missing SUPABASE_SECRET_KEY"
+          if [ -n "$missing" ]; then
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Workday ingest skipped -- missing secrets:$missing"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Ingest (Workday)
+        if: steps.config.outputs.ready == 'true'
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+        # Schedule runs live and writes; a manual dispatch obeys the inputs, so
+        # the default manual run is a harmless dry run. Same shape as `ingest`.
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            FLAGS="--live --write"
+          else
+            FLAGS=""
+            [ "${{ inputs.live }}" = "true" ]  && FLAGS="$FLAGS --live"
+            [ "${{ inputs.write }}" = "true" ] && FLAGS="$FLAGS --write"
+          fi
+          echo "running: ingest.py --source workday $FLAGS"
+          uv run python scripts/job_postings/ingest.py --source workday $FLAGS
+
+      - name: Age out raw payloads
+        # retention.py is source-agnostic (nulls raw_payload on any row past
+        # the 90-day window). Running it here too means it still happens on a
+        # schedule night where `ingest` was skipped for missing Adzuna secrets;
+        # if `ingest` did run it, this is a harmless no-op the second time.
         if: github.event_name == 'schedule' && steps.config.outputs.ready == 'true'
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
