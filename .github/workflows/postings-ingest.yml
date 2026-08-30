@@ -79,12 +79,14 @@ jobs:
         id: config
         env:
           ADZUNA_APP_ID: ${{ secrets.ADZUNA_APP_ID }}
+          ADZUNA_APP_KEY: ${{ secrets.ADZUNA_APP_KEY }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
         run: |
           set -euo pipefail
           missing=""
           [ -z "${ADZUNA_APP_ID:-}" ]       && missing="$missing ADZUNA_APP_ID"
+          [ -z "${ADZUNA_APP_KEY:-}" ]      && missing="$missing ADZUNA_APP_KEY"
           [ -z "${SUPABASE_URL:-}" ]        && missing="$missing SUPABASE_URL"
           [ -z "${SUPABASE_SECRET_KEY:-}" ] && missing="$missing SUPABASE_SECRET_KEY"
           if [ -n "$missing" ]; then
