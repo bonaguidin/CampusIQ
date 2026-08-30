@@ -581,7 +581,10 @@ def _check_assessment_points_consistency(assessment: Assessment) -> Reconciliati
     return None
 
 
-def _check_threshold_range_consistency(threshold: GradeThreshold) -> ReconciliationFinding | None:
+def _check_threshold_range_consistency(
+    threshold: GradeThreshold,
+    confirmed_value_claims: set[str] | None = None,
+) -> ReconciliationFinding | None:
     # Only checked when BOTH bounds are stated -- a single-bound threshold
     # ("A: 90+") has no safe deterministic range pattern to compare against.
     if threshold.minimum is None or threshold.maximum is None:
@@ -591,17 +594,52 @@ def _check_threshold_range_consistency(threshold: GradeThreshold) -> Reconciliat
     label = f"threshold:{threshold.letter}"
     match = _RANGE_RE.search(threshold.evidence.text)
     if match is None:
-        return _unverifiable_finding(label, threshold.evidence.text)
-    lo, hi = sorted((float(match.group(1)), float(match.group(2))))
-    claimed_lo, claimed_hi = sorted((threshold.minimum, threshold.maximum))
-    if abs(lo - claimed_lo) > _VALUE_TOLERANCE or abs(hi - claimed_hi) > _VALUE_TOLERANCE:
-        return _mismatch_finding(
-            label, f"{threshold.minimum}-{threshold.maximum}", f"{match.group(1)}-{match.group(2)}", threshold.evidence.text
-        )
-    return None
+        finding: ReconciliationFinding | None = _unverifiable_finding(label, threshold.evidence.text)
+    else:
+        lo, hi = sorted((float(match.group(1)), float(match.group(2))))
+        claimed_lo, claimed_hi = sorted((threshold.minimum, threshold.maximum))
+        if abs(lo - claimed_lo) > _VALUE_TOLERANCE or abs(hi - claimed_hi) > _VALUE_TOLERANCE:
+            finding = _mismatch_finding(
+                label, f"{threshold.minimum}-{threshold.maximum}", f"{match.group(1)}-{match.group(2)}", threshold.evidence.text
+            )
+        else:
+            finding = None
+
+    # A student may affirm "this extracted value IS what the syllabus says"
+    # for a threshold whose value could not be deterministically verified,
+    # or that the deterministic check read as a mismatch (e.g. a cutoff the
+    # student themselves narrowed away from the verbatim "< 90%" text via a
+    # SET_MAXIMUM correction). confirmed_value_claims is the set of such
+    # affirmed threshold letters (normalized). Suppression is per-letter and
+    # re-derived every run: only a finding this function was independently
+    # about to emit is skipped, so a stale confirmation for a letter that
+    # now verifies clean suppresses nothing. The extracted threshold and its
+    # verbatim evidence are left untouched (see
+    # corrections.CONFIRM_THRESHOLD_VALUE -- a validated no-op).
+    if (
+        finding is not None
+        and confirmed_value_claims
+        and threshold.letter.strip().lower() in confirmed_value_claims
+    ):
+        return None
+    return finding
 
 
-def _check_claim_evidence_consistency(grade_model: GradeModel) -> list[ReconciliationFinding]:
+def unverified_threshold_value_finding(threshold: GradeThreshold) -> ReconciliationFinding | None:
+    """Public wrapper: the claim_evidence_consistency_unverifiable /
+    claim_evidence_value_mismatch finding a single threshold's value
+    produces against its cited evidence, or None when it verifies clean (or
+    has no comparable range/evidence to check). Used by
+    corrections.CONFIRM_THRESHOLD_VALUE to check there is actually an
+    unverified claim to affirm before recording a no-op confirmation.
+    """
+    return _check_threshold_range_consistency(threshold)
+
+
+def _check_claim_evidence_consistency(
+    grade_model: GradeModel,
+    confirmed_value_claims: set[str] | None = None,
+) -> list[ReconciliationFinding]:
     findings: list[ReconciliationFinding] = []
     for category in grade_model.categories:
         finding = _check_category_weight_consistency(category)
@@ -612,7 +650,7 @@ def _check_claim_evidence_consistency(grade_model: GradeModel) -> list[Reconcili
         if finding is not None:
             findings.append(finding)
     for threshold in grade_model.grade_thresholds:
-        finding = _check_threshold_range_consistency(threshold)
+        finding = _check_threshold_range_consistency(threshold, confirmed_value_claims)
         if finding is not None:
             findings.append(finding)
     return findings
@@ -641,6 +679,7 @@ def reconcile_grade_model(
     grade_model: GradeModel,
     content: RelevantSyllabusContent,
     confirmed_cutoff_pairs: set[frozenset[str]] | None = None,
+    confirmed_value_claims: set[str] | None = None,
 ) -> GradeModelReconciliationResult:
     """Evaluate (never repair) a source-grounded GradeModel.
 
@@ -653,6 +692,14 @@ def reconcile_grade_model(
     overlapping_grade_thresholds ERROR is suppressed for such a pair only
     when it is independently re-derived as cleanly resolvable -- see
     _check_grade_thresholds.
+
+    `confirmed_value_claims` is the set of normalized threshold letters a
+    student has affirmed the extracted value for ("yes, that IS what the
+    syllabus says"). The per-threshold claim_evidence_consistency_
+    unverifiable / claim_evidence_value_mismatch finding is suppressed for
+    such a letter -- pure suppression, the threshold and its verbatim
+    evidence are never touched (see corrections.CONFIRM_THRESHOLD_VALUE and
+    _check_threshold_range_consistency).
     """
     findings: list[ReconciliationFinding] = []
     findings.extend(_wrap_weight_validation(grade_model))
@@ -664,7 +711,7 @@ def reconcile_grade_model(
     findings.extend(_check_non_deterministic_rules(grade_model))
     findings.extend(_check_assessment_category_references(grade_model))
     findings.extend(_check_extraction_warnings(grade_model))
-    findings.extend(_check_claim_evidence_consistency(grade_model))
+    findings.extend(_check_claim_evidence_consistency(grade_model, confirmed_value_claims))
 
     coverage, coverage_findings = _evidence_coverage(grade_model, content)
     findings.extend(coverage_findings)

@@ -482,6 +482,104 @@ def test_confirming_a_multi_way_component_does_not_suppress_the_error():
     assert any(f.code == "overlapping_grade_thresholds" for f in result.findings)
 
 
+# --- confirmed_value_claims suppression --------------------------------------------
+
+
+def _unverifiable_bc_model() -> GradeModel:
+    """Otherwise-clean weighted model. B and C carry fully-bounded ranges
+    whose evidence text uses ">= / <" comparison phrasing _RANGE_RE cannot
+    parse -> each yields a claim_evidence_consistency_unverifiable WARNING,
+    which is the model's only blocker. A is single-bound so it is skipped by
+    the range check entirely (kept clear of the overlap scan).
+    """
+    return GradeModel(
+        grading_method=GradingMethod.WEIGHTED,
+        categories=[GradeCategory(name="Overall", weight=100, evidence=evidence(1, "Overall: 100%"))],
+        grade_thresholds=[
+            GradeThreshold(letter="A", minimum=90, evidence=evidence(1, "A: >= 90%")),
+            GradeThreshold(letter="B", minimum=80, maximum=89, evidence=evidence(1, "B: >= 80% and < 90%")),
+            GradeThreshold(letter="C", minimum=70, maximum=79, evidence=evidence(1, "C: >= 70% and < 80%")),
+        ],
+    )
+
+
+def test_confirmed_value_claim_suppresses_unverifiable_finding():
+    model = _unverifiable_bc_model()
+    result = reconcile_grade_model(
+        model, content_from_pages([page(1, "x")]), confirmed_value_claims={"b", "c"}
+    )
+    assert not any(f.code == "claim_evidence_consistency_unverifiable" for f in result.findings)
+    assert result.status == ReconciliationStatus.ACCEPTED
+    # thresholds and their verbatim evidence are returned exactly as given
+    assert [(t.letter, t.minimum, t.maximum, t.evidence.text) for t in result.grade_model.grade_thresholds] == [
+        ("A", 90, None, "A: >= 90%"),
+        ("B", 80, 89, "B: >= 80% and < 90%"),
+        ("C", 70, 79, "C: >= 70% and < 80%"),
+    ]
+
+
+def test_unconfirmed_value_claim_still_blocks():
+    result = reconcile_grade_model(_unverifiable_bc_model(), content_from_pages([page(1, "x")]))
+    assert [f.field for f in result.findings if f.code == "claim_evidence_consistency_unverifiable"] == [
+        "threshold:B",
+        "threshold:C",
+    ]
+    assert result.status == ReconciliationStatus.NEEDS_STUDENT_REVIEW
+
+
+def test_confirmed_value_claim_is_letter_scoped():
+    result = reconcile_grade_model(
+        _unverifiable_bc_model(), content_from_pages([page(1, "x")]), confirmed_value_claims={"b"}
+    )
+    assert [f.field for f in result.findings if f.code == "claim_evidence_consistency_unverifiable"] == [
+        "threshold:C",
+    ]
+    assert result.status == ReconciliationStatus.NEEDS_STUDENT_REVIEW
+
+
+def test_confirmed_value_claim_suppresses_value_mismatch_error():
+    # Evidence says 80-90 but the student narrowed B to 80-89 (e.g. to break
+    # a cutoff overlap) -> _RANGE_RE parses "80-90", the deterministic check
+    # reads it as a claim_evidence_value_mismatch ERROR. Affirming the value
+    # suppresses it; the threshold stays 80-89 with its verbatim evidence.
+    model = GradeModel(
+        grade_thresholds=[
+            GradeThreshold(letter="B", minimum=80, maximum=89, evidence=evidence(1, "B: 80-90")),
+        ],
+    )
+    unconfirmed = reconcile_grade_model(model, content_from_pages([page(1, "x")]))
+    assert any(f.code == "claim_evidence_value_mismatch" for f in unconfirmed.findings)
+
+    confirmed = reconcile_grade_model(
+        model, content_from_pages([page(1, "x")]), confirmed_value_claims={"b"}
+    )
+    assert not any(f.code == "claim_evidence_value_mismatch" for f in confirmed.findings)
+    assert confirmed.grade_model.grade_thresholds[0].maximum == 89
+    assert confirmed.grade_model.grade_thresholds[0].evidence.text == "B: 80-90"
+
+
+def test_confirmed_value_claim_only_skips_a_finding_it_would_have_emitted():
+    # B verifies clean against its evidence; "confirming" it changes nothing
+    # and does not suppress C's genuine unverifiable finding.
+    model = GradeModel(
+        grade_thresholds=[
+            GradeThreshold(letter="B", minimum=80, maximum=90, evidence=evidence(1, "B: 80-90")),
+            GradeThreshold(letter="C", minimum=70, maximum=79, evidence=evidence(1, "C: >= 70% and < 80%")),
+        ],
+    )
+    result = reconcile_grade_model(
+        model, content_from_pages([page(1, "x")]), confirmed_value_claims={"b", "c"}
+    )
+    # C was confirmed too, so it is suppressed; B never had a finding.
+    assert not any(f.code.startswith("claim_evidence") for f in result.findings)
+    result_b_only = reconcile_grade_model(
+        model, content_from_pages([page(1, "x")]), confirmed_value_claims={"b"}
+    )
+    assert [f.field for f in result_b_only.findings if f.code == "claim_evidence_consistency_unverifiable"] == [
+        "threshold:C",
+    ]
+
+
 def test_unbounded_thresholds_are_allowed():
     model = GradeModel(
         grade_thresholds=[
