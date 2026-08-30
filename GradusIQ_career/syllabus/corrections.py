@@ -33,6 +33,7 @@ from pydantic import BaseModel, Field
 
 from GradusIQ_career.syllabus.cutoff_resolution import resolve_cutoff_overlaps
 from GradusIQ_career.syllabus.models import GradeModel, GradingMethod, StrictModel
+from GradusIQ_career.syllabus.reconciliation import unverified_threshold_value_finding
 
 
 class CorrectionTargetType(str, Enum):
@@ -55,6 +56,7 @@ class CorrectionOperation(str, Enum):
     SET_MINIMUM = "set_minimum"
     SET_MAXIMUM = "set_maximum"
     RESOLVE_CUTOFF_OVERLAP = "resolve_cutoff_overlap"
+    CONFIRM_THRESHOLD_VALUE = "confirm_threshold_value"
     SET_SOURCE = "set_source"
     SET_TARGET = "set_target"
     SET_CONDITION = "set_condition"
@@ -223,6 +225,43 @@ def _apply_resolve_cutoff_overlap(model: GradeModel, normalized_letter: str, raw
     return model
 
 
+def _apply_confirm_threshold_value(model: GradeModel, normalized_letter: str, raw_letter: str) -> GradeModel:
+    """"Yes, that value is what the syllabus says": the student affirms an
+    extracted threshold value that reconciliation could not deterministically
+    verify against its cited evidence text (claim_evidence_consistency_
+    unverifiable), or that the deterministic check read as a mismatch
+    (claim_evidence_value_mismatch -- e.g. after the student narrowed the
+    bound themselves via SET_MAXIMUM, moving it off the verbatim "< 90%").
+
+    A NO-OP on the GradeModel -- like RESOLVE_CUTOFF_OVERLAP / CONFIRM_RULE.
+    The threshold and its verbatim evidence are left exactly as extracted;
+    the affirmation's only effect is downstream, where reconcile_grade_model
+    suppresses that one finding for this letter (see its
+    confirmed_value_claims argument -- the record of "which letters" is
+    carried by the correction list itself, threaded through by
+    service.apply_student_corrections).
+
+    Still validated here: the letter must name an existing threshold that
+    CURRENTLY produces one of those two findings -- affirming a value that
+    already verifies clean, or a single-bound threshold the check skips
+    entirely, is rejected so a pointless/stale confirmation never lands.
+    """
+    threshold = next(
+        (t for t in model.grade_thresholds if t.letter.strip().lower() == normalized_letter), None
+    )
+    if threshold is None:
+        raise CorrectionApplicationError(f"unknown threshold letter: '{raw_letter}'")
+    finding = unverified_threshold_value_finding(threshold)
+    if finding is None or finding.code not in (
+        "claim_evidence_consistency_unverifiable",
+        "claim_evidence_value_mismatch",
+    ):
+        raise CorrectionApplicationError(
+            f"threshold '{raw_letter}' has no unverified value claim to confirm"
+        )
+    return model
+
+
 def _apply_threshold_correction(model: GradeModel, correction: GradeModelCorrection) -> GradeModel:
     if correction.threshold_letter is None:
         raise CorrectionApplicationError("threshold correction requires threshold_letter")
@@ -231,6 +270,9 @@ def _apply_threshold_correction(model: GradeModel, correction: GradeModelCorrect
 
     if op == CorrectionOperation.RESOLVE_CUTOFF_OVERLAP:
         return _apply_resolve_cutoff_overlap(model, normalized, correction.threshold_letter)
+
+    if op == CorrectionOperation.CONFIRM_THRESHOLD_VALUE:
+        return _apply_confirm_threshold_value(model, normalized, correction.threshold_letter)
 
     index = next(
         (i for i, t in enumerate(model.grade_thresholds) if t.letter.strip().lower() == normalized), None

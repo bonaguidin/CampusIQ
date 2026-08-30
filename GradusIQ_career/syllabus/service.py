@@ -175,16 +175,20 @@ def apply_student_corrections(
 
     candidate = apply_grade_model_corrections(extracted_model, corrections)
 
-    # RESOLVE_CUTOFF_OVERLAP is a no-op on the model; its effect is here --
-    # the confirmed pairs suppress the overlapping_grade_thresholds ERROR on
-    # re-reconciliation (only for pairs reconcile_grade_model itself
-    # re-derives as cleanly resolvable), and each is logged as a keyed
-    # clarifying answer.
+    # RESOLVE_CUTOFF_OVERLAP and CONFIRM_THRESHOLD_VALUE are both no-ops on
+    # the model; their effect is here -- on re-reconciliation the confirmed
+    # cutoff pairs suppress the overlapping_grade_thresholds ERROR (only for
+    # pairs reconcile_grade_model itself re-derives as cleanly resolvable),
+    # and the confirmed value-claim letters suppress that threshold's
+    # claim_evidence_consistency_unverifiable / claim_evidence_value_mismatch
+    # finding. Each is logged as a keyed clarifying answer.
     resolved_cutoffs = _confirmed_cutoff_resolutions(extracted_model, corrections)
+    confirmed_value_claim_letters = _confirmed_value_claim_letters(corrections)
     candidate_reconciliation = reconcile_grade_model(
         candidate,
         content,
         confirmed_cutoff_pairs={frozenset((r.winner, r.loser)) for r in resolved_cutoffs},
+        confirmed_value_claims=confirmed_value_claim_letters,
     )
 
     clarifying_answers = dict(revision.get("clarifying_answers") or {})
@@ -194,6 +198,11 @@ def apply_student_corrections(
             "boundary": r.boundary,
             "winner": r.winner,
             "loser": r.loser,
+        }
+    for letter in sorted(confirmed_value_claim_letters):
+        clarifying_answers[f"claim_evidence:threshold:{letter}"] = {
+            "answer": "confirm_value",
+            "letter": letter,
         }
 
     return store.update_revision_confirmation(
@@ -206,6 +215,22 @@ def apply_student_corrections(
         confirmed_at=None,
         clarifying_answers=clarifying_answers,
     )
+
+
+def _confirmed_value_claim_letters(corrections) -> set[str]:
+    """Normalized threshold letters the CONFIRM_THRESHOLD_VALUE corrections
+    in this batch affirm. apply_grade_model_corrections has already rejected
+    any letter whose threshold produces no unverified claim_evidence
+    finding, so every letter here is a real affirmation reconcile_grade_model
+    can act on via confirmed_value_claims.
+    """
+    return {
+        c.threshold_letter.strip().lower()
+        for c in corrections
+        if c.target_type == CorrectionTargetType.THRESHOLD
+        and c.operation == CorrectionOperation.CONFIRM_THRESHOLD_VALUE
+        and c.threshold_letter is not None
+    }
 
 
 def _confirmed_cutoff_resolutions(extracted_model, corrections):

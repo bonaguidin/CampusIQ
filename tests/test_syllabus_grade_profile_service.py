@@ -26,6 +26,8 @@ from GradusIQ_career.syllabus.corrections import (
 )
 from GradusIQ_career.syllabus.models import (
     Assessment,
+    ExtractionWarning,
+    ExtractionWarningType,
     GradeCategory,
     GradeModel,
     GradeThreshold,
@@ -648,4 +650,139 @@ def test_non_adjacent_overlap_cannot_be_confirmed_away_and_still_blocks(client):
     with pytest.raises(CorrectionApplicationError, match="set_minimum / set_maximum"):
         service.apply_student_corrections(
             client, revision_id=revision["id"], student_id=STUDENT_A, corrections=[_resolve_cutoff("A")]
+        )
+
+
+# --- claim-evidence value confirmation (CONFIRM_THRESHOLD_VALUE, log-only) ----------
+
+
+def _confirm_threshold_value(letter: str) -> GradeModelCorrection:
+    return GradeModelCorrection(
+        target_type=CorrectionTargetType.THRESHOLD,
+        operation=CorrectionOperation.CONFIRM_THRESHOLD_VALUE,
+        threshold_letter=letter,
+    )
+
+
+def ecen_248_confirmed_state_model() -> GradeModel:
+    """Mirrors ECEN 248's stored confirmed_grade_model after its cutoff
+    overlaps were fixed by manual SET_MAXIMUM/SET_MINIMUM corrections: every
+    A-F threshold is now fully bounded, and every one carries verbatim
+    ">= / <" comparison-phrasing evidence that _RANGE_RE cannot parse -> all
+    five raise claim_evidence_consistency_unverifiable, which is the only
+    thing still blocking calculator-ready. Curve / late-work rules and the
+    unknown-assessment-count warnings are non-blocking (NON_BLOCKING_
+    WARNING_CODES) and must not affect the outcome.
+    """
+    return GradeModel(
+        grading_method=GradingMethod.WEIGHTED,
+        categories=[
+            GradeCategory(name="Homework", weight=25, count=None, evidence=evidence(1, "Homework 25%")),
+            GradeCategory(name="Labs", weight=25, count=None, evidence=evidence(1, "Labs 25%")),
+            GradeCategory(name="Midterm Exam", weight=25, evidence=evidence(1, "Midterm Exam 25%")),
+            GradeCategory(name="Final Exam", weight=25, evidence=evidence(1, "Final Exam 25%")),
+        ],
+        grade_thresholds=[
+            GradeThreshold(letter="A", minimum=90, maximum=100, evidence=evidence(1, "A: >= 90%")),
+            GradeThreshold(letter="B", minimum=80, maximum=89, evidence=evidence(1, "B: >= 80% and < 90%")),
+            GradeThreshold(letter="C", minimum=70, maximum=79, evidence=evidence(1, "C: >= 70% and < 80%")),
+            GradeThreshold(letter="D", minimum=60, maximum=69, evidence=evidence(1, "D: >= 60% and < 70%")),
+            GradeThreshold(letter="F", minimum=0, maximum=59, evidence=evidence(1, "F: < 60%")),
+        ],
+        rules=[
+            GradingRule(
+                rule_type=GradingRuleType.CURVE,
+                description="Grades will be curved if necessary.",
+                evidence=evidence(1, "Grades will be curved if necessary."),
+            ),
+        ],
+        warnings=[
+            ExtractionWarning(
+                type=ExtractionWarningType.UNKNOWN_ASSESSMENT_COUNT,
+                description="The syllabus does not state how many homework assignments there are.",
+                related_field="Homework",
+            ),
+        ],
+    )
+
+
+ECEN_248_CONTENT = content_for(
+    "Homework 25% Labs 25% Midterm Exam 25% Final Exam 25% "
+    "A: >= 90% B: >= 80% and < 90% C: >= 70% and < 80% D: >= 60% and < 70% F: < 60% "
+    "Grades will be curved if necessary."
+)
+
+
+def test_confirming_all_five_a_f_value_claims_clears_ecen_248_and_unblocks_calculator_ready(client):
+    """The real-world case this was built for: an ECEN 248-shaped profile
+    whose sole remaining blocker is five claim_evidence_consistency_
+    unverifiable findings (one per A-F threshold). Affirming all five takes
+    the confirmed model to ACCEPTED and, after confirm, calculator-ready --
+    with the thresholds and their verbatim evidence completely untouched.
+    """
+    profile, revision, _, reconciliation = ingest(
+        client,
+        ecen_248_confirmed_state_model(),
+        ECEN_248_CONTENT,
+        profile_kwargs={"course_code": "ECEN 248"},
+    )
+    assert reconciliation.status == ReconciliationStatus.NEEDS_STUDENT_REVIEW
+    assert sorted(
+        f.field for f in reconciliation.findings if f.code == "claim_evidence_consistency_unverifiable"
+    ) == ["threshold:A", "threshold:B", "threshold:C", "threshold:D", "threshold:F"]
+
+    updated = service.apply_student_corrections(
+        client,
+        revision_id=revision["id"],
+        student_id=STUDENT_A,
+        corrections=[_confirm_threshold_value(letter) for letter in ("A", "B", "C", "D", "F")],
+    )
+    assert updated["confirmed_reconciliation_status"] == "accepted"
+    assert updated["clarifying_answers"] == {
+        f"claim_evidence:threshold:{letter}": {"answer": "confirm_value", "letter": letter}
+        for letter in ("a", "b", "c", "d", "f")
+    }
+
+    service.confirm_grade_model(client, revision_id=revision["id"], student_id=STUDENT_A)
+    assembled = service.get_syllabus_grade_profile(client, profile_id=profile["id"], student_id=STUDENT_A)
+    assert assembled["calculator_ready"] is True
+
+    extracted = {
+        t.letter: (t.minimum, t.maximum, t.evidence.text)
+        for t in assembled["extracted_grade_model"].grade_thresholds
+    }
+    confirmed = {
+        t.letter: (t.minimum, t.maximum, t.evidence.text)
+        for t in assembled["confirmed_grade_model"].grade_thresholds
+    }
+    assert confirmed == extracted
+    assert confirmed["A"] == (90, 100, "A: >= 90%")
+
+
+def test_confirming_only_some_value_claims_still_blocks(client):
+    profile, revision, _, _ = ingest(
+        client,
+        ecen_248_confirmed_state_model(),
+        ECEN_248_CONTENT,
+        profile_kwargs={"course_code": "ECEN 248"},
+    )
+    updated = service.apply_student_corrections(
+        client,
+        revision_id=revision["id"],
+        student_id=STUDENT_A,
+        corrections=[_confirm_threshold_value(letter) for letter in ("B", "C", "D")],
+    )
+    assert updated["confirmed_reconciliation_status"] == "needs_student_review"
+    with pytest.raises(service.GradeModelNotAcceptedError):
+        service.confirm_grade_model(client, revision_id=revision["id"], student_id=STUDENT_A)
+
+
+def test_confirm_threshold_value_for_a_clean_threshold_is_rejected(client):
+    _, revision, _, _ = ingest(client, clean_model(), CLEAN_CONTENT)
+    with pytest.raises(CorrectionApplicationError, match="no unverified value claim"):
+        service.apply_student_corrections(
+            client,
+            revision_id=revision["id"],
+            student_id=STUDENT_A,
+            corrections=[_confirm_threshold_value("A")],
         )
