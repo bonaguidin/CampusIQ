@@ -227,6 +227,29 @@ function overlapFindingPair(finding: SyllabusFinding): [string, string] | null {
   return parts.length === 2 ? [parts[0], parts[1]] : null;
 }
 
+// Per-threshold "we couldn't verify this value against the syllabus text"
+// findings. Backend: reconciliation._check_threshold_range_consistency.
+// A student affirms the extracted value ("Yes, that's correct") via a
+// CONFIRM_THRESHOLD_VALUE correction, which suppresses the finding without
+// touching the threshold or its evidence -- the same propose/confirm shape
+// as the cutoff-overlap questions, so the raw finding is dropped from the
+// review list (see reviewFindings) and shown as a question instead.
+const CLAIM_EVIDENCE_THRESHOLD_CODES: ReadonlySet<string> = new Set([
+  'claim_evidence_consistency_unverifiable',
+  'claim_evidence_value_mismatch',
+]);
+
+function valueClaimKey(letter: string): string {
+  return `claim_evidence:threshold:${letter.trim().toLowerCase()}`;
+}
+
+// "threshold:B" -> "B"; null for a finding whose field is any other shape
+// (category:/assessment: claim-evidence findings are not confirmable here).
+function thresholdFindingLetter(finding: SyllabusFinding): string | null {
+  const m = /^threshold:(.+)$/.exec(finding.field ?? '');
+  return m ? m[1].trim() : null;
+}
+
 interface UploadFields {
   institution: string;
   courseCode: string;
@@ -563,6 +586,14 @@ export function GradeCalculatorPanel({ accessToken, courses, institutionName }: 
     );
   }
 
+  function handleConfirmThresholdValue(letter: string) {
+    if (!detail) return;
+    void submitCorrections(
+      [...detail.corrections, { target_type: 'threshold', operation: 'confirm_threshold_value', threshold_letter: letter }],
+      'Could not save your answer.',
+    );
+  }
+
   async function handleManualThresholdBounds(corrections: SyllabusProfileDetail['corrections']) {
     if (!detail) return;
     const updated = await submitCorrections([...detail.corrections, ...corrections], 'Could not save the cutoffs.');
@@ -654,8 +685,37 @@ export function GradeCalculatorPanel({ accessToken, courses, institutionName }: 
         const pair = overlapFindingPair(finding);
         if (pair && resolvedPairs.has(cutoffPairKey(pair[0], pair[1]))) return false;
       }
+      // Per-threshold claim-evidence findings become their own
+      // propose/confirm question below, resolvable or not -- drop the raw
+      // finding here so it isn't also shown as a bare dismiss.
+      if (CLAIM_EVIDENCE_THRESHOLD_CODES.has(finding.code) && thresholdFindingLetter(finding)) return false;
       return true;
     });
+  }, [detail]);
+
+  // Open (unanswered) per-threshold value-claim questions, and the letters
+  // already affirmed -- both derived from the same re-reconciled findings
+  // list + the persisted clarifying_answers, mirroring CutoffOverlapQuestions.
+  const thresholdValueQuestions = useMemo(() => {
+    const answers = detail?.clarifying_answers ?? {};
+    const src = (detail?.confirmed_reconciliation ?? detail?.reconciliation)?.findings ?? [];
+    const seen = new Set<string>();
+    const open: { letter: string; finding: SyllabusFinding }[] = [];
+    for (const finding of src) {
+      if (!CLAIM_EVIDENCE_THRESHOLD_CODES.has(finding.code)) continue;
+      const letter = thresholdFindingLetter(finding);
+      if (!letter || seen.has(letter)) continue;
+      seen.add(letter);
+      if (!(valueClaimKey(letter) in answers)) open.push({ letter, finding });
+    }
+    return open;
+  }, [detail]);
+
+  const answeredValueClaimLetters = useMemo(() => {
+    const answers = detail?.clarifying_answers ?? {};
+    return Object.keys(answers)
+      .filter((k) => k.startsWith('claim_evidence:threshold:'))
+      .map((k) => (answers[k]?.letter ?? k.slice('claim_evidence:threshold:'.length)).toUpperCase());
   }, [detail]);
   const findingsByAnchor = useMemo(
     () => groupFindingsByAnchor(reviewFindings, detail?.extracted_grade_model ?? null),
@@ -714,6 +774,12 @@ export function GradeCalculatorPanel({ accessToken, courses, institutionName }: 
                   busy={busy}
                   onConfirmPair={handleConfirmCutoffPair}
                   onManualEdit={setManualCutoffPair}
+                />
+                <ThresholdValueQuestions
+                  open={thresholdValueQuestions}
+                  answeredLetters={answeredValueClaimLetters}
+                  busy={busy}
+                  onConfirm={handleConfirmThresholdValue}
                 />
                 {manualCutoffPair && (
                   <ManualThresholdEditor
@@ -1197,6 +1263,60 @@ function CutoffOverlapQuestions({
             </button>
           </div>
         </div>
+      ))}
+    </div>
+  );
+}
+
+/**
+ * Affirm-only clarifying questions for per-threshold values reconciliation
+ * could not verify against the syllabus text
+ * (claim_evidence_consistency_unverifiable / claim_evidence_value_mismatch).
+ * "Yes, that's correct" records a CONFIRM_THRESHOLD_VALUE correction, which
+ * suppresses the finding without touching the threshold or its evidence
+ * (backend: corrections._apply_confirm_threshold_value). No "let me edit it"
+ * branch by design -- the value is affirmed as extracted, or the syllabus
+ * is re-uploaded. Once answered (clarifying_answers) a letter shows only a
+ * one-line confirmation and never asks again.
+ */
+function ThresholdValueQuestions({
+  open,
+  answeredLetters,
+  busy,
+  onConfirm,
+}: {
+  open: { letter: string; finding: SyllabusFinding }[];
+  answeredLetters: string[];
+  busy: boolean;
+  onConfirm: (letter: string) => void;
+}) {
+  if (open.length === 0 && answeredLetters.length === 0) return null;
+
+  return (
+    <div className="grade-cutoff-questions" aria-label="Unconfirmed grade cutoff values">
+      {open.map(({ letter, finding }) => (
+        <div className="grade-cutoff-question" key={`value:${letter}`} data-threshold-letter={letter}>
+          <p className="grade-cutoff-question-text">
+            {findingCopy(finding)} Is the {letter} cutoff correct as we read it from your syllabus?
+          </p>
+          <div className="grade-cutoff-question-actions">
+            <button
+              type="button"
+              className="btn btn-primary btn-sm"
+              disabled={busy}
+              aria-busy={busy}
+              onClick={() => onConfirm(letter)}
+            >
+              Yes, that's correct
+            </button>
+          </div>
+        </div>
+      ))}
+
+      {answeredLetters.map((letter) => (
+        <p className="grade-cutoff-resolved" key={`value-done:${letter}`} data-threshold-letter={letter}>
+          ✓ {letter} cutoff confirmed as correct.
+        </p>
       ))}
     </div>
   );

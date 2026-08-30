@@ -717,3 +717,103 @@ test('Grade Calculator: non-blocking informational findings are filtered from th
   assert.equal(await page.locator('[data-finding-code="unknown_assessment_count"]').count(), 0)
   assert.equal(await page.getByText("doesn't say exactly how many assessments are in this category").count(), 0)
 })
+
+// --- per-threshold value-claim clarifying questions ------------------------------
+
+// One otherwise-clean threshold whose evidence uses ">= / <" phrasing the
+// backend range check cannot parse -> one claim_evidence_consistency_
+// unverifiable finding, which is the only blocker.
+const VALUE_CLAIM_MODEL = {
+  ...EXTRACTED_MODEL,
+  grade_thresholds: [
+    { letter: 'A', minimum: 90, maximum: 100, evidence: { page: 2, text: 'A: 90-100', confidence: 1.0 } },
+    { letter: 'B', minimum: 80, maximum: 89, evidence: { page: 2, text: 'B: >= 80% and < 90%', confidence: 1.0 } },
+  ],
+  rules: [],
+  warnings: [],
+}
+
+const RECONCILIATION_B_UNVERIFIABLE = {
+  status: 'needs_student_review',
+  findings: [
+    { code: 'category_weight_validation', severity: 'valid', message: 'category weights sum to 100.0', field: 'categories' },
+    {
+      code: 'claim_evidence_consistency_unverifiable',
+      severity: 'warning',
+      message: "could not deterministically verify threshold:B against its cited evidence text ('B: >= 80% and < 90%')",
+      field: 'threshold:B',
+    },
+  ],
+  evidence_coverage: { total_claims: 5, supported_claims: 5, coverage_ratio: 1, unsupported_claims: [] },
+}
+
+test('Grade Calculator: threshold value-claim question — affirm, unblock', { timeout: 45_000 }, async (t) => {
+  let correctionBody = null
+  const page = await mountCutoffPanel(t, 'grade-calculator-value-claim-confirm', async (path, method, request, response) => {
+    if (path === `/api/v2/student/me/syllabus-grade-profiles/${PROFILE_ID}` && method === 'GET') {
+      json(response, 200, detail({ extracted_grade_model: VALUE_CLAIM_MODEL, reconciliation: RECONCILIATION_B_UNVERIFIABLE }))
+      return true
+    }
+    if (path === `/api/v2/student/me/syllabus-grade-profiles/${PROFILE_ID}/corrections` && method === 'POST') {
+      correctionBody = JSON.parse(await readBody(request))
+      json(response, 200, detail({
+        extracted_grade_model: VALUE_CLAIM_MODEL,
+        confirmed_grade_model: VALUE_CLAIM_MODEL,
+        calculator_ready: true,
+        reconciliation: RECONCILIATION_B_UNVERIFIABLE,
+        confirmed_reconciliation: RECONCILIATION_ACCEPTED,
+        corrections: correctionBody.corrections,
+        clarifying_answers: { 'claim_evidence:threshold:b': { answer: 'confirm_value', letter: 'b' } },
+      }))
+      return true
+    }
+    return false
+  })
+
+  const question = page.locator('.grade-cutoff-question[data-threshold-letter="B"]')
+  await question.getByText(/couldn't automatically confirm this value/).waitFor()
+  await question.getByText(/Is the B cutoff correct as we read it/).waitFor()
+  // the raw claim-evidence finding is NOT also shown as a bare review note
+  assert.equal(await page.locator('.grade-inline-findings--general').getByText(/couldn't automatically confirm this value/).count(), 0)
+
+  await question.getByRole('button', { name: "Yes, that's correct" }).click()
+  await page.getByRole('heading', { name: 'Enter your grades' }).waitFor()
+
+  assert.deepEqual(correctionBody.corrections, [
+    { target_type: 'threshold', operation: 'confirm_threshold_value', threshold_letter: 'B' },
+  ])
+  assert.equal(await page.locator('.grade-cutoff-question[data-threshold-letter="B"]').count(), 0)
+})
+
+test('Grade Calculator: an affirmed threshold value shows confirmed and does not re-ask on reload', { timeout: 45_000 }, async (t) => {
+  const answered = detail({
+    extracted_grade_model: VALUE_CLAIM_MODEL,
+    reconciliation: RECONCILIATION_B_UNVERIFIABLE,
+    confirmed_grade_model: VALUE_CLAIM_MODEL,
+    calculator_ready: false,
+    corrections: [{ target_type: 'threshold', operation: 'confirm_threshold_value', threshold_letter: 'B' }],
+    clarifying_answers: { 'claim_evidence:threshold:b': { answer: 'confirm_value', letter: 'b' } },
+    // re-reconciled: the B finding is suppressed, one unrelated finding still blocks
+    confirmed_reconciliation: {
+      status: 'needs_student_review',
+      findings: [{ code: 'grading_method_unknown', severity: 'warning', message: 'x', field: 'grading_method' }],
+      evidence_coverage: RECONCILIATION_ACCEPTED.evidence_coverage,
+    },
+  })
+
+  const page = await mountCutoffPanel(t, 'grade-calculator-value-claim-answered', async (path, method, request, response) => {
+    if (path === `/api/v2/student/me/syllabus-grade-profiles/${PROFILE_ID}` && method === 'GET') {
+      json(response, 200, answered)
+      return true
+    }
+    return false
+  })
+
+  await page.locator('.grade-cutoff-resolved[data-threshold-letter="B"]').getByText('B cutoff confirmed as correct').waitFor()
+  assert.equal(await page.locator('.grade-cutoff-question[data-threshold-letter="B"]').count(), 0)
+
+  await page.getByRole('button', { name: '← Back to your calculators' }).click()
+  await page.locator('.grade-profile-row-button', { hasText: 'PHYS 207' }).click()
+  await page.locator('.grade-cutoff-resolved[data-threshold-letter="B"]').waitFor()
+  assert.equal(await page.locator('.grade-cutoff-question[data-threshold-letter="B"]').count(), 0)
+})

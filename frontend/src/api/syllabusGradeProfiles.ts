@@ -113,11 +113,12 @@ export interface SyllabusCutoffOverlapResolution {
 }
 
 // Keyed answer log persisted on the revision (backend:
-// apply_student_corrections merges these). Only `cutoff_overlap:<winner>,<loser>`
-// keys exist today; the value shape below is that answer.
+// apply_student_corrections merges these). Keys in use:
+//   `cutoff_overlap:<winner>,<loser>`   -> { answer, boundary, winner, loser }
+//   `claim_evidence:threshold:<letter>` -> { answer, letter }
 export type SyllabusClarifyingAnswers = Record<
   string,
-  { answer: string; boundary?: number; winner?: string; loser?: string }
+  { answer: string; boundary?: number; winner?: string; loser?: string; letter?: string }
 >;
 
 export interface SyllabusCategoryScore {
