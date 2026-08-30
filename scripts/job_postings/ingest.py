@@ -670,14 +670,31 @@ def run_workday(*, live: bool, write: bool, store: Any = None) -> RunReport:
 
         outcome.rows = rows
         outcome.results_count = len(rows)
-        report.outcomes.append(outcome)
 
         if rows:
-            resolve_and_attach_identity(rows, store, report)
-            report.rows_upserted += store.upsert_postings(rows)
+            try:
+                resolve_and_attach_identity(rows, store, report)
+                report.rows_upserted += store.upsert_postings(rows)
+            except Exception as exc:  # noqa: BLE001 -- deliberately broad
+                # A store/DB error for one employer must not abort the sweep or
+                # drop the employers still queued -- same posture as the
+                # fetch_board failure branch above. Fixes A and B remove the
+                # known cause (source_job_id='Texas' -> 21000); this is the
+                # backstop. resolve_and_attach_identity may already have written
+                # this employer's cluster/key rows before upsert_postings
+                # raised -- fully transactional writes (no orphan window) are
+                # tracked as the canonical_posting_id follow-up.
+                outcome.status = "error"
+                outcome.error_detail = f"store: {type(exc).__name__}: {exc}"
+
+        report.outcomes.append(outcome)
 
         if live:
-            store.write_log(outcome.log_row())
+            try:
+                store.write_log(outcome.log_row())
+            except Exception as exc:  # noqa: BLE001
+                print(f"  workday: fetch_log write failed for {employer}: {exc}",
+                      file=sys.stderr)
 
     return report
 

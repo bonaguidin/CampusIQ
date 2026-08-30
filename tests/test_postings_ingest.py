@@ -348,13 +348,13 @@ def test_retention_window_must_be_positive():
 # run_workday -- the (source x employer) driver
 # ---------------------------------------------------------------------------
 
-def _wd_row(job_id: str, location: str) -> dict:
+def _wd_row(job_id: str, location: str, company: str = "Atmos Energy") -> dict:
     """A row shaped like workday.normalize_listing() output."""
     return {
         "source": "workday",
         "source_job_id": job_id,
         "title": f"Analyst {job_id}",
-        "company": "Atmos Energy",
+        "company": company,
         "location": location,
         "url": f"https://atmosenergy.wd108.myworkdayjobs.com/job/x/Analyst_{job_id}",
         "posted_date": "2026-08-19",
@@ -470,6 +470,42 @@ def test_run_workday_fetch_log_is_employer_keyed_and_satisfies_has_subject(
     assert (log["target_role"] is not None) or (log["employer"] is not None)
     assert log["status"] == "success"
     assert log["quota_used"] == 3
+
+
+def test_run_workday_one_employer_store_failure_does_not_abort_the_sweep(monkeypatch):
+    """A DB write error for one employer must be caught, logged, and the
+    remaining employers still processed -- same catch-log-continue posture as
+    a fetch_board failure. Regression for the 2026-08-30 crash, where an
+    upsert error propagated and killed the whole sweep partway through."""
+    boards = [
+        ("Alpha", workday.WorkdayBoard("a.wd1.myworkdayjobs.com", "a", "S"), False),
+        ("Bravo", workday.WorkdayBoard("b.wd1.myworkdayjobs.com", "b", "S"), False),
+        ("Charlie", workday.WorkdayBoard("c.wd1.myworkdayjobs.com", "c", "S"), False),
+    ]
+    monkeypatch.setattr(workday, "usable_workday_boards", lambda: boards)
+    monkeypatch.setattr(
+        workday, "fetch_board",
+        lambda board, employer, *, live: ([_wd_row(f"{employer}-1", "Dallas, TX",
+                                                   company=employer)], []),
+    )
+
+    class FlakyStore(DryRunStore):
+        def upsert_postings(self, rows):
+            if rows and rows[0]["company"] == "Bravo":
+                raise RuntimeError("simulated DB write failure")
+            return super().upsert_postings(rows)
+
+    store = FlakyStore()
+    report = run_workday(live=True, write=False, store=store)
+
+    assert {(o.employer, o.status) for o in report.outcomes} == {
+        ("Alpha", "success"), ("Bravo", "error"), ("Charlie", "success"),
+    }
+    assert {r["source_job_id"] for r in store.rows} == {"Alpha-1", "Charlie-1"}
+    assert len(store.log_rows) == 3   # every employer logged, Bravo included
+    bravo = next(l for l in store.log_rows if l["employer"] == "Bravo")
+    assert bravo["status"] == "error"
+    assert "simulated DB write failure" in bravo["error_detail"]
 
 
 def test_run_workday_records_a_failed_board_without_aborting_the_sweep(monkeypatch):
