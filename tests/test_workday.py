@@ -133,23 +133,41 @@ def test_normalize_the_live_listing():
     )
 
 
-def test_job_id_prefers_the_requisition_number():
-    """externalPath embeds the title, so it forks when a title is edited and
-    one posting becomes two rows. The requisition number does not move."""
+def test_job_id_is_the_post_underscore_segment_of_the_path():
+    """externalPath is '<title-slug>_<REQ>'; the REQ is what stays put when a
+    title is edited. Unchanged for the Atmos fixture (no '-n' suffix)."""
     row = normalize_listing(LIVE_LISTING, ATMOS, "Atmos Energy")
     assert row["source_job_id"] == "JR13846"
 
 
-def test_job_id_falls_back_to_the_path_tail():
-    listing = {k: v for k, v in LIVE_LISTING.items() if k != "bulletFields"}
-    row = normalize_listing(listing, ATMOS, "Atmos Energy")
-    assert row["source_job_id"] == "Sr-Applications-Developer_JR13846"
+def test_job_id_ignores_bulletfields_even_when_present():
+    """bulletFields layout is board-specific and must not be trusted: Michaels
+    puts the US state at [0] and the real req at [2]. Regression for the
+    source_job_id='Texas' crash -- 70+ rows collapsing onto one upsert key."""
+    michaels_listing = {
+        "title": "PT Merchandise Manager",
+        "externalPath": "/job/Frisco-5255-Eldorado-Pkwy/PT-Merchandise-Manager_R00323100-1",
+        "locationsText": "Frisco-5255 Eldorado Pkwy",
+        "postedOn": "Posted Today",
+        "bulletFields": ["Texas", "United States; Country; Frisco; Texas", "R00323100"],
+    }
+    board = WorkdayBoard("michaels.wd5.myworkdayjobs.com", "michaels", "External")
+    row = normalize_listing(michaels_listing, board, "Michaels")
+    assert row["source_job_id"] == "R00323100-1"        # from the URL, not "Texas"
 
 
-def test_empty_bulletfields_falls_back_rather_than_producing_a_blank_id():
-    listing = {**LIVE_LISTING, "bulletFields": [""]}
+def test_job_id_keeps_the_whole_tail_when_there_is_no_underscore():
+    listing = {**LIVE_LISTING, "externalPath": "/job/Somewhere/Plain-Title-Slug"}
     row = normalize_listing(listing, ATMOS, "Atmos Energy")
-    assert row["source_job_id"] == "Sr-Applications-Developer_JR13846"
+    assert row["source_job_id"] == "Plain-Title-Slug"
+
+
+@pytest.mark.parametrize("req", ["R-120761-1", "R-2026-70969", "JR-019450"])
+def test_job_id_preserves_hyphenated_requisition_numbers(req):
+    """Split is on '_', not '-': reqs contain hyphens."""
+    listing = {**LIVE_LISTING, "externalPath": f"/job/Dallas-Texas/Some-Role_{req}"}
+    row = normalize_listing(listing, ATMOS, "Atmos Energy")
+    assert row["source_job_id"] == req
 
 
 @pytest.mark.parametrize("missing", ["externalPath", "title"])

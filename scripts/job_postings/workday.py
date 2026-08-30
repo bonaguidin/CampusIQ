@@ -43,9 +43,11 @@ exact-matched or spot-checked, and nothing downstream would look wrong.
 
 Two things the live response settled that documentation would not have:
 
-  - `bulletFields[0]` is the requisition number ('JR13846'), and it makes a
-    better source_job_id than the externalPath tail, which embeds the job
-    title and therefore changes when someone edits it.
+  - `bulletFields` layout is board-specific and NOT a safe source_job_id.
+    Atmos returns ['JR13846'] (req at [0]); Michaels returns
+    ['Texas', '<location breadcrumb>', 'R00323100'] (state at [0], req at
+    [2]). source_job_id is taken from the externalPath's post-'_' segment
+    instead -- see _job_id().
   - `postedOn` is relative prose ('Posted Today'), never a timestamp.
 
 WHAT A MISSING SITE PATH MEANS
@@ -235,7 +237,7 @@ def normalize_listing(listing: dict, board: WorkdayBoard, employer: str) -> dict
 
     return {
         "source": SOURCE,
-        "source_job_id": _job_id(listing, external_path),
+        "source_job_id": _job_id(external_path),
         "title": title,
         "company": employer,
         "location": listing.get("locationsText"),
@@ -247,19 +249,30 @@ def normalize_listing(listing: dict, board: WorkdayBoard, employer: str) -> dict
     }
 
 
-def _job_id(listing: dict, external_path: str) -> str:
-    """Prefer the requisition number over the URL slug.
+def _job_id(external_path: str) -> str:
+    """Requisition id from the externalPath: the segment after the last '_'.
 
-    A live response gives bulletFields ['JR13846'] alongside externalPath
-    '/job/Texas---Dallas/Sr-Applications-Developer_JR13846'. The path embeds
-    the job title, so an employer editing the title changes the path, the
-    upsert key forks, and one posting becomes two rows. The requisition number
-    does not move.
+    Workday slugs are '<title-slug>_<REQ>'
+    ('Sr-Applications-Developer_JR13846', 'PT-Merchandise-Manager_R00323100-1'),
+    and the REQ is the part that stays put when a title is edited.
+
+    This deliberately does NOT read bulletFields. That field's layout is
+    board-specific: Atmos puts the req at bulletFields[0], Michaels puts the US
+    state there (the req is at [2]). Trusting [0] gave every Texas Michaels
+    posting source_job_id='Texas', collapsing 70+ rows onto one upsert key and
+    raising a Postgres 21000 on the batch. The externalPath is the one
+    identifier every board renders the same way.
+
+    Split on '_', not '-': a req can itself contain hyphens ('R-120761-1',
+    'R-2026-70969'). Workday's trailing '-<n>' URL disambiguator is kept as
+    part of the id rather than stripped, because a blind '-\\d+$' strip would
+    also eat the trailing number of a req like 'R-2026-70969'. If that
+    disambiguator ever drifts between fetches, normalise it in its own pass;
+    the (source, source_job_id) de-dupe in SupabaseStore.upsert_postings is the
+    backstop regardless.
     """
-    bullets = listing.get("bulletFields")
-    if isinstance(bullets, list) and bullets and isinstance(bullets[0], str) and bullets[0].strip():
-        return bullets[0].strip()
-    return external_path.rstrip("/").split("/")[-1]
+    tail = external_path.rstrip("/").split("/")[-1]
+    return tail.rsplit("_", 1)[-1] if "_" in tail else tail
 
 
 _RELATIVE_DAYS = re.compile(r"posted\s+(\d+)\+?\s+days?\s+ago", re.IGNORECASE)
