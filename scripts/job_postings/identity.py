@@ -211,6 +211,20 @@ _DFW_LOCALITIES = frozenset({
     "southlake", "keller", "wylie", "little elm", "haltom city", "rockwall",
     "addison", "prosper", "celina", "sachse", "murphy", "balch springs",
     "lancaster", "waxahachie", "midlothian", "north richland hills",
+    # Added 2026-08-30 -- distinctive DFW-metro names, low collision risk.
+    "trophy club", "colleyville", "northlake", "haslet", "double oak",
+    "seagoville",
+})
+
+# DFW-metro names that also name places (or people) elsewhere: Westlake OH/CA,
+# Roanoke VA, Sunnyvale CA, Argyle NY/WI, and the given-name towns north of
+# Dallas (Justin, Melissa, Anna, Aubrey). Matched ONLY when the string also
+# names Texas -- which a real DFW posting effectively always does -- so a
+# national feed (Adzuna/JSearch) cannot misfire on the out-of-state namesakes.
+_DFW_LOCALITIES_TX_GATED = frozenset({
+    "westlake", "roanoke", "argyle", "justin", "melissa", "anna", "aubrey",
+    "corinth", "fairview", "sunnyvale", "fate", "royse city", "forney",
+    "highland village",
 })
 
 _REMOTE = re.compile(r"\b(?:remote|work from home|wfh|anywhere|virtual)\b", re.IGNORECASE)
@@ -262,6 +276,13 @@ def classify_location(location: str | None) -> tuple[bool, LocationKind]:
     folded = _WHITESPACE.sub(" ", _PUNCT.sub(" ", _fold(location))).strip()
     padded = f" {folded} "
     has_dfw = any(f" {locality} " in padded for locality in _DFW_LOCALITIES)
+
+    # Ambiguous exurb names only count when Texas is also named -- see the
+    # _DFW_LOCALITIES_TX_GATED comment.
+    if not has_dfw and _TEXAS.search(location):
+        has_dfw = any(
+            f" {locality} " in padded for locality in _DFW_LOCALITIES_TX_GATED
+        )
 
     if has_dfw:
         if _HYBRID.search(location):
