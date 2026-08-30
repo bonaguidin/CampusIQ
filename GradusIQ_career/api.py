@@ -2293,6 +2293,31 @@ def _syllabus_revision_summary(revision_row: dict | None) -> dict | None:
     }
 
 
+def _confirmed_suppression_sets(
+    clarifying_answers: dict,
+) -> tuple[set[frozenset[str]], set[str]]:
+    """Rebuild reconcile_grade_model's confirmed_cutoff_pairs /
+    confirmed_value_claims from the persisted clarifying_answers keyed log,
+    so a re-reconciliation in the read path honours questions the student
+    has already answered. Keys written by service.apply_student_corrections:
+    'cutoff_overlap:<winner>,<loser>' and 'claim_evidence:threshold:<letter>'.
+    """
+    cutoff_pairs: set[frozenset[str]] = set()
+    value_claims: set[str] = set()
+    for key, answer in clarifying_answers.items():
+        if not isinstance(answer, dict):
+            continue
+        if key.startswith("cutoff_overlap:"):
+            winner, loser = answer.get("winner"), answer.get("loser")
+            if winner and loser:
+                cutoff_pairs.add(frozenset((str(winner), str(loser))))
+        elif key.startswith("claim_evidence:threshold:"):
+            letter = answer.get("letter")
+            if letter:
+                value_claims.add(str(letter).strip().lower())
+    return cutoff_pairs, value_claims
+
+
 def _syllabus_profile_detail_response(assembled: dict) -> dict:
     reconciliation = assembled["reconciliation"]
     grade_state = assembled["grade_state"]
@@ -2301,11 +2326,27 @@ def _syllabus_profile_detail_response(assembled: dict) -> dict:
     # assembled["reconciliation"] is always the ORIGINAL extraction's result
     # (service.get_syllabus_grade_profile never reconstructs the confirmed
     # candidate's). Once corrections have been applied, the candidate's OWN
-    # re-reconciliation is what the review UI actually needs to show --
-    # reconstruct it here rather than exposing only the pre-correction status.
+    # re-reconciliation is what the review UI needs -- and it must be a real
+    # re-run, not reconciliation_result_from_row(confirmed=True), which only
+    # relabels the stale original-extraction findings. The review UI drives
+    # its per-finding affirm/resolve actions off this findings list, and
+    # after e.g. a SET_MAXIMUM correction the set of claim_evidence findings
+    # can differ from what was stored at ingest. Suppression sets are
+    # rebuilt from the persisted clarifying_answers so cutoff / value-claim
+    # questions the student has already answered stay suppressed.
     confirmed_reconciliation = None
     if current_revision is not None and current_revision.get("confirmed_grade_model") is not None:
-        confirmed_reconciliation = syllabus_read.reconciliation_result_from_row(current_revision, confirmed=True)
+        confirmed_model = syllabus_read.confirmed_grade_model_from_row(current_revision)
+        confirmed_content = syllabus_read.relevant_content_from_row(current_revision)
+        confirmed_cutoff_pairs, confirmed_value_claims = _confirmed_suppression_sets(
+            current_revision.get("clarifying_answers") or {}
+        )
+        confirmed_reconciliation = reconcile_grade_model(
+            confirmed_model,
+            confirmed_content,
+            confirmed_cutoff_pairs=confirmed_cutoff_pairs,
+            confirmed_value_claims=confirmed_value_claims,
+        )
 
     # Cutoff-overlap resolution proposal, computed from whichever grade
     # model the client is currently acting on (the corrected candidate once

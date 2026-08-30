@@ -85,6 +85,23 @@ def overlapping_cutoffs_pdf() -> bytes:
     )
 
 
+def unverifiable_thresholds_pdf() -> bytes:
+    return _build_pdf(
+        [
+            [
+                ("Midterm: 30%", 10, False),
+                ("Final: 40%", 10, False),
+                ("Project: 30%", 10, False),
+                ("A: at least 90%", 10, False),
+                ("B: >= 80% and < 90%", 10, False),
+                ("C: >= 70% and < 80%", 10, False),
+                ("D: >= 60% and < 70%", 10, False),
+                ("F: below 60%", 10, False),
+            ]
+        ]
+    )
+
+
 def blank_pdf() -> bytes:
     buf = io.BytesIO()
     canvas = rl_canvas.Canvas(buf, pagesize=letter)
@@ -158,6 +175,20 @@ OVERLAPPING_CUTOFFS_MODEL_RESPONSE["grade_thresholds"] = [
     {"letter": "A", "minimum": 91, "maximum": 100, "evidence": {"page": 1, "text": "A: 91-100", "confidence": 1.0}},
     {"letter": "B", "minimum": 80, "maximum": 90, "evidence": {"page": 1, "text": "B: 80-90", "confidence": 1.0}},
     {"letter": "C", "minimum": 70, "maximum": 80, "evidence": {"page": 1, "text": "C: 70-80", "confidence": 1.0}},
+]
+
+# Otherwise-clean model whose only blocker is that every A-F threshold's
+# verbatim evidence uses ">= / < / at least / below" phrasing the
+# deterministic range check cannot parse -> five claim_evidence_consistency_
+# unverifiable findings. Evidence strings appear verbatim in
+# unverifiable_thresholds_pdf(). Mirrors ECEN 248's real shape.
+UNVERIFIABLE_THRESHOLDS_MODEL_RESPONSE = copy.deepcopy(CLEAN_MODEL_RESPONSE)
+UNVERIFIABLE_THRESHOLDS_MODEL_RESPONSE["grade_thresholds"] = [
+    {"letter": "A", "minimum": 90, "maximum": 100, "evidence": {"page": 1, "text": "A: at least 90%", "confidence": 1.0}},
+    {"letter": "B", "minimum": 80, "maximum": 89, "evidence": {"page": 1, "text": "B: >= 80% and < 90%", "confidence": 1.0}},
+    {"letter": "C", "minimum": 70, "maximum": 79, "evidence": {"page": 1, "text": "C: >= 70% and < 80%", "confidence": 1.0}},
+    {"letter": "D", "minimum": 60, "maximum": 69, "evidence": {"page": 1, "text": "D: >= 60% and < 70%", "confidence": 1.0}},
+    {"letter": "F", "minimum": 0, "maximum": 59, "evidence": {"page": 1, "text": "F: below 60%", "confidence": 1.0}},
 ]
 
 
@@ -675,6 +706,110 @@ def test_cutoff_overlap_resolution_appears_and_confirming_it_unblocks_calculator
     confirmed = client.post(f"{profile_url(created['id'])}/confirm", headers=HEADERS)
     assert confirmed.status_code == 200
     assert confirmed.json()["calculator_ready"] is True
+
+
+def test_confirming_threshold_value_claims_re_reconciles_and_unblocks_calculator_ready(client, db, monkeypatch):
+    patch_session(monkeypatch, db)
+    monkeypatch.setattr(
+        api, "build_client", lambda: FakeAI(text=json.dumps(UNVERIFIABLE_THRESHOLDS_MODEL_RESPONSE))
+    )
+    created = ingest(
+        client, pdf_bytes=unverifiable_thresholds_pdf(), course_code="ECEN 248", term="Fall 2026"
+    ).json()
+
+    assert created["reconciliation"]["status"] == "needs_student_review"
+    assert created["calculator_ready"] is False
+    assert sorted(
+        f["field"]
+        for f in created["reconciliation"]["findings"]
+        if f["code"] == "claim_evidence_consistency_unverifiable"
+    ) == ["threshold:A", "threshold:B", "threshold:C", "threshold:D", "threshold:F"]
+
+    corrected = client.post(
+        f"{profile_url(created['id'])}/corrections",
+        headers=HEADERS,
+        json={
+            "corrections": [
+                {"target_type": "threshold", "operation": "confirm_threshold_value", "threshold_letter": letter}
+                for letter in ("A", "B", "C", "D", "F")
+            ]
+        },
+    ).json()
+
+    # confirmed_reconciliation is a real re-run of the corrected model, not
+    # the stale original-extraction findings: every claim_evidence finding
+    # is gone and the status is accepted.
+    assert corrected["confirmed_reconciliation"]["status"] == "accepted"
+    assert not any(
+        f["code"].startswith("claim_evidence")
+        for f in corrected["confirmed_reconciliation"]["findings"]
+    )
+    assert corrected["clarifying_answers"] == {
+        f"claim_evidence:threshold:{letter}": {"answer": "confirm_value", "letter": letter}
+        for letter in ("a", "b", "c", "d", "f")
+    }
+    # the ORIGINAL extraction's reconciliation is untouched
+    assert corrected["reconciliation"]["status"] == "needs_student_review"
+    # thresholds and their verbatim evidence are unchanged
+    a_threshold = next(t for t in corrected["confirmed_grade_model"]["grade_thresholds"] if t["letter"] == "A")
+    assert (a_threshold["minimum"], a_threshold["maximum"], a_threshold["evidence"]["text"]) == (
+        90,
+        100,
+        "A: at least 90%",
+    )
+
+    confirmed = client.post(f"{profile_url(created['id'])}/confirm", headers=HEADERS)
+    assert confirmed.status_code == 200
+    assert confirmed.json()["calculator_ready"] is True
+
+
+def test_confirming_only_some_threshold_value_claims_still_blocks(client, db, monkeypatch):
+    patch_session(monkeypatch, db)
+    monkeypatch.setattr(
+        api, "build_client", lambda: FakeAI(text=json.dumps(UNVERIFIABLE_THRESHOLDS_MODEL_RESPONSE))
+    )
+    created = ingest(
+        client, pdf_bytes=unverifiable_thresholds_pdf(), course_code="ECEN 248", term="Fall 2026"
+    ).json()
+
+    corrected = client.post(
+        f"{profile_url(created['id'])}/corrections",
+        headers=HEADERS,
+        json={
+            "corrections": [
+                {"target_type": "threshold", "operation": "confirm_threshold_value", "threshold_letter": letter}
+                for letter in ("A", "B", "C")
+            ]
+        },
+    ).json()
+    assert corrected["confirmed_reconciliation"]["status"] == "needs_student_review"
+    assert sorted(
+        f["field"]
+        for f in corrected["confirmed_reconciliation"]["findings"]
+        if f["code"] == "claim_evidence_consistency_unverifiable"
+    ) == ["threshold:D", "threshold:F"]
+    assert client.post(f"{profile_url(created['id'])}/confirm", headers=HEADERS).status_code == 409
+
+
+def test_confirm_threshold_value_for_a_clean_threshold_is_rejected(client, db, monkeypatch):
+    patch_session(monkeypatch, db)
+    monkeypatch.setattr(
+        api, "build_client", lambda: FakeAI(text=json.dumps(OVERLAPPING_CUTOFFS_MODEL_RESPONSE))
+    )
+    created = ingest(
+        client, pdf_bytes=overlapping_cutoffs_pdf(), course_code="TEST 100", term="Spring 2027"
+    ).json()
+    response = client.post(
+        f"{profile_url(created['id'])}/corrections",
+        headers=HEADERS,
+        json={
+            "corrections": [
+                {"target_type": "threshold", "operation": "confirm_threshold_value", "threshold_letter": "A"}
+            ]
+        },
+    )
+    assert response.status_code == 422
+    assert "no unverified value claim" in response.json()["detail"]["message"]
 
 
 def test_confirm_without_correction_when_accepted(client, db, monkeypatch):
