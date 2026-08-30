@@ -154,7 +154,18 @@ class JSearchClient:
                 f"JSearch request failed: {exc} | body={body!r}", transient=transient
             ) from exc
 
-        return response.json()
+        # A 200 with a non-JSON body must surface as a caught
+        # JobPostingRequestError, not a raw decode error that escapes
+        # ingest.py's per-role handler and aborts the whole run. Same
+        # rationale as adzuna_client.py.
+        try:
+            return response.json()
+        except ValueError as exc:  # includes requests' JSONDecodeError
+            raise JobPostingRequestError(
+                f"JSearch returned a non-JSON body (HTTP {response.status_code}): "
+                f"{exc} | body={response.text[:500]!r}",
+                transient=False,
+            ) from exc
 
 
 def find_source_field(result_item: dict[str, Any]) -> tuple[str, Any] | None:

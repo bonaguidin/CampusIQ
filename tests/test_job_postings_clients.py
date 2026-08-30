@@ -18,9 +18,11 @@ from errors import JobPostingConfigError, JobPostingRequestError  # noqa: E402
 
 
 class FakeHTTPResponse:
-    def __init__(self, payload, status_code=200):
+    def __init__(self, payload, status_code=200, *, json_exc=None, text=""):
         self.payload = payload
         self.status_code = status_code
+        self._json_exc = json_exc
+        self.text = text
 
     def raise_for_status(self):
         if self.status_code >= 400:
@@ -29,6 +31,8 @@ class FakeHTTPResponse:
             raise requests.HTTPError(response=response)
 
     def json(self):
+        if self._json_exc is not None:
+            raise self._json_exc
         return self.payload
 
 
@@ -123,6 +127,24 @@ def test_adzuna_connection_error_is_transient():
     assert exc_info.value.transient is True
 
 
+def test_adzuna_200_with_non_json_body_raises_caught_error_not_a_raw_decode():
+    """A maintenance page / CDN error returned as HTTP 200 must come back as a
+    JobPostingRequestError so ingest.py's per-role handler catches it -- not a
+    raw ValueError that escapes and aborts the whole nightly loop."""
+    bad = FakeHTTPResponse(
+        None, status_code=200,
+        json_exc=requests.exceptions.JSONDecodeError("Expecting value", "<html>", 0),
+    )
+    session = FakeSession(response=bad)
+    client = adzuna_client.AdzunaClient(app_id="id", app_key="secret-key", session=session)
+
+    with pytest.raises(JobPostingRequestError) as exc_info:
+        client.search(what="x", where="Dallas", live=True)
+
+    assert exc_info.value.transient is False
+    assert "non-JSON body (HTTP 200)" in str(exc_info.value)
+
+
 # ---------------------------------------------------------------- JSearch
 
 
@@ -169,6 +191,23 @@ def test_jsearch_live_call_sends_auth_header():
     assert result == payload
     assert len(session.calls) == 1
     assert session.calls[0]["kwargs"]["headers"][client.auth_header] == "ak_secretvalue"
+
+
+def test_jsearch_200_with_non_json_body_raises_caught_error():
+    bad = FakeHTTPResponse(
+        None, status_code=200, text="<html>maintenance</html>",
+        json_exc=requests.exceptions.JSONDecodeError("Expecting value", "<html>", 0),
+    )
+    session = FakeSession(response=bad)
+    client = jsearch_client.JSearchClient(
+        base_url="https://api.openwebninja.com", api_key="ak_secretvalue", session=session
+    )
+
+    with pytest.raises(JobPostingRequestError) as exc_info:
+        client.search(query="x", live=True)
+
+    assert exc_info.value.transient is False
+    assert "non-JSON body (HTTP 200)" in str(exc_info.value)
 
 
 def test_find_source_field_prefers_job_publisher():
