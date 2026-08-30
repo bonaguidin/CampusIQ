@@ -138,25 +138,34 @@ def parse_workday_slug(slug: str | None) -> WorkdayBoard | None:
 EMPLOYER_CSV = REPO_ROOT / "data" / "job_postings" / "dfw_employers_ats.csv"
 
 
-def usable_workday_boards(csv_path: Path = EMPLOYER_CSV) -> list[tuple[str, WorkdayBoard]]:
-    """(employer, board) for every ats=workday CSV row whose slug builds.
+def usable_workday_boards(
+    csv_path: Path = EMPLOYER_CSV,
+) -> list[tuple[str, WorkdayBoard, bool]]:
+    """(employer, board, always_dfw) for every ats=workday row whose slug builds.
 
     The single source of truth for which employers the Workday ingest sweeps.
     Today that is 12 of the 19 ats=workday rows; the other 7 carry a host but
     no site-path segment, so parse_workday_slug returns None and they are
     skipped rather than guessed at. Fill their `slug` column and they join the
     sweep with no code change -- see outstanding-fixes.md.
+
+    `always_dfw` is the CSV's `always_dfw` column: true for a single-metro
+    employer (e.g. Parkland Health, whose every facility is in Dallas County)
+    whose Workday `locationsText` is a building name with no city token for
+    classify_location to match. The driver keeps such rows regardless of the
+    string. Blank/absent for everyone else.
     """
     import csv as _csv
 
-    boards: list[tuple[str, WorkdayBoard]] = []
+    boards: list[tuple[str, WorkdayBoard, bool]] = []
     with csv_path.open(encoding="utf-8-sig", newline="") as f:
         for row in _csv.DictReader(f):
             if row.get("ats") != "workday":
                 continue
             board = parse_workday_slug(row.get("slug"))
             if board is not None:
-                boards.append((row["employer"], board))
+                always_dfw = (row.get("always_dfw") or "").strip().lower() == "true"
+                boards.append((row["employer"], board, always_dfw))
     return boards
 
 
@@ -352,7 +361,7 @@ def main() -> int:
 
     if args.list_boards:
         import csv
-        usable = {name for name, _ in usable_workday_boards()}
+        usable = {name for name, _, _ in usable_workday_boards()}
         total = 0
         with EMPLOYER_CSV.open(encoding="utf-8-sig", newline="") as f:
             for r in csv.DictReader(f):

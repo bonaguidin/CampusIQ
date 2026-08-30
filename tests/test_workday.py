@@ -267,7 +267,7 @@ def test_fetch_board_respects_the_max_pages_cap(monkeypatch):
 
 def test_usable_workday_boards_are_the_twelve_with_a_site_path():
     boards = usable_workday_boards()
-    names = {name for name, _ in boards}
+    names = {name for name, _, _ in boards}
 
     assert len(boards) == 12
     # Confirmed usable on 2026-08-19 -- host AND site segment present.
@@ -284,8 +284,14 @@ def test_usable_workday_boards_are_the_twelve_with_a_site_path():
 
 def test_usable_workday_boards_returns_real_board_objects():
     boards = usable_workday_boards()
-    atmos = next(b for name, b in boards if name == "Atmos Energy")
+    atmos = next(b for name, b, _ in boards if name == "Atmos Energy")
     assert atmos.jobs_url == (
         "https://atmosenergy.wd108.myworkdayjobs.com"
         "/wday/cxs/atmosenergy/External_Career_Site/jobs"
     )
+
+
+def test_usable_workday_boards_flags_parkland_always_dfw_and_no_one_else():
+    flags = {name: always_dfw for name, _, always_dfw in usable_workday_boards()}
+    assert flags["Parkland Health"] is True
+    assert all(v is False for k, v in flags.items() if k != "Parkland Health")

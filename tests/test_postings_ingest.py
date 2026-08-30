@@ -367,7 +367,7 @@ def one_atmos_board(monkeypatch):
         "atmosenergy.wd108.myworkdayjobs.com", "atmosenergy", "External_Career_Site"
     )
     monkeypatch.setattr(
-        workday, "usable_workday_boards", lambda: [("Atmos Energy", board)]
+        workday, "usable_workday_boards", lambda: [("Atmos Energy", board, False)]
     )
     return board
 
@@ -390,6 +390,53 @@ def test_run_workday_keeps_dfw_rows_and_drops_the_rest(monkeypatch, one_atmos_bo
     assert all(r["is_dfw"] is True for r in store.rows)
     assert {r["location_kind"] for r in store.rows} == {"dfw_metro"}
     assert report.rows_upserted == 2
+
+
+def test_run_workday_always_dfw_keeps_facility_string_rows(monkeypatch):
+    """Parkland's locationsText is a building name with no city token, so
+    classify_location returns non-DFW. always_dfw=True keeps it anyway and
+    labels it dfw_metro."""
+    board = workday.WorkdayBoard("wd12.myworkdaysite.com", "parklandhospital",
+                                 "Parkland_Careers")
+    monkeypatch.setattr(
+        workday, "usable_workday_boards",
+        lambda: [("Parkland Health", board, True)],
+    )
+    fetched = [
+        _wd_row("JR1", "Main Hospital Bldg - 1st Flr"),   # no city token
+        _wd_row("JR2", "Moody Outpatient Center"),        # no city token
+        _wd_row("JR3", "Southeast Dallas Health Ctr"),    # has "dallas"
+    ]
+    monkeypatch.setattr(workday, "fetch_board", lambda *a, **k: (fetched, []))
+
+    store = DryRunStore()
+    run_workday(live=True, write=False, store=store)
+
+    assert {r["source_job_id"] for r in store.rows} == {"JR1", "JR2", "JR3"}
+    assert all(r["is_dfw"] is True for r in store.rows)
+    assert {r["location_kind"] for r in store.rows} == {"dfw_metro"}
+
+
+def test_run_workday_without_always_dfw_drops_the_same_facility_rows(monkeypatch):
+    """Same rows, always_dfw=False -> the two city-less strings are dropped,
+    only the one naming a DFW suburb survives."""
+    board = workday.WorkdayBoard("wd12.myworkdaysite.com", "parklandhospital",
+                                 "Parkland_Careers")
+    monkeypatch.setattr(
+        workday, "usable_workday_boards",
+        lambda: [("Parkland Health", board, False)],
+    )
+    fetched = [
+        _wd_row("JR1", "Main Hospital Bldg - 1st Flr"),
+        _wd_row("JR2", "Moody Outpatient Center"),
+        _wd_row("JR3", "Southeast Dallas Health Ctr"),
+    ]
+    monkeypatch.setattr(workday, "fetch_board", lambda *a, **k: (fetched, []))
+
+    store = DryRunStore()
+    run_workday(live=True, write=False, store=store)
+
+    assert {r["source_job_id"] for r in store.rows} == {"JR3"}
 
 
 def test_run_workday_stamps_target_role_null(monkeypatch, one_atmos_board):
@@ -426,7 +473,8 @@ def test_run_workday_records_a_failed_board_without_aborting_the_sweep(monkeypat
     good = workday.WorkdayBoard("a.wd1.myworkdayjobs.com", "a", "S")
     bad = workday.WorkdayBoard("b.wd1.myworkdayjobs.com", "b", "S")
     monkeypatch.setattr(
-        workday, "usable_workday_boards", lambda: [("Bad Co", bad), ("Good Co", good)]
+        workday, "usable_workday_boards",
+        lambda: [("Bad Co", bad, False), ("Good Co", good, False)],
     )
 
     def fake_fetch_board(board, employer, *, live):

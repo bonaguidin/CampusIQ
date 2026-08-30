@@ -586,13 +586,13 @@ def run_workday(*, live: bool, write: bool, store: Any = None) -> RunReport:
     import math
 
     import workday
-    from identity import classify_location
+    from identity import LocationKind, classify_location
 
     report = RunReport(started_at=datetime.now(timezone.utc), dry_run=not live)
     if store is None:
         store = SupabaseStore() if write else DryRunStore()
 
-    for employer, board in workday.usable_workday_boards():
+    for employer, board, always_dfw in workday.usable_workday_boards():
         outcome = FetchOutcome(source="workday", employer=employer)
         try:
             raw_rows, outcome.normalization_errors = workday.fetch_board(
@@ -617,8 +617,16 @@ def run_workday(*, live: bool, write: bool, store: Any = None) -> RunReport:
         for row in raw_rows:
             in_dfw, kind = classify_location(row.get("location"))
             if not in_dfw:
-                continue  # CXS returns the whole national board; keep DFW only
-            row["is_dfw"] = in_dfw
+                if not always_dfw:
+                    continue  # CXS returns the whole national board; DFW only
+                # Single-metro employer (Parkland Health = Dallas County
+                # hospital district): its locationsText is a building name with
+                # no city token to match, but every facility is in DFW. Trust
+                # the employer. dfw_metro is reused rather than adding a new
+                # LocationKind -- it is one DFW-metro location, just not one the
+                # string proved -- which keeps the location_kind CHECK as-is.
+                kind = LocationKind.DFW_METRO
+            row["is_dfw"] = True
             row["location_kind"] = kind.value
             row["target_role"] = None  # whole-board fetch, no role searched for
             rows.append(row)
