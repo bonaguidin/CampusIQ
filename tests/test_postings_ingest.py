@@ -21,9 +21,12 @@ sys.path.insert(0, str(REPO_ROOT / "scripts" / "job_postings"))
 
 import workday  # noqa: E402
 from ingest import (  # noqa: E402
+    UPSERT_CONFLICT,
     DryRunStore,
     FetchOutcome,
     RunReport,
+    SupabaseStore,
+    dedupe_by_conflict_key,
     load_target_roles,
     resolve_and_attach_identity,
     run_workday,
@@ -513,3 +516,76 @@ def test_run_workday_does_not_touch_the_vendor_fetch_log_payload():
     wd = FetchOutcome(source="workday", employer="Atmos Energy", results_count=3)
     assert wd.log_row()["employer"] == "Atmos Energy"
     assert wd.log_row()["target_role"] is None
+
+
+# ---------------------------------------------------------------------------
+# Batch de-dupe -- one requisition posted at N locations must not 21000
+# ---------------------------------------------------------------------------
+
+def test_dedupe_by_conflict_key_keeps_first_seen():
+    rows = [
+        {"source": "workday", "source_job_id": "R1", "location": "Frisco"},
+        {"source": "workday", "source_job_id": "R1", "location": "Plano"},   # dup
+        {"source": "workday", "source_job_id": "R2", "location": "Dallas"},
+        {"source": "workday", "source_job_id": "R1", "location": "Irving"},  # dup
+    ]
+    out = dedupe_by_conflict_key(rows)
+    assert [(r["source_job_id"], r["location"]) for r in out] == [
+        ("R1", "Frisco"), ("R2", "Dallas"),
+    ]
+
+
+def test_dedupe_is_scoped_by_source_not_just_job_id():
+    rows = [
+        {"source": "workday", "source_job_id": "R1"},
+        {"source": "adzuna", "source_job_id": "R1"},  # same id, different source -> kept
+    ]
+    assert len(dedupe_by_conflict_key(rows)) == 2
+
+
+class _FakeUpsertClient:
+    """Captures the payload handed to .upsert(on_conflict=...).execute()."""
+    def __init__(self):
+        self.upsert_payload = None
+        self.upsert_on_conflict = None
+
+    def table(self, _name):
+        return self
+
+    def upsert(self, payload, on_conflict=None):
+        self.upsert_payload = payload
+        self.upsert_on_conflict = on_conflict
+        return self
+
+    def execute(self):
+        return type("R", (), {"data": self.upsert_payload})()
+
+
+def test_supabase_upsert_never_sends_a_duplicate_conflict_key():
+    """Regression for the 2026-08-30 crash: a batch where one requisition
+    repeats (open at several store locations) must reach PostgREST with no
+    (source, source_job_id) appearing twice -- otherwise Postgres raises
+    21000 'ON CONFLICT DO UPDATE cannot affect row a second time' and the
+    whole sweep aborts."""
+    store = SupabaseStore.__new__(SupabaseStore)   # skip __init__ / real client
+    store.client = _FakeUpsertClient()
+    store._cluster_cache = {}
+
+    batch = [
+        {"source": "workday", "source_job_id": "R00323100-1", "title": "PT Merch Mgr",
+         "location": loc, "_match_rule": "seed"}
+        for loc in ("Frisco", "Plano", "Irving", "Denton", "Arlington")
+    ] + [
+        {"source": "workday", "source_job_id": "R00319440-1", "title": "Stocker",
+         "location": "Southlake"},
+    ]
+
+    written = store.upsert_postings(batch)
+
+    payload = store.client.upsert_payload
+    assert store.client.upsert_on_conflict == UPSERT_CONFLICT
+    keys = [(r["source"], r["source_job_id"]) for r in payload]
+    assert len(keys) == len(set(keys)) == 2      # 5 Michaels dups collapsed to 1
+    assert written == 2
+    assert all("_match_rule" not in r for r in payload)   # private keys still stripped
+    assert all("fetched_at" in r for r in payload)

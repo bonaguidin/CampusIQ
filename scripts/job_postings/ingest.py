@@ -73,6 +73,39 @@ VENDOR_SOURCES = frozenset({"adzuna", "jsearch"})
 
 UPSERT_CONFLICT = "source,source_job_id"
 
+
+def dedupe_by_conflict_key(rows: list[dict]) -> list[dict]:
+    """Collapse rows sharing (source, source_job_id), keeping the FIRST seen.
+
+    Postgres rejects an INSERT ... ON CONFLICT DO UPDATE whose input carries
+    the same conflict key twice ("cannot affect row a second time", SQLSTATE
+    21000). A Workday whole-board fetch hits this whenever one requisition is
+    posted at several locations -- each location is a separate jobPostings
+    entry, but they share the requisition id.
+
+    The data decision: one requisition == one job. The pipeline counts skill
+    frequency per role family, so 40 rows for a req open at 40 stores would
+    inflate that title's weight 40x. The duplicates differ only in `location`
+    (one store vs another); title, req, and description are identical.
+
+    First-seen rather than last-seen: Workday returns a board in a stable
+    order, so first-seen is deterministic without any field comparison, and
+    there is no quality axis on which a later duplicate would be preferable.
+    Not "merge locations into one field": `location` is a single text column
+    with no reader today, and inventing a join format nothing validates adds
+    risk for no gain -- is_dfw / location_kind are already dfw_metro on every
+    kept row.
+    """
+    seen: set[tuple] = set()
+    out: list[dict] = []
+    for r in rows:
+        key = (r.get("source"), str(r.get("source_job_id")))
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append(r)
+    return out
+
 # Rows per vendor call. Small on purpose -- one call returns one page, and a
 # bigger page does not cost more quota but does cost more to normalize wrongly
 # while the field maps are unconfirmed.
@@ -381,6 +414,7 @@ class DryRunStore:
         self.canonical[cluster_id] = (source, source_job_id)
 
     def upsert_postings(self, rows: list[dict]) -> int:
+        rows = dedupe_by_conflict_key(rows)
         self.rows.extend(rows)
         return len(rows)
 
@@ -521,6 +555,9 @@ class SupabaseStore:
             ).eq("id", cluster_id).execute()
 
     def upsert_postings(self, rows: list[dict]) -> int:
+        # Collapse intra-batch (source, source_job_id) duplicates before the
+        # upsert -- Postgres 21000 otherwise. See dedupe_by_conflict_key.
+        rows = dedupe_by_conflict_key(rows)
         payload = [{k: v for k, v in r.items() if not k.startswith("_")} for r in rows]
         for r in payload:
             r["fetched_at"] = datetime.now(timezone.utc).isoformat()
