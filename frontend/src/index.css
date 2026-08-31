@@ -6375,7 +6375,7 @@ a {
 }
 
 .academic-overview-current {
-  margin-top: var(--sp-4);
+  margin-top: var(--sp-8);
 }
 
 .academic-overview-term-label {
@@ -6387,11 +6387,18 @@ a {
 .academic-overview-status {
   color: var(--muted);
   font-size: 0.8125rem;
-  margin: var(--sp-4) 0 0;
+  /* Trailing summary caption, not a peer section -- sits closer than the
+     --sp-8 inter-section rhythm above, but far enough not to read as
+     attached to the Grade Calculator block. */
+  margin: var(--sp-6) 0 0;
 }
 
 .academic-overview-course-discovery {
-  margin-top: var(--sp-4);
+  margin-top: var(--sp-8);
+}
+
+.academic-overview-grade-calculator {
+  margin-top: var(--sp-8);
 }
 
 .academic-overview-cd-role {
