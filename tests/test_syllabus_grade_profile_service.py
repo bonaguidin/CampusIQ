@@ -777,12 +777,19 @@ def test_confirming_only_some_value_claims_still_blocks(client):
         service.confirm_grade_model(client, revision_id=revision["id"], student_id=STUDENT_A)
 
 
-def test_confirm_threshold_value_for_a_clean_threshold_is_rejected(client):
+def test_confirm_threshold_value_for_a_clean_threshold_is_a_tolerated_no_op(client):
+    # A verifies clean, so there is no finding for the affirmation to
+    # suppress -- it is inert, not an error. The unified cutoff table
+    # auto-appends CONFIRM_THRESHOLD_VALUE after every in-place edit, so a
+    # letter that needed no affirming must not fail the batch or move the
+    # reconciliation outcome off ACCEPTED.
     _, revision, _, _ = ingest(client, clean_model(), CLEAN_CONTENT)
-    with pytest.raises(CorrectionApplicationError, match="no unverified value claim"):
-        service.apply_student_corrections(
-            client,
-            revision_id=revision["id"],
-            student_id=STUDENT_A,
-            corrections=[_confirm_threshold_value("A")],
-        )
+    updated = service.apply_student_corrections(
+        client,
+        revision_id=revision["id"],
+        student_id=STUDENT_A,
+        corrections=[_confirm_threshold_value("A")],
+    )
+    assert updated["confirmed_reconciliation_status"] == "accepted"
+    confirmed = service.confirm_grade_model(client, revision_id=revision["id"], student_id=STUDENT_A)
+    assert confirmed["confirmed_grade_model"]["grade_thresholds"] == clean_model().model_dump(mode="json")["grade_thresholds"]

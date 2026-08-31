@@ -33,7 +33,6 @@ from pydantic import BaseModel, Field
 
 from GradusIQ_career.syllabus.cutoff_resolution import resolve_cutoff_overlaps
 from GradusIQ_career.syllabus.models import GradeModel, GradingMethod, StrictModel
-from GradusIQ_career.syllabus.reconciliation import unverified_threshold_value_finding
 
 
 class CorrectionTargetType(str, Enum):
@@ -241,24 +240,30 @@ def _apply_confirm_threshold_value(model: GradeModel, normalized_letter: str, ra
     carried by the correction list itself, threaded through by
     service.apply_student_corrections).
 
-    Still validated here: the letter must name an existing threshold that
-    CURRENTLY produces one of those two findings -- affirming a value that
-    already verifies clean, or a single-bound threshold the check skips
-    entirely, is rejected so a pointless/stale confirmation never lands.
+    Validated here: the letter must name an existing threshold. Beyond that
+    this is deliberately tolerant -- a letter with no open
+    claim_evidence_consistency_unverifiable / claim_evidence_value_mismatch
+    finding is a NO-OP, not an error. Two reasons:
+
+    * With no finding, reconcile_grade_model's confirmed_value_claims has
+      nothing to suppress for this letter, so recording the affirmation or
+      not is downstream-inert -- there is no wrong outcome to guard against.
+    * This op is also submitted programmatically. The unified cutoff table
+      appends a CONFIRM_THRESHOLD_VALUE for every letter it just edited via
+      SET_MINIMUM / SET_MAXIMUM, so a student who types a bound is never
+      re-prompted to affirm the value they just entered. That edit may or
+      may not leave a residual finding -- a single-bound threshold, one with
+      no citable evidence text, or an edit that now matches the cited range
+      all leave none -- and the auto-appended confirmation must not fail the
+      whole atomic batch when it doesn't.
     """
     threshold = next(
         (t for t in model.grade_thresholds if t.letter.strip().lower() == normalized_letter), None
     )
     if threshold is None:
         raise CorrectionApplicationError(f"unknown threshold letter: '{raw_letter}'")
-    finding = unverified_threshold_value_finding(threshold)
-    if finding is None or finding.code not in (
-        "claim_evidence_consistency_unverifiable",
-        "claim_evidence_value_mismatch",
-    ):
-        raise CorrectionApplicationError(
-            f"threshold '{raw_letter}' has no unverified value claim to confirm"
-        )
+    # A residual unverified value claim is not a precondition -- see docstring.
+    # The affirmation is a validated no-op whether or not one currently exists.
     return model
 
 
