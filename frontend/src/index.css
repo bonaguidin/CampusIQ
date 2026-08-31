@@ -6532,7 +6532,42 @@ label.profile-form-check { display: flex; flex-direction: row; align-items: cent
   text-align: left;
   cursor: pointer;
 }
+/* Row + per-row Remove affordance: the clickable row keeps its full 3-column
+   layout, the Remove button tucks to the far right. */
+.grade-profile-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+.grade-profile-row .grade-profile-row-button { flex: 1 1 auto; }
+.grade-profile-remove { flex: 0 0 auto; }
 .grade-review-card { display: flex; flex-direction: column; gap: var(--sp-4); }
+
+/* Clarifying questions for overlapping letter-grade cutoffs (spec §2A). */
+.grade-cutoff-questions { display: flex; flex-direction: column; gap: var(--sp-3); }
+.grade-cutoff-question {
+  padding: var(--sp-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.grade-cutoff-question--manual { border-style: dashed; }
+.grade-cutoff-question-text { margin: 0 0 var(--sp-2); }
+.grade-cutoff-question-actions { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+.grade-cutoff-resolved { margin: 0; color: var(--muted); font-size: var(--text-sm); }
+.grade-cutoff-editor {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.grade-cutoff-editor-heading { margin: 0; font-weight: 600; }
+.grade-cutoff-editor-row { display: flex; align-items: center; gap: var(--sp-2); flex-wrap: wrap; }
+.grade-cutoff-editor-letter { min-width: 2rem; font-weight: 600; }
+.grade-cutoff-editor-row .form-input { width: 6rem; }
 .grade-entry-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 8rem 8rem;
@@ -6553,6 +6588,21 @@ label.profile-form-check { display: flex; flex-direction: row; align-items: cent
 .grade-rule-title { margin: 0 0 var(--sp-2); font-weight: 600; }
 .grade-rule-explanation { color: var(--muted); font-size: var(--text-sm); }
 .grade-breakdown-row { display: flex; flex-direction: column; }
+
+/* Professor's rules -- persistent reference panel next to the calculator
+   (ProfessorsRules in GradeCalculatorPanel.tsx). Informational only: no
+   dismiss control, no blocking affordance. */
+.professors-rules { display: flex; flex-direction: column; gap: var(--sp-3); }
+.professors-rule {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding-bottom: var(--sp-3);
+  border-bottom: 1px solid var(--line);
+}
+.professors-rule:last-child { padding-bottom: 0; border-bottom: 0; }
+.professors-rule-type { margin: 0; font-weight: 600; font-size: var(--text-sm); }
+.professors-rule-text { margin: 0; color: var(--muted); font-size: var(--text-sm); }
 
 /* Inline review findings -- rendered next to the field/row/rule they're
    about (see InlineFindings/GeneralFindings in GradeCalculatorPanel.tsx),

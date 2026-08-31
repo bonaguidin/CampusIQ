@@ -85,6 +85,7 @@ from GradusIQ_career.syllabus.parsing import (
     SyllabusNoExtractableTextError,
     parse_syllabus_pdf,
 )
+from GradusIQ_career.syllabus.cutoff_resolution import resolve_cutoff_overlaps
 from GradusIQ_career.syllabus.reconciliation import reconcile_grade_model
 from GradusIQ_career.syllabus.relevance import select_relevant_syllabus_content
 from GradusIQ_career.syllabus.store import GradeStateConflictError
@@ -2292,6 +2293,31 @@ def _syllabus_revision_summary(revision_row: dict | None) -> dict | None:
     }
 
 
+def _confirmed_suppression_sets(
+    clarifying_answers: dict,
+) -> tuple[set[frozenset[str]], set[str]]:
+    """Rebuild reconcile_grade_model's confirmed_cutoff_pairs /
+    confirmed_value_claims from the persisted clarifying_answers keyed log,
+    so a re-reconciliation in the read path honours questions the student
+    has already answered. Keys written by service.apply_student_corrections:
+    'cutoff_overlap:<winner>,<loser>' and 'claim_evidence:threshold:<letter>'.
+    """
+    cutoff_pairs: set[frozenset[str]] = set()
+    value_claims: set[str] = set()
+    for key, answer in clarifying_answers.items():
+        if not isinstance(answer, dict):
+            continue
+        if key.startswith("cutoff_overlap:"):
+            winner, loser = answer.get("winner"), answer.get("loser")
+            if winner and loser:
+                cutoff_pairs.add(frozenset((str(winner), str(loser))))
+        elif key.startswith("claim_evidence:threshold:"):
+            letter = answer.get("letter")
+            if letter:
+                value_claims.add(str(letter).strip().lower())
+    return cutoff_pairs, value_claims
+
+
 def _syllabus_profile_detail_response(assembled: dict) -> dict:
     reconciliation = assembled["reconciliation"]
     grade_state = assembled["grade_state"]
@@ -2300,11 +2326,39 @@ def _syllabus_profile_detail_response(assembled: dict) -> dict:
     # assembled["reconciliation"] is always the ORIGINAL extraction's result
     # (service.get_syllabus_grade_profile never reconstructs the confirmed
     # candidate's). Once corrections have been applied, the candidate's OWN
-    # re-reconciliation is what the review UI actually needs to show --
-    # reconstruct it here rather than exposing only the pre-correction status.
+    # re-reconciliation is what the review UI needs -- and it must be a real
+    # re-run, not reconciliation_result_from_row(confirmed=True), which only
+    # relabels the stale original-extraction findings. The review UI drives
+    # its per-finding affirm/resolve actions off this findings list, and
+    # after e.g. a SET_MAXIMUM correction the set of claim_evidence findings
+    # can differ from what was stored at ingest. Suppression sets are
+    # rebuilt from the persisted clarifying_answers so cutoff / value-claim
+    # questions the student has already answered stay suppressed.
     confirmed_reconciliation = None
     if current_revision is not None and current_revision.get("confirmed_grade_model") is not None:
-        confirmed_reconciliation = syllabus_read.reconciliation_result_from_row(current_revision, confirmed=True)
+        confirmed_model = syllabus_read.confirmed_grade_model_from_row(current_revision)
+        confirmed_content = syllabus_read.relevant_content_from_row(current_revision)
+        confirmed_cutoff_pairs, confirmed_value_claims = _confirmed_suppression_sets(
+            current_revision.get("clarifying_answers") or {}
+        )
+        confirmed_reconciliation = reconcile_grade_model(
+            confirmed_model,
+            confirmed_content,
+            confirmed_cutoff_pairs=confirmed_cutoff_pairs,
+            confirmed_value_claims=confirmed_value_claims,
+        )
+
+    # Cutoff-overlap resolution proposal, computed from whichever grade
+    # model the client is currently acting on (the corrected candidate once
+    # it exists, else the raw extraction). `resolved` entries are
+    # propose/confirm questions a frontend can render directly; `unresolved`
+    # entries still require the student to set threshold values manually via
+    # a SET_MINIMUM/SET_MAXIMUM correction. Empty arrays when there are no
+    # overlapping thresholds.
+    current_model = assembled["confirmed_grade_model"] or assembled["extracted_grade_model"]
+    cutoff_overlap_resolution = resolve_cutoff_overlaps(
+        current_model.grade_thresholds if current_model else []
+    ).model_dump(mode="json")
 
     return {
         "id": assembled["profile"]["id"],
@@ -2332,6 +2386,8 @@ def _syllabus_profile_detail_response(assembled: dict) -> dict:
             confirmed_reconciliation.model_dump(mode="json") if confirmed_reconciliation else None
         ),
         "corrections": current_revision.get("corrections", []) if current_revision else [],
+        "clarifying_answers": current_revision.get("clarifying_answers", {}) if current_revision else {},
+        "cutoff_overlap_resolution": cutoff_overlap_resolution,
         "grade_state": grade_state.model_dump(mode="json") if grade_state else None,
         "grade_state_revision": assembled["grade_state_revision"],
     }
@@ -2462,6 +2518,30 @@ def get_me_syllabus_grade_profile(request: Request, profile_id: str) -> dict:
         return _syllabus_profile_detail_response(assembled)
     except syllabus_read.PersistedRecordInvalidError as exc:
         raise HTTPException(status_code=502, detail="Could not read this syllabus grade profile.") from exc
+
+
+@router.delete(
+    "/api/v2/student/me/syllabus-grade-profiles/{profile_id}",
+    dependencies=[Depends(authorize_proxy_request)],
+)
+def delete_me_syllabus_grade_profile(request: Request, profile_id: str) -> dict:
+    """Soft delete: the profile drops off the student's list, but its
+    immutable revision history and saved grade state are left intact.
+    """
+    client = _session_client(request)
+    student_id = _resolve_session_student_id(client)
+
+    try:
+        removed = syllabus_store.soft_delete_profile(client, profile_id=profile_id, student_id=student_id)
+    except Exception as exc:  # noqa: BLE001 -- RLS denial or transport
+        raise HTTPException(status_code=502, detail="Could not remove this grade calculator.") from exc
+
+    if removed is None:
+        # 404 for both "no such profile" and "another student's profile":
+        # RLS makes them indistinguishable and a 403 would confirm the row
+        # exists. Same shape as delete_me_planned_course.
+        raise HTTPException(status_code=404, detail="No such grade calculator.")
+    return {"removed": profile_id}
 
 
 @router.post(

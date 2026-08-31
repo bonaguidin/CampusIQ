@@ -4,6 +4,7 @@ No network: OpenRouter is a fake client, Supabase is a small in-memory
 double. Mirrors tests/test_api_v2_resume.py's fixture shape.
 """
 
+import copy
 import io
 import json
 
@@ -69,6 +70,38 @@ def clean_model_pdf() -> bytes:
     return _build_pdf([[("Midterm: 30%", 10, False), ("Final: 40%", 10, False), ("Project: 30%", 10, False)]])
 
 
+def overlapping_cutoffs_pdf() -> bytes:
+    return _build_pdf(
+        [
+            [
+                ("Midterm: 30%", 10, False),
+                ("Final: 40%", 10, False),
+                ("Project: 30%", 10, False),
+                ("A: 91-100", 10, False),
+                ("B: 80-90", 10, False),
+                ("C: 70-80", 10, False),
+            ]
+        ]
+    )
+
+
+def unverifiable_thresholds_pdf() -> bytes:
+    return _build_pdf(
+        [
+            [
+                ("Midterm: 30%", 10, False),
+                ("Final: 40%", 10, False),
+                ("Project: 30%", 10, False),
+                ("A: at least 90%", 10, False),
+                ("B: >= 80% and < 90%", 10, False),
+                ("C: >= 70% and < 80%", 10, False),
+                ("D: >= 60% and < 70%", 10, False),
+                ("F: below 60%", 10, False),
+            ]
+        ]
+    )
+
+
 def blank_pdf() -> bytes:
     buf = io.BytesIO()
     canvas = rl_canvas.Canvas(buf, pagesize=letter)
@@ -124,6 +157,40 @@ CLEAN_MODEL_RESPONSE = {
     "warnings": [],
 }
 
+# A model that genuinely needs student review for a reason unrelated to any
+# informational (curve/late-work/makeup) rule: the replacement rule's
+# target names a category that does not exist -> unresolved_rule_reference
+# (blocking). Built from the PHYS 207 response so every evidence string
+# still appears verbatim in phys_207_pdf() (Phase 4 verification). The
+# curve rule rides along and, post-reclassification, is non-blocking on its
+# own -- so removing just the broken replacement rule reaches ACCEPTED.
+REVIEW_REQUIRED_MODEL_RESPONSE = copy.deepcopy(PHYS_207_MODEL_RESPONSE)
+REVIEW_REQUIRED_MODEL_RESPONSE["rules"][0]["target"] = "Makeup Exam"
+
+# Otherwise-clean model whose only blocker is an isolated, cleanly-resolvable
+# B/C cutoff overlap at 80. Threshold evidence strings appear verbatim in
+# overlapping_cutoffs_pdf().
+OVERLAPPING_CUTOFFS_MODEL_RESPONSE = copy.deepcopy(CLEAN_MODEL_RESPONSE)
+OVERLAPPING_CUTOFFS_MODEL_RESPONSE["grade_thresholds"] = [
+    {"letter": "A", "minimum": 91, "maximum": 100, "evidence": {"page": 1, "text": "A: 91-100", "confidence": 1.0}},
+    {"letter": "B", "minimum": 80, "maximum": 90, "evidence": {"page": 1, "text": "B: 80-90", "confidence": 1.0}},
+    {"letter": "C", "minimum": 70, "maximum": 80, "evidence": {"page": 1, "text": "C: 70-80", "confidence": 1.0}},
+]
+
+# Otherwise-clean model whose only blocker is that every A-F threshold's
+# verbatim evidence uses ">= / < / at least / below" phrasing the
+# deterministic range check cannot parse -> five claim_evidence_consistency_
+# unverifiable findings. Evidence strings appear verbatim in
+# unverifiable_thresholds_pdf(). Mirrors ECEN 248's real shape.
+UNVERIFIABLE_THRESHOLDS_MODEL_RESPONSE = copy.deepcopy(CLEAN_MODEL_RESPONSE)
+UNVERIFIABLE_THRESHOLDS_MODEL_RESPONSE["grade_thresholds"] = [
+    {"letter": "A", "minimum": 90, "maximum": 100, "evidence": {"page": 1, "text": "A: at least 90%", "confidence": 1.0}},
+    {"letter": "B", "minimum": 80, "maximum": 89, "evidence": {"page": 1, "text": "B: >= 80% and < 90%", "confidence": 1.0}},
+    {"letter": "C", "minimum": 70, "maximum": 79, "evidence": {"page": 1, "text": "C: >= 70% and < 80%", "confidence": 1.0}},
+    {"letter": "D", "minimum": 60, "maximum": 69, "evidence": {"page": 1, "text": "D: >= 60% and < 70%", "confidence": 1.0}},
+    {"letter": "F", "minimum": 0, "maximum": 59, "evidence": {"page": 1, "text": "F: below 60%", "confidence": 1.0}},
+]
+
 
 class FakeAI:
     def __init__(self, text=None):
@@ -174,6 +241,7 @@ class FakeQuery:
         self.op = None
         self.payload = None
         self.filters = []
+        self.null_filters = []
         self._order = None
 
     def select(self, *a, **k):
@@ -194,6 +262,12 @@ class FakeQuery:
         self.filters.append((column, value))
         return self
 
+    def is_(self, column, value):
+        # Only the "<column> IS NULL" form is used (soft-delete filters).
+        assert value == "null", f"FakeQuery.is_ only supports 'null', got {value!r}"
+        self.null_filters.append(column)
+        return self
+
     def order(self, column, desc=False):
         self._order = (column, desc)
         return self
@@ -205,7 +279,12 @@ class FakeQuery:
         return [r for r in rows if r.get("student_id") == self.student_id]
 
     def _matched(self):
-        return [r for r in self._visible() if all(r.get(c) == v for c, v in self.filters)]
+        return [
+            r
+            for r in self._visible()
+            if all(r.get(c) == v for c, v in self.filters)
+            and all(r.get(c) is None for c in self.null_filters)
+        ]
 
     def execute(self):
         if self.op == "select":
@@ -226,6 +305,7 @@ class FakeQuery:
                 row.setdefault("confirmed_at", None)
             if self.table_name == "syllabus_grade_profiles":
                 row.setdefault("current_revision_id", None)
+                row.setdefault("deleted_at", None)
             self.db.tables[self.table_name].append(row)
             return _Result([dict(row)])
         if self.op == "update":
@@ -329,6 +409,89 @@ def test_read_nonexistent_profile_404(client, db, monkeypatch):
     assert response.status_code == 404
 
 
+# --- soft delete ---------------------------------------------------------------------
+
+
+def test_soft_deleted_profile_disappears_from_list(client, db, monkeypatch):
+    patch_session(monkeypatch, db)
+    monkeypatch.setattr(api, "build_client", lambda: FakeAI())
+    created = ingest(client).json()
+    profile_id = created["id"]
+
+    assert [p["id"] for p in client.get(LIST_URL, headers=HEADERS).json()["syllabus_grade_profiles"]] == [profile_id]
+
+    delete_response = client.delete(profile_url(profile_id), headers=HEADERS)
+    assert delete_response.status_code == 200
+    assert delete_response.json() == {"removed": profile_id}
+
+    # Gone from the list; the underlying rows (revision history, grade state)
+    # are untouched -- this is a soft delete, not a cascade.
+    assert client.get(LIST_URL, headers=HEADERS).json() == {"syllabus_grade_profiles": []}
+    assert len(db.tables["syllabus_grade_revisions"]) == 1
+    profile_row = db.tables["syllabus_grade_profiles"][0]
+    assert profile_row["deleted_at"] is not None
+
+    # A re-upload of the same course does not resurface or reuse the
+    # soft-deleted profile.
+    recreated = ingest(client).json()
+    assert recreated["id"] != profile_id
+    assert recreated["possible_duplicate_profiles"] == []
+
+
+def test_cannot_soft_delete_another_students_profile(client, db, monkeypatch):
+    patch_session(monkeypatch, db, student_id=STUDENT_A)
+    monkeypatch.setattr(api, "build_client", lambda: FakeAI())
+    created = ingest(client).json()
+    profile_id = created["id"]
+
+    patch_session(monkeypatch, db, student_id=STUDENT_B)
+    response = client.delete(profile_url(profile_id), headers=HEADERS)
+    assert response.status_code == 404
+
+    # Student A's profile is untouched and still listed for them.
+    patch_session(monkeypatch, db, student_id=STUDENT_A)
+    assert db.tables["syllabus_grade_profiles"][0]["deleted_at"] is None
+    assert [p["id"] for p in client.get(LIST_URL, headers=HEADERS).json()["syllabus_grade_profiles"]] == [profile_id]
+
+
+def test_soft_delete_nonexistent_profile_404(client, db, monkeypatch):
+    patch_session(monkeypatch, db)
+    response = client.delete(profile_url("nonexistent-id"), headers=HEADERS)
+    assert response.status_code == 404
+
+
+def test_soft_deleted_profile_404s_on_direct_access(client, db, monkeypatch):
+    """Removing a profile hides it everywhere, not just from the list: the
+    detail read and every mutating/compute route resolve it through the
+    same get_profile lookup, which now excludes soft-deleted rows.
+    """
+    patch_session(monkeypatch, db)
+    monkeypatch.setattr(api, "build_client", lambda: FakeAI())
+    created = ingest(client).json()
+    profile_id = created["id"]
+
+    assert client.delete(profile_url(profile_id), headers=HEADERS).status_code == 200
+
+    assert client.get(profile_url(profile_id), headers=HEADERS).status_code == 404
+    assert client.post(f"{profile_url(profile_id)}/confirm", headers=HEADERS).status_code == 404
+    assert client.post(f"{profile_url(profile_id)}/calculate", headers=HEADERS, json={}).status_code == 404
+    assert client.post(
+        f"{profile_url(profile_id)}/corrections",
+        headers=HEADERS,
+        json={"corrections": [{"target_type": "rule", "operation": "remove_rule", "rule_index": 1}]},
+    ).status_code == 404
+    assert client.put(
+        f"{profile_url(profile_id)}/grade-state",
+        headers=HEADERS,
+        json={"category_scores": [{"category_name": "Mid-term Exam", "actual_score": 88}]},
+    ).status_code == 404
+    assert client.post(
+        f"{profile_url(profile_id)}/solve-target",
+        headers=HEADERS,
+        json={"target_component": "Final Exam", "target_grade": 90},
+    ).status_code == 404
+
+
 def test_cross_student_mutation_and_calculation_paths_404(client, db, monkeypatch):
     """Student B must not be able to touch Student A's syllabus profile via
     any mutating/compute route -- not just GET. Each of these resolves
@@ -384,13 +547,30 @@ def test_cross_student_mutation_and_calculation_paths_404(client, db, monkeypatc
 
 def test_valid_pdf_ingestion_review_required(client, db, monkeypatch):
     patch_session(monkeypatch, db)
-    monkeypatch.setattr(api, "build_client", lambda: FakeAI())
+    monkeypatch.setattr(api, "build_client", lambda: FakeAI(text=json.dumps(REVIEW_REQUIRED_MODEL_RESPONSE)))
     response = ingest(client)
     assert response.status_code == 200
     body = response.json()
     assert body["reconciliation"]["status"] == "needs_student_review"
     assert body["calculator_ready"] is False
     assert body["extracted_grade_model"]["categories"][0]["name"] == "Mid-term Exam"
+
+
+def test_curve_syllabus_reaches_calculator_ready_without_correction(client, db, monkeypatch):
+    # A correctly-extracted curve is informational, not a blocker
+    # (syllabus-review redesign §2C / §5): ingest lands ACCEPTED and the
+    # student confirms without removing the curve.
+    patch_session(monkeypatch, db)
+    monkeypatch.setattr(api, "build_client", lambda: FakeAI())
+    created = ingest(client).json()
+    assert created["reconciliation"]["status"] == "accepted"
+    assert created["calculator_ready"] is False
+
+    confirmed = client.post(f"{profile_url(created['id'])}/confirm", headers=HEADERS)
+    assert confirmed.status_code == 200
+    assert confirmed.json()["calculator_ready"] is True
+    assert any(r["rule_type"] == "curve" for r in confirmed.json()["extracted_grade_model"]["rules"])
+    assert any(r["rule_type"] == "curve" for r in confirmed.json()["confirmed_grade_model"]["rules"])
 
 
 def test_valid_pdf_ingestion_persists(client, db, monkeypatch):
@@ -451,19 +631,16 @@ def test_duplicate_course_signal(client, db, monkeypatch):
 
 def test_correction_and_confirm_reaches_calculator_ready(client, db, monkeypatch):
     patch_session(monkeypatch, db)
-    monkeypatch.setattr(api, "build_client", lambda: FakeAI())
+    monkeypatch.setattr(api, "build_client", lambda: FakeAI(text=json.dumps(REVIEW_REQUIRED_MODEL_RESPONSE)))
     created = ingest(client).json()
     assert created["reconciliation"]["status"] == "needs_student_review"
 
+    # Remove only the broken replacement rule (index 0); the curve rule
+    # (index 1) stays and is non-blocking on its own.
     corrected = client.post(
         f"{profile_url(created['id'])}/corrections",
         headers=HEADERS,
-        json={
-            "corrections": [
-                {"target_type": "rule", "operation": "remove_rule", "rule_index": 1},
-                {"target_type": "warning", "operation": "dismiss_warning", "warning_index": 0},
-            ]
-        },
+        json={"corrections": [{"target_type": "rule", "operation": "remove_rule", "rule_index": 0}]},
     )
     assert corrected.status_code == 200
     assert corrected.json()["confirmed_reconciliation"]["status"] == "accepted"
@@ -476,11 +653,12 @@ def test_correction_and_confirm_reaches_calculator_ready(client, db, monkeypatch
     confirmed = client.post(f"{profile_url(created['id'])}/confirm", headers=HEADERS)
     assert confirmed.status_code == 200
     assert confirmed.json()["calculator_ready"] is True
-    # original extracted curve preserved
-    assert any(r["rule_type"] == "curve" for r in confirmed.json()["extracted_grade_model"]["rules"])
+    # original extracted (broken) rule preserved; gone from the confirmed model
+    assert any(r["target"] == "Makeup Exam" for r in confirmed.json()["extracted_grade_model"]["rules"])
     confirmed_rules = confirmed.json()["confirmed_grade_model"]["rules"]
-    assert not any(r["rule_type"] == "curve" for r in confirmed_rules)
-    assert any(r["rule_type"] == "replacement" for r in confirmed_rules)
+    assert not any(r["target"] == "Makeup Exam" for r in confirmed_rules)
+    # the informational curve rule is retained -- it never needed removing
+    assert any(r["rule_type"] == "curve" for r in confirmed_rules)
 
 
 def test_invalid_correction_rejected(client, db, monkeypatch):
@@ -495,6 +673,145 @@ def test_invalid_correction_rejected(client, db, monkeypatch):
     assert response.status_code == 422
 
 
+def test_cutoff_overlap_resolution_appears_and_confirming_it_unblocks_calculator_ready(client, db, monkeypatch):
+    patch_session(monkeypatch, db)
+    monkeypatch.setattr(api, "build_client", lambda: FakeAI(text=json.dumps(OVERLAPPING_CUTOFFS_MODEL_RESPONSE)))
+    created = ingest(
+        client, pdf_bytes=overlapping_cutoffs_pdf(), course_code="TEST 100", term="Spring 2027"
+    ).json()
+
+    # the resolution proposal is on the detail response, and the overlap
+    # still blocks until the student confirms it
+    assert created["reconciliation"]["status"] == "needs_student_review"
+    assert created["calculator_ready"] is False
+    resolution = created["cutoff_overlap_resolution"]
+    assert resolution["unresolved"] == []
+    assert [(r["winner"], r["loser"], r["boundary"]) for r in resolution["resolved"]] == [("B", "C", 80.0)]
+    assert created["clarifying_answers"] == {}
+
+    corrected = client.post(
+        f"{profile_url(created['id'])}/corrections",
+        headers=HEADERS,
+        json={"corrections": [{"target_type": "threshold", "operation": "resolve_cutoff_overlap", "threshold_letter": "C"}]},
+    ).json()
+    assert corrected["confirmed_reconciliation"]["status"] == "accepted"
+    assert corrected["clarifying_answers"] == {
+        "cutoff_overlap:B,C": {"answer": "confirm_default", "boundary": 80.0, "winner": "B", "loser": "C"}
+    }
+    # thresholds untouched -- the resolution proposal is unchanged
+    assert corrected["cutoff_overlap_resolution"]["resolved"][0]["loser"] == "C"
+    c_threshold = next(t for t in corrected["confirmed_grade_model"]["grade_thresholds"] if t["letter"] == "C")
+    assert (c_threshold["minimum"], c_threshold["maximum"]) == (70, 80)
+
+    confirmed = client.post(f"{profile_url(created['id'])}/confirm", headers=HEADERS)
+    assert confirmed.status_code == 200
+    assert confirmed.json()["calculator_ready"] is True
+
+
+def test_confirming_threshold_value_claims_re_reconciles_and_unblocks_calculator_ready(client, db, monkeypatch):
+    patch_session(monkeypatch, db)
+    monkeypatch.setattr(
+        api, "build_client", lambda: FakeAI(text=json.dumps(UNVERIFIABLE_THRESHOLDS_MODEL_RESPONSE))
+    )
+    created = ingest(
+        client, pdf_bytes=unverifiable_thresholds_pdf(), course_code="ECEN 248", term="Fall 2026"
+    ).json()
+
+    assert created["reconciliation"]["status"] == "needs_student_review"
+    assert created["calculator_ready"] is False
+    assert sorted(
+        f["field"]
+        for f in created["reconciliation"]["findings"]
+        if f["code"] == "claim_evidence_consistency_unverifiable"
+    ) == ["threshold:A", "threshold:B", "threshold:C", "threshold:D", "threshold:F"]
+
+    corrected = client.post(
+        f"{profile_url(created['id'])}/corrections",
+        headers=HEADERS,
+        json={
+            "corrections": [
+                {"target_type": "threshold", "operation": "confirm_threshold_value", "threshold_letter": letter}
+                for letter in ("A", "B", "C", "D", "F")
+            ]
+        },
+    ).json()
+
+    # confirmed_reconciliation is a real re-run of the corrected model, not
+    # the stale original-extraction findings: every claim_evidence finding
+    # is gone and the status is accepted.
+    assert corrected["confirmed_reconciliation"]["status"] == "accepted"
+    assert not any(
+        f["code"].startswith("claim_evidence")
+        for f in corrected["confirmed_reconciliation"]["findings"]
+    )
+    assert corrected["clarifying_answers"] == {
+        f"claim_evidence:threshold:{letter}": {"answer": "confirm_value", "letter": letter}
+        for letter in ("a", "b", "c", "d", "f")
+    }
+    # the ORIGINAL extraction's reconciliation is untouched
+    assert corrected["reconciliation"]["status"] == "needs_student_review"
+    # thresholds and their verbatim evidence are unchanged
+    a_threshold = next(t for t in corrected["confirmed_grade_model"]["grade_thresholds"] if t["letter"] == "A")
+    assert (a_threshold["minimum"], a_threshold["maximum"], a_threshold["evidence"]["text"]) == (
+        90,
+        100,
+        "A: at least 90%",
+    )
+
+    confirmed = client.post(f"{profile_url(created['id'])}/confirm", headers=HEADERS)
+    assert confirmed.status_code == 200
+    assert confirmed.json()["calculator_ready"] is True
+
+
+def test_confirming_only_some_threshold_value_claims_still_blocks(client, db, monkeypatch):
+    patch_session(monkeypatch, db)
+    monkeypatch.setattr(
+        api, "build_client", lambda: FakeAI(text=json.dumps(UNVERIFIABLE_THRESHOLDS_MODEL_RESPONSE))
+    )
+    created = ingest(
+        client, pdf_bytes=unverifiable_thresholds_pdf(), course_code="ECEN 248", term="Fall 2026"
+    ).json()
+
+    corrected = client.post(
+        f"{profile_url(created['id'])}/corrections",
+        headers=HEADERS,
+        json={
+            "corrections": [
+                {"target_type": "threshold", "operation": "confirm_threshold_value", "threshold_letter": letter}
+                for letter in ("A", "B", "C")
+            ]
+        },
+    ).json()
+    assert corrected["confirmed_reconciliation"]["status"] == "needs_student_review"
+    assert sorted(
+        f["field"]
+        for f in corrected["confirmed_reconciliation"]["findings"]
+        if f["code"] == "claim_evidence_consistency_unverifiable"
+    ) == ["threshold:D", "threshold:F"]
+    assert client.post(f"{profile_url(created['id'])}/confirm", headers=HEADERS).status_code == 409
+
+
+def test_confirm_threshold_value_for_a_clean_threshold_is_rejected(client, db, monkeypatch):
+    patch_session(monkeypatch, db)
+    monkeypatch.setattr(
+        api, "build_client", lambda: FakeAI(text=json.dumps(OVERLAPPING_CUTOFFS_MODEL_RESPONSE))
+    )
+    created = ingest(
+        client, pdf_bytes=overlapping_cutoffs_pdf(), course_code="TEST 100", term="Spring 2027"
+    ).json()
+    response = client.post(
+        f"{profile_url(created['id'])}/corrections",
+        headers=HEADERS,
+        json={
+            "corrections": [
+                {"target_type": "threshold", "operation": "confirm_threshold_value", "threshold_letter": "A"}
+            ]
+        },
+    )
+    assert response.status_code == 422
+    assert "no unverified value claim" in response.json()["detail"]["message"]
+
+
 def test_confirm_without_correction_when_accepted(client, db, monkeypatch):
     patch_session(monkeypatch, db)
     monkeypatch.setattr(api, "build_client", lambda: FakeAI(text=json.dumps(CLEAN_MODEL_RESPONSE)))
@@ -507,7 +824,7 @@ def test_confirm_without_correction_when_accepted(client, db, monkeypatch):
 
 def test_confirm_when_not_accepted_returns_409(client, db, monkeypatch):
     patch_session(monkeypatch, db)
-    monkeypatch.setattr(api, "build_client", lambda: FakeAI())
+    monkeypatch.setattr(api, "build_client", lambda: FakeAI(text=json.dumps(REVIEW_REQUIRED_MODEL_RESPONSE)))
     created = ingest(client).json()
     response = client.post(f"{profile_url(created['id'])}/confirm", headers=HEADERS)
     assert response.status_code == 409

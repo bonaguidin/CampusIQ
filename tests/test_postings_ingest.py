@@ -19,11 +19,17 @@ import pytest
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "scripts" / "job_postings"))
 
+import workday  # noqa: E402
 from ingest import (  # noqa: E402
+    UPSERT_CONFLICT,
     DryRunStore,
+    FetchOutcome,
     RunReport,
+    SupabaseStore,
+    dedupe_by_conflict_key,
     load_target_roles,
     resolve_and_attach_identity,
+    run_workday,
 )
 from normalize import (  # noqa: E402
     ADZUNA,
@@ -336,3 +342,286 @@ def test_retention_window_must_be_positive():
     for bad in (0, -1):
         with pytest.raises(ValueError):
             cutoff_for(bad)
+
+
+# ---------------------------------------------------------------------------
+# run_workday -- the (source x employer) driver
+# ---------------------------------------------------------------------------
+
+def _wd_row(job_id: str, location: str, company: str = "Atmos Energy") -> dict:
+    """A row shaped like workday.normalize_listing() output."""
+    return {
+        "source": "workday",
+        "source_job_id": job_id,
+        "title": f"Analyst {job_id}",
+        "company": company,
+        "location": location,
+        "url": f"https://atmosenergy.wd108.myworkdayjobs.com/job/x/Analyst_{job_id}",
+        "posted_date": "2026-08-19",
+        "salary_min": None,
+        "salary_max": None,
+        "raw_payload": {"externalPath": f"/job/x/Analyst_{job_id}"},
+    }
+
+
+@pytest.fixture
+def one_atmos_board(monkeypatch):
+    board = workday.WorkdayBoard(
+        "atmosenergy.wd108.myworkdayjobs.com", "atmosenergy", "External_Career_Site"
+    )
+    monkeypatch.setattr(
+        workday, "usable_workday_boards", lambda: [("Atmos Energy", board, False)]
+    )
+    return board
+
+
+def test_run_workday_keeps_dfw_rows_and_drops_the_rest(monkeypatch, one_atmos_board):
+    fetched = [
+        _wd_row("JR1", "Texas - Dallas"),      # keep
+        _wd_row("JR2", "Plano, TX"),           # keep
+        _wd_row("JR3", "Atlanta, GA"),         # drop -- non-DFW
+        _wd_row("JR4", "2 Locations"),         # drop -- no locality to match
+        _wd_row("JR5", "Remote - US"),         # drop -- remote, no DFW anchor
+    ]
+    monkeypatch.setattr(workday, "fetch_board", lambda *a, **k: (fetched, []))
+
+    store = DryRunStore()
+    report = run_workday(live=True, write=False, store=store)
+
+    kept = {r["source_job_id"] for r in store.rows}
+    assert kept == {"JR1", "JR2"}
+    assert all(r["is_dfw"] is True for r in store.rows)
+    assert {r["location_kind"] for r in store.rows} == {"dfw_metro"}
+    assert report.rows_upserted == 2
+
+
+def test_run_workday_always_dfw_keeps_facility_string_rows(monkeypatch):
+    """Parkland's locationsText is a building name with no city token, so
+    classify_location returns non-DFW. always_dfw=True keeps it anyway and
+    labels it dfw_metro."""
+    board = workday.WorkdayBoard("wd12.myworkdaysite.com", "parklandhospital",
+                                 "Parkland_Careers")
+    monkeypatch.setattr(
+        workday, "usable_workday_boards",
+        lambda: [("Parkland Health", board, True)],
+    )
+    fetched = [
+        _wd_row("JR1", "Main Hospital Bldg - 1st Flr"),   # no city token
+        _wd_row("JR2", "Moody Outpatient Center"),        # no city token
+        _wd_row("JR3", "Southeast Dallas Health Ctr"),    # has "dallas"
+    ]
+    monkeypatch.setattr(workday, "fetch_board", lambda *a, **k: (fetched, []))
+
+    store = DryRunStore()
+    run_workday(live=True, write=False, store=store)
+
+    assert {r["source_job_id"] for r in store.rows} == {"JR1", "JR2", "JR3"}
+    assert all(r["is_dfw"] is True for r in store.rows)
+    assert {r["location_kind"] for r in store.rows} == {"dfw_metro"}
+
+
+def test_run_workday_without_always_dfw_drops_the_same_facility_rows(monkeypatch):
+    """Same rows, always_dfw=False -> the two city-less strings are dropped,
+    only the one naming a DFW suburb survives."""
+    board = workday.WorkdayBoard("wd12.myworkdaysite.com", "parklandhospital",
+                                 "Parkland_Careers")
+    monkeypatch.setattr(
+        workday, "usable_workday_boards",
+        lambda: [("Parkland Health", board, False)],
+    )
+    fetched = [
+        _wd_row("JR1", "Main Hospital Bldg - 1st Flr"),
+        _wd_row("JR2", "Moody Outpatient Center"),
+        _wd_row("JR3", "Southeast Dallas Health Ctr"),
+    ]
+    monkeypatch.setattr(workday, "fetch_board", lambda *a, **k: (fetched, []))
+
+    store = DryRunStore()
+    run_workday(live=True, write=False, store=store)
+
+    assert {r["source_job_id"] for r in store.rows} == {"JR3"}
+
+
+def test_run_workday_stamps_target_role_null(monkeypatch, one_atmos_board):
+    monkeypatch.setattr(
+        workday, "fetch_board", lambda *a, **k: ([_wd_row("JR1", "Dallas, TX")], [])
+    )
+    store = DryRunStore()
+    run_workday(live=True, write=False, store=store)
+    assert store.rows[0]["target_role"] is None
+
+
+def test_run_workday_fetch_log_is_employer_keyed_and_satisfies_has_subject(
+    monkeypatch, one_atmos_board
+):
+    # 45 listings seen -> ceil(45/20) = 3 pages -> quota_used proxy = 3.
+    rows = [_wd_row(f"JR{i}", "Dallas, TX") for i in range(45)]
+    monkeypatch.setattr(workday, "fetch_board", lambda *a, **k: (rows, []))
+
+    store = DryRunStore()
+    run_workday(live=True, write=False, store=store)
+
+    assert len(store.log_rows) == 1
+    log = store.log_rows[0]
+    assert log["source"] == "workday"
+    assert log["employer"] == "Atmos Energy"
+    assert log["target_role"] is None
+    # job_posting_fetch_log_has_subject: target_role IS NOT NULL OR employer IS NOT NULL
+    assert (log["target_role"] is not None) or (log["employer"] is not None)
+    assert log["status"] == "success"
+    assert log["quota_used"] == 3
+
+
+def test_run_workday_one_employer_store_failure_does_not_abort_the_sweep(monkeypatch):
+    """A DB write error for one employer must be caught, logged, and the
+    remaining employers still processed -- same catch-log-continue posture as
+    a fetch_board failure. Regression for the 2026-08-30 crash, where an
+    upsert error propagated and killed the whole sweep partway through."""
+    boards = [
+        ("Alpha", workday.WorkdayBoard("a.wd1.myworkdayjobs.com", "a", "S"), False),
+        ("Bravo", workday.WorkdayBoard("b.wd1.myworkdayjobs.com", "b", "S"), False),
+        ("Charlie", workday.WorkdayBoard("c.wd1.myworkdayjobs.com", "c", "S"), False),
+    ]
+    monkeypatch.setattr(workday, "usable_workday_boards", lambda: boards)
+    monkeypatch.setattr(
+        workday, "fetch_board",
+        lambda board, employer, *, live: ([_wd_row(f"{employer}-1", "Dallas, TX",
+                                                   company=employer)], []),
+    )
+
+    class FlakyStore(DryRunStore):
+        def upsert_postings(self, rows):
+            if rows and rows[0]["company"] == "Bravo":
+                raise RuntimeError("simulated DB write failure")
+            return super().upsert_postings(rows)
+
+    store = FlakyStore()
+    report = run_workday(live=True, write=False, store=store)
+
+    assert {(o.employer, o.status) for o in report.outcomes} == {
+        ("Alpha", "success"), ("Bravo", "error"), ("Charlie", "success"),
+    }
+    assert {r["source_job_id"] for r in store.rows} == {"Alpha-1", "Charlie-1"}
+    assert len(store.log_rows) == 3   # every employer logged, Bravo included
+    bravo = next(l for l in store.log_rows if l["employer"] == "Bravo")
+    assert bravo["status"] == "error"
+    assert "simulated DB write failure" in bravo["error_detail"]
+
+
+def test_run_workday_records_a_failed_board_without_aborting_the_sweep(monkeypatch):
+    good = workday.WorkdayBoard("a.wd1.myworkdayjobs.com", "a", "S")
+    bad = workday.WorkdayBoard("b.wd1.myworkdayjobs.com", "b", "S")
+    monkeypatch.setattr(
+        workday, "usable_workday_boards",
+        lambda: [("Bad Co", bad, False), ("Good Co", good, False)],
+    )
+
+    def fake_fetch_board(board, employer, *, live):
+        if employer == "Bad Co":
+            from errors import JobPostingRequestError
+
+            raise JobPostingRequestError("Workday HTTP 503", transient=True)
+        return ([_wd_row("JR9", "Irving, TX")], [])
+
+    monkeypatch.setattr(workday, "fetch_board", fake_fetch_board)
+
+    store = DryRunStore()
+    report = run_workday(live=True, write=False, store=store)
+
+    statuses = {(o.employer, o.status) for o in report.outcomes}
+    assert statuses == {("Bad Co", "error"), ("Good Co", "success")}
+    assert {r["source_job_id"] for r in store.rows} == {"JR9"}
+    assert len(store.log_rows) == 2  # both boards logged
+
+
+def test_run_workday_dry_run_writes_nothing(monkeypatch, one_atmos_board):
+    # live=False: workday.fetch_board returns ([], []) and prints the request.
+    monkeypatch.setattr(workday, "fetch_board", lambda *a, **k: ([], []))
+    store = DryRunStore()
+    report = run_workday(live=False, write=False, store=store)
+    assert store.rows == []
+    assert store.log_rows == []
+    assert report.rows_upserted == 0
+
+
+def test_run_workday_does_not_touch_the_vendor_fetch_log_payload():
+    """Adzuna/JSearch log rows must stay byte-identical -- no employer key."""
+    vendor = FetchOutcome(source="adzuna", target_role="Finance Intern",
+                          results_count=3, quota_used=1)
+    assert "employer" not in vendor.log_row()
+    wd = FetchOutcome(source="workday", employer="Atmos Energy", results_count=3)
+    assert wd.log_row()["employer"] == "Atmos Energy"
+    assert wd.log_row()["target_role"] is None
+
+
+# ---------------------------------------------------------------------------
+# Batch de-dupe -- one requisition posted at N locations must not 21000
+# ---------------------------------------------------------------------------
+
+def test_dedupe_by_conflict_key_keeps_first_seen():
+    rows = [
+        {"source": "workday", "source_job_id": "R1", "location": "Frisco"},
+        {"source": "workday", "source_job_id": "R1", "location": "Plano"},   # dup
+        {"source": "workday", "source_job_id": "R2", "location": "Dallas"},
+        {"source": "workday", "source_job_id": "R1", "location": "Irving"},  # dup
+    ]
+    out = dedupe_by_conflict_key(rows)
+    assert [(r["source_job_id"], r["location"]) for r in out] == [
+        ("R1", "Frisco"), ("R2", "Dallas"),
+    ]
+
+
+def test_dedupe_is_scoped_by_source_not_just_job_id():
+    rows = [
+        {"source": "workday", "source_job_id": "R1"},
+        {"source": "adzuna", "source_job_id": "R1"},  # same id, different source -> kept
+    ]
+    assert len(dedupe_by_conflict_key(rows)) == 2
+
+
+class _FakeUpsertClient:
+    """Captures the payload handed to .upsert(on_conflict=...).execute()."""
+    def __init__(self):
+        self.upsert_payload = None
+        self.upsert_on_conflict = None
+
+    def table(self, _name):
+        return self
+
+    def upsert(self, payload, on_conflict=None):
+        self.upsert_payload = payload
+        self.upsert_on_conflict = on_conflict
+        return self
+
+    def execute(self):
+        return type("R", (), {"data": self.upsert_payload})()
+
+
+def test_supabase_upsert_never_sends_a_duplicate_conflict_key():
+    """Regression for the 2026-08-30 crash: a batch where one requisition
+    repeats (open at several store locations) must reach PostgREST with no
+    (source, source_job_id) appearing twice -- otherwise Postgres raises
+    21000 'ON CONFLICT DO UPDATE cannot affect row a second time' and the
+    whole sweep aborts."""
+    store = SupabaseStore.__new__(SupabaseStore)   # skip __init__ / real client
+    store.client = _FakeUpsertClient()
+    store._cluster_cache = {}
+
+    batch = [
+        {"source": "workday", "source_job_id": "R00323100-1", "title": "PT Merch Mgr",
+         "location": loc, "_match_rule": "seed"}
+        for loc in ("Frisco", "Plano", "Irving", "Denton", "Arlington")
+    ] + [
+        {"source": "workday", "source_job_id": "R00319440-1", "title": "Stocker",
+         "location": "Southlake"},
+    ]
+
+    written = store.upsert_postings(batch)
+
+    payload = store.client.upsert_payload
+    assert store.client.upsert_on_conflict == UPSERT_CONFLICT
+    keys = [(r["source"], r["source_job_id"]) for r in payload]
+    assert len(keys) == len(set(keys)) == 2      # 5 Michaels dups collapsed to 1
+    assert written == 2
+    assert all("_match_rule" not in r for r in payload)   # private keys still stripped
+    assert all("fetched_at" in r for r in payload)

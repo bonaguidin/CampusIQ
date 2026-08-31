@@ -36,7 +36,28 @@ const EXTRACTED_MODEL = {
   warnings: [{ type: 'possible_curve', description: 'No deterministic curve formula is given.', related_field: null }],
 }
 
-const CONFIRMED_MODEL = { ...EXTRACTED_MODEL, rules: [EXTRACTED_MODEL.rules[0]], warnings: [] }
+// Confirmed model keeps the deterministic replacement rule (calculator-
+// executed) plus a spread of informational rules -- curve / late work /
+// makeup -- that must land in the persistent "Professor's rules" panel,
+// not the review list.
+const CONFIRMED_MODEL = {
+  ...EXTRACTED_MODEL,
+  rules: [
+    EXTRACTED_MODEL.rules[0], // replacement (deterministic)
+    EXTRACTED_MODEL.rules[1], // curve
+    {
+      rule_type: 'late_work', description: 'No late homework will be accepted.',
+      source: null, target: null, condition: null,
+      evidence: { page: 3, text: 'No late homework will be accepted.', confidence: 1.0 },
+    },
+    {
+      rule_type: 'makeup', description: 'Makeup exams require a documented, university-excused absence.',
+      source: null, target: null, condition: null,
+      evidence: { page: 4, text: 'Makeup exams require a documented, university-excused absence.', confidence: 1.0 },
+    },
+  ],
+  warnings: [],
+}
 
 // field values below use the real backend shapes (reconciliation.py): a
 // per-rule-instance index for non_deterministic_grading_rule (rules[1] is
@@ -80,6 +101,8 @@ function detail(overrides = {}) {
     reconciliation: RECONCILIATION_REVIEW,
     confirmed_reconciliation: null,
     corrections: [],
+    clarifying_answers: {},
+    cutoff_overlap_resolution: { schema_version: '1', resolved: [], unresolved: [] },
     grade_state: null,
     grade_state_revision: null,
     possible_duplicate_profiles: [],
@@ -115,6 +138,7 @@ test('Grade Calculator: empty state, upload, review, confirm, grade entry, calcu
   })
   let state = 'empty' // empty -> reviewing -> corrected -> confirmed
   let capturedIngestBody = null
+  let capturedGradeStateBody = null
 
   const apiPlugin = {
     name: 'grade-calculator-api',
@@ -165,6 +189,7 @@ test('Grade Calculator: empty state, upload, review, confirm, grade entry, calcu
         }
         if (path === `/api/v2/student/me/syllabus-grade-profiles/${PROFILE_ID}/grade-state` && request.method === 'PUT') {
           const body = JSON.parse(await readBody(request))
+          capturedGradeStateBody = body
           return json(response, 200, { revision: 1, category_scores: body.category_scores, assessment_scores: body.assessment_scores })
         }
         if (path === `/api/v2/student/me/syllabus-grade-profiles/${PROFILE_ID}/calculate` && request.method === 'POST') {
@@ -246,41 +271,46 @@ test('Grade Calculator: empty state, upload, review, confirm, grade entry, calcu
   assert.ok(capturedIngestBody, 'ingest request body was captured')
   assert.match(capturedIngestBody, /name="institution"\r\n\r\nTexas A&M University\r\n/)
 
-  // --- review-required state with findings + curve rule ---
-  await page.getByText('Your syllabus says grades may be curved').waitFor()
+  // --- review-required state: the curve rule still lists under "Special
+  //     grading rules" with its can't-calculate note, but the rule-based
+  //     findings (non_deterministic_grading_rule, possible_curve) no longer
+  //     appear in the review list -- they're informational now ---
   await page.getByText("The syllabus does not provide enough information").waitFor()
 
   // --- the old flat findings list is gone entirely ---
   assert.equal(await page.locator('.grade-findings-list').count(), 0)
   assert.equal(await page.locator('.grade-finding').count(), 0)
 
-  // --- non_deterministic_grading_rule renders inline on its OWN rule card,
-  //     with the real per-rule detail (not the old blanket generic string) ---
-  const curveCard = page.locator('.grade-rule-card', { hasText: 'Curve' })
-  await curveCard.getByText("CampusIQ can't calculate this curve rule automatically: Grades may be curved upward.").waitFor()
-  assert.equal(
-    await page.getByText("CampusIQ can't calculate this rule automatically.", { exact: true }).count(),
-    0,
-    'the old generic no-detail string must not appear',
-  )
-  // the replacement rule card (deterministic, no matching finding) carries no inline finding
-  const replacementCard = page.locator('.grade-rule-card', { hasText: 'Score replacement' })
-  assert.equal(await replacementCard.locator('.grade-inline-finding').count(), 0)
+  const reviewCard = page.locator('.grade-review-card')
+  // rule-informational findings are filtered out of the review list
+  assert.equal(await reviewCard.locator('[data-finding-code="non_deterministic_grading_rule"]').count(), 0)
+  assert.equal(await reviewCard.locator('[data-finding-code="possible_curve"]').count(), 0)
+  assert.equal(await reviewCard.getByText('Your syllabus says grades may be curved').count(), 0)
+  assert.equal(await reviewCard.getByText("CampusIQ can't calculate this curve rule automatically").count(), 0)
+  // no inline finding on any rule card anymore
+  assert.equal(await page.locator('.grade-rule-card .grade-inline-finding').count(), 0)
+  // the "Ignore this rule for What-If calculations" button is gone
+  assert.equal(await page.getByRole('button', { name: 'Ignore this rule for What-If calculations' }).count(), 0)
 
-  // --- overlapping_grade_thresholds has no dedicated row in the review step
-  //     (thresholds aren't rendered there), so it falls back to the General
-  //     section at the top of the review card, with the real letters/ranges ---
+  // --- the grading breakdown no longer shows a per-category assessment
+  //     count: it was never a blocker and it's meaningless to a student
+  //     entering one average per category ---
+  const breakdown = page.locator('[aria-label="Grading breakdown"]')
+  await breakdown.waitFor()
+  assert.equal(await breakdown.getByText('Number of assessments: Unknown').count(), 0)
+  assert.equal(await breakdown.getByText(/\d+ assessments/).count(), 0)
+
+  // --- overlapping_grade_thresholds is NOT reclassified: it still shows in
+  //     the General section at the top of the review card, with the real
+  //     letters/ranges ---
   const general = page.locator('.grade-inline-findings--general')
   await general.getByText('Letter grades B and B+ have overlapping cutoffs: B is 80–89, B+ is 85–92.').waitFor()
-  await general.getByText('Your syllabus says grades may be curved').waitFor()
 
   // --- dismiss is session-only: dismissing the threshold finding hides it
   //     immediately, with no network call, and it comes back on reopen ---
   const thresholdFinding = general.locator('.grade-inline-finding', { hasText: 'overlapping cutoffs' })
   await thresholdFinding.getByRole('button', { name: 'Dismiss this finding' }).click()
   assert.equal(await general.getByText('overlapping cutoffs').count(), 0)
-  // the curve-rule finding, untouched, is still there
-  await curveCard.getByText("CampusIQ can't calculate this curve rule automatically").waitFor()
 
   await page.getByRole('button', { name: '← Back to your calculators' }).click()
   await page.locator('.grade-profile-row-button', { hasText: 'PHYS 207' }).click()
@@ -288,12 +318,31 @@ test('Grade Calculator: empty state, upload, review, confirm, grade entry, calcu
   // reopening re-fetched the same findings and dismissal did not persist
   await page.locator('.grade-inline-findings--general').getByText('overlapping cutoffs').waitFor()
 
-  // --- ignore the curve rule (correction), then confirm ---
-  await page.getByRole('button', { name: 'Ignore this rule for What-If calculations' }).click()
+  // --- confirm straight from review; rules no longer gate calculator_ready ---
   await page.getByRole('button', { name: 'Confirm' }).click()
 
   // --- grade entry ---
   await page.getByRole('heading', { name: 'Enter your grades' }).waitFor()
+
+  // --- Professor's rules panel: persistent beside the calculator, fed
+  //     from the grade model's rules[] (not findings). Every informational
+  //     rule type renders with its label, text and page provenance; the
+  //     deterministic replacement rule does NOT appear here; there is no
+  //     dismiss / ignore control. ---
+  const rulesPanel = page.locator('[data-testid="professors-rules"]')
+  await rulesPanel.getByRole('heading', { name: "Professor's rules" }).waitFor()
+  await rulesPanel.getByText('Grades may be curved upward.').waitFor()
+  await rulesPanel.getByText('No late homework will be accepted.').waitFor()
+  await rulesPanel.getByText('Makeup exams require a documented, university-excused absence.').waitFor()
+  await rulesPanel.getByText('Curve', { exact: true }).waitFor()
+  await rulesPanel.getByText('Late work', { exact: true }).waitFor()
+  await rulesPanel.getByText('Makeup work', { exact: true }).waitFor()
+  await rulesPanel.getByText('Source: page 3').waitFor()
+  await rulesPanel.getByText('Source: page 4').waitFor()
+  assert.equal(await rulesPanel.getByText('Score replacement').count(), 0, 'deterministic replacement rule must not appear in Professor\'s rules')
+  assert.equal(await rulesPanel.getByText(/replaces Midterm/).count(), 0)
+  assert.equal(await rulesPanel.getByRole('button').count(), 0, 'Professor\'s rules panel has no dismiss / ignore control')
+
   await page.fill('#actual-category\\:Mid-term\\ Exam', '78')
   await page.fill('#actual-category\\:Lecture\\ Quizzes', '92')
   await page.fill('#actual-category\\:Recitation\\ Quizzes', '88')
@@ -301,6 +350,22 @@ test('Grade Calculator: empty state, upload, review, confirm, grade entry, calcu
 
   await page.getByText('81.4%').waitFor()
   await page.getByText('Based on 50% of the course completed').waitFor()
+
+  // --- Save grades: the per-category averages the student typed are what
+  //     gets persisted as category_scores[].actual_score (no per-assessment
+  //     breakdown required) ---
+  await page.getByRole('button', { name: 'Save grades' }).click()
+  await page.waitForFunction(() => !document.querySelector('button[aria-busy="true"]'))
+  assert.ok(capturedGradeStateBody, 'Save grades sent a grade-state PUT')
+  assert.deepEqual(
+    [...capturedGradeStateBody.category_scores].sort((a, b) => a.category_name.localeCompare(b.category_name)),
+    [
+      { category_name: 'Lecture Quizzes', actual_score: 92 },
+      { category_name: 'Mid-term Exam', actual_score: 78 },
+      { category_name: 'Recitation Quizzes', actual_score: 88 },
+    ],
+  )
+  assert.deepEqual(capturedGradeStateBody.assessment_scores, [])
 
   // --- target solver ---
   await page.selectOption('#target-component', 'Final Exam')
@@ -355,4 +420,400 @@ test('Grade Calculator replaces a framework 404 with friendly list-load copy', {
   await page.getByRole('button', { name: 'Grade Calculator', exact: true }).click()
   await page.getByRole('alert').getByText("We couldn't load your saved grade calculators. Try again.").waitFor()
   assert.equal(await page.getByText('Not Found', { exact: true }).count(), 0)
+})
+
+test('Grade Calculator: remove a calculator from the list (confirm-gated soft delete)', { timeout: 30_000 }, async (t) => {
+  const planning = planningRoutes({ terms: [] })
+  const PROFILE = {
+    id: PROFILE_ID, institution: 'tamu', course_code: 'ECEN 248', term: 'Fall 2026', section: '501',
+    review_state: 'needs_review', created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z',
+    calculator_ready: false, current_grade: null,
+  }
+  let listRows = [PROFILE]
+  let deleteCount = 0
+
+  const apiPlugin = {
+    name: 'grade-calculator-remove',
+    configureServer(server) {
+      server.middlewares.use((request, response, next) => {
+        const path = request.url?.split('?')[0]
+        if (planning.handle(path, request.method, request, response)) return undefined
+        if (path === '/api/v2/student/me/requirement-satisfaction') return json(response, 404, { detail: 'Not found.' })
+        if (path?.startsWith('/api/v2/student/me/analysis-cache/')) return json(response, 404, { detail: 'Not found.' })
+        if (path === '/api/v2/student/me/syllabus-grade-profiles' && request.method === 'GET') {
+          return json(response, 200, { syllabus_grade_profiles: listRows })
+        }
+        if (path === `/api/v2/student/me/syllabus-grade-profiles/${PROFILE_ID}` && request.method === 'DELETE') {
+          deleteCount += 1
+          listRows = []
+          return json(response, 200, { removed: PROFILE_ID })
+        }
+        next()
+      })
+    },
+  }
+  const server = await createServer({
+    root: new URL('..', import.meta.url).pathname,
+    cacheDir: new URL('../node_modules/.vite-grade-calculator-remove', import.meta.url).pathname,
+    logLevel: 'silent',
+    plugins: [apiPlugin],
+    server: { host: '127.0.0.1' },
+  })
+  await server.listen()
+  t.after(async () => server.close())
+  const address = server.httpServer?.address()
+  assert.ok(address && typeof address === 'object')
+  const browser = await chromium.launch()
+  t.after(async () => browser.close())
+  const page = await browser.newPage()
+  await page.goto(`http://127.0.0.1:${address.port}/authenticated-dashboard-preview.html?mode=complete`)
+  await page.getByRole('button', { name: 'Academic' }).click()
+  await page.getByRole('button', { name: 'Grade Calculator', exact: true }).click()
+
+  const row = page.locator('.grade-profile-row', { hasText: 'ECEN 248' })
+  await row.waitFor()
+  const removeButton = row.getByRole('button', { name: /Remove grade calculator for ECEN 248/ })
+
+  // --- cancelling the confirm does nothing ---
+  page.once('dialog', (d) => d.dismiss())
+  await removeButton.click()
+  await page.waitForTimeout(100)
+  assert.equal(deleteCount, 0, 'dismissing the confirm must not call DELETE')
+  await row.waitFor()
+
+  // --- accepting the confirm removes the row ---
+  page.once('dialog', (d) => {
+    assert.match(d.message(), /Remove the grade calculator for ECEN 248\?/)
+    d.accept()
+  })
+  await removeButton.click()
+
+  await page.locator('.grade-profile-row', { hasText: 'ECEN 248' }).waitFor({ state: 'detached' })
+  assert.equal(deleteCount, 1, 'accepting the confirm calls DELETE exactly once')
+  await page.getByText('See what you need to reach your target grade').waitFor()
+})
+
+// --- cutoff-overlap clarifying questions -----------------------------------------
+
+const CUTOFF_MODEL = {
+  ...EXTRACTED_MODEL,
+  grade_thresholds: [
+    { letter: 'A', minimum: 91, maximum: 100, evidence: { page: 2, text: 'A: 91-100', confidence: 1.0 } },
+    { letter: 'B', minimum: 80, maximum: 90, evidence: { page: 2, text: 'B: 80-90', confidence: 1.0 } },
+    { letter: 'C', minimum: 70, maximum: 80, evidence: { page: 2, text: 'C: 70-80', confidence: 1.0 } },
+  ],
+  rules: [],
+  warnings: [],
+}
+
+const RECONCILIATION_BC_OVERLAP = {
+  status: 'needs_student_review',
+  findings: [
+    { code: 'overlapping_grade_thresholds', severity: 'error', message: "thresholds 'B' (80-90) and 'C' (70-80) overlap", field: 'B,C' },
+  ],
+  evidence_coverage: { total_claims: 5, supported_claims: 5, coverage_ratio: 1, unsupported_claims: [] },
+}
+const RESOLUTION_BC = { schema_version: '1', resolved: [{ letters: ['B', 'C'], boundary: 80, winner: 'B', loser: 'C' }], unresolved: [] }
+
+// Boot the panel with a middleware `handle(path, method, request, response)`
+// that returns true when it answered. Navigates into the single profile.
+async function mountCutoffPanel(t, cacheKey, handle) {
+  const planning = planningRoutes({ terms: [] })
+  const apiPlugin = {
+    name: cacheKey,
+    configureServer(server) {
+      server.middlewares.use(async (request, response, next) => {
+        const path = request.url?.split('?')[0]
+        if (planning.handle(path, request.method, request, response)) return undefined
+        if (path === '/api/v2/student/me/requirement-satisfaction') return json(response, 404, { detail: 'Not found.' })
+        if (path?.startsWith('/api/v2/student/me/analysis-cache/')) return json(response, 404, { detail: 'Not found.' })
+        if (path === '/api/v2/student/me/syllabus-grade-profiles' && request.method === 'GET') {
+          return json(response, 200, { syllabus_grade_profiles: [{ id: PROFILE_ID, institution: 'tamu', course_code: 'PHYS 207', term: 'Fall 2026', section: '529', review_state: 'needs_review', created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z', calculator_ready: false, current_grade: null }] })
+        }
+        if (await handle(path, request.method, request, response)) return undefined
+        next()
+      })
+    },
+  }
+  const server = await createServer({
+    root: new URL('..', import.meta.url).pathname,
+    cacheDir: new URL(`../node_modules/.vite-${cacheKey}`, import.meta.url).pathname,
+    logLevel: 'silent',
+    plugins: [apiPlugin],
+    server: { host: '127.0.0.1' },
+  })
+  await server.listen()
+  t.after(async () => server.close())
+  const address = server.httpServer?.address()
+  assert.ok(address && typeof address === 'object')
+  const browser = await chromium.launch()
+  t.after(async () => browser.close())
+  const page = await browser.newPage()
+  await page.goto(`http://127.0.0.1:${address.port}/authenticated-dashboard-preview.html?mode=complete`)
+  await page.getByRole('button', { name: 'Academic' }).click()
+  await page.getByRole('button', { name: 'Grade Calculator', exact: true }).click()
+  await page.locator('.grade-profile-row-button', { hasText: 'PHYS 207' }).click()
+  return page
+}
+
+test('Grade Calculator: cutoff-overlap question — propose, confirm, unblock', { timeout: 45_000 }, async (t) => {
+  let confirmed = false
+  let correctionBody = null
+  const page = await mountCutoffPanel(t, 'grade-calculator-cutoff-confirm', async (path, method, request, response) => {
+    if (path === `/api/v2/student/me/syllabus-grade-profiles/${PROFILE_ID}` && method === 'GET') {
+      json(response, 200, detail({ extracted_grade_model: CUTOFF_MODEL, reconciliation: RECONCILIATION_BC_OVERLAP, cutoff_overlap_resolution: RESOLUTION_BC }))
+      return true
+    }
+    if (path === `/api/v2/student/me/syllabus-grade-profiles/${PROFILE_ID}/corrections` && method === 'POST') {
+      correctionBody = JSON.parse(await readBody(request))
+      confirmed = true
+      json(response, 200, detail({
+        extracted_grade_model: CUTOFF_MODEL,
+        confirmed_grade_model: CUTOFF_MODEL,
+        calculator_ready: true,
+        review_state: 'needs_review',
+        reconciliation: RECONCILIATION_BC_OVERLAP,
+        confirmed_reconciliation: RECONCILIATION_ACCEPTED,
+        corrections: correctionBody.corrections,
+        clarifying_answers: { 'cutoff_overlap:B,C': { answer: 'confirm_default', boundary: 80, winner: 'B', loser: 'C' } },
+        cutoff_overlap_resolution: RESOLUTION_BC,
+      }))
+      return true
+    }
+    return false
+  })
+
+  // the question renders with ranges joined from grade_thresholds
+  const question = page.locator('.grade-cutoff-question[data-cutoff-pair="B,C"]')
+  await question.getByText(/Your syllabus lists B as 80–90 and C as 70–80/).waitFor()
+  await question.getByText(/80 is B, not C\. Sound right\?/).waitFor()
+  // the raw overlapping_grade_thresholds finding is NOT also shown for a resolvable pair
+  assert.equal(await page.locator('.grade-inline-findings--general').getByText(/overlapping cutoffs/).count(), 0)
+
+  await question.getByRole('button', { name: "Yes, that's right" }).click()
+  await page.getByRole('heading', { name: 'Enter your grades' }).waitFor()
+
+  assert.ok(confirmed)
+  assert.deepEqual(correctionBody.corrections, [
+    { target_type: 'threshold', operation: 'resolve_cutoff_overlap', threshold_letter: 'B' },
+  ])
+  // question gone once answered
+  assert.equal(await page.locator('.grade-cutoff-question[data-cutoff-pair="B,C"]').count(), 0)
+})
+
+test('Grade Calculator: unresolved overlap is not an auto-question; manual editor for both entry points', { timeout: 45_000 }, async (t) => {
+  let corrections = []
+  const RESOLUTION_MIXED = {
+    schema_version: '1',
+    resolved: [{ letters: ['B', 'C'], boundary: 80, winner: 'B', loser: 'C' }],
+    unresolved: [{ letters: ['A', 'C'], reason: 'non_adjacent_letters' }],
+  }
+  const RECON_MIXED = {
+    status: 'needs_student_review',
+    findings: [
+      { code: 'overlapping_grade_thresholds', severity: 'error', message: "thresholds 'B' (80-90) and 'C' (70-80) overlap", field: 'B,C' },
+      { code: 'overlapping_grade_thresholds', severity: 'error', message: "thresholds 'A' (75-100) and 'C' (70-80) overlap", field: 'A,C' },
+    ],
+    evidence_coverage: { total_claims: 5, supported_claims: 5, coverage_ratio: 1, unsupported_claims: [] },
+  }
+  const model = { ...CUTOFF_MODEL, grade_thresholds: [
+    { letter: 'A', minimum: 75, maximum: 100, evidence: null },
+    { letter: 'B', minimum: 80, maximum: 90, evidence: null },
+    { letter: 'C', minimum: 70, maximum: 80, evidence: null },
+  ] }
+  const page = await mountCutoffPanel(t, 'grade-calculator-cutoff-manual', async (path, method, request, response) => {
+    if (path === `/api/v2/student/me/syllabus-grade-profiles/${PROFILE_ID}` && method === 'GET') {
+      json(response, 200, detail({ extracted_grade_model: model, reconciliation: RECON_MIXED, cutoff_overlap_resolution: RESOLUTION_MIXED }))
+      return true
+    }
+    if (path === `/api/v2/student/me/syllabus-grade-profiles/${PROFILE_ID}/corrections` && method === 'POST') {
+      corrections = JSON.parse(await readBody(request)).corrections
+      json(response, 200, detail({
+        extracted_grade_model: model, confirmed_grade_model: model, calculator_ready: true,
+        reconciliation: RECON_MIXED, confirmed_reconciliation: RECONCILIATION_ACCEPTED,
+        corrections, cutoff_overlap_resolution: RESOLUTION_MIXED,
+      }))
+      return true
+    }
+    return false
+  })
+
+  // A/C is unresolved: no "Sound right?" proposal, but its raw finding stays,
+  // and there's a "Set the cutoffs" action.
+  const unresolved = page.locator('.grade-cutoff-question[data-cutoff-pair="A,C"]')
+  await unresolved.getByText(/cutoffs for A and C overlap and CampusIQ can't pick a safe default/).waitFor()
+  assert.equal(await unresolved.getByText(/Sound right\?/).count(), 0)
+  await page.locator('.grade-inline-findings--general').getByText("Letter grades A and C have overlapping cutoffs: A is 75–100, C is 70–80.").waitFor()
+
+  // "No, let me set it myself" on the resolvable B/C question opens the editor
+  await page.locator('.grade-cutoff-question[data-cutoff-pair="B,C"]').getByRole('button', { name: 'No, let me set it myself' }).click()
+  await page.locator('[data-testid="cutoff-manual-editor"][data-cutoff-pair="B,C"]').waitFor()
+  await page.fill('#cutoff-C-max', '79')
+  await page.getByRole('button', { name: 'Save cutoffs' }).click()
+  await page.getByRole('heading', { name: 'Enter your grades' }).waitFor()
+  assert.deepEqual(corrections, [{ target_type: 'threshold', operation: 'set_maximum', threshold_letter: 'C', value: 79 }])
+})
+
+test('Grade Calculator: an answered cutoff shows resolved and does not re-ask on reload', { timeout: 45_000 }, async (t) => {
+  // Answered, but still in review because one unrelated finding blocks -- so
+  // the clarifying-questions section stays on screen.
+  const answered = detail({
+    extracted_grade_model: CUTOFF_MODEL,
+    reconciliation: RECONCILIATION_BC_OVERLAP,
+    confirmed_grade_model: CUTOFF_MODEL,
+    calculator_ready: false,
+    corrections: [{ target_type: 'threshold', operation: 'resolve_cutoff_overlap', threshold_letter: 'B' }],
+    clarifying_answers: { 'cutoff_overlap:B,C': { answer: 'confirm_default', boundary: 80, winner: 'B', loser: 'C' } },
+    cutoff_overlap_resolution: RESOLUTION_BC,
+    confirmed_reconciliation: {
+      status: 'needs_student_review',
+      findings: [{ code: 'grading_method_unknown', severity: 'warning', message: 'x', field: 'grading_method' }],
+      evidence_coverage: RECONCILIATION_ACCEPTED.evidence_coverage,
+    },
+  })
+
+  const page = await mountCutoffPanel(t, 'grade-calculator-cutoff-answered', async (path, method, request, response) => {
+    if (path === `/api/v2/student/me/syllabus-grade-profiles/${PROFILE_ID}` && method === 'GET') {
+      json(response, 200, answered)
+      return true
+    }
+    return false
+  })
+
+  await page.locator('.grade-cutoff-resolved[data-cutoff-pair="B,C"]').getByText('80 counts as B, not C').waitFor()
+  assert.equal(await page.locator('.grade-cutoff-question[data-cutoff-pair="B,C"]').count(), 0)
+
+  // navigate away and back — still resolved, still no question
+  await page.getByRole('button', { name: '← Back to your calculators' }).click()
+  await page.locator('.grade-profile-row-button', { hasText: 'PHYS 207' }).click()
+  await page.locator('.grade-cutoff-resolved[data-cutoff-pair="B,C"]').waitFor()
+  assert.equal(await page.locator('.grade-cutoff-question[data-cutoff-pair="B,C"]').count(), 0)
+})
+
+test('Grade Calculator: non-blocking informational findings are filtered from the review list', { timeout: 45_000 }, async (t) => {
+  const model = { ...EXTRACTED_MODEL, grade_thresholds: [], rules: [], warnings: [] }
+  const recon = {
+    status: 'needs_student_review',
+    findings: [
+      // non-blocking, no correction path -> must NOT show in the review list
+      { code: 'unknown_assessment_count', severity: 'warning', message: 'The exact number of Lecture Quizzes is unknown.', field: 'Lecture Quizzes' },
+      // genuinely blocking -> must still show
+      { code: 'grading_method_unknown', severity: 'warning', message: 'grading_method could not be determined from the syllabus', field: 'grading_method' },
+    ],
+    evidence_coverage: { total_claims: 4, supported_claims: 4, coverage_ratio: 1, unsupported_claims: [] },
+  }
+  const page = await mountCutoffPanel(t, 'grade-calculator-nonblocking-filter', async (path, method, request, response) => {
+    if (path === `/api/v2/student/me/syllabus-grade-profiles/${PROFILE_ID}` && method === 'GET') {
+      json(response, 200, detail({ extracted_grade_model: model, reconciliation: recon }))
+      return true
+    }
+    return false
+  })
+
+  await page.getByRole('heading', { name: 'Needs your review' }).waitFor()
+  // the blocking finding is still shown, so the review list isn't just empty
+  assert.ok((await page.locator('[data-finding-code="grading_method_unknown"]').count()) >= 1)
+  // unknown_assessment_count is filtered out entirely
+  assert.equal(await page.locator('[data-finding-code="unknown_assessment_count"]').count(), 0)
+  assert.equal(await page.getByText("doesn't say exactly how many assessments are in this category").count(), 0)
+})
+
+// --- per-threshold value-claim clarifying questions ------------------------------
+
+// One otherwise-clean threshold whose evidence uses ">= / <" phrasing the
+// backend range check cannot parse -> one claim_evidence_consistency_
+// unverifiable finding, which is the only blocker.
+const VALUE_CLAIM_MODEL = {
+  ...EXTRACTED_MODEL,
+  grade_thresholds: [
+    { letter: 'A', minimum: 90, maximum: 100, evidence: { page: 2, text: 'A: 90-100', confidence: 1.0 } },
+    { letter: 'B', minimum: 80, maximum: 89, evidence: { page: 2, text: 'B: >= 80% and < 90%', confidence: 1.0 } },
+  ],
+  rules: [],
+  warnings: [],
+}
+
+const RECONCILIATION_B_UNVERIFIABLE = {
+  status: 'needs_student_review',
+  findings: [
+    { code: 'category_weight_validation', severity: 'valid', message: 'category weights sum to 100.0', field: 'categories' },
+    {
+      code: 'claim_evidence_consistency_unverifiable',
+      severity: 'warning',
+      message: "could not deterministically verify threshold:B against its cited evidence text ('B: >= 80% and < 90%')",
+      field: 'threshold:B',
+    },
+  ],
+  evidence_coverage: { total_claims: 5, supported_claims: 5, coverage_ratio: 1, unsupported_claims: [] },
+}
+
+test('Grade Calculator: threshold value-claim question — affirm, unblock', { timeout: 45_000 }, async (t) => {
+  let correctionBody = null
+  const page = await mountCutoffPanel(t, 'grade-calculator-value-claim-confirm', async (path, method, request, response) => {
+    if (path === `/api/v2/student/me/syllabus-grade-profiles/${PROFILE_ID}` && method === 'GET') {
+      json(response, 200, detail({ extracted_grade_model: VALUE_CLAIM_MODEL, reconciliation: RECONCILIATION_B_UNVERIFIABLE }))
+      return true
+    }
+    if (path === `/api/v2/student/me/syllabus-grade-profiles/${PROFILE_ID}/corrections` && method === 'POST') {
+      correctionBody = JSON.parse(await readBody(request))
+      json(response, 200, detail({
+        extracted_grade_model: VALUE_CLAIM_MODEL,
+        confirmed_grade_model: VALUE_CLAIM_MODEL,
+        calculator_ready: true,
+        reconciliation: RECONCILIATION_B_UNVERIFIABLE,
+        confirmed_reconciliation: RECONCILIATION_ACCEPTED,
+        corrections: correctionBody.corrections,
+        clarifying_answers: { 'claim_evidence:threshold:b': { answer: 'confirm_value', letter: 'b' } },
+      }))
+      return true
+    }
+    return false
+  })
+
+  const question = page.locator('.grade-cutoff-question[data-threshold-letter="B"]')
+  await question.getByText(/couldn't automatically confirm this value/).waitFor()
+  await question.getByText(/Is the B cutoff correct as we read it/).waitFor()
+  // the raw claim-evidence finding is NOT also shown as a bare review note
+  assert.equal(await page.locator('.grade-inline-findings--general').getByText(/couldn't automatically confirm this value/).count(), 0)
+
+  await question.getByRole('button', { name: "Yes, that's correct" }).click()
+  await page.getByRole('heading', { name: 'Enter your grades' }).waitFor()
+
+  assert.deepEqual(correctionBody.corrections, [
+    { target_type: 'threshold', operation: 'confirm_threshold_value', threshold_letter: 'B' },
+  ])
+  assert.equal(await page.locator('.grade-cutoff-question[data-threshold-letter="B"]').count(), 0)
+})
+
+test('Grade Calculator: an affirmed threshold value shows confirmed and does not re-ask on reload', { timeout: 45_000 }, async (t) => {
+  const answered = detail({
+    extracted_grade_model: VALUE_CLAIM_MODEL,
+    reconciliation: RECONCILIATION_B_UNVERIFIABLE,
+    confirmed_grade_model: VALUE_CLAIM_MODEL,
+    calculator_ready: false,
+    corrections: [{ target_type: 'threshold', operation: 'confirm_threshold_value', threshold_letter: 'B' }],
+    clarifying_answers: { 'claim_evidence:threshold:b': { answer: 'confirm_value', letter: 'b' } },
+    // re-reconciled: the B finding is suppressed, one unrelated finding still blocks
+    confirmed_reconciliation: {
+      status: 'needs_student_review',
+      findings: [{ code: 'grading_method_unknown', severity: 'warning', message: 'x', field: 'grading_method' }],
+      evidence_coverage: RECONCILIATION_ACCEPTED.evidence_coverage,
+    },
+  })
+
+  const page = await mountCutoffPanel(t, 'grade-calculator-value-claim-answered', async (path, method, request, response) => {
+    if (path === `/api/v2/student/me/syllabus-grade-profiles/${PROFILE_ID}` && method === 'GET') {
+      json(response, 200, answered)
+      return true
+    }
+    return false
+  })
+
+  await page.locator('.grade-cutoff-resolved[data-threshold-letter="B"]').getByText('B cutoff confirmed as correct').waitFor()
+  assert.equal(await page.locator('.grade-cutoff-question[data-threshold-letter="B"]').count(), 0)
+
+  await page.getByRole('button', { name: '← Back to your calculators' }).click()
+  await page.locator('.grade-profile-row-button', { hasText: 'PHYS 207' }).click()
+  await page.locator('.grade-cutoff-resolved[data-threshold-letter="B"]').waitFor()
+  assert.equal(await page.locator('.grade-cutoff-question[data-threshold-letter="B"]').count(), 0)
 })

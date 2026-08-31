@@ -14,6 +14,7 @@ from GradusIQ_career.syllabus.calculator import (
     UnsupportedGradingStructureError,
     UnsupportedRuleConditionError,
     calculate_grade_projection,
+    classify_grade,
     solve_required_score,
 )
 from GradusIQ_career.syllabus.models import (
@@ -373,6 +374,24 @@ def test_letter_target_resolves_from_threshold():
     result = solve_required_score(recon, phys_207_state(), target_component="Final Exam", target_letter="A")
     assert result.target_grade == 90
     assert result.target_label == "A"
+
+
+def test_classify_grade_assigns_a_shared_boundary_to_the_higher_letter():
+    # The "higher grade wins the tie" resolution (cutoff_resolution.py /
+    # RESOLVE_CUTOFF_OVERLAP) relies entirely on this: for a canonically
+    # ordered threshold list where B and C share the boundary 80,
+    # classify_grade must return "B" for 80 -- first match in list order.
+    model = GradeModel(
+        grade_thresholds=[
+            GradeThreshold(letter="A", minimum=90, maximum=100),
+            GradeThreshold(letter="B", minimum=80, maximum=90),
+            GradeThreshold(letter="C", minimum=70, maximum=80),
+        ],
+    )
+    assert classify_grade(model, 80) == "B"  # boundary -> higher grade
+    assert classify_grade(model, 90) == "A"
+    assert classify_grade(model, 85) == "B"
+    assert classify_grade(model, 75) == "C"
 
 
 def test_unknown_letter_target_rejected():

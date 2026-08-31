@@ -19,14 +19,18 @@ import pytest
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "scripts" / "job_postings"))
 
+import workday  # noqa: E402
 from workday import (  # noqa: E402
+    MAX_PAGES,
     WorkdayBoard,
     describe_shape,
+    fetch_board,
     listings_from,
     normalize_listing,
     parse_posted_on,
     parse_workday_slug,
     total_from,
+    usable_workday_boards,
 )
 
 # Captured live, 2026-08-19.
@@ -129,23 +133,41 @@ def test_normalize_the_live_listing():
     )
 
 
-def test_job_id_prefers_the_requisition_number():
-    """externalPath embeds the title, so it forks when a title is edited and
-    one posting becomes two rows. The requisition number does not move."""
+def test_job_id_is_the_post_underscore_segment_of_the_path():
+    """externalPath is '<title-slug>_<REQ>'; the REQ is what stays put when a
+    title is edited. Unchanged for the Atmos fixture (no '-n' suffix)."""
     row = normalize_listing(LIVE_LISTING, ATMOS, "Atmos Energy")
     assert row["source_job_id"] == "JR13846"
 
 
-def test_job_id_falls_back_to_the_path_tail():
-    listing = {k: v for k, v in LIVE_LISTING.items() if k != "bulletFields"}
-    row = normalize_listing(listing, ATMOS, "Atmos Energy")
-    assert row["source_job_id"] == "Sr-Applications-Developer_JR13846"
+def test_job_id_ignores_bulletfields_even_when_present():
+    """bulletFields layout is board-specific and must not be trusted: Michaels
+    puts the US state at [0] and the real req at [2]. Regression for the
+    source_job_id='Texas' crash -- 70+ rows collapsing onto one upsert key."""
+    michaels_listing = {
+        "title": "PT Merchandise Manager",
+        "externalPath": "/job/Frisco-5255-Eldorado-Pkwy/PT-Merchandise-Manager_R00323100-1",
+        "locationsText": "Frisco-5255 Eldorado Pkwy",
+        "postedOn": "Posted Today",
+        "bulletFields": ["Texas", "United States; Country; Frisco; Texas", "R00323100"],
+    }
+    board = WorkdayBoard("michaels.wd5.myworkdayjobs.com", "michaels", "External")
+    row = normalize_listing(michaels_listing, board, "Michaels")
+    assert row["source_job_id"] == "R00323100-1"        # from the URL, not "Texas"
 
 
-def test_empty_bulletfields_falls_back_rather_than_producing_a_blank_id():
-    listing = {**LIVE_LISTING, "bulletFields": [""]}
+def test_job_id_keeps_the_whole_tail_when_there_is_no_underscore():
+    listing = {**LIVE_LISTING, "externalPath": "/job/Somewhere/Plain-Title-Slug"}
     row = normalize_listing(listing, ATMOS, "Atmos Energy")
-    assert row["source_job_id"] == "Sr-Applications-Developer_JR13846"
+    assert row["source_job_id"] == "Plain-Title-Slug"
+
+
+@pytest.mark.parametrize("req", ["R-120761-1", "R-2026-70969", "JR-019450"])
+def test_job_id_preserves_hyphenated_requisition_numbers(req):
+    """Split is on '_', not '-': reqs contain hyphens."""
+    listing = {**LIVE_LISTING, "externalPath": f"/job/Dallas-Texas/Some-Role_{req}"}
+    row = normalize_listing(listing, ATMOS, "Atmos Energy")
+    assert row["source_job_id"] == req
 
 
 @pytest.mark.parametrize("missing", ["externalPath", "title"])
@@ -195,3 +217,99 @@ def test_describe_shape_reports_the_live_response():
 def test_describe_shape_flags_a_missing_field():
     payload = {"jobPostings": [{"title": "A"}], "total": 1}
     assert "MISSING" in describe_shape(payload, ATMOS)
+
+
+# ---------------------------------------------------------------------------
+# Pagination -- fetch_board loops offset until `total`, capped by max_pages
+# ---------------------------------------------------------------------------
+
+def _page(n_items: int, total: int) -> dict:
+    return {
+        "total": total,
+        "jobPostings": [
+            {
+                "title": f"Role {i}",
+                "externalPath": f"/job/Texas---Dallas/Role-{i}_JR{i:05d}",
+                "locationsText": "Texas - Dallas",
+                "postedOn": "Posted Today",
+                "bulletFields": [f"JR{i:05d}"],
+            }
+            for i in range(n_items)
+        ],
+    }
+
+
+def test_max_pages_is_generous_enough_for_the_largest_verified_board():
+    """Michaels reported 2,000 and AT&T 1,409 postings on 2026-08-19. At
+    PAGE_SIZE=20 those need 100 and 71 pages; the cap must clear them with
+    headroom so a real board is never silently truncated."""
+    assert MAX_PAGES * workday.PAGE_SIZE >= 5000
+
+
+def test_fetch_board_pages_through_to_total(monkeypatch):
+    # 3 full pages then a short one: 65 postings across a 65-total board.
+    pages = [_page(20, 65), _page(20, 65), _page(20, 65), _page(5, 65)]
+    calls: list[int] = []
+
+    def fake_fetch_page(board, *, offset=0, limit=workday.PAGE_SIZE):
+        calls.append(offset)
+        return pages[len(calls) - 1]
+
+    monkeypatch.setattr(workday, "fetch_page", fake_fetch_page)
+    monkeypatch.setattr(workday.time, "sleep", lambda *_: None)
+
+    rows, errors = fetch_board(ATMOS, "Atmos Energy", live=True)
+
+    assert len(rows) == 65
+    assert errors == []
+    assert calls == [0, 20, 40, 60]  # stopped once offset >= total, no 5th call
+
+
+def test_fetch_board_respects_the_max_pages_cap(monkeypatch):
+    # A board that never reports a usable `total` would loop forever without
+    # the cap. Force it: every page is full and `total` stays huge.
+    def fake_fetch_page(board, *, offset=0, limit=workday.PAGE_SIZE):
+        return _page(20, 10**9)
+
+    monkeypatch.setattr(workday, "fetch_page", fake_fetch_page)
+    monkeypatch.setattr(workday.time, "sleep", lambda *_: None)
+
+    rows, _ = fetch_board(ATMOS, "Atmos Energy", live=True, max_pages=3)
+
+    assert len(rows) == 60  # exactly max_pages * PAGE_SIZE, then it stops
+
+
+# ---------------------------------------------------------------------------
+# usable_workday_boards -- the CSV rows the ingest actually sweeps
+# ---------------------------------------------------------------------------
+
+def test_usable_workday_boards_are_the_twelve_with_a_site_path():
+    boards = usable_workday_boards()
+    names = {name for name, _, _ in boards}
+
+    assert len(boards) == 12
+    # Confirmed usable on 2026-08-19 -- host AND site segment present.
+    assert {
+        "Fidelity Investments", "AT&T", "Toyota Motor North America", "Solera",
+        "Vistra Energy", "Atmos Energy", "Parkland Health", "McKesson",
+        "Southwest Airlines", "Kimberly-Clark", "Michaels", "Copart",
+    } == names
+    # The 7 host-only rows must NOT be swept -- their slug builds no board.
+    for excluded in ("Bank of America", "Comerica", "USAA", "Capital One",
+                     "Globe Life", "PwC", "Accenture"):
+        assert excluded not in names
+
+
+def test_usable_workday_boards_returns_real_board_objects():
+    boards = usable_workday_boards()
+    atmos = next(b for name, b, _ in boards if name == "Atmos Energy")
+    assert atmos.jobs_url == (
+        "https://atmosenergy.wd108.myworkdayjobs.com"
+        "/wday/cxs/atmosenergy/External_Career_Site/jobs"
+    )
+
+
+def test_usable_workday_boards_flags_parkland_always_dfw_and_no_one_else():
+    flags = {name: always_dfw for name, _, always_dfw in usable_workday_boards()}
+    assert flags["Parkland Health"] is True
+    assert all(v is False for k, v in flags.items() if k != "Parkland Health")

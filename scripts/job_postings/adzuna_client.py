@@ -145,7 +145,18 @@ class AdzunaClient:
             )
             raise JobPostingRequestError(f"Adzuna request failed: {exc}", transient=transient) from exc
 
-        return response.json()
+        # A 200 with a non-JSON body (Adzuna maintenance page, CDN error) must
+        # surface as a caught JobPostingRequestError -- otherwise the raw
+        # decode error propagates past ingest.py's per-role handler and aborts
+        # the whole run mid-loop. Not transient: a bad body this minute is a
+        # vendor-side problem, not a blip to retry inside the same run.
+        try:
+            return response.json()
+        except ValueError as exc:  # includes requests' JSONDecodeError
+            raise JobPostingRequestError(
+                f"Adzuna returned a non-JSON body (HTTP {response.status_code}): {exc}",
+                transient=False,
+            ) from exc
 
 
 def main() -> None:

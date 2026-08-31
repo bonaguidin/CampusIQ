@@ -129,12 +129,17 @@ def phys_207_grade_model(*, include_curve: bool) -> GradeModel:
     )
 
 
-# --- PHYS 207: with curve -> NEEDS_STUDENT_REVIEW --------------------------------
+# --- PHYS 207: with curve -> ACCEPTED, curve findings surfaced not blocking -----
 
 
-def test_phys_207_with_curve_needs_student_review():
+def test_phys_207_with_curve_is_accepted_curve_findings_non_blocking():
+    # A correctly-extracted curve is informational, not an ambiguity to
+    # resolve (syllabus-review redesign, planning-docs/
+    # syllabus-review-redesign-spec.md §2C / §5). The findings are still
+    # produced -- the UI shows the rule as a Professor's Rule -- they just
+    # no longer force NEEDS_STUDENT_REVIEW.
     result = reconcile_grade_model(phys_207_grade_model(include_curve=True), PHYS_207_CONTENT)
-    assert result.status == ReconciliationStatus.NEEDS_STUDENT_REVIEW
+    assert result.status == ReconciliationStatus.ACCEPTED
     codes = {f.code for f in result.findings}
     assert "possible_curve" in codes
     assert "non_deterministic_grading_rule" in codes
@@ -411,6 +416,170 @@ def test_non_overlapping_thresholds_pass():
     assert not any(f.code == "overlapping_grade_thresholds" for f in result.findings)
 
 
+# --- confirmed_cutoff_pairs suppression ----------------------------------------------
+
+
+def _bc_boundary_overlap_model() -> GradeModel:
+    # Isolated, cleanly-resolvable B/C overlap at 80 (A kept clear of B).
+    return GradeModel(
+        grade_thresholds=[
+            GradeThreshold(letter="A", minimum=91, maximum=100),
+            GradeThreshold(letter="B", minimum=80, maximum=90),
+            GradeThreshold(letter="C", minimum=70, maximum=80),
+        ],
+    )
+
+
+def test_confirmed_resolvable_pair_suppresses_the_overlap_error():
+    model = _bc_boundary_overlap_model()
+    result = reconcile_grade_model(
+        model, content_from_pages([page(1, "x")]), confirmed_cutoff_pairs={frozenset(("B", "C"))}
+    )
+    assert not any(f.code == "overlapping_grade_thresholds" for f in result.findings)
+    # thresholds are returned exactly as given -- nothing was narrowed
+    assert [(t.letter, t.minimum, t.maximum) for t in result.grade_model.grade_thresholds] == [
+        ("A", 91, 100),
+        ("B", 80, 90),
+        ("C", 70, 80),
+    ]
+
+
+def test_unconfirmed_overlap_still_errors():
+    result = reconcile_grade_model(_bc_boundary_overlap_model(), content_from_pages([page(1, "x")]))
+    assert any(f.code == "overlapping_grade_thresholds" for f in result.findings)
+    assert result.status == ReconciliationStatus.NEEDS_STUDENT_REVIEW
+
+
+def test_confirming_a_non_adjacent_pair_does_not_suppress_the_error():
+    # A vs C overlap, not rank-adjacent -> resolve_cutoff_overlaps leaves it
+    # unresolved, so the confirmed set is ignored and the ERROR stands.
+    model = GradeModel(
+        grade_thresholds=[
+            GradeThreshold(letter="A", minimum=80, maximum=100),
+            GradeThreshold(letter="C", minimum=70, maximum=85),
+        ],
+    )
+    result = reconcile_grade_model(
+        model, content_from_pages([page(1, "x")]), confirmed_cutoff_pairs={frozenset(("A", "C"))}
+    )
+    assert any(f.code == "overlapping_grade_thresholds" for f in result.findings)
+    assert result.status == ReconciliationStatus.NEEDS_STUDENT_REVIEW
+
+
+def test_confirming_a_multi_way_component_does_not_suppress_the_error():
+    # A/B share 90, B/C share 80 -> 3-threshold connected component -> the
+    # resolver refuses it; confirming (B,C) must not sneak past.
+    model = GradeModel(
+        grade_thresholds=[
+            GradeThreshold(letter="A", minimum=90, maximum=100),
+            GradeThreshold(letter="B", minimum=80, maximum=90),
+            GradeThreshold(letter="C", minimum=70, maximum=80),
+        ],
+    )
+    result = reconcile_grade_model(
+        model, content_from_pages([page(1, "x")]), confirmed_cutoff_pairs={frozenset(("B", "C"))}
+    )
+    assert any(f.code == "overlapping_grade_thresholds" for f in result.findings)
+
+
+# --- confirmed_value_claims suppression --------------------------------------------
+
+
+def _unverifiable_bc_model() -> GradeModel:
+    """Otherwise-clean weighted model. B and C carry fully-bounded ranges
+    whose evidence text uses ">= / <" comparison phrasing _RANGE_RE cannot
+    parse -> each yields a claim_evidence_consistency_unverifiable WARNING,
+    which is the model's only blocker. A is single-bound so it is skipped by
+    the range check entirely (kept clear of the overlap scan).
+    """
+    return GradeModel(
+        grading_method=GradingMethod.WEIGHTED,
+        categories=[GradeCategory(name="Overall", weight=100, evidence=evidence(1, "Overall: 100%"))],
+        grade_thresholds=[
+            GradeThreshold(letter="A", minimum=90, evidence=evidence(1, "A: >= 90%")),
+            GradeThreshold(letter="B", minimum=80, maximum=89, evidence=evidence(1, "B: >= 80% and < 90%")),
+            GradeThreshold(letter="C", minimum=70, maximum=79, evidence=evidence(1, "C: >= 70% and < 80%")),
+        ],
+    )
+
+
+def test_confirmed_value_claim_suppresses_unverifiable_finding():
+    model = _unverifiable_bc_model()
+    result = reconcile_grade_model(
+        model, content_from_pages([page(1, "x")]), confirmed_value_claims={"b", "c"}
+    )
+    assert not any(f.code == "claim_evidence_consistency_unverifiable" for f in result.findings)
+    assert result.status == ReconciliationStatus.ACCEPTED
+    # thresholds and their verbatim evidence are returned exactly as given
+    assert [(t.letter, t.minimum, t.maximum, t.evidence.text) for t in result.grade_model.grade_thresholds] == [
+        ("A", 90, None, "A: >= 90%"),
+        ("B", 80, 89, "B: >= 80% and < 90%"),
+        ("C", 70, 79, "C: >= 70% and < 80%"),
+    ]
+
+
+def test_unconfirmed_value_claim_still_blocks():
+    result = reconcile_grade_model(_unverifiable_bc_model(), content_from_pages([page(1, "x")]))
+    assert [f.field for f in result.findings if f.code == "claim_evidence_consistency_unverifiable"] == [
+        "threshold:B",
+        "threshold:C",
+    ]
+    assert result.status == ReconciliationStatus.NEEDS_STUDENT_REVIEW
+
+
+def test_confirmed_value_claim_is_letter_scoped():
+    result = reconcile_grade_model(
+        _unverifiable_bc_model(), content_from_pages([page(1, "x")]), confirmed_value_claims={"b"}
+    )
+    assert [f.field for f in result.findings if f.code == "claim_evidence_consistency_unverifiable"] == [
+        "threshold:C",
+    ]
+    assert result.status == ReconciliationStatus.NEEDS_STUDENT_REVIEW
+
+
+def test_confirmed_value_claim_suppresses_value_mismatch_error():
+    # Evidence says 80-90 but the student narrowed B to 80-89 (e.g. to break
+    # a cutoff overlap) -> _RANGE_RE parses "80-90", the deterministic check
+    # reads it as a claim_evidence_value_mismatch ERROR. Affirming the value
+    # suppresses it; the threshold stays 80-89 with its verbatim evidence.
+    model = GradeModel(
+        grade_thresholds=[
+            GradeThreshold(letter="B", minimum=80, maximum=89, evidence=evidence(1, "B: 80-90")),
+        ],
+    )
+    unconfirmed = reconcile_grade_model(model, content_from_pages([page(1, "x")]))
+    assert any(f.code == "claim_evidence_value_mismatch" for f in unconfirmed.findings)
+
+    confirmed = reconcile_grade_model(
+        model, content_from_pages([page(1, "x")]), confirmed_value_claims={"b"}
+    )
+    assert not any(f.code == "claim_evidence_value_mismatch" for f in confirmed.findings)
+    assert confirmed.grade_model.grade_thresholds[0].maximum == 89
+    assert confirmed.grade_model.grade_thresholds[0].evidence.text == "B: 80-90"
+
+
+def test_confirmed_value_claim_only_skips_a_finding_it_would_have_emitted():
+    # B verifies clean against its evidence; "confirming" it changes nothing
+    # and does not suppress C's genuine unverifiable finding.
+    model = GradeModel(
+        grade_thresholds=[
+            GradeThreshold(letter="B", minimum=80, maximum=90, evidence=evidence(1, "B: 80-90")),
+            GradeThreshold(letter="C", minimum=70, maximum=79, evidence=evidence(1, "C: >= 70% and < 80%")),
+        ],
+    )
+    result = reconcile_grade_model(
+        model, content_from_pages([page(1, "x")]), confirmed_value_claims={"b", "c"}
+    )
+    # C was confirmed too, so it is suppressed; B never had a finding.
+    assert not any(f.code.startswith("claim_evidence") for f in result.findings)
+    result_b_only = reconcile_grade_model(
+        model, content_from_pages([page(1, "x")]), confirmed_value_claims={"b"}
+    )
+    assert [f.field for f in result_b_only.findings if f.code == "claim_evidence_consistency_unverifiable"] == [
+        "threshold:C",
+    ]
+
+
 def test_unbounded_thresholds_are_allowed():
     model = GradeModel(
         grade_thresholds=[
@@ -495,7 +664,60 @@ def test_curve_rule_is_always_non_deterministic():
     result = reconcile_grade_model(model, content_from_pages([page(1, "x")]))
     finding = next(f for f in result.findings if f.code == "non_deterministic_grading_rule")
     assert finding.severity.value == "warning"
+    # non_deterministic_grading_rule no longer forces review on its own; this
+    # bare model still needs review, but only because grading_method is
+    # UNKNOWN (see test below for the isolated non-blocking case).
     assert result.status == ReconciliationStatus.NEEDS_STUDENT_REVIEW
+    assert any(f.code == "grading_method_unknown" for f in result.findings)
+
+
+def test_informational_rules_alone_do_not_force_review():
+    """Curve / late-work / makeup rules, correctly extracted, are facts the
+    student should see while calculating -- not ambiguities or missing data.
+    Reclassified as non-blocking per the syllabus-review redesign
+    (planning-docs/syllabus-review-redesign-spec.md §2C / §5). The findings
+    are still emitted so the UI can render the Professor's Rules panel.
+    """
+    model = GradeModel(
+        grading_method=GradingMethod.WEIGHTED,
+        categories=[GradeCategory(name="Exam", weight=100, evidence=evidence(1, "Exam: 100%"))],
+        rules=[
+            GradingRule(
+                rule_type=GradingRuleType.CURVE,
+                description="Grades may be curved.",
+                evidence=evidence(1, "Grades may be curved."),
+            ),
+            GradingRule(
+                rule_type=GradingRuleType.LATE_WORK,
+                description="No late homework accepted.",
+                evidence=evidence(1, "No late homework accepted."),
+            ),
+            GradingRule(
+                rule_type=GradingRuleType.MAKEUP,
+                description="Makeup work only for excused absences.",
+                evidence=evidence(1, "Makeup work only for excused absences."),
+            ),
+        ],
+        warnings=[
+            ExtractionWarning(type=ExtractionWarningType.POSSIBLE_CURVE, description="No curve formula is given."),
+            ExtractionWarning(type=ExtractionWarningType.AMBIGUOUS_RULE, description="Late-work policy phrasing is loose."),
+        ],
+    )
+    content = content_from_pages(
+        [
+            page(
+                1,
+                "Exam: 100%\nGrades may be curved.\nNo late homework accepted.\n"
+                "Makeup work only for excused absences.",
+            )
+        ]
+    )
+    result = reconcile_grade_model(model, content)
+    assert result.status == ReconciliationStatus.ACCEPTED
+    codes = {f.code for f in result.findings}
+    assert "non_deterministic_grading_rule" in codes
+    assert "possible_curve" in codes
+    assert "ambiguous_rule" in codes
 
 
 def test_replacement_rule_with_source_and_target_is_deterministic():

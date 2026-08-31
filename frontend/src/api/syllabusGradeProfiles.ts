@@ -88,6 +88,39 @@ export interface SyllabusReconciliation {
   evidence_coverage: { total_claims: number; supported_claims: number; coverage_ratio: number; unsupported_claims: string[] };
 }
 
+// Cutoff-overlap resolution proposal (backend: cutoff_resolution.py). A
+// `resolved` entry is a "higher grade wins the tie" default the student can
+// confirm as-is; an `unresolved` entry (non-adjacent / multi-way /
+// wider-than-a-point / single-bound / non-canonical) the backend refuses
+// to guess at -- it needs a manual threshold correction. `letters` is
+// [winner, loser] for resolved entries.
+export interface SyllabusResolvedCutoffOverlap {
+  letters: [string, string];
+  boundary: number;
+  winner: string;
+  loser: string;
+}
+
+export interface SyllabusUnresolvedCutoffOverlap {
+  letters: [string, string];
+  reason: string;
+}
+
+export interface SyllabusCutoffOverlapResolution {
+  schema_version: string;
+  resolved: SyllabusResolvedCutoffOverlap[];
+  unresolved: SyllabusUnresolvedCutoffOverlap[];
+}
+
+// Keyed answer log persisted on the revision (backend:
+// apply_student_corrections merges these). Keys in use:
+//   `cutoff_overlap:<winner>,<loser>`   -> { answer, boundary, winner, loser }
+//   `claim_evidence:threshold:<letter>` -> { answer, letter }
+export type SyllabusClarifyingAnswers = Record<
+  string,
+  { answer: string; boundary?: number; winner?: string; loser?: string; letter?: string }
+>;
+
 export interface SyllabusCategoryScore {
   category_name: string;
   actual_score?: number | null;
@@ -131,7 +164,9 @@ export interface SyllabusProfileDetail {
   confirmed_grade_model: SyllabusGradeModel | null;
   reconciliation: SyllabusReconciliation | null;
   confirmed_reconciliation: SyllabusReconciliation | null;
-  corrections: unknown[];
+  corrections: SyllabusCorrection[];
+  clarifying_answers: SyllabusClarifyingAnswers;
+  cutoff_overlap_resolution: SyllabusCutoffOverlapResolution;
   grade_state: SyllabusGradeState | null;
   grade_state_revision: number | null;
   possible_duplicate_profiles?: SyllabusProfileSummary[];
@@ -296,6 +331,14 @@ export async function confirmSyllabusGradeModel(accessToken: string, profileId: 
     `${BASE_URL}/${encodeURIComponent(profileId)}/confirm`,
     { method: 'POST', headers: authHeaders(accessToken) },
     'Could not confirm this grading model.',
+  );
+}
+
+export async function deleteSyllabusGradeProfile(accessToken: string, profileId: string): Promise<void> {
+  await request<{ removed: string }>(
+    `${BASE_URL}/${encodeURIComponent(profileId)}`,
+    { method: 'DELETE', headers: authHeaders(accessToken) },
+    'Could not remove this grade calculator.',
   );
 }
 

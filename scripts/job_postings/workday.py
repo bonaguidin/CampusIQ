@@ -43,9 +43,11 @@ exact-matched or spot-checked, and nothing downstream would look wrong.
 
 Two things the live response settled that documentation would not have:
 
-  - `bulletFields[0]` is the requisition number ('JR13846'), and it makes a
-    better source_job_id than the externalPath tail, which embeds the job
-    title and therefore changes when someone edits it.
+  - `bulletFields` layout is board-specific and NOT a safe source_job_id.
+    Atmos returns ['JR13846'] (req at [0]); Michaels returns
+    ['Texas', '<location breadcrumb>', 'R00323100'] (state at [0], req at
+    [2]). source_job_id is taken from the externalPath's post-'_' segment
+    instead -- see _job_id().
   - `postedOn` is relative prose ('Posted Today'), never a timestamp.
 
 WHAT A MISSING SITE PATH MEANS
@@ -82,7 +84,12 @@ USER_AGENT = "GradusIQ-ATS-Puller/0.1 (labor market research)"
 TIMEOUT_SECONDS = 20.0
 PAGE_SIZE = 20
 DELAY_BETWEEN_PAGES = 1.0
-MAX_PAGES = 25  # 500 postings per employer; Michaels alone reports 2,000
+# Backstop against a board whose `total` is missing or wrong -- a healthy
+# fetch stops early on `offset >= total`. 250 pages x PAGE_SIZE = 5,000
+# postings, ~2.5x the largest verified board (Michaels, 2,000; AT&T, 1,409).
+# Raise this, or pass fetch_board(max_pages=...) per employer, if a board
+# ever legitimately exceeds it.
+MAX_PAGES = 250
 
 SOURCE = "workday"
 
@@ -128,6 +135,40 @@ def parse_workday_slug(slug: str | None) -> WorkdayBoard | None:
         return WorkdayBoard(host, m.group("tenant"), m.group("site"))
 
     return None
+
+
+EMPLOYER_CSV = REPO_ROOT / "data" / "job_postings" / "dfw_employers_ats.csv"
+
+
+def usable_workday_boards(
+    csv_path: Path = EMPLOYER_CSV,
+) -> list[tuple[str, WorkdayBoard, bool]]:
+    """(employer, board, always_dfw) for every ats=workday row whose slug builds.
+
+    The single source of truth for which employers the Workday ingest sweeps.
+    Today that is 12 of the 19 ats=workday rows; the other 7 carry a host but
+    no site-path segment, so parse_workday_slug returns None and they are
+    skipped rather than guessed at. Fill their `slug` column and they join the
+    sweep with no code change -- see outstanding-fixes.md.
+
+    `always_dfw` is the CSV's `always_dfw` column: true for a single-metro
+    employer (e.g. Parkland Health, whose every facility is in Dallas County)
+    whose Workday `locationsText` is a building name with no city token for
+    classify_location to match. The driver keeps such rows regardless of the
+    string. Blank/absent for everyone else.
+    """
+    import csv as _csv
+
+    boards: list[tuple[str, WorkdayBoard, bool]] = []
+    with csv_path.open(encoding="utf-8-sig", newline="") as f:
+        for row in _csv.DictReader(f):
+            if row.get("ats") != "workday":
+                continue
+            board = parse_workday_slug(row.get("slug"))
+            if board is not None:
+                always_dfw = (row.get("always_dfw") or "").strip().lower() == "true"
+                boards.append((row["employer"], board, always_dfw))
+    return boards
 
 
 def _post(url: str, body: dict, *, timeout: float = TIMEOUT_SECONDS) -> Any:
@@ -196,7 +237,7 @@ def normalize_listing(listing: dict, board: WorkdayBoard, employer: str) -> dict
 
     return {
         "source": SOURCE,
-        "source_job_id": _job_id(listing, external_path),
+        "source_job_id": _job_id(external_path),
         "title": title,
         "company": employer,
         "location": listing.get("locationsText"),
@@ -208,19 +249,30 @@ def normalize_listing(listing: dict, board: WorkdayBoard, employer: str) -> dict
     }
 
 
-def _job_id(listing: dict, external_path: str) -> str:
-    """Prefer the requisition number over the URL slug.
+def _job_id(external_path: str) -> str:
+    """Requisition id from the externalPath: the segment after the last '_'.
 
-    A live response gives bulletFields ['JR13846'] alongside externalPath
-    '/job/Texas---Dallas/Sr-Applications-Developer_JR13846'. The path embeds
-    the job title, so an employer editing the title changes the path, the
-    upsert key forks, and one posting becomes two rows. The requisition number
-    does not move.
+    Workday slugs are '<title-slug>_<REQ>'
+    ('Sr-Applications-Developer_JR13846', 'PT-Merchandise-Manager_R00323100-1'),
+    and the REQ is the part that stays put when a title is edited.
+
+    This deliberately does NOT read bulletFields. That field's layout is
+    board-specific: Atmos puts the req at bulletFields[0], Michaels puts the US
+    state there (the req is at [2]). Trusting [0] gave every Texas Michaels
+    posting source_job_id='Texas', collapsing 70+ rows onto one upsert key and
+    raising a Postgres 21000 on the batch. The externalPath is the one
+    identifier every board renders the same way.
+
+    Split on '_', not '-': a req can itself contain hyphens ('R-120761-1',
+    'R-2026-70969'). Workday's trailing '-<n>' URL disambiguator is kept as
+    part of the id rather than stripped, because a blind '-\\d+$' strip would
+    also eat the trailing number of a req like 'R-2026-70969'. If that
+    disambiguator ever drifts between fetches, normalise it in its own pass;
+    the (source, source_job_id) de-dupe in SupabaseStore.upsert_postings is the
+    backstop regardless.
     """
-    bullets = listing.get("bulletFields")
-    if isinstance(bullets, list) and bullets and isinstance(bullets[0], str) and bullets[0].strip():
-        return bullets[0].strip()
-    return external_path.rstrip("/").split("/")[-1]
+    tail = external_path.rstrip("/").split("/")[-1]
+    return tail.rsplit("_", 1)[-1] if "_" in tail else tail
 
 
 _RELATIVE_DAYS = re.compile(r"posted\s+(\d+)\+?\s+days?\s+ago", re.IGNORECASE)
@@ -322,20 +374,19 @@ def main() -> int:
 
     if args.list_boards:
         import csv
-        path = REPO_ROOT / "data" / "job_postings" / "dfw_employers_ats.csv"
-        usable = unusable = 0
-        with path.open(encoding="utf-8-sig", newline="") as f:
+        usable = {name for name, _, _ in usable_workday_boards()}
+        total = 0
+        with EMPLOYER_CSV.open(encoding="utf-8-sig", newline="") as f:
             for r in csv.DictReader(f):
                 if r.get("ats") != "workday":
                     continue
-                board = parse_workday_slug(r.get("slug"))
-                if board:
-                    usable += 1
+                total += 1
+                if r["employer"] in usable:
+                    board = parse_workday_slug(r.get("slug"))
                     print(f"  OK       {r['employer'][:32]:<34} {board.tenant}/{board.site}")
                 else:
-                    unusable += 1
                     print(f"  NO SITE  {r['employer'][:32]:<34} {r.get('slug')}")
-        print(f"\n{usable} usable, {unusable} missing a site path.")
+        print(f"\n{len(usable)} usable, {total - len(usable)} missing a site path.")
         return 0
 
     if not args.slug:

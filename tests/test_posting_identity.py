@@ -223,6 +223,31 @@ def test_is_dfw_named_locality_beats_remote():
         ("Remote", False, LocationKind.REMOTE_ANYWHERE),
         ("Work from home", False, LocationKind.REMOTE_ANYWHERE),
         ("Seoul, South Korea", False, LocationKind.NON_DFW),
+        # Workday CXS `locationsText` shapes -- "Texas - Dallas" is the common
+        # single-site rendering; "N Locations" is what a multi-site req sends
+        # instead of city names, and with no locality to match it stays out of
+        # the DFW-filtered Workday sweep (absence = false, by design).
+        ("Texas - Dallas", True, LocationKind.DFW_METRO),
+        ("2 Locations", False, LocationKind.NON_DFW),
+        # TX-gated exurb names: DFW only when the string also names Texas, so
+        # the out-of-state namesakes (Westlake OH, Roanoke VA, Sunnyvale CA,
+        # Argyle WI) don't misfire on a national feed.
+        ("Westlake, TX", True, LocationKind.DFW_METRO),
+        ("Westlake, Texas", True, LocationKind.DFW_METRO),
+        ("One Destiny Way, Westlake TX", True, LocationKind.DFW_METRO),
+        ("Westlake, OH", False, LocationKind.NON_DFW),
+        ("Westlake", False, LocationKind.NON_DFW),          # no state -> can't tell
+        ("Roanoke, TX", True, LocationKind.DFW_METRO),
+        ("Roanoke, VA", False, LocationKind.NON_DFW),
+        ("Sunnyvale, TX", True, LocationKind.DFW_METRO),
+        ("Sunnyvale, CA", False, LocationKind.NON_DFW),
+        ("Argyle, TX", True, LocationKind.DFW_METRO),
+        ("Argyle, WI", False, LocationKind.NON_DFW),
+        ("Anna, TX", True, LocationKind.DFW_METRO),
+        ("Anna, OH", False, LocationKind.NON_DFW),
+        # Bare additions -- distinctive enough to match without a state token.
+        ("Trophy Club, TX", True, LocationKind.DFW_METRO),
+        ("Colleyville", True, LocationKind.DFW_METRO),
         ("", False, LocationKind.UNKNOWN),
         (None, False, LocationKind.UNKNOWN),
     ],
