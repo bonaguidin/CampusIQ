@@ -6550,31 +6550,34 @@ label.profile-form-check { display: flex; flex-direction: row; align-items: cent
 .grade-profile-remove { flex: 0 0 auto; }
 .grade-review-card { display: flex; flex-direction: column; gap: var(--sp-4); }
 
-/* Clarifying questions for overlapping letter-grade cutoffs (spec §2A). */
-.grade-cutoff-questions { display: flex; flex-direction: column; gap: var(--sp-3); }
-.grade-cutoff-question {
+/* Unified letter-grade cutoff table (CutoffTable): one editable row per
+   grade threshold, plus overlap banners and per-row value affirmations. */
+.grade-cutoff-table { display: flex; flex-direction: column; gap: var(--sp-3); }
+.grade-cutoff-banner {
   padding: var(--sp-3);
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--surface);
 }
-.grade-cutoff-question--manual { border-style: dashed; }
+.grade-cutoff-banner--manual { border-style: dashed; margin: 0; }
+.grade-cutoff-banner-hint { margin: var(--sp-2) 0 0; color: var(--muted); font-size: var(--text-sm); }
 .grade-cutoff-question-text { margin: 0 0 var(--sp-2); }
 .grade-cutoff-question-actions { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
 .grade-cutoff-resolved { margin: 0; color: var(--muted); font-size: var(--text-sm); }
-.grade-cutoff-editor {
-  display: flex;
-  flex-direction: column;
+.grade-cutoff-table-rows { display: flex; flex-direction: column; gap: var(--sp-2); }
+.grade-cutoff-row {
+  display: grid;
+  grid-template-columns: 2.5rem minmax(0, 5rem) minmax(0, 5rem) minmax(0, 1fr);
+  align-items: center;
   gap: var(--sp-2);
-  padding: var(--sp-3);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  background: var(--surface);
 }
-.grade-cutoff-editor-heading { margin: 0; font-weight: 600; }
-.grade-cutoff-editor-row { display: flex; align-items: center; gap: var(--sp-2); flex-wrap: wrap; }
-.grade-cutoff-editor-letter { min-width: 2rem; font-weight: 600; }
-.grade-cutoff-editor-row .form-input { width: 6rem; }
+.grade-cutoff-row > span { min-width: 0; overflow-wrap: anywhere; }
+.grade-cutoff-row--head { color: var(--muted); font-size: var(--text-sm); }
+.grade-cutoff-row-letter { font-weight: 600; }
+.grade-cutoff-row .form-input { width: 100%; min-width: 0; }
+.grade-cutoff-row-status { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2); font-size: var(--text-sm); }
+.grade-cutoff-row-affirm { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2); }
+.grade-cutoff-row-note { color: var(--muted); }
 .grade-entry-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 8rem 8rem;
