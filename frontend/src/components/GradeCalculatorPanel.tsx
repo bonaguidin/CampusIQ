@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { fetchPlannedCourses, fetchTerms } from '../api/planning';
 import type { PlannedCourse, PlanningTerm } from '../lib/termPlanning.mjs';
 import type { AcademicCourse } from '../types/studentIntelligenceProfile';
@@ -416,6 +416,13 @@ export function GradeCalculatorPanel({ accessToken, courses, institutionName }: 
   const [calcError, setCalcError] = useState<string | null>(null);
   const [showBreakdown, setShowBreakdown] = useState(false);
 
+  // Opt-in re-open of the letter-grade cutoff editor once the calculator is
+  // ready. Off by default (most students never need it); submitting an edit
+  // from here drops the profile back to 'reconfirm_required' on the backend,
+  // which re-renders the normal review card, so this toggle only has to
+  // surface CutoffTable, not manage the return trip.
+  const [showCutoffReview, setShowCutoffReview] = useState(false);
+
   const [targetComponent, setTargetComponent] = useState('');
   const [targetLetter, setTargetLetter] = useState('');
   const [targetNumeric, setTargetNumeric] = useState('');
@@ -578,7 +585,11 @@ export function GradeCalculatorPanel({ accessToken, courses, institutionName }: 
         calculator_ready: created.calculator_ready,
         current_grade: null,
       };
-      setProfiles((prev) => [...(prev ?? []), summary]);
+      // The backend reuses an existing profile row when the same
+      // student/institution/course_code/term is re-uploaded (get_or_create_
+      // profile), so key on id: replace the matching summary if present,
+      // otherwise append -- never render two rows for one profile.
+      setProfiles((prev) => [...(prev ?? []).filter((p) => p.id !== summary.id), summary]);
       setShowUpload(false);
       setFile(null);
       setDetail(created);
@@ -705,6 +716,7 @@ export function GradeCalculatorPanel({ accessToken, courses, institutionName }: 
   // calculators or survive a reopen. See dismissedFindingKeys above.
   useEffect(() => {
     setDismissedFindingKeys(new Set());
+    setShowCutoffReview(false);
   }, [selectedProfileId]);
 
   // Findings that don't belong in the review list:
@@ -784,7 +796,7 @@ export function GradeCalculatorPanel({ accessToken, courses, institutionName }: 
                   {detail.confirmed_reconciliation ? 'Still needs your review' : 'Needs your review'}
                 </h3>
                 <CutoffTable
-                  key={`${detail.id}:${detail.corrections.length}`}
+                  key={detail.id}
                   detail={detail}
                   busy={busy}
                   onSubmitCorrections={handleCutoffTableCorrections}
@@ -960,6 +972,35 @@ export function GradeCalculatorPanel({ accessToken, courses, institutionName }: 
                       </p>
                     )}
                   </div>
+
+                  {!showCutoffReview ? (
+                    <button
+                      type="button"
+                      className="btn btn-ghost btn-sm grade-cutoff-revisit-toggle"
+                      onClick={() => setShowCutoffReview(true)}
+                    >
+                      Review letter-grade cutoffs
+                    </button>
+                  ) : (
+                    <div className="card grade-cutoff-revisit">
+                      <p className="empty-state">
+                        Saving a change here sends your calculator back for a quick re-confirm.
+                      </p>
+                      <CutoffTable
+                        key={detail.id}
+                        detail={detail}
+                        busy={busy}
+                        onSubmitCorrections={handleCutoffTableCorrections}
+                      />
+                      <button
+                        type="button"
+                        className="btn btn-ghost btn-sm"
+                        onClick={() => setShowCutoffReview(false)}
+                      >
+                        Done
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 <div className="grade-calculator-aside">
@@ -1196,9 +1237,12 @@ function GeneralFindings({
  *    (confirm_threshold_value). Once answered (clarifying_answers) the row
  *    shows a one-line confirmation and never asks again.
  *
- * Keyed on `${detail.id}:${detail.corrections.length}` by the caller, so
- * every successful correction submit remounts it with fresh server values
- * and an empty edit draft.
+ * Keyed on `detail.id` by the caller (stable across correction submits, so
+ * switching profiles still forces a fresh mount). The edit draft is NOT
+ * discarded on every submit: when a submit brings back new server values,
+ * only bounds the student has not touched adopt them -- an in-progress edit
+ * in another row survives a sibling row's affirm/resolve (see the
+ * serverDraft sync effect below).
  */
 function CutoffTable({
   detail,
@@ -1236,15 +1280,42 @@ function CutoffTable({
   const openResolved = resolution.resolved.filter((r) => !(clarifyingKey(r.winner, r.loser) in answers));
   const answeredResolved = resolution.resolved.filter((r) => clarifyingKey(r.winner, r.loser) in answers);
 
-  const initDraft = (): Record<string, string> => {
+  // Server-truth bound values, recomputed only when the grade model itself
+  // changes (a correction submit brought back a new `detail`) -- keyed on
+  // `model`, not the `?? []` fallback, so it can't churn identity between
+  // renders. Doubles as the initial draft and as the baseline the sync
+  // effect diffs against.
+  const serverDraft = useMemo((): Record<string, string> => {
     const d: Record<string, string> = {};
-    for (const t of thresholds) {
+    for (const t of model?.grade_thresholds ?? []) {
       d[`${t.letter}:minimum`] = t.minimum != null ? String(t.minimum) : '';
       d[`${t.letter}:maximum`] = t.maximum != null ? String(t.maximum) : '';
     }
     return d;
-  };
-  const [draft, setDraft] = useState<Record<string, string>>(initDraft);
+  }, [model]);
+  const [draft, setDraft] = useState<Record<string, string>>(serverDraft);
+
+  // The table is no longer remounted on every correction submit (the caller
+  // key is now just `detail.id`). Instead, when new server values arrive,
+  // adopt them ONLY for bounds the student hasn't edited (draft still equals
+  // the previous server value); a genuinely edited bound keeps the in-flight
+  // value. Preserves the old "fresh values after a real data change" intent
+  // without discarding a half-typed edit in another row when a sibling row's
+  // affirm/resolve submits.
+  const prevServerDraft = useRef(serverDraft);
+  useEffect(() => {
+    if (prevServerDraft.current === serverDraft) return;
+    const prevServer = prevServerDraft.current;
+    prevServerDraft.current = serverDraft;
+    setDraft((current) => {
+      const next: Record<string, string> = {};
+      for (const key of Object.keys(serverDraft)) {
+        const userEdited = (current[key] ?? '') !== (prevServer[key] ?? '');
+        next[key] = userEdited ? (current[key] ?? '') : serverDraft[key];
+      }
+      return next;
+    });
+  }, [serverDraft]);
 
   function boundString(t: SyllabusThreshold | null, bound: 'minimum' | 'maximum'): string {
     const current = bound === 'minimum' ? t?.minimum : t?.maximum;
@@ -1388,7 +1459,7 @@ function CutoffTable({
           <button type="button" className="btn btn-primary btn-sm" disabled={busy} aria-busy={busy} onClick={handleSave}>
             Save cutoffs
           </button>
-          <button type="button" className="btn btn-ghost btn-sm" disabled={busy} onClick={() => setDraft(initDraft())}>
+          <button type="button" className="btn btn-ghost btn-sm" disabled={busy} onClick={() => setDraft(serverDraft)}>
             Cancel
           </button>
         </div>

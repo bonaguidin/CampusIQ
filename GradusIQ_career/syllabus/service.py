@@ -205,7 +205,7 @@ def apply_student_corrections(
             "letter": letter,
         }
 
-    return store.update_revision_confirmation(
+    updated_revision = store.update_revision_confirmation(
         client,
         revision_id=revision_id,
         student_id=student_id,
@@ -215,6 +215,27 @@ def apply_student_corrections(
         confirmed_at=None,
         clarifying_answers=clarifying_answers,
     )
+
+    # A correction submitted against an already-CONFIRMED profile means the
+    # student is editing a model they had previously signed off on (e.g.
+    # revisiting the letter-grade cutoffs from the ready calculator). Mirror
+    # the re-upload-of-same-source path (ingest_syllabus_extraction): drop
+    # the profile to 'reconfirm_required' so the edit requires an explicit
+    # re-confirm, rather than silently persisting as "still confirmed" while
+    # update_revision_confirmation has just nulled confirmed_at. calculator_
+    # ready already gates on review_state == 'confirmed', so this also takes
+    # the calculator offline until the student re-confirms.
+    profile = store.get_profile(client, profile_id=revision["profile_id"], student_id=student_id)
+    if profile is not None and profile.get("review_state") == "confirmed":
+        store.update_profile_state(
+            client,
+            profile_id=revision["profile_id"],
+            student_id=student_id,
+            review_state="reconfirm_required",
+            current_revision_id=profile.get("current_revision_id"),
+        )
+
+    return updated_revision
 
 
 def _confirmed_value_claim_letters(corrections) -> set[str]:

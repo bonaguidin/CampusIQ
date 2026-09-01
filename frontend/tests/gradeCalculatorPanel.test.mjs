@@ -955,3 +955,150 @@ test('Grade Calculator: affirming every unverified cutoff value in the table cle
     .getByRole('button', { name: "Yes, that's correct" }).click()
   await page.getByRole('heading', { name: 'Enter your grades' }).waitFor()
 })
+
+// --- re-open cutoff review after calculator_ready ------------------------------
+
+test('Grade Calculator: a ready calculator can re-open cutoff review; editing a cutoff sends it back for re-confirm', { timeout: 45_000 }, async (t) => {
+  const CUTOFF_A92 = { ...CUTOFF_MODEL, grade_thresholds: [
+    { ...CUTOFF_MODEL.grade_thresholds[0], minimum: 92 },
+    CUTOFF_MODEL.grade_thresholds[1],
+    CUTOFF_MODEL.grade_thresholds[2],
+  ] }
+  const readyDetail = () => detail({
+    review_state: 'confirmed',
+    calculator_ready: true,
+    extracted_grade_model: CUTOFF_MODEL,
+    confirmed_grade_model: CUTOFF_MODEL,
+    reconciliation: RECONCILIATION_ACCEPTED,
+    confirmed_reconciliation: RECONCILIATION_ACCEPTED,
+  })
+  let correctionBody = null
+  let reconfirmed = false
+
+  const page = await mountCutoffPanel(t, 'grade-calculator-cutoff-reopen', async (path, method, request, response) => {
+    if (path === `/api/v2/student/me/syllabus-grade-profiles/${PROFILE_ID}` && method === 'GET') {
+      json(response, 200, readyDetail())
+      return true
+    }
+    if (path === `/api/v2/student/me/syllabus-grade-profiles/${PROFILE_ID}/corrections` && method === 'POST') {
+      correctionBody = JSON.parse(await readBody(request))
+      // backend reset: an edit against a confirmed profile drops it to
+      // reconfirm_required and takes calculator_ready offline
+      json(response, 200, detail({
+        review_state: 'reconfirm_required',
+        calculator_ready: false,
+        extracted_grade_model: CUTOFF_MODEL,
+        confirmed_grade_model: CUTOFF_A92,
+        reconciliation: RECONCILIATION_ACCEPTED,
+        confirmed_reconciliation: RECONCILIATION_ACCEPTED,
+        corrections: correctionBody.corrections,
+      }))
+      return true
+    }
+    if (path === `/api/v2/student/me/syllabus-grade-profiles/${PROFILE_ID}/confirm` && method === 'POST') {
+      reconfirmed = true
+      json(response, 200, detail({
+        review_state: 'confirmed',
+        calculator_ready: true,
+        extracted_grade_model: CUTOFF_MODEL,
+        confirmed_grade_model: CUTOFF_A92,
+        reconciliation: RECONCILIATION_ACCEPTED,
+        confirmed_reconciliation: RECONCILIATION_ACCEPTED,
+      }))
+      return true
+    }
+    return false
+  })
+
+  // ready calculator: the cutoff table is NOT shown, but a discreet re-open
+  // control is
+  await page.getByRole('heading', { name: 'Enter your grades' }).waitFor()
+  assert.equal(await page.locator('[data-testid="cutoff-table"]').count(), 0)
+  await page.getByRole('button', { name: 'Review letter-grade cutoffs' }).click()
+
+  const table = page.locator('[data-testid="cutoff-table"]')
+  await table.waitFor()
+  assert.equal(await page.inputValue('#cutoff-A-min'), '91')
+
+  await page.fill('#cutoff-A-min', '92')
+  await page.getByRole('button', { name: 'Save cutoffs' }).click()
+
+  // the edit reopens the normal review card (calculator_ready is now false)
+  await page.getByRole('heading', { name: 'Still needs your review' }).waitFor()
+  assert.deepEqual(correctionBody.corrections, [
+    { target_type: 'threshold', operation: 'set_minimum', threshold_letter: 'A', value: 92 },
+    { target_type: 'threshold', operation: 'confirm_threshold_value', threshold_letter: 'A' },
+  ])
+
+  // an explicit re-confirm restores the ready calculator
+  await page.getByRole('button', { name: 'Confirm' }).click()
+  await page.getByRole('heading', { name: 'Enter your grades' }).waitFor()
+  assert.ok(reconfirmed)
+})
+
+// --- cross-row edits survive a sibling row's submit (no remount) ---------------
+
+test('Grade Calculator: in-progress edits in other rows survive a sibling row affirm', { timeout: 45_000 }, async (t) => {
+  const RECON_C_UNVERIFIABLE = {
+    status: 'needs_student_review',
+    findings: [
+      { code: 'grading_method_unknown', severity: 'warning', message: 'x', field: 'grading_method' },
+      {
+        code: 'claim_evidence_consistency_unverifiable', severity: 'warning',
+        message: "could not deterministically verify threshold:C against its cited evidence text ('x')",
+        field: 'threshold:C',
+      },
+    ],
+    evidence_coverage: { total_claims: 5, supported_claims: 5, coverage_ratio: 1, unsupported_claims: [] },
+  }
+  // C's finding suppressed after the affirm; the unrelated blocker keeps the
+  // table on screen so we can inspect the other rows' inputs.
+  const RECON_AFTER = {
+    status: 'needs_student_review',
+    findings: [{ code: 'grading_method_unknown', severity: 'warning', message: 'x', field: 'grading_method' }],
+    evidence_coverage: RECON_C_UNVERIFIABLE.evidence_coverage,
+  }
+  let correctionBody = null
+
+  const page = await mountCutoffPanel(t, 'grade-calculator-cutoff-no-remount', async (path, method, request, response) => {
+    if (path === `/api/v2/student/me/syllabus-grade-profiles/${PROFILE_ID}` && method === 'GET') {
+      json(response, 200, detail({ extracted_grade_model: AF_MODEL, reconciliation: RECON_C_UNVERIFIABLE }))
+      return true
+    }
+    if (path === `/api/v2/student/me/syllabus-grade-profiles/${PROFILE_ID}/corrections` && method === 'POST') {
+      correctionBody = JSON.parse(await readBody(request))
+      json(response, 200, detail({
+        extracted_grade_model: AF_MODEL,
+        confirmed_grade_model: AF_MODEL, // thresholds unchanged by an affirm
+        reconciliation: RECON_C_UNVERIFIABLE,
+        confirmed_reconciliation: RECON_AFTER,
+        calculator_ready: false,
+        corrections: correctionBody.corrections,
+        clarifying_answers: { 'claim_evidence:threshold:c': { answer: 'confirm_value', letter: 'c' } },
+      }))
+      return true
+    }
+    return false
+  })
+
+  await page.locator('[data-testid="cutoff-table"]').waitFor()
+
+  // edit two different rows, save neither
+  await page.fill('#cutoff-A-min', '88')
+  await page.fill('#cutoff-D-max', '66')
+  await page.getByRole('button', { name: 'Save cutoffs' }).waitFor()
+
+  // affirm a third, untouched row -> a correction submits mid-edit
+  await page.locator('.grade-cutoff-row[data-threshold-letter="C"]')
+    .getByRole('button', { name: "Yes, that's correct" }).click()
+  await page.waitForFunction(() => !document.querySelector('button[aria-busy="true"]'))
+  await page.locator('.grade-cutoff-resolved[data-threshold-letter="C"]').waitFor()
+
+  // the in-progress edits in rows A and D are still there (no remount wiped them)
+  assert.equal(await page.inputValue('#cutoff-A-min'), '88')
+  assert.equal(await page.inputValue('#cutoff-D-max'), '66')
+  await page.getByRole('button', { name: 'Save cutoffs' }).waitFor()
+  assert.deepEqual(correctionBody.corrections, [
+    { target_type: 'threshold', operation: 'confirm_threshold_value', threshold_letter: 'C' },
+  ])
+})
