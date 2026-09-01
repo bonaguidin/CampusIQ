@@ -84,9 +84,9 @@ class ScheduledCourse(StrictModel):
     credit_hours: float
     requirement_group_id: str
     # Human-readable notes on prerequisite facts this scheduler could not
-    # safely turn into a hard ordering edge -- e.g. an OR-clause where
-    # neither alternative is otherwise known to be satisfied. Never
-    # silently dropped; see _clause_limitation().
+    # safely turn into a hard ordering edge -- e.g. an OR-clause where no
+    # alternative is otherwise known to be satisfied or present in the
+    # scheduled course set. Never silently dropped; see _clause_limitation().
     limitations: list[str] = Field(default_factory=list)
 
 
@@ -215,7 +215,18 @@ def _build_dependencies(
                 if not codes:
                     continue
             if len(codes) > 1:
-                limitations[course.course_code].append(_clause_limitation(codes))
+                # OR-set with more than one alternative: no single hard
+                # ordering edge can be synthesized without guessing which
+                # alternative the student will take (PrerequisiteClause's
+                # course_codes is unordered). But if any alternative is
+                # itself in this schedule's course set, the clause WILL be
+                # met within the plan -- record nothing, exactly as the
+                # already-satisfied branch above does. Only when no
+                # alternative appears anywhere (not satisfied, not in scope)
+                # is this a fact the scheduler cannot represent, and it must
+                # be surfaced as a limitation rather than silently dropped.
+                if not any(code in in_scope for code in codes):
+                    limitations[course.course_code].append(_clause_limitation(codes))
                 continue
             (code,) = codes
             if code in in_scope:

@@ -754,3 +754,58 @@ def test_zero_feasible_restriction_evidence_requires_adviser_review():
 
     assert selected(result) == []
     assert decision(result, "pick").state == RequirementDecisionState.ADVISER_REVIEW
+
+
+def test_or_clause_prereq_satisfied_within_the_same_combination_is_not_unschedulable():
+    """Regression for the TAMU ECEN 314 collapse: a course with an
+    "X or Y" prerequisite (here C -> "A or B") used to emit a blocking
+    "prerequisite (A or B) not modeled..." limitation on every candidate
+    combination, even when an alternative (B) was itself scheduled by
+    another requirement in the same combination. select_structured_
+    requirements treated that advisory as a hard scheduling failure, so
+    every combination was rejected and every structured group collapsed
+    to ADVISER_REVIEW. With the OR-clause in-scope check, B being present
+    in the combination clears the advisory and both groups resolve."""
+    groups = [
+        group("needs-or-prereq", "enumerated_all"),
+        group("supplies-B", "enumerated_all"),
+    ]
+    options = [
+        option("opt-c", "needs-or-prereq", 0),
+        option("opt-b", "supplies-B", 0),
+    ]
+    rows = [course("opt-c", code="C"), course("opt-b", code="B")]
+    prerequisites = {
+        "C": StructuredPrerequisite(requires_all=[PrerequisiteClause(course_codes=["A", "B"])]),
+    }
+    result = run(
+        groups, options, rows, {}, {"C": 3, "B": 3},
+        catalog_by_code={"C": ["C"], "B": ["B"]},
+        prerequisites=prerequisites,
+    )
+
+    assert decision(result, "needs-or-prereq").state == RequirementDecisionState.AUTO_SELECTED
+    assert decision(result, "supplies-B").state == RequirementDecisionState.AUTO_SELECTED
+    assert sorted(selected(result)) == ["B", "C"]
+
+
+def test_or_clause_prereq_with_no_alternative_anywhere_still_blocks():
+    """Negative control for the fix above: when NEITHER alternative of an
+    "X or Y" prerequisite is satisfied or present anywhere in the plan,
+    the advisory is still emitted and the candidate is still correctly
+    unschedulable -- the fix only suppresses the advisory when an
+    alternative is genuinely in the scheduled set."""
+    groups = [group("needs-or-prereq", "enumerated_all")]
+    options = [option("opt-c", "needs-or-prereq", 0)]
+    rows = [course("opt-c", code="C")]
+    prerequisites = {
+        "C": StructuredPrerequisite(requires_all=[PrerequisiteClause(course_codes=["A", "B"])]),
+    }
+    result = run(
+        groups, options, rows, {}, {"C": 3},
+        catalog_by_code={"C": ["C"]},
+        prerequisites=prerequisites,
+    )
+
+    assert selected(result) == []
+    assert decision(result, "needs-or-prereq").state == RequirementDecisionState.ADVISER_REVIEW
