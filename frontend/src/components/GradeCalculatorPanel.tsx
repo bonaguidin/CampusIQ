@@ -824,137 +824,148 @@ export function GradeCalculatorPanel({ accessToken, courses, institutionName }: 
             )}
 
             {detail.calculator_ready && (
-              <>
-                <ProfessorsRules model={detail.confirmed_grade_model ?? detail.extracted_grade_model} />
-
-                <div className="card">
-                  <h3 className="card-heading">Enter your grades</h3>
-                  <p className="empty-state">Leave a field blank if you don't know it yet — blank never counts as zero.</p>
-                  {scoreableNames.map((name) => {
-                    const key = `${detail.confirmed_grade_model?.categories.some((c) => c.name === name) ? 'category' : 'assessment'}:${name}`;
-                    return (
-                      <div className="grade-entry-row" key={key}>
-                        <label htmlFor={`actual-${key}`}>{name}</label>
-                        <input
-                          id={`actual-${key}`}
-                          type="number"
-                          min={0}
-                          max={100}
-                          className="form-input"
-                          value={gradeDraft[key]?.actual ?? ''}
-                          onChange={(e) => setGradeDraft((prev) => ({ ...prev, [key]: { ...prev[key], actual: e.target.value, projected: prev[key]?.projected ?? '' } }))}
-                          placeholder="—"
-                        />
-                        <label htmlFor={`hypo-${key}`} className="sr-only">Hypothetical {name} score</label>
-                        <input
-                          id={`hypo-${key}`}
-                          type="number"
-                          min={0}
-                          max={100}
-                          className="form-input grade-entry-hypothetical"
-                          value={gradeDraft[key]?.projected ?? ''}
-                          onChange={(e) => setGradeDraft((prev) => ({ ...prev, [key]: { ...prev[key], projected: e.target.value, actual: prev[key]?.actual ?? '' } }))}
-                          placeholder="What if?"
-                        />
-                      </div>
-                    );
-                  })}
-                  <div className="grade-entry-actions">
-                    <button type="button" className="btn btn-primary btn-sm" onClick={handleSaveActualGrades} disabled={busy} aria-busy={busy}>
-                      {busy ? 'Saving…' : 'Save grades'}
-                    </button>
-                    <button type="button" className="btn btn-ghost btn-sm" onClick={handleCalculate}>
-                      Calculate
-                    </button>
+              // Side-by-side region: the calculator cards ("Enter your
+              // grades", "Current grade", "Target grade") in the main column,
+              // the Professor's rules reference panel in a sticky sidebar so
+              // it stays visible across every calculator interaction, not just
+              // data entry (syllabus-review-redesign-spec.md §2C). Collapses
+              // to a single column below 880px -- see .grade-calculator-layout
+              // in index.css for why that breakpoint and not the 640px one.
+              <div className="grade-calculator-layout">
+                <div className="grade-calculator-main">
+                  <div className="card">
+                    <h3 className="card-heading">Enter your grades</h3>
+                    <p className="empty-state">Leave a field blank if you don't know it yet — blank never counts as zero.</p>
+                    {scoreableNames.map((name) => {
+                      const key = `${detail.confirmed_grade_model?.categories.some((c) => c.name === name) ? 'category' : 'assessment'}:${name}`;
+                      return (
+                        <div className="grade-entry-row" key={key}>
+                          <label htmlFor={`actual-${key}`}>{name}</label>
+                          <input
+                            id={`actual-${key}`}
+                            type="number"
+                            min={0}
+                            max={100}
+                            className="form-input"
+                            value={gradeDraft[key]?.actual ?? ''}
+                            onChange={(e) => setGradeDraft((prev) => ({ ...prev, [key]: { ...prev[key], actual: e.target.value, projected: prev[key]?.projected ?? '' } }))}
+                            placeholder="—"
+                          />
+                          <label htmlFor={`hypo-${key}`} className="sr-only">Hypothetical {name} score</label>
+                          <input
+                            id={`hypo-${key}`}
+                            type="number"
+                            min={0}
+                            max={100}
+                            className="form-input grade-entry-hypothetical"
+                            value={gradeDraft[key]?.projected ?? ''}
+                            onChange={(e) => setGradeDraft((prev) => ({ ...prev, [key]: { ...prev[key], projected: e.target.value, actual: prev[key]?.actual ?? '' } }))}
+                            placeholder="What if?"
+                          />
+                        </div>
+                      );
+                    })}
+                    <div className="grade-entry-actions">
+                      <button type="button" className="btn btn-primary btn-sm" onClick={handleSaveActualGrades} disabled={busy} aria-busy={busy}>
+                        {busy ? 'Saving…' : 'Save grades'}
+                      </button>
+                      <button type="button" className="btn btn-ghost btn-sm" onClick={handleCalculate}>
+                        Calculate
+                      </button>
+                    </div>
                   </div>
-                </div>
 
-                {calcError && <p className="login-error" role="alert">{calcError}</p>}
+                  {calcError && <p className="login-error" role="alert">{calcError}</p>}
 
-                {calcResult && (
-                  <div className="card" role="status" aria-live="polite">
-                    <h3 className="card-heading">Current grade</h3>
-                    <p className="overview-stat-value">{calcResult.current_grade !== null ? `${calcResult.current_grade}%` : '—'}</p>
-                    <p className="empty-state">
-                      {calcResult.completed_weight !== null
-                        ? `Based on ${calcResult.completed_weight}% of the course completed.`
-                        : 'No grades entered yet.'}
-                    </p>
-
-                    <h3 className="card-heading">Projected grade</h3>
-                    {calcResult.projected_grade !== null ? (
-                      <p className="overview-stat-value">{calcResult.projected_grade}%</p>
-                    ) : (
-                      <p className="empty-state">Enter a hypothetical score for every remaining component to see your projected grade.</p>
-                    )}
-
-                    {calcResult.applied_rules.filter((r) => r.changed_calculation).map((rule, i) => (
-                      <p key={i} className="grade-rule-explanation">
-                        {rule.rule_type === 'replacement'
-                          ? `${rule.source} replacement applied: your ${rule.source} score replaces your ${rule.target} score in this scenario.`
-                          : `${rule.description}`}
+                  {calcResult && (
+                    <div className="card" role="status" aria-live="polite">
+                      <h3 className="card-heading">Current grade</h3>
+                      <p className="overview-stat-value">{calcResult.current_grade !== null ? `${calcResult.current_grade}%` : '—'}</p>
+                      <p className="empty-state">
+                        {calcResult.completed_weight !== null
+                          ? `Based on ${calcResult.completed_weight}% of the course completed.`
+                          : 'No grades entered yet.'}
                       </p>
-                    ))}
 
-                    <button type="button" className="btn btn-ghost btn-sm" onClick={() => setShowBreakdown((v) => !v)}>
-                      {showBreakdown ? 'Hide breakdown' : 'Show breakdown'}
+                      <h3 className="card-heading">Projected grade</h3>
+                      {calcResult.projected_grade !== null ? (
+                        <p className="overview-stat-value">{calcResult.projected_grade}%</p>
+                      ) : (
+                        <p className="empty-state">Enter a hypothetical score for every remaining component to see your projected grade.</p>
+                      )}
+
+                      {calcResult.applied_rules.filter((r) => r.changed_calculation).map((rule, i) => (
+                        <p key={i} className="grade-rule-explanation">
+                          {rule.rule_type === 'replacement'
+                            ? `${rule.source} replacement applied: your ${rule.source} score replaces your ${rule.target} score in this scenario.`
+                            : `${rule.description}`}
+                        </p>
+                      ))}
+
+                      <button type="button" className="btn btn-ghost btn-sm" onClick={() => setShowBreakdown((v) => !v)}>
+                        {showBreakdown ? 'Hide breakdown' : 'Show breakdown'}
+                      </button>
+                      {showBreakdown && (
+                        <div className="real-course-table" role="table" aria-label="Calculation breakdown">
+                          {calcResult.components.map((c) => (
+                            <div className="real-course-row" role="row" key={c.name}>
+                              <span role="cell">{c.name}</span>
+                              <span role="cell">entered: {c.original_score ?? '—'}</span>
+                              <span role="cell">effective: {c.effective_score ?? '—'}</span>
+                              <span role="cell">weight: {formatPercent(c.weight_percent)}</span>
+                              <span role="cell">contribution: {c.contribution ?? '—'}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="card">
+                    <h3 className="card-heading">Target grade</h3>
+                    <label htmlFor="target-component" className="form-label">Solve for</label>
+                    <select id="target-component" className="form-input" value={targetComponent} onChange={(e) => setTargetComponent(e.target.value)}>
+                      <option value="">Choose a component</option>
+                      {scoreableNames.map((name) => (
+                        <option key={name} value={name}>{name}</option>
+                      ))}
+                    </select>
+                    <label htmlFor="target-letter" className="form-label">Target grade</label>
+                    <select id="target-letter" className="form-input" value={targetLetter} onChange={(e) => setTargetLetter(e.target.value)}>
+                      <option value="">Custom number…</option>
+                      {(detail.confirmed_grade_model?.grade_thresholds ?? []).map((t) => (
+                        <option key={t.letter} value={t.letter}>{t.letter}</option>
+                      ))}
+                    </select>
+                    {!targetLetter && (
+                      <>
+                        <label htmlFor="target-numeric" className="form-label">Numeric target</label>
+                        <input id="target-numeric" type="number" className="form-input" value={targetNumeric} onChange={(e) => setTargetNumeric(e.target.value)} />
+                      </>
+                    )}
+                    <button type="button" className="btn btn-primary btn-sm" onClick={handleSolveTarget} disabled={!targetComponent}>
+                      Solve
                     </button>
-                    {showBreakdown && (
-                      <div className="real-course-table" role="table" aria-label="Calculation breakdown">
-                        {calcResult.components.map((c) => (
-                          <div className="real-course-row" role="row" key={c.name}>
-                            <span role="cell">{c.name}</span>
-                            <span role="cell">entered: {c.original_score ?? '—'}</span>
-                            <span role="cell">effective: {c.effective_score ?? '—'}</span>
-                            <span role="cell">weight: {formatPercent(c.weight_percent)}</span>
-                            <span role="cell">contribution: {c.contribution ?? '—'}</span>
-                          </div>
-                        ))}
-                      </div>
+
+                    {targetError && <p className="login-error" role="alert">{targetError}</p>}
+
+                    {targetResult && (
+                      <p role="status" aria-live="polite" className="grade-target-result">
+                        {targetResult.already_achieved && "You've already reached this target under the grades and assumptions entered."}
+                        {!targetResult.already_achieved && targetResult.feasible && targetResult.required_score !== null &&
+                          `You need about ${targetResult.required_score}% on the ${targetResult.target_component} to finish with ${targetResult.target_label ? `an ${targetResult.target_label}` : 'this target'}.`}
+                        {!targetResult.already_achieved && !targetResult.feasible && targetResult.required_score !== null &&
+                          `You would need ${targetResult.required_score}% on the ${targetResult.target_component}. This target isn't reachable under the current assumptions.`}
+                        {targetResult.required_score === null && "CampusIQ needs more grades entered to solve for this target."}
+                      </p>
                     )}
                   </div>
-                )}
-
-                <div className="card">
-                  <h3 className="card-heading">Target grade</h3>
-                  <label htmlFor="target-component" className="form-label">Solve for</label>
-                  <select id="target-component" className="form-input" value={targetComponent} onChange={(e) => setTargetComponent(e.target.value)}>
-                    <option value="">Choose a component</option>
-                    {scoreableNames.map((name) => (
-                      <option key={name} value={name}>{name}</option>
-                    ))}
-                  </select>
-                  <label htmlFor="target-letter" className="form-label">Target grade</label>
-                  <select id="target-letter" className="form-input" value={targetLetter} onChange={(e) => setTargetLetter(e.target.value)}>
-                    <option value="">Custom number…</option>
-                    {(detail.confirmed_grade_model?.grade_thresholds ?? []).map((t) => (
-                      <option key={t.letter} value={t.letter}>{t.letter}</option>
-                    ))}
-                  </select>
-                  {!targetLetter && (
-                    <>
-                      <label htmlFor="target-numeric" className="form-label">Numeric target</label>
-                      <input id="target-numeric" type="number" className="form-input" value={targetNumeric} onChange={(e) => setTargetNumeric(e.target.value)} />
-                    </>
-                  )}
-                  <button type="button" className="btn btn-primary btn-sm" onClick={handleSolveTarget} disabled={!targetComponent}>
-                    Solve
-                  </button>
-
-                  {targetError && <p className="login-error" role="alert">{targetError}</p>}
-
-                  {targetResult && (
-                    <p role="status" aria-live="polite" className="grade-target-result">
-                      {targetResult.already_achieved && "You've already reached this target under the grades and assumptions entered."}
-                      {!targetResult.already_achieved && targetResult.feasible && targetResult.required_score !== null &&
-                        `You need about ${targetResult.required_score}% on the ${targetResult.target_component} to finish with ${targetResult.target_label ? `an ${targetResult.target_label}` : 'this target'}.`}
-                      {!targetResult.already_achieved && !targetResult.feasible && targetResult.required_score !== null &&
-                        `You would need ${targetResult.required_score}% on the ${targetResult.target_component}. This target isn't reachable under the current assumptions.`}
-                      {targetResult.required_score === null && "CampusIQ needs more grades entered to solve for this target."}
-                    </p>
-                  )}
                 </div>
-              </>
+
+                <div className="grade-calculator-aside">
+                  <ProfessorsRules model={detail.confirmed_grade_model ?? detail.extracted_grade_model} />
+                </div>
+              </div>
             )}
           </>
         )}

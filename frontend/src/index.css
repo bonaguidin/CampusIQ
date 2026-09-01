@@ -6614,6 +6614,53 @@ label.profile-form-check { display: flex; flex-direction: row; align-items: cent
 .professors-rule-type { margin: 0; font-weight: 600; font-size: var(--text-sm); }
 .professors-rule-text { margin: 0; color: var(--muted); font-size: var(--text-sm); }
 
+/* Side-by-side calculator + Professor's rules (GradeCalculatorPanel.tsx,
+   detail.calculator_ready branch). Same grid shape as .degree-planner-summary
+   above: a fluid main column and a fixed-ish secondary column, align-items:
+   start so the sidebar can stick rather than being stretched to row height.
+   The .grade-calculator-main flex column reproduces the var(--sp-4) card
+   spacing that .grade-calculator-panel's own gap used to provide when these
+   cards were its direct children.
+   Collapse breakpoint is 880px, NOT the 640px used elsewhere in this file:
+   the stage content column is only ~880px wide (--stage-max 960 minus
+   padding), and the grade-entry rows carry ~256px of fixed columns, so a
+   ~300px sidebar in the 640-880px band would squeeze the calculator to an
+   unusable width. Below 880px the sidebar unsticks and drops below the
+   calculator in source order. */
+.grade-calculator-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 320px);
+  gap: var(--sp-5);
+  align-items: start;
+}
+/* No professor-policy rules extracted -> ProfessorsRules renders nothing and
+   .professors-rules is absent from the DOM. Drop the empty sidebar track so
+   the calculator keeps the full width (matches the :has() pattern already
+   used for .editable-section-header above). */
+.grade-calculator-layout:not(:has(.professors-rules)) {
+  grid-template-columns: minmax(0, 1fr);
+}
+.grade-calculator-main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+.grade-calculator-aside {
+  position: sticky;
+  top: var(--sp-4);
+  max-height: calc(100vh - var(--topbar-h) - var(--sp-6));
+  overflow-y: auto;
+}
+@media (max-width: 880px) {
+  .grade-calculator-layout { grid-template-columns: minmax(0, 1fr); }
+  .grade-calculator-aside {
+    position: static;
+    max-height: none;
+    overflow-y: visible;
+  }
+}
+
 /* Inline review findings -- rendered next to the field/row/rule they're
    about (see InlineFindings/GeneralFindings in GradeCalculatorPanel.tsx),
    not as a separate flat list. Small marker column + compact text mirrors

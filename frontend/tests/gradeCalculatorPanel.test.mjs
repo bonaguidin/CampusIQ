@@ -343,6 +343,15 @@ test('Grade Calculator: empty state, upload, review, confirm, grade entry, calcu
   assert.equal(await rulesPanel.getByText(/replaces Midterm/).count(), 0)
   assert.equal(await rulesPanel.getByRole('button').count(), 0, 'Professor\'s rules panel has no dismiss / ignore control')
 
+  // --- Side-by-side layout: the calculator cards and the Professor's rules
+  //     panel share one grid wrapper (.grade-calculator-layout), with the
+  //     cards in .grade-calculator-main and the rules panel in
+  //     .grade-calculator-aside. ---
+  const layout = page.locator('.grade-calculator-layout')
+  await layout.waitFor()
+  await layout.locator('.grade-calculator-main').getByRole('heading', { name: 'Enter your grades' }).waitFor()
+  await layout.locator('.grade-calculator-aside [data-testid="professors-rules"]').waitFor()
+
   await page.fill('#actual-category\\:Mid-term\\ Exam', '78')
   await page.fill('#actual-category\\:Lecture\\ Quizzes', '92')
   await page.fill('#actual-category\\:Recitation\\ Quizzes', '88')
