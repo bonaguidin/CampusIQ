@@ -26,6 +26,13 @@ by applying the general three-state rule uniformly; §9's text itself has
 not been edited to match -- see the requirement-satisfaction build
 task's report for the full reasoning, still pending a spec-text pass.
 
+IN-PROGRESS COURSE MATCHING: an in_progress course_records row counts
+toward a group regardless of counts_toward_credit; the gate applies to
+completed rows only. See _build_matched_courses() for why (lifecycle
+auto-promotion writes every in_progress row with counts_toward_credit=
+False) and for the alignment with scheduler.satisfied_course_codes().
+Also pending a §9 spec-text pass.
+
 CREDIT-THRESHOLD DETECTION: keyed directly off
 group_type == "enumerated_credit_threshold"
 (supabase/migrations/20260819160000_requirement_groups_credit_threshold_
@@ -91,17 +98,30 @@ class RequirementSatisfactionResult(StrictModel):
 
 def _build_matched_courses(course_records: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
     """course_code -> the student's row for it, completed preferred over
-    in_progress when both exist. Only rows with counts_toward_credit truthy
-    (default True when absent) and status in (completed, in_progress) --
+    in_progress when both exist. Status must be in (completed, in_progress);
     per §9, counts_toward_gpa/excluded_from_gpa_by are GPA-only concerns and
     are deliberately never consulted here.
+
+    counts_toward_credit gates a COMPLETED row only (a completed course
+    explicitly marked false -- withdrawn, incomplete, repeat-excluded -- did
+    not earn its requirement slot). It is NOT applied to an in_progress row:
+    planning/lifecycle.py writes every auto-promoted in_progress record with
+    counts_toward_credit=False (no grade posted yet, so no credit earned
+    yet), so applying the gate here would mean no in-progress course could
+    ever count toward a requirement -- defeating §8.4's "in-progress counts"
+    decision entirely. This matches scheduler.satisfied_course_codes(), the
+    sibling reader, which already counts in_progress regardless of
+    counts_toward_credit for prerequisite-clearing. §9's text still says the
+    gate applies to every matched course; that pre-dates lifecycle
+    auto-promotion and needs a spec-text pass, tracked separately (same
+    posture as the LEAF-GROUP STATUS note above).
     """
     matched: dict[str, dict[str, Any]] = {}
     for record in course_records:
-        if not record.get("counts_toward_credit", True):
-            continue
         status = record.get("status")
         if status not in ("completed", "in_progress"):
+            continue
+        if status == "completed" and not record.get("counts_toward_credit", True):
             continue
         code = record["course_code"]
         existing = matched.get(code)
