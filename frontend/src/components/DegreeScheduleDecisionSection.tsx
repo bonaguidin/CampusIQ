@@ -119,18 +119,18 @@ export function DegreeScheduleDecisionSection({ schedule, mutation, message, int
             <li className="degree-schedule-decision-card" key={item.requirementGroupId}>
               <div className="degree-schedule-decision-heading"><h5>{item.requirementName}</h5><div><strong>
                 {item.state === 'CHOICE_REQUIRED' && 'Choice required'}
-                {item.state === 'ADVISER_REVIEW' && 'Adviser review needed'}
+                {item.state === 'ADVISER_REVIEW' && "Can't auto-verify"}
                 {item.state === 'DATA_UNRESOLVED' && 'Course data unavailable'}
               </strong>{item.state === 'CHOICE_REQUIRED' && <span>{item.validOptionLabel}</span>}</div></div>
               {item.state === 'CHOICE_REQUIRED' && candidates(item, false)}
-              {item.state === 'ADVISER_REVIEW' && <p>CampusIQ found course paths for this requirement, but eligibility or institutional restrictions require review.</p>}
+              {item.state === 'ADVISER_REVIEW' && <p>We can't automatically verify this requirement is satisfied — check with your adviser.</p>}
               {item.state === 'DATA_UNRESOLVED' && <p>CampusIQ does not yet have enough structured course data to resolve this requirement.</p>}
             </li>
           ))}
           {presentation.legacyRequirements.map((requirement) => (
             <li className="degree-schedule-decision-card" key={requirement.requirement_group_id}>
-              <div className="degree-schedule-decision-heading"><h5>{requirement.name}</h5><strong>Needs review</strong></div>
-              <p>CampusIQ does not yet have structured course options for this requirement.</p>
+              <div className="degree-schedule-decision-heading"><h5>{requirement.name}</h5><strong>Can't auto-verify</strong></div>
+              <p>We can't automatically verify this requirement is satisfied — check with your adviser.</p>
             </li>
           ))}
         </ul>
