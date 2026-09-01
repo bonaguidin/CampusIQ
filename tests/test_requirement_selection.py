@@ -686,6 +686,43 @@ def test_tamu_mixed_requirement_keeps_cross_listing_atomic_and_applies_prerequis
     assert {candidate.course_codes[-2] for candidate in candidates.feasible_candidates} == {"MATH 251", "MATH 253"}
 
 
+def test_cross_listing_collapses_to_the_alias_on_the_student_transcript():
+    """The student took the "PHYS 217/ENGR 217" cross-listed course under
+    PHYS 217. The other option in the group is still open, so the group is
+    deferred -- but the cross-listed slot must be recognised as done via
+    the PHYS 217 alias, not re-proposed under ENGR 217 (the alias the
+    lexical tie-break would otherwise pick). Candidates should cover only
+    the genuinely-remaining option."""
+    groups = [group("Second Year — Fall — Required Courses", "enumerated_all")]
+    group_id = groups[0]["id"]
+    options = [option("lab", group_id, 0), option("stat", group_id, 1, "or")]
+    rows = [
+        course("lab", code="PHYS 217/ENGR 217"),
+        course("stat", code="ECEN 303"),
+        course("stat", code="STAT 211"),
+    ]
+    catalog_by_code = {
+        "PHYS 217/ENGR 217": ["PHYS 217", "ENGR 217"],
+        "ECEN 303": ["ECEN 303"],
+        "STAT 211": ["STAT 211"],
+    }
+    credits = {code: 3 for values in catalog_by_code.values() for code in values}
+    records = [{"course_code": "PHYS 217", "status": "completed", "counts_toward_credit": True, "credit_hours": 3}]
+    result = run(groups, options, rows, {}, credits, catalog_by_code=catalog_by_code, records=records)
+
+    candidates = result.candidate_sets[0]
+    every_code = {
+        code
+        for bucket in (candidates.feasible_candidates, candidates.excluded_candidates)
+        for candidate in bucket
+        for code in candidate.course_codes
+    }
+    assert "ENGR 217" not in every_code
+    assert "PHYS 217" not in every_code  # already done, never re-proposed
+    assert {tuple(c.course_codes) for c in candidates.feasible_candidates} == {("ECEN 303",), ("STAT 211",)}
+    assert decision(result, group_id).state == RequirementDecisionState.CHOICE_REQUIRED
+
+
 def test_direct_course_code_or_produces_both_feasible_candidates():
     groups = [group("pick", "enumerated_all")]
     options = [option("direct-or", "pick", 0, "or")]
@@ -754,3 +791,58 @@ def test_zero_feasible_restriction_evidence_requires_adviser_review():
 
     assert selected(result) == []
     assert decision(result, "pick").state == RequirementDecisionState.ADVISER_REVIEW
+
+
+def test_or_clause_prereq_satisfied_within_the_same_combination_is_not_unschedulable():
+    """Regression for the TAMU ECEN 314 collapse: a course with an
+    "X or Y" prerequisite (here C -> "A or B") used to emit a blocking
+    "prerequisite (A or B) not modeled..." limitation on every candidate
+    combination, even when an alternative (B) was itself scheduled by
+    another requirement in the same combination. select_structured_
+    requirements treated that advisory as a hard scheduling failure, so
+    every combination was rejected and every structured group collapsed
+    to ADVISER_REVIEW. With the OR-clause in-scope check, B being present
+    in the combination clears the advisory and both groups resolve."""
+    groups = [
+        group("needs-or-prereq", "enumerated_all"),
+        group("supplies-B", "enumerated_all"),
+    ]
+    options = [
+        option("opt-c", "needs-or-prereq", 0),
+        option("opt-b", "supplies-B", 0),
+    ]
+    rows = [course("opt-c", code="C"), course("opt-b", code="B")]
+    prerequisites = {
+        "C": StructuredPrerequisite(requires_all=[PrerequisiteClause(course_codes=["A", "B"])]),
+    }
+    result = run(
+        groups, options, rows, {}, {"C": 3, "B": 3},
+        catalog_by_code={"C": ["C"], "B": ["B"]},
+        prerequisites=prerequisites,
+    )
+
+    assert decision(result, "needs-or-prereq").state == RequirementDecisionState.AUTO_SELECTED
+    assert decision(result, "supplies-B").state == RequirementDecisionState.AUTO_SELECTED
+    assert sorted(selected(result)) == ["B", "C"]
+
+
+def test_or_clause_prereq_with_no_alternative_anywhere_still_blocks():
+    """Negative control for the fix above: when NEITHER alternative of an
+    "X or Y" prerequisite is satisfied or present anywhere in the plan,
+    the advisory is still emitted and the candidate is still correctly
+    unschedulable -- the fix only suppresses the advisory when an
+    alternative is genuinely in the scheduled set."""
+    groups = [group("needs-or-prereq", "enumerated_all")]
+    options = [option("opt-c", "needs-or-prereq", 0)]
+    rows = [course("opt-c", code="C")]
+    prerequisites = {
+        "C": StructuredPrerequisite(requires_all=[PrerequisiteClause(course_codes=["A", "B"])]),
+    }
+    result = run(
+        groups, options, rows, {}, {"C": 3},
+        catalog_by_code={"C": ["C"]},
+        prerequisites=prerequisites,
+    )
+
+    assert selected(result) == []
+    assert decision(result, "needs-or-prereq").state == RequirementDecisionState.ADVISER_REVIEW

@@ -625,17 +625,6 @@ def _check_threshold_range_consistency(
     return finding
 
 
-def unverified_threshold_value_finding(threshold: GradeThreshold) -> ReconciliationFinding | None:
-    """Public wrapper: the claim_evidence_consistency_unverifiable /
-    claim_evidence_value_mismatch finding a single threshold's value
-    produces against its cited evidence, or None when it verifies clean (or
-    has no comparable range/evidence to check). Used by
-    corrections.CONFIRM_THRESHOLD_VALUE to check there is actually an
-    unverified claim to affirm before recording a no-op confirmation.
-    """
-    return _check_threshold_range_consistency(threshold)
-
-
 def _check_claim_evidence_consistency(
     grade_model: GradeModel,
     confirmed_value_claims: set[str] | None = None,

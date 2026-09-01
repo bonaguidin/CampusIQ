@@ -6,7 +6,7 @@ const STATUS_LABEL: Record<RequirementGroupStatus, string> = {
   SATISFIED: 'Satisfied',
   IN_PROGRESS: 'In progress',
   NOT_STARTED: 'Not started',
-  MANUAL_REVIEW: 'Adviser review needed',
+  MANUAL_REVIEW: "Can't auto-verify",
 };
 
 const STATUS_MODIFIER: Record<RequirementGroupStatus, string> = {
@@ -61,7 +61,7 @@ export function RequirementGroupNode({ group }: { group: RequirementGroupResult 
 
       {group.status === 'MANUAL_REVIEW' && (
         <p className="requirement-group-adviser-note">
-          Course options for this requirement are not automatically selected yet.
+          We can't automatically verify this requirement is satisfied — check with your adviser.
         </p>
       )}
 

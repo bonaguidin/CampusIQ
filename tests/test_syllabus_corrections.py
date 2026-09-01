@@ -272,24 +272,100 @@ def test_confirm_threshold_value_is_case_insensitive_on_the_letter():
     assert apply_grade_model_corrections(model, [_confirm_value("b")]).model_dump() == model.model_dump()
 
 
-def test_confirm_threshold_value_rejects_a_threshold_that_verifies_clean():
+def test_confirm_threshold_value_noops_on_a_threshold_that_verifies_clean():
+    # A verifies clean against its evidence -> no finding to suppress. The
+    # affirmation is inert (confirmed_value_claims has nothing to match), so
+    # it is tolerated as a no-op rather than raising: the unified cutoff
+    # table auto-appends CONFIRM_THRESHOLD_VALUE after every edit and must
+    # not blow up the atomic batch when the edited value needs no affirming.
     model = _unverifiable_threshold_model()
-    with pytest.raises(CorrectionApplicationError, match="no unverified value claim"):
-        apply_grade_model_corrections(model, [_confirm_value("A")])
+    assert apply_grade_model_corrections(model, [_confirm_value("A")]).model_dump() == model.model_dump()
 
 
-def test_confirm_threshold_value_rejects_a_single_bound_threshold():
+def test_confirm_threshold_value_noops_on_a_single_bound_threshold():
     # The range check never runs on a single-bound threshold, so there is no
-    # claim_evidence finding to affirm.
+    # claim_evidence finding to affirm -- tolerated as a no-op.
     model = _unverifiable_threshold_model()
-    with pytest.raises(CorrectionApplicationError, match="no unverified value claim"):
-        apply_grade_model_corrections(model, [_confirm_value("F")])
+    assert apply_grade_model_corrections(model, [_confirm_value("F")]).model_dump() == model.model_dump()
 
 
 def test_confirm_threshold_value_rejects_an_unknown_letter():
+    # A missing threshold is still a real mistake -- only "nothing to
+    # confirm" is tolerated, not "no such threshold".
     model = _unverifiable_threshold_model()
     with pytest.raises(CorrectionApplicationError, match="unknown threshold letter"):
         apply_grade_model_corrections(model, [_confirm_value("Z")])
+
+
+# --- set_minimum/set_maximum + auto-appended confirm_threshold_value -------------------
+# The unified cutoff table submits, for every letter it edited in place, a
+# SET_MINIMUM / SET_MAXIMUM followed by a CONFIRM_THRESHOLD_VALUE for the
+# same letter in one atomic batch, so the student is never re-prompted to
+# affirm a value they just typed. The confirmation must never fail that
+# batch, whatever the edit left behind.
+
+
+def _set_max(letter, value):
+    return correction(
+        CorrectionTargetType.THRESHOLD, CorrectionOperation.SET_MAXIMUM, threshold_letter=letter, value=value
+    )
+
+
+def _edit_batch_model() -> GradeModel:
+    return GradeModel(
+        grade_thresholds=[
+            # edit 89 -> 90 makes B match its cited "B: 80-90" exactly: no residual finding
+            GradeThreshold(letter="B", minimum=80, maximum=89, evidence=ev("B: 80-90")),
+            # edit 80 -> 79 keeps C disagreeing with its cited "C: 70-80": residual finding
+            GradeThreshold(letter="C", minimum=70, maximum=80, evidence=ev("C: 70-80")),
+            # no citable evidence text at all: range check returns early, no finding
+            GradeThreshold(letter="D", minimum=60, maximum=69, evidence=None),
+            # single-bound: range check skips it, no finding
+            GradeThreshold(letter="F", maximum=59, evidence=ev("F: < 60%")),
+        ],
+    )
+
+
+def test_edit_then_autoaffirm_batch_edit_matches_evidence():
+    model = _edit_batch_model()
+    result = apply_grade_model_corrections(model, [_set_max("B", 90), _confirm_value("B")])
+    assert result.grade_thresholds[0].maximum == 90
+    assert model.grade_thresholds[0].maximum == 89  # original untouched
+
+
+def test_edit_then_autoaffirm_batch_edit_still_mismatches_evidence():
+    model = _edit_batch_model()
+    result = apply_grade_model_corrections(model, [_set_max("C", 79), _confirm_value("C")])
+    assert result.grade_thresholds[1].maximum == 79
+
+
+def test_edit_then_autoaffirm_batch_threshold_has_no_evidence_text():
+    model = _edit_batch_model()
+    result = apply_grade_model_corrections(model, [_set_max("D", 68), _confirm_value("D")])
+    assert result.grade_thresholds[2].maximum == 68
+
+
+def test_edit_then_autoaffirm_batch_single_bound_threshold():
+    model = _edit_batch_model()
+    result = apply_grade_model_corrections(model, [_set_max("F", 58), _confirm_value("F")])
+    assert result.grade_thresholds[3].maximum == 58
+
+
+def test_edit_then_autoaffirm_all_four_scenarios_in_one_atomic_batch():
+    # Every edit + its auto-appended affirmation, together: the batch that
+    # would previously have aborted on the first affirm with nothing to
+    # confirm now applies cleanly end to end.
+    model = _edit_batch_model()
+    result = apply_grade_model_corrections(
+        model,
+        [
+            _set_max("B", 90), _confirm_value("B"),
+            _set_max("C", 79), _confirm_value("C"),
+            _set_max("D", 68), _confirm_value("D"),
+            _set_max("F", 58), _confirm_value("F"),
+        ],
+    )
+    assert [t.maximum for t in result.grade_thresholds] == [90, 79, 68, 58]
 
 
 # --- rule corrections ----------------------------------------------------------------------

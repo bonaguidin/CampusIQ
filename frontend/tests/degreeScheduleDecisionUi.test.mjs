@@ -110,7 +110,7 @@ test('Degree Schedule decisions are actionable, grouped, deduplicated, and respo
   assert.equal(await section.getByText('CEE 2302', { exact: true }).count(), 1)
   assert.equal(await section.getByText('CS 3377', { exact: true }).count(), 1)
   assert.equal(await section.getByText('6 credits total').count(), 1)
-  assert.equal(await section.getByText('Adviser review needed').count(), 1)
+  assert.equal(await section.getByText("Can't auto-verify").count(), 2)
   assert.equal(await section.getByText('Course data unavailable').count(), 1)
   assert.equal(await section.getByText('University Core Curriculum').count(), 1)
   assert.equal(await section.getByText('Calculus').count(), 0)

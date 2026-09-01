@@ -14,7 +14,7 @@ test('degree requirements auto-load with deterministic language and collapsed de
   assert.doesNotMatch(panel, /live model|Run analysis|Re-run analysis|Analyzing/)
   assert.match(node, /useState\(false\)/)
   assert.match(node, /aria-expanded=\{expanded\}/)
-  assert.match(node, /Adviser review needed/)
+  assert.match(node, /Can't auto-verify/)
 })
 
 test('planner hierarchy uses existing dashboard data and keeps Course Discovery separate', async () => {

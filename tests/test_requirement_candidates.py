@@ -61,10 +61,14 @@ def test_ethan_exposes_all_five_candidate_sets_with_stable_order_and_ids():
         "Two Courses",
         "Engineering Leadership (6 Credit Hours)",
     ]
+    # AI set is (5, 6): CS 5331 is feasible because its OR-clause prereq
+    # (CS 4340 or OREM 3340 or STAT 4340) is met within the same plan by
+    # whichever course resolves Statistical Methods -- see
+    # test_horizon_or_cycle_failure_is_not_misrepresented_as_feasible.
     assert [
         (len(item.feasible_candidates), len(item.excluded_candidates))
         for item in first.candidate_sets
-    ] == [(4, 7), (4, 2), (3, 0), (11, 5), (1, 7)]
+    ] == [(5, 6), (4, 2), (3, 0), (11, 5), (1, 7)]
     assert first.candidate_sets == second.candidate_sets
     first_ids = [
         candidate.candidate_id for group in first.candidate_sets
@@ -178,12 +182,21 @@ def test_completed_course_is_existing_contribution_not_additional_burden():
 
 
 def test_horizon_or_cycle_failure_is_not_misrepresented_as_feasible():
-    # The real AI candidates CS 5325/CS 5331 cannot join any complete global
-    # schedule under the current prerequisite/horizon evidence.
+    # CS 5325's sole prerequisite is CS 5324 -- another course in this same
+    # "choose one" AI requirement, so no single combination can contain
+    # both. It genuinely cannot join any complete global schedule and must
+    # stay UNSCHEDULABLE, not be surfaced as feasible.
+    #
+    # CS 5331 is the contrast: its OR-clause prerequisite (CS 4340 or
+    # OREM 3340 or STAT 4340) is met within the plan by whichever course
+    # resolves Statistical Methods, so it IS feasible -- an in-plan
+    # alternative to an OR-clause is not an unschedulable blocker.
     _, _, result = _ethan_result()
     ai = next(item for item in result.candidate_sets if item.requirement_name.startswith("Advanced/"))
     unschedulable = {candidate.course_codes[0] for candidate in ai.excluded_candidates if CandidateExclusionReason.UNSCHEDULABLE in candidate.exclusion_reasons}
-    assert {"CS 5325", "CS 5331"} <= unschedulable
+    assert "CS 5325" in unschedulable
+    assert "CS 5331" not in unschedulable
+    assert "CS 5331" in {candidate.course_codes[0] for candidate in ai.feasible_candidates}
 
 
 def test_structured_prerequisite_contract_used_without_a_second_export_schedule():

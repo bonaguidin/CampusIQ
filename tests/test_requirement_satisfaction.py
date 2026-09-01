@@ -349,17 +349,37 @@ def test_compound_any_satisfied_via_one_path():
     assert top.children[1].status == RequirementGroupStatus.NOT_STARTED  # Path B untouched
 
 
-def test_counts_toward_credit_false_excludes_course():
+def test_counts_toward_credit_false_excludes_completed_course():
     groups = [_group("leaf", "Leaf", "enumerated_all")]
     options = [_option("opt", "leaf", 0)]
     option_courses = [_option_course("opt", coursedog_group_id="g-a")]
     catalog = {"g-a": "AAA 100"}
-    course_records = [_course_record("AAA 100", counts_toward_credit=False)]
+    course_records = [_course_record("AAA 100", status="completed", counts_toward_credit=False)]
 
     results = evaluate_requirement_tree(groups, options, option_courses, course_records, catalog)
     leaf = results[0]
     assert leaf.status == RequirementGroupStatus.NOT_STARTED
     assert leaf.matched_course_codes == []
+
+
+def test_in_progress_course_counts_regardless_of_counts_toward_credit():
+    """planning/lifecycle.py auto-promotes a planned course into an
+    in_progress course_records row with counts_toward_credit=False (no
+    grade posted yet). That row must still count toward its requirement
+    group -- otherwise no in-progress course could ever satisfy a
+    requirement, defeating the in-progress-counts rule -- and it must
+    agree with scheduler.satisfied_course_codes(), which already counts
+    in_progress for prerequisite-clearing regardless of the flag."""
+    groups = [_group("leaf", "Leaf", "enumerated_all")]
+    options = [_option("opt", "leaf", 0)]
+    option_courses = [_option_course("opt", coursedog_group_id="g-a")]
+    catalog = {"g-a": "AAA 100"}
+    course_records = [_course_record("AAA 100", status="in_progress", counts_toward_credit=False)]
+
+    results = evaluate_requirement_tree(groups, options, option_courses, course_records, catalog)
+    leaf = results[0]
+    assert leaf.status == RequirementGroupStatus.SATISFIED
+    assert leaf.matched_course_codes == ["AAA 100"]
 
 
 def test_manual_review_freeform_group():

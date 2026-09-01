@@ -410,6 +410,77 @@ def test_original_extraction_immutable_after_correction(client):
     assert assembled["current_revision"]["corrections"][0]["value"] == 25
 
 
+# --- Test 33b: correcting an already-confirmed profile reopens review ----------------
+
+
+def test_correction_after_confirmation_reopens_review_state(client):
+    """A student who revisits the letter-grade cutoffs from a ready
+    calculator and edits one must land back in 'reconfirm_required' -- the
+    edit is not silently persisted as "still confirmed" while confirmed_at
+    goes null, and the calculator goes offline until an explicit re-confirm.
+    """
+    profile, revision, _, _ = ingest(client, clean_model(), CLEAN_CONTENT)
+    service.confirm_grade_model(client, revision_id=revision["id"], student_id=STUDENT_A)
+
+    before = service.get_syllabus_grade_profile(client, profile_id=profile["id"], student_id=STUDENT_A)
+    assert before["profile"]["review_state"] == "confirmed"
+    assert before["calculator_ready"] is True
+
+    # Narrow the A cutoff; the auto-appended CONFIRM_THRESHOLD_VALUE mirrors
+    # what the unified cutoff table emits, keeping the candidate ACCEPTED.
+    service.apply_student_corrections(
+        client,
+        revision_id=revision["id"],
+        student_id=STUDENT_A,
+        corrections=[
+            GradeModelCorrection(
+                target_type=CorrectionTargetType.THRESHOLD,
+                operation=CorrectionOperation.SET_MINIMUM,
+                threshold_letter="A",
+                value=93,
+            ),
+            GradeModelCorrection(
+                target_type=CorrectionTargetType.THRESHOLD,
+                operation=CorrectionOperation.CONFIRM_THRESHOLD_VALUE,
+                threshold_letter="A",
+            ),
+        ],
+    )
+
+    after = service.get_syllabus_grade_profile(client, profile_id=profile["id"], student_id=STUDENT_A)
+    assert after["profile"]["review_state"] == "reconfirm_required"
+    assert after["calculator_ready"] is False
+    assert after["current_revision"]["confirmed_at"] is None
+    # the edit itself was applied and the candidate is still acceptable
+    assert after["current_revision"]["confirmed_reconciliation_status"] == "accepted"
+
+    # An explicit re-confirm is required, and it restores the ready calculator.
+    service.confirm_grade_model(client, revision_id=revision["id"], student_id=STUDENT_A)
+    final = service.get_syllabus_grade_profile(client, profile_id=profile["id"], student_id=STUDENT_A)
+    assert final["profile"]["review_state"] == "confirmed"
+    assert final["calculator_ready"] is True
+    assert next(t for t in final["confirmed_grade_model"].grade_thresholds if t.letter == "A").minimum == 93
+
+
+def test_correction_from_needs_review_does_not_flip_to_reconfirm_required(client):
+    """The reopen behavior is scoped to an already-confirmed profile: a
+    correction applied during the initial review leaves review_state alone.
+    """
+    profile, revision, _, _ = ingest(client, phys_207_with_curve(), PHYS_207_CONTENT)
+    service.apply_student_corrections(
+        client,
+        revision_id=revision["id"],
+        student_id=STUDENT_A,
+        corrections=[
+            GradeModelCorrection(
+                target_type=CorrectionTargetType.RULE, operation=CorrectionOperation.REMOVE_RULE, rule_index=0
+            )
+        ],
+    )
+    assembled = service.get_syllabus_grade_profile(client, profile_id=profile["id"], student_id=STUDENT_A)
+    assert assembled["profile"]["review_state"] == "needs_review"
+
+
 # --- Test 34: grade-state round trip --------------------------------------------------
 
 
@@ -777,12 +848,19 @@ def test_confirming_only_some_value_claims_still_blocks(client):
         service.confirm_grade_model(client, revision_id=revision["id"], student_id=STUDENT_A)
 
 
-def test_confirm_threshold_value_for_a_clean_threshold_is_rejected(client):
+def test_confirm_threshold_value_for_a_clean_threshold_is_a_tolerated_no_op(client):
+    # A verifies clean, so there is no finding for the affirmation to
+    # suppress -- it is inert, not an error. The unified cutoff table
+    # auto-appends CONFIRM_THRESHOLD_VALUE after every in-place edit, so a
+    # letter that needed no affirming must not fail the batch or move the
+    # reconciliation outcome off ACCEPTED.
     _, revision, _, _ = ingest(client, clean_model(), CLEAN_CONTENT)
-    with pytest.raises(CorrectionApplicationError, match="no unverified value claim"):
-        service.apply_student_corrections(
-            client,
-            revision_id=revision["id"],
-            student_id=STUDENT_A,
-            corrections=[_confirm_threshold_value("A")],
-        )
+    updated = service.apply_student_corrections(
+        client,
+        revision_id=revision["id"],
+        student_id=STUDENT_A,
+        corrections=[_confirm_threshold_value("A")],
+    )
+    assert updated["confirmed_reconciliation_status"] == "accepted"
+    confirmed = service.confirm_grade_model(client, revision_id=revision["id"], student_id=STUDENT_A)
+    assert confirmed["confirmed_grade_model"]["grade_thresholds"] == clean_model().model_dump(mode="json")["grade_thresholds"]

@@ -10,9 +10,9 @@ const source = await readFile(
 test('decision section exposes the required student-readable states', () => {
   assert.match(source, /Decisions needed to complete your plan/)
   assert.match(source, /Choice required/)
-  assert.match(source, /Adviser review needed/)
+  assert.match(source, /Can't auto-verify/)
   assert.match(source, /Course data unavailable/)
-  assert.match(source, /does not yet have structured course options/)
+  assert.match(source, /can't automatically verify this requirement is satisfied/)
 })
 
 test('candidate paths render course metadata as one grouped option', () => {

@@ -367,8 +367,34 @@ def test_course_code_cross_listing_already_satisfied_under_either_half_is_skippe
         raw_groups, options, option_courses, course_records, {}, catalog_by_code
     )
     courses, unscheduled = scope_schedule_input(
-        groups, options, option_courses, {}, {"ENGR 216": 2.0, "PHYS 216": 2.0}, catalog_by_code
+        groups, options, option_courses, {}, {"ENGR 216": 2.0, "PHYS 216": 2.0}, catalog_by_code,
+        {r["course_code"] for r in course_records},
     )
 
     assert unscheduled == []
     assert courses == []
+
+
+def test_course_code_cross_listing_scheduled_uses_the_transcript_alias_as_representative():
+    """When a cross-listed requirement must still be scheduled, and the
+    student has one alias on their transcript (e.g. a prior attempt that
+    didn't count, or an in-progress row not yet reflected in the group's
+    matched set), the CourseToSchedule uses that alias -- the code the
+    student will actually recognise -- not the lexical-first fallback."""
+    from GradusIQ_career.course_discovery.requirement_satisfaction import RequirementGroupResult
+
+    leaf = RequirementGroupResult(
+        id="leaf", coursedog_rule_id="leaf", name="Required Courses",
+        group_type="enumerated_all", status="NOT_STARTED", matched_course_codes=[],
+    )
+    options = [_option("opt", "leaf", 0)]
+    option_courses = [_option_course_by_code("opt", "ENGR 216/PHYS 216")]
+    catalog_by_code = {"ENGR 216/PHYS 216": ["ENGR 216", "PHYS 216"]}
+
+    courses, unscheduled = scope_schedule_input(
+        [leaf], options, option_courses, {}, {"ENGR 216": 2.0, "PHYS 216": 2.0}, catalog_by_code,
+        {"PHYS 216"},
+    )
+
+    assert [c.course_code for c in courses] == ["PHYS 216"]
+    assert unscheduled == []

@@ -343,6 +343,15 @@ test('Grade Calculator: empty state, upload, review, confirm, grade entry, calcu
   assert.equal(await rulesPanel.getByText(/replaces Midterm/).count(), 0)
   assert.equal(await rulesPanel.getByRole('button').count(), 0, 'Professor\'s rules panel has no dismiss / ignore control')
 
+  // --- Side-by-side layout: the calculator cards and the Professor's rules
+  //     panel share one grid wrapper (.grade-calculator-layout), with the
+  //     cards in .grade-calculator-main and the rules panel in
+  //     .grade-calculator-aside. ---
+  const layout = page.locator('.grade-calculator-layout')
+  await layout.waitFor()
+  await layout.locator('.grade-calculator-main').getByRole('heading', { name: 'Enter your grades' }).waitFor()
+  await layout.locator('.grade-calculator-aside [data-testid="professors-rules"]').waitFor()
+
   await page.fill('#actual-category\\:Mid-term\\ Exam', '78')
   await page.fill('#actual-category\\:Lecture\\ Quizzes', '92')
   await page.fill('#actual-category\\:Recitation\\ Quizzes', '88')
@@ -583,25 +592,33 @@ test('Grade Calculator: cutoff-overlap question — propose, confirm, unblock', 
     return false
   })
 
-  // the question renders with ranges joined from grade_thresholds
-  const question = page.locator('.grade-cutoff-question[data-cutoff-pair="B,C"]')
-  await question.getByText(/Your syllabus lists B as 80–90 and C as 70–80/).waitFor()
-  await question.getByText(/80 is B, not C\. Sound right\?/).waitFor()
+  // the table renders one row per grade threshold with current values
+  await page.locator('[data-testid="cutoff-table"]').waitFor()
+  assert.equal(await page.inputValue('#cutoff-A-min'), '91')
+  assert.equal(await page.inputValue('#cutoff-A-max'), '100')
+  assert.equal(await page.inputValue('#cutoff-B-min'), '80')
+  assert.equal(await page.inputValue('#cutoff-C-max'), '80')
+
+  // the resolvable overlap renders as a cross-row banner with ranges from
+  // grade_thresholds and the "higher grade wins" default
+  const banner = page.locator('.grade-cutoff-banner[data-cutoff-pair="B,C"]')
+  await banner.getByText(/Your syllabus lists B as 80–90 and C as 70–80/).waitFor()
+  await banner.getByText(/80 is B, not C\. Sound right\?/).waitFor()
   // the raw overlapping_grade_thresholds finding is NOT also shown for a resolvable pair
   assert.equal(await page.locator('.grade-inline-findings--general').getByText(/overlapping cutoffs/).count(), 0)
 
-  await question.getByRole('button', { name: "Yes, that's right" }).click()
+  await banner.getByRole('button', { name: "Yes, that's right" }).click()
   await page.getByRole('heading', { name: 'Enter your grades' }).waitFor()
 
   assert.ok(confirmed)
   assert.deepEqual(correctionBody.corrections, [
     { target_type: 'threshold', operation: 'resolve_cutoff_overlap', threshold_letter: 'B' },
   ])
-  // question gone once answered
-  assert.equal(await page.locator('.grade-cutoff-question[data-cutoff-pair="B,C"]').count(), 0)
+  // banner gone once answered
+  assert.equal(await page.locator('.grade-cutoff-banner[data-cutoff-pair="B,C"]').count(), 0)
 })
 
-test('Grade Calculator: unresolved overlap is not an auto-question; manual editor for both entry points', { timeout: 45_000 }, async (t) => {
+test('Grade Calculator: unresolved overlap shows only a note; an inline row edit saves set_max + auto-appended confirm_threshold_value', { timeout: 45_000 }, async (t) => {
   let corrections = []
   const RESOLUTION_MIXED = {
     schema_version: '1',
@@ -616,10 +633,14 @@ test('Grade Calculator: unresolved overlap is not an auto-question; manual edito
     ],
     evidence_coverage: { total_claims: 5, supported_claims: 5, coverage_ratio: 1, unsupported_claims: [] },
   }
+  // C's evidence range (70-80) still disagrees with the narrowed max (79)
+  // after the edit -> a residual claim_evidence finding WOULD exist, so the
+  // auto-appended confirm_threshold_value has something to suppress. (The
+  // no-residual-finding case is covered by the backend test suite.)
   const model = { ...CUTOFF_MODEL, grade_thresholds: [
     { letter: 'A', minimum: 75, maximum: 100, evidence: null },
     { letter: 'B', minimum: 80, maximum: 90, evidence: null },
-    { letter: 'C', minimum: 70, maximum: 80, evidence: null },
+    { letter: 'C', minimum: 70, maximum: 80, evidence: { page: 2, text: 'C: 70-80', confidence: 1.0 } },
   ] }
   const page = await mountCutoffPanel(t, 'grade-calculator-cutoff-manual', async (path, method, request, response) => {
     if (path === `/api/v2/student/me/syllabus-grade-profiles/${PROFILE_ID}` && method === 'GET') {
@@ -638,20 +659,22 @@ test('Grade Calculator: unresolved overlap is not an auto-question; manual edito
     return false
   })
 
-  // A/C is unresolved: no "Sound right?" proposal, but its raw finding stays,
-  // and there's a "Set the cutoffs" action.
-  const unresolved = page.locator('.grade-cutoff-question[data-cutoff-pair="A,C"]')
+  // A/C is unresolved: only a note (no "Sound right?" proposal, no action
+  // button), and its raw finding stays in the general review list.
+  const unresolved = page.locator('.grade-cutoff-banner[data-cutoff-pair="A,C"]')
   await unresolved.getByText(/cutoffs for A and C overlap and CampusIQ can't pick a safe default/).waitFor()
   assert.equal(await unresolved.getByText(/Sound right\?/).count(), 0)
+  assert.equal(await unresolved.getByRole('button').count(), 0)
   await page.locator('.grade-inline-findings--general').getByText("Letter grades A and C have overlapping cutoffs: A is 75–100, C is 70–80.").waitFor()
 
-  // "No, let me set it myself" on the resolvable B/C question opens the editor
-  await page.locator('.grade-cutoff-question[data-cutoff-pair="B,C"]').getByRole('button', { name: 'No, let me set it myself' }).click()
-  await page.locator('[data-testid="cutoff-manual-editor"][data-cutoff-pair="B,C"]').waitFor()
+  // edit C's max in place; the row-level "Save cutoffs" appears once dirty
   await page.fill('#cutoff-C-max', '79')
   await page.getByRole('button', { name: 'Save cutoffs' }).click()
   await page.getByRole('heading', { name: 'Enter your grades' }).waitFor()
-  assert.deepEqual(corrections, [{ target_type: 'threshold', operation: 'set_maximum', threshold_letter: 'C', value: 79 }])
+  assert.deepEqual(corrections, [
+    { target_type: 'threshold', operation: 'set_maximum', threshold_letter: 'C', value: 79 },
+    { target_type: 'threshold', operation: 'confirm_threshold_value', threshold_letter: 'C' },
+  ])
 })
 
 test('Grade Calculator: an answered cutoff shows resolved and does not re-ask on reload', { timeout: 45_000 }, async (t) => {
@@ -681,13 +704,13 @@ test('Grade Calculator: an answered cutoff shows resolved and does not re-ask on
   })
 
   await page.locator('.grade-cutoff-resolved[data-cutoff-pair="B,C"]').getByText('80 counts as B, not C').waitFor()
-  assert.equal(await page.locator('.grade-cutoff-question[data-cutoff-pair="B,C"]').count(), 0)
+  assert.equal(await page.locator('.grade-cutoff-banner[data-cutoff-pair="B,C"]').count(), 0)
 
-  // navigate away and back — still resolved, still no question
+  // navigate away and back — still resolved, still no banner
   await page.getByRole('button', { name: '← Back to your calculators' }).click()
   await page.locator('.grade-profile-row-button', { hasText: 'PHYS 207' }).click()
   await page.locator('.grade-cutoff-resolved[data-cutoff-pair="B,C"]').waitFor()
-  assert.equal(await page.locator('.grade-cutoff-question[data-cutoff-pair="B,C"]').count(), 0)
+  assert.equal(await page.locator('.grade-cutoff-banner[data-cutoff-pair="B,C"]').count(), 0)
 })
 
 test('Grade Calculator: non-blocking informational findings are filtered from the review list', { timeout: 45_000 }, async (t) => {
@@ -770,19 +793,21 @@ test('Grade Calculator: threshold value-claim question — affirm, unblock', { t
     return false
   })
 
-  const question = page.locator('.grade-cutoff-question[data-threshold-letter="B"]')
-  await question.getByText(/couldn't automatically confirm this value/).waitFor()
-  await question.getByText(/Is the B cutoff correct as we read it/).waitFor()
+  const row = page.locator('.grade-cutoff-row[data-threshold-letter="B"]')
+  // Q2: the actual cutoff value is visible on the row, not just generic copy
+  assert.equal(await page.inputValue('#cutoff-B-min'), '80')
+  assert.equal(await page.inputValue('#cutoff-B-max'), '89')
+  await row.getByText(/B: 80–89 — we couldn't confirm this against your syllabus/).waitFor()
   // the raw claim-evidence finding is NOT also shown as a bare review note
   assert.equal(await page.locator('.grade-inline-findings--general').getByText(/couldn't automatically confirm this value/).count(), 0)
 
-  await question.getByRole('button', { name: "Yes, that's correct" }).click()
+  await row.getByRole('button', { name: "Yes, that's correct" }).click()
   await page.getByRole('heading', { name: 'Enter your grades' }).waitFor()
 
   assert.deepEqual(correctionBody.corrections, [
     { target_type: 'threshold', operation: 'confirm_threshold_value', threshold_letter: 'B' },
   ])
-  assert.equal(await page.locator('.grade-cutoff-question[data-threshold-letter="B"]').count(), 0)
+  assert.equal(await page.locator('.grade-cutoff-row[data-threshold-letter="B"] .grade-cutoff-row-affirm').count(), 0)
 })
 
 test('Grade Calculator: an affirmed threshold value shows confirmed and does not re-ask on reload', { timeout: 45_000 }, async (t) => {
@@ -810,10 +835,270 @@ test('Grade Calculator: an affirmed threshold value shows confirmed and does not
   })
 
   await page.locator('.grade-cutoff-resolved[data-threshold-letter="B"]').getByText('B cutoff confirmed as correct').waitFor()
-  assert.equal(await page.locator('.grade-cutoff-question[data-threshold-letter="B"]').count(), 0)
+  assert.equal(await page.locator('.grade-cutoff-row[data-threshold-letter="B"] .grade-cutoff-row-affirm').count(), 0)
 
   await page.getByRole('button', { name: '← Back to your calculators' }).click()
   await page.locator('.grade-profile-row-button', { hasText: 'PHYS 207' }).click()
   await page.locator('.grade-cutoff-resolved[data-threshold-letter="B"]').waitFor()
-  assert.equal(await page.locator('.grade-cutoff-question[data-threshold-letter="B"]').count(), 0)
+  assert.equal(await page.locator('.grade-cutoff-row[data-threshold-letter="B"] .grade-cutoff-row-affirm').count(), 0)
+})
+
+// --- unified cutoff table: full-scale rendering + ECEN 248-style unblock --------
+
+const AF_MODEL = {
+  ...EXTRACTED_MODEL,
+  grade_thresholds: [
+    { letter: 'A', minimum: 90, maximum: 100, evidence: { page: 2, text: 'A: at least 90%', confidence: 1.0 } },
+    { letter: 'B', minimum: 80, maximum: 89, evidence: { page: 2, text: 'B: >= 80% and < 90%', confidence: 1.0 } },
+    { letter: 'C', minimum: 70, maximum: 79, evidence: { page: 2, text: 'C: >= 70% and < 80%', confidence: 1.0 } },
+    { letter: 'D', minimum: 60, maximum: 69, evidence: { page: 2, text: 'D: >= 60% and < 70%', confidence: 1.0 } },
+    { letter: 'F', minimum: 0, maximum: 59, evidence: { page: 2, text: 'F: below 60%', confidence: 1.0 } },
+  ],
+  rules: [],
+  warnings: [],
+}
+
+test('Grade Calculator: the cutoff table renders one row per letter grade with its current min–max', { timeout: 45_000 }, async (t) => {
+  const recon = {
+    status: 'needs_student_review',
+    findings: [{ code: 'grading_method_unknown', severity: 'warning', message: 'x', field: 'grading_method' }],
+    evidence_coverage: { total_claims: 5, supported_claims: 5, coverage_ratio: 1, unsupported_claims: [] },
+  }
+  const page = await mountCutoffPanel(t, 'grade-calculator-cutoff-table-render', async (path, method, request, response) => {
+    if (path === `/api/v2/student/me/syllabus-grade-profiles/${PROFILE_ID}` && method === 'GET') {
+      json(response, 200, detail({ extracted_grade_model: AF_MODEL, reconciliation: recon }))
+      return true
+    }
+    return false
+  })
+
+  await page.locator('[data-testid="cutoff-table"]').waitFor()
+  const rows = page.locator('.grade-cutoff-table-rows .grade-cutoff-row[data-threshold-letter]')
+  assert.equal(await rows.count(), 5)
+  for (const [letter, min, max] of [['A', '90', '100'], ['B', '80', '89'], ['C', '70', '79'], ['D', '60', '69'], ['F', '0', '59']]) {
+    assert.equal(await page.inputValue(`#cutoff-${letter}-min`), min, `${letter} minimum`)
+    assert.equal(await page.inputValue(`#cutoff-${letter}-max`), max, `${letter} maximum`)
+  }
+
+  // no horizontal overflow at any width
+  for (const width of [390, 834, 1280]) {
+    await page.setViewportSize({ width, height: 900 })
+    assert.equal(
+      await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1),
+      true,
+      `horizontal overflow at ${width}px`,
+    )
+  }
+})
+
+test('Grade Calculator: affirming every unverified cutoff value in the table clears review and unblocks the calculator', { timeout: 45_000 }, async (t) => {
+  // ECEN 248-style: A/B/C each carry an unparseable-evidence finding; the
+  // table shows a per-row affirm for each. Affirming the last one clears
+  // the re-reconciliation and the calculator becomes ready.
+  const OPEN = ['a', 'b', 'c']
+  const findingFor = (letter) => ({
+    code: 'claim_evidence_consistency_unverifiable',
+    severity: 'warning',
+    message: `could not deterministically verify threshold:${letter.toUpperCase()} against its cited evidence text ('x')`,
+    field: `threshold:${letter.toUpperCase()}`,
+  })
+  const answers = {}
+  const reconWith = () => ({
+    status: Object.keys(answers).length >= OPEN.length ? 'accepted' : 'needs_student_review',
+    findings: [
+      { code: 'category_weight_validation', severity: 'valid', message: 'ok', field: 'categories' },
+      ...OPEN.filter((l) => !(`claim_evidence:threshold:${l}` in answers)).map(findingFor),
+    ],
+    evidence_coverage: { total_claims: 5, supported_claims: 5, coverage_ratio: 1, unsupported_claims: [] },
+  })
+  const bodyNow = () => detail({
+    extracted_grade_model: AF_MODEL,
+    confirmed_grade_model: AF_MODEL,
+    reconciliation: RECONCILIATION_ACCEPTED,
+    confirmed_reconciliation: reconWith(),
+    calculator_ready: Object.keys(answers).length >= OPEN.length,
+    corrections: Object.keys(answers).map((k) => ({ target_type: 'threshold', operation: 'confirm_threshold_value', threshold_letter: k.slice(-1).toUpperCase() })),
+    clarifying_answers: { ...answers },
+  })
+
+  const page = await mountCutoffPanel(t, 'grade-calculator-cutoff-table-unblock', async (path, method, request, response) => {
+    if (path === `/api/v2/student/me/syllabus-grade-profiles/${PROFILE_ID}` && method === 'GET') {
+      json(response, 200, bodyNow())
+      return true
+    }
+    if (path === `/api/v2/student/me/syllabus-grade-profiles/${PROFILE_ID}/corrections` && method === 'POST') {
+      const { corrections } = JSON.parse(await readBody(request))
+      for (const c of corrections) {
+        if (c.operation === 'confirm_threshold_value') {
+          const l = c.threshold_letter.toLowerCase()
+          answers[`claim_evidence:threshold:${l}`] = { answer: 'confirm_value', letter: l }
+        }
+      }
+      json(response, 200, bodyNow())
+      return true
+    }
+    return false
+  })
+
+  await page.locator('[data-testid="cutoff-table"]').waitFor()
+  // affirm A then B; each removes only its own row's affirm control
+  for (const letter of ['A', 'B']) {
+    await page.locator(`.grade-cutoff-row[data-threshold-letter="${letter}"]`)
+      .getByRole('button', { name: "Yes, that's correct" }).click()
+    await page.waitForFunction(() => !document.querySelector('button[aria-busy="true"]'))
+    await page.locator(`.grade-cutoff-resolved[data-threshold-letter="${letter}"]`).waitFor()
+  }
+  // still in review with C outstanding
+  await page.getByRole('heading', { name: /needs your review/i }).waitFor()
+  // affirm the last one -> re-reconciliation accepted -> calculator ready
+  await page.locator('.grade-cutoff-row[data-threshold-letter="C"]')
+    .getByRole('button', { name: "Yes, that's correct" }).click()
+  await page.getByRole('heading', { name: 'Enter your grades' }).waitFor()
+})
+
+// --- re-open cutoff review after calculator_ready ------------------------------
+
+test('Grade Calculator: a ready calculator can re-open cutoff review; editing a cutoff sends it back for re-confirm', { timeout: 45_000 }, async (t) => {
+  const CUTOFF_A92 = { ...CUTOFF_MODEL, grade_thresholds: [
+    { ...CUTOFF_MODEL.grade_thresholds[0], minimum: 92 },
+    CUTOFF_MODEL.grade_thresholds[1],
+    CUTOFF_MODEL.grade_thresholds[2],
+  ] }
+  const readyDetail = () => detail({
+    review_state: 'confirmed',
+    calculator_ready: true,
+    extracted_grade_model: CUTOFF_MODEL,
+    confirmed_grade_model: CUTOFF_MODEL,
+    reconciliation: RECONCILIATION_ACCEPTED,
+    confirmed_reconciliation: RECONCILIATION_ACCEPTED,
+  })
+  let correctionBody = null
+  let reconfirmed = false
+
+  const page = await mountCutoffPanel(t, 'grade-calculator-cutoff-reopen', async (path, method, request, response) => {
+    if (path === `/api/v2/student/me/syllabus-grade-profiles/${PROFILE_ID}` && method === 'GET') {
+      json(response, 200, readyDetail())
+      return true
+    }
+    if (path === `/api/v2/student/me/syllabus-grade-profiles/${PROFILE_ID}/corrections` && method === 'POST') {
+      correctionBody = JSON.parse(await readBody(request))
+      // backend reset: an edit against a confirmed profile drops it to
+      // reconfirm_required and takes calculator_ready offline
+      json(response, 200, detail({
+        review_state: 'reconfirm_required',
+        calculator_ready: false,
+        extracted_grade_model: CUTOFF_MODEL,
+        confirmed_grade_model: CUTOFF_A92,
+        reconciliation: RECONCILIATION_ACCEPTED,
+        confirmed_reconciliation: RECONCILIATION_ACCEPTED,
+        corrections: correctionBody.corrections,
+      }))
+      return true
+    }
+    if (path === `/api/v2/student/me/syllabus-grade-profiles/${PROFILE_ID}/confirm` && method === 'POST') {
+      reconfirmed = true
+      json(response, 200, detail({
+        review_state: 'confirmed',
+        calculator_ready: true,
+        extracted_grade_model: CUTOFF_MODEL,
+        confirmed_grade_model: CUTOFF_A92,
+        reconciliation: RECONCILIATION_ACCEPTED,
+        confirmed_reconciliation: RECONCILIATION_ACCEPTED,
+      }))
+      return true
+    }
+    return false
+  })
+
+  // ready calculator: the cutoff table is NOT shown, but a discreet re-open
+  // control is
+  await page.getByRole('heading', { name: 'Enter your grades' }).waitFor()
+  assert.equal(await page.locator('[data-testid="cutoff-table"]').count(), 0)
+  await page.getByRole('button', { name: 'Review letter-grade cutoffs' }).click()
+
+  const table = page.locator('[data-testid="cutoff-table"]')
+  await table.waitFor()
+  assert.equal(await page.inputValue('#cutoff-A-min'), '91')
+
+  await page.fill('#cutoff-A-min', '92')
+  await page.getByRole('button', { name: 'Save cutoffs' }).click()
+
+  // the edit reopens the normal review card (calculator_ready is now false)
+  await page.getByRole('heading', { name: 'Still needs your review' }).waitFor()
+  assert.deepEqual(correctionBody.corrections, [
+    { target_type: 'threshold', operation: 'set_minimum', threshold_letter: 'A', value: 92 },
+    { target_type: 'threshold', operation: 'confirm_threshold_value', threshold_letter: 'A' },
+  ])
+
+  // an explicit re-confirm restores the ready calculator
+  await page.getByRole('button', { name: 'Confirm' }).click()
+  await page.getByRole('heading', { name: 'Enter your grades' }).waitFor()
+  assert.ok(reconfirmed)
+})
+
+// --- cross-row edits survive a sibling row's submit (no remount) ---------------
+
+test('Grade Calculator: in-progress edits in other rows survive a sibling row affirm', { timeout: 45_000 }, async (t) => {
+  const RECON_C_UNVERIFIABLE = {
+    status: 'needs_student_review',
+    findings: [
+      { code: 'grading_method_unknown', severity: 'warning', message: 'x', field: 'grading_method' },
+      {
+        code: 'claim_evidence_consistency_unverifiable', severity: 'warning',
+        message: "could not deterministically verify threshold:C against its cited evidence text ('x')",
+        field: 'threshold:C',
+      },
+    ],
+    evidence_coverage: { total_claims: 5, supported_claims: 5, coverage_ratio: 1, unsupported_claims: [] },
+  }
+  // C's finding suppressed after the affirm; the unrelated blocker keeps the
+  // table on screen so we can inspect the other rows' inputs.
+  const RECON_AFTER = {
+    status: 'needs_student_review',
+    findings: [{ code: 'grading_method_unknown', severity: 'warning', message: 'x', field: 'grading_method' }],
+    evidence_coverage: RECON_C_UNVERIFIABLE.evidence_coverage,
+  }
+  let correctionBody = null
+
+  const page = await mountCutoffPanel(t, 'grade-calculator-cutoff-no-remount', async (path, method, request, response) => {
+    if (path === `/api/v2/student/me/syllabus-grade-profiles/${PROFILE_ID}` && method === 'GET') {
+      json(response, 200, detail({ extracted_grade_model: AF_MODEL, reconciliation: RECON_C_UNVERIFIABLE }))
+      return true
+    }
+    if (path === `/api/v2/student/me/syllabus-grade-profiles/${PROFILE_ID}/corrections` && method === 'POST') {
+      correctionBody = JSON.parse(await readBody(request))
+      json(response, 200, detail({
+        extracted_grade_model: AF_MODEL,
+        confirmed_grade_model: AF_MODEL, // thresholds unchanged by an affirm
+        reconciliation: RECON_C_UNVERIFIABLE,
+        confirmed_reconciliation: RECON_AFTER,
+        calculator_ready: false,
+        corrections: correctionBody.corrections,
+        clarifying_answers: { 'claim_evidence:threshold:c': { answer: 'confirm_value', letter: 'c' } },
+      }))
+      return true
+    }
+    return false
+  })
+
+  await page.locator('[data-testid="cutoff-table"]').waitFor()
+
+  // edit two different rows, save neither
+  await page.fill('#cutoff-A-min', '88')
+  await page.fill('#cutoff-D-max', '66')
+  await page.getByRole('button', { name: 'Save cutoffs' }).waitFor()
+
+  // affirm a third, untouched row -> a correction submits mid-edit
+  await page.locator('.grade-cutoff-row[data-threshold-letter="C"]')
+    .getByRole('button', { name: "Yes, that's correct" }).click()
+  await page.waitForFunction(() => !document.querySelector('button[aria-busy="true"]'))
+  await page.locator('.grade-cutoff-resolved[data-threshold-letter="C"]').waitFor()
+
+  // the in-progress edits in rows A and D are still there (no remount wiped them)
+  assert.equal(await page.inputValue('#cutoff-A-min'), '88')
+  assert.equal(await page.inputValue('#cutoff-D-max'), '66')
+  await page.getByRole('button', { name: 'Save cutoffs' }).waitFor()
+  assert.deepEqual(correctionBody.corrections, [
+    { target_type: 'threshold', operation: 'confirm_threshold_value', threshold_letter: 'C' },
+  ])
 })

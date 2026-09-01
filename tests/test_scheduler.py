@@ -168,11 +168,45 @@ def test_ethan_brooks_13_course_v1_scope():
 # ---------------------------------------------------------------------------
 
 
-def test_or_clause_edge_is_dropped_and_flagged_not_resolved():
-    """C requires (A or B); neither A nor B is satisfied or scheduled.
-    Per §10.1's decision: no hard edge synthesized (C must not wait on
-    both, nor be silently treated as free of the requirement), and the
-    fact is recorded as a limitation."""
+def test_or_clause_edge_is_dropped_and_flagged_when_no_alternative_anywhere():
+    """C requires (A or B); neither A nor B is satisfied nor in the
+    scheduled course set. Per §10.1's decision: no hard edge synthesized
+    (C must not wait on both, nor be silently treated as free of the
+    requirement), and the fact is recorded as a limitation."""
+    courses = [
+        CourseToSchedule(course_code="C", credit_hours=3, requirement_group_id="g2", requirement_group_name="C"),
+    ]
+    prerequisites = {
+        "C": StructuredPrerequisite(requires_all=[PrerequisiteClause(course_codes=["A", "B"])]),
+    }
+
+    result = schedule_courses(
+        student_id="stu-1", program_id="prog-1",
+        courses=courses, prerequisites=prerequisites, already_satisfied=set(), unscheduled=[],
+        starting_year=2026, starting_season="Fall", max_terms=4,
+    )
+
+    assert result.status == "SCHEDULED"
+    assert len(result.terms) == 1
+    c_course = next(c for c in result.terms[0].courses if c.course_code == "C")
+    assert c_course.limitations == [
+        "prerequisite (A or B) not modeled as a hard ordering edge -- "
+        "OR-clause, not tracked to a single alternative"
+    ]
+
+
+def test_or_clause_not_flagged_when_an_alternative_is_in_the_scheduled_set():
+    """C requires (A or B); neither is already satisfied, but B is itself
+    in this schedule's course set (here for its own requirement). The
+    clause will be met within the plan, so -- like the already-satisfied
+    case -- no limitation is recorded. No hard ordering edge is added
+    (the OR-set is still not resolved to a single alternative), so A, B
+    and C may share a term; the point is only that this combination is
+    no longer rejected as unschedulable. Regression: a mandatory course
+    with an "X or Y" prerequisite (TAMU ECEN 314 -> "ECEN 214 or ECEN
+    215") used to poison every candidate combination in
+    select_structured_requirements, collapsing structured requirement
+    groups to ADVISER_REVIEW."""
     courses = [
         CourseToSchedule(course_code="A", credit_hours=3, requirement_group_id="g1", requirement_group_name="A"),
         CourseToSchedule(course_code="B", credit_hours=3, requirement_group_id="g1", requirement_group_name="B"),
@@ -189,17 +223,9 @@ def test_or_clause_edge_is_dropped_and_flagged_not_resolved():
     )
 
     assert result.status == "SCHEDULED"
-    # No edge: A, B, and C are all immediately ready and land in the same
-    # first term -- not "resolved" toward requiring either alternative.
-    assert len(result.terms) == 1
-    assert sorted(c.course_code for c in result.terms[0].courses) == ["A", "B", "C"]
-    c_course = next(c for c in result.terms[0].courses if c.course_code == "C")
-    assert c_course.limitations == [
-        "prerequisite (A or B) not modeled as a hard ordering edge -- "
-        "OR-clause, not tracked to a single alternative"
-    ]
-    a_course = next(c for c in result.terms[0].courses if c.course_code == "A")
-    assert a_course.limitations == []
+    scheduled = {c.course_code: c for term in result.terms for c in term.courses}
+    assert scheduled.keys() == {"A", "B", "C"}
+    assert scheduled["C"].limitations == []
 
 
 def test_or_clause_trivially_satisfied_by_already_completed_alternative():

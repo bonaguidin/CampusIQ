@@ -791,7 +791,12 @@ def test_confirming_only_some_threshold_value_claims_still_blocks(client, db, mo
     assert client.post(f"{profile_url(created['id'])}/confirm", headers=HEADERS).status_code == 409
 
 
-def test_confirm_threshold_value_for_a_clean_threshold_is_rejected(client, db, monkeypatch):
+def test_confirm_threshold_value_for_a_clean_threshold_is_a_tolerated_no_op(client, db, monkeypatch):
+    # A (91-100) verifies clean against its evidence -- no finding to
+    # suppress. Affirming it is inert, so the correction is accepted as a
+    # no-op rather than 422'd: the unified cutoff table auto-appends
+    # confirm_threshold_value after every in-place edit and must not have
+    # the whole atomic batch rejected for a letter that needed no affirming.
     patch_session(monkeypatch, db)
     monkeypatch.setattr(
         api, "build_client", lambda: FakeAI(text=json.dumps(OVERLAPPING_CUTOFFS_MODEL_RESPONSE))
@@ -808,8 +813,14 @@ def test_confirm_threshold_value_for_a_clean_threshold_is_rejected(client, db, m
             ]
         },
     )
-    assert response.status_code == 422
-    assert "no unverified value claim" in response.json()["detail"]["message"]
+    assert response.status_code == 200
+    body = response.json()
+    # inert: the threshold is untouched and the B/C overlap still blocks
+    assert body["confirmed_grade_model"]["grade_thresholds"][0] == {
+        "letter": "A", "minimum": 91, "maximum": 100,
+        "evidence": {"page": 1, "text": "A: 91-100", "confidence": 1.0},
+    }
+    assert body["confirmed_reconciliation"]["status"] == "needs_student_review"
 
 
 def test_confirm_without_correction_when_accepted(client, db, monkeypatch):

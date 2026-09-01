@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { fetchPlannedCourses, fetchTerms } from '../api/planning';
 import type { PlannedCourse, PlanningTerm } from '../lib/termPlanning.mjs';
 import type { AcademicCourse } from '../types/studentIntelligenceProfile';
@@ -21,6 +21,7 @@ import {
   type SyllabusProfileSummary,
   type SyllabusRule,
   type SyllabusTargetResult,
+  type SyllabusThreshold,
 } from '../api/syllabusGradeProfiles';
 
 // Presentation copy for machine-readable reconciliation finding codes. The
@@ -210,10 +211,10 @@ function clarifyingKey(winner: string, loser: string): string {
 }
 
 // Pair keys for cleanly-resolvable overlaps: their raw
-// overlapping_grade_thresholds finding is replaced by the propose/confirm
-// question in CutoffOverlapQuestions, so it's dropped from the review list
-// (same idea as RULE_INFO_FINDING_CODES). Unresolved overlaps keep their
-// raw finding.
+// overlapping_grade_thresholds finding is replaced by the CutoffTable's
+// "higher grade wins" banner, so it's dropped from the review list (same
+// idea as RULE_INFO_FINDING_CODES). Unresolved overlaps keep their raw
+// finding.
 function resolvedOverlapPairKeys(
   resolution: SyllabusProfileDetail['cutoff_overlap_resolution'] | undefined,
 ): Set<string> {
@@ -231,9 +232,9 @@ function overlapFindingPair(finding: SyllabusFinding): [string, string] | null {
 // findings. Backend: reconciliation._check_threshold_range_consistency.
 // A student affirms the extracted value ("Yes, that's correct") via a
 // CONFIRM_THRESHOLD_VALUE correction, which suppresses the finding without
-// touching the threshold or its evidence -- the same propose/confirm shape
-// as the cutoff-overlap questions, so the raw finding is dropped from the
-// review list (see reviewFindings) and shown as a question instead.
+// touching the threshold or its evidence. Both are surfaced per-row in the
+// unified CutoffTable, so the raw finding is dropped from the review list
+// (see reviewFindings).
 const CLAIM_EVIDENCE_THRESHOLD_CODES: ReadonlySet<string> = new Set([
   'claim_evidence_consistency_unverifiable',
   'claim_evidence_value_mismatch',
@@ -248,6 +249,62 @@ function valueClaimKey(letter: string): string {
 function thresholdFindingLetter(finding: SyllabusFinding): string | null {
   const m = /^threshold:(.+)$/.exec(finding.field ?? '');
   return m ? m[1].trim() : null;
+}
+
+function formatThresholdRange(t: SyllabusThreshold | null | undefined): string {
+  if (!t) return '—';
+  const lo = t.minimum ?? null;
+  const hi = t.maximum ?? null;
+  if (lo === null && hi === null) return '—';
+  if (lo === null) return `up to ${hi}`;
+  if (hi === null) return `${lo}+`;
+  return `${lo}–${hi}`;
+}
+
+// The corrections a per-row cutoff edit submits: a set_minimum / set_maximum
+// for every bound the student actually changed (the diff-and-emit the old
+// ManualThresholdEditor did), plus -- for each letter touched -- a
+// confirm_threshold_value so the student is never re-prompted to affirm a
+// bound they just typed. The backend's _apply_confirm_threshold_value is a
+// tolerated no-op when that edit left no residual claim-evidence finding,
+// so the auto-appended affirmation never fails the atomic batch. Returns []
+// when nothing changed.
+function thresholdEditCorrections(
+  letters: string[],
+  thresholdOf: (letter: string) => SyllabusThreshold | null,
+  draft: Record<string, string>,
+): SyllabusProfileDetail['corrections'] {
+  const setCorrections: SyllabusProfileDetail['corrections'] = [];
+  const editedLetters: string[] = [];
+  for (const letter of letters) {
+    const t = thresholdOf(letter);
+    let touched = false;
+    for (const bound of ['minimum', 'maximum'] as const) {
+      const raw = (draft[`${letter}:${bound}`] ?? '').trim();
+      if (raw === '') continue;
+      const value = Number(raw);
+      if (Number.isNaN(value)) continue;
+      const current = bound === 'minimum' ? t?.minimum : t?.maximum;
+      if (current != null && current === value) continue;
+      setCorrections.push({
+        target_type: 'threshold',
+        operation: bound === 'minimum' ? 'set_minimum' : 'set_maximum',
+        threshold_letter: letter,
+        value,
+      });
+      touched = true;
+    }
+    if (touched) editedLetters.push(letter);
+  }
+  if (setCorrections.length === 0) return [];
+  return [
+    ...setCorrections,
+    ...editedLetters.map((letter) => ({
+      target_type: 'threshold' as const,
+      operation: 'confirm_threshold_value',
+      threshold_letter: letter,
+    })),
+  ];
 }
 
 interface UploadFields {
@@ -344,11 +401,6 @@ export function GradeCalculatorPanel({ accessToken, courses, institutionName }: 
   const [busy, setBusy] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
 
-  // The overlapping-threshold pair the student chose to set manually
-  // ("No, let me set it myself", or an unresolved overlap). null = the
-  // inline threshold editor is closed. Reset when switching calculators.
-  const [manualCutoffPair, setManualCutoffPair] = useState<[string, string] | null>(null);
-
   // Dismissed inline findings, session-only: NOT persisted anywhere (no API
   // call, no backend field). Keyed by the finding's index in its source
   // findings array, so it resets whenever that array is recreated -- a
@@ -363,6 +415,13 @@ export function GradeCalculatorPanel({ accessToken, courses, institutionName }: 
   const [calcResult, setCalcResult] = useState<SyllabusCalculationResult | null>(null);
   const [calcError, setCalcError] = useState<string | null>(null);
   const [showBreakdown, setShowBreakdown] = useState(false);
+
+  // Opt-in re-open of the letter-grade cutoff editor once the calculator is
+  // ready. Off by default (most students never need it); submitting an edit
+  // from here drops the profile back to 'reconfirm_required' on the backend,
+  // which re-renders the normal review card, so this toggle only has to
+  // surface CutoffTable, not manage the return trip.
+  const [showCutoffReview, setShowCutoffReview] = useState(false);
 
   const [targetComponent, setTargetComponent] = useState('');
   const [targetLetter, setTargetLetter] = useState('');
@@ -526,7 +585,11 @@ export function GradeCalculatorPanel({ accessToken, courses, institutionName }: 
         calculator_ready: created.calculator_ready,
         current_grade: null,
       };
-      setProfiles((prev) => [...(prev ?? []), summary]);
+      // The backend reuses an existing profile row when the same
+      // student/institution/course_code/term is re-uploaded (get_or_create_
+      // profile), so key on id: replace the matching summary if present,
+      // otherwise append -- never render two rows for one profile.
+      setProfiles((prev) => [...(prev ?? []).filter((p) => p.id !== summary.id), summary]);
       setShowUpload(false);
       setFile(null);
       setDetail(created);
@@ -578,26 +641,13 @@ export function GradeCalculatorPanel({ accessToken, courses, institutionName }: 
     }
   }
 
-  function handleConfirmCutoffPair(winner: string) {
-    if (!detail) return;
-    void submitCorrections(
-      [...detail.corrections, { target_type: 'threshold', operation: 'resolve_cutoff_overlap', threshold_letter: winner }],
-      'Could not save your answer.',
-    );
-  }
-
-  function handleConfirmThresholdValue(letter: string) {
-    if (!detail) return;
-    void submitCorrections(
-      [...detail.corrections, { target_type: 'threshold', operation: 'confirm_threshold_value', threshold_letter: letter }],
-      'Could not save your answer.',
-    );
-  }
-
-  async function handleManualThresholdBounds(corrections: SyllabusProfileDetail['corrections']) {
-    if (!detail) return;
-    const updated = await submitCorrections([...detail.corrections, ...corrections], 'Could not save the cutoffs.');
-    if (updated) setManualCutoffPair(null);
+  // Every action in the unified CutoffTable -- a per-row bounds edit (with
+  // its auto-appended confirm_threshold_value), affirming an unverified
+  // value, confirming a "higher grade wins" overlap default -- lands here
+  // as one appended correction batch.
+  function handleCutoffTableCorrections(newCorrections: SyllabusProfileDetail['corrections']) {
+    if (!detail || newCorrections.length === 0) return;
+    void submitCorrections([...detail.corrections, ...newCorrections], 'Could not save the cutoffs.');
   }
 
   async function handleSaveActualGrades() {
@@ -666,7 +716,7 @@ export function GradeCalculatorPanel({ accessToken, courses, institutionName }: 
   // calculators or survive a reopen. See dismissedFindingKeys above.
   useEffect(() => {
     setDismissedFindingKeys(new Set());
-    setManualCutoffPair(null);
+    setShowCutoffReview(false);
   }, [selectedProfileId]);
 
   // Findings that don't belong in the review list:
@@ -675,7 +725,7 @@ export function GradeCalculatorPanel({ accessToken, courses, institutionName }: 
   // - NON_BLOCKING_INFO_FINDING_CODES: non-blocking informational with no
   //   correction path (unknown_assessment_count).
   // - overlapping_grade_thresholds for a cleanly-resolvable pair --
-  //   replaced by its propose/confirm question in CutoffOverlapQuestions.
+  //   handled by the CutoffTable's "higher grade wins" banner.
   //   Unresolved overlaps keep their raw finding.
   const reviewFindings = useMemo(() => {
     const resolvedPairs = resolvedOverlapPairKeys(detail?.cutoff_overlap_resolution);
@@ -685,38 +735,14 @@ export function GradeCalculatorPanel({ accessToken, courses, institutionName }: 
         const pair = overlapFindingPair(finding);
         if (pair && resolvedPairs.has(cutoffPairKey(pair[0], pair[1]))) return false;
       }
-      // Per-threshold claim-evidence findings become their own
-      // propose/confirm question below, resolvable or not -- drop the raw
-      // finding here so it isn't also shown as a bare dismiss.
+      // Per-threshold claim-evidence findings are surfaced per-row in the
+      // CutoffTable -- drop the raw finding here so it isn't also shown as
+      // a bare dismiss.
       if (CLAIM_EVIDENCE_THRESHOLD_CODES.has(finding.code) && thresholdFindingLetter(finding)) return false;
       return true;
     });
   }, [detail]);
 
-  // Open (unanswered) per-threshold value-claim questions, and the letters
-  // already affirmed -- both derived from the same re-reconciled findings
-  // list + the persisted clarifying_answers, mirroring CutoffOverlapQuestions.
-  const thresholdValueQuestions = useMemo(() => {
-    const answers = detail?.clarifying_answers ?? {};
-    const src = (detail?.confirmed_reconciliation ?? detail?.reconciliation)?.findings ?? [];
-    const seen = new Set<string>();
-    const open: { letter: string; finding: SyllabusFinding }[] = [];
-    for (const finding of src) {
-      if (!CLAIM_EVIDENCE_THRESHOLD_CODES.has(finding.code)) continue;
-      const letter = thresholdFindingLetter(finding);
-      if (!letter || seen.has(letter)) continue;
-      seen.add(letter);
-      if (!(valueClaimKey(letter) in answers)) open.push({ letter, finding });
-    }
-    return open;
-  }, [detail]);
-
-  const answeredValueClaimLetters = useMemo(() => {
-    const answers = detail?.clarifying_answers ?? {};
-    return Object.keys(answers)
-      .filter((k) => k.startsWith('claim_evidence:threshold:'))
-      .map((k) => (answers[k]?.letter ?? k.slice('claim_evidence:threshold:'.length)).toUpperCase());
-  }, [detail]);
   const findingsByAnchor = useMemo(
     () => groupFindingsByAnchor(reviewFindings, detail?.extracted_grade_model ?? null),
     [reviewFindings, detail],
@@ -769,28 +795,12 @@ export function GradeCalculatorPanel({ accessToken, courses, institutionName }: 
                 <h3 className="card-heading">
                   {detail.confirmed_reconciliation ? 'Still needs your review' : 'Needs your review'}
                 </h3>
-                <CutoffOverlapQuestions
+                <CutoffTable
+                  key={detail.id}
                   detail={detail}
                   busy={busy}
-                  onConfirmPair={handleConfirmCutoffPair}
-                  onManualEdit={setManualCutoffPair}
+                  onSubmitCorrections={handleCutoffTableCorrections}
                 />
-                <ThresholdValueQuestions
-                  open={thresholdValueQuestions}
-                  answeredLetters={answeredValueClaimLetters}
-                  busy={busy}
-                  onConfirm={handleConfirmThresholdValue}
-                />
-                {manualCutoffPair && (
-                  <ManualThresholdEditor
-                    key={manualCutoffPair.join(',')}
-                    pair={manualCutoffPair}
-                    detail={detail}
-                    busy={busy}
-                    onSubmit={handleManualThresholdBounds}
-                    onCancel={() => setManualCutoffPair(null)}
-                  />
-                )}
                 <GeneralFindings
                   findings={findingsByAnchor.get('general') ?? []}
                   dismissedFindingKeys={dismissedFindingKeys}
@@ -826,137 +836,177 @@ export function GradeCalculatorPanel({ accessToken, courses, institutionName }: 
             )}
 
             {detail.calculator_ready && (
-              <>
-                <ProfessorsRules model={detail.confirmed_grade_model ?? detail.extracted_grade_model} />
-
-                <div className="card">
-                  <h3 className="card-heading">Enter your grades</h3>
-                  <p className="empty-state">Leave a field blank if you don't know it yet — blank never counts as zero.</p>
-                  {scoreableNames.map((name) => {
-                    const key = `${detail.confirmed_grade_model?.categories.some((c) => c.name === name) ? 'category' : 'assessment'}:${name}`;
-                    return (
-                      <div className="grade-entry-row" key={key}>
-                        <label htmlFor={`actual-${key}`}>{name}</label>
-                        <input
-                          id={`actual-${key}`}
-                          type="number"
-                          min={0}
-                          max={100}
-                          className="form-input"
-                          value={gradeDraft[key]?.actual ?? ''}
-                          onChange={(e) => setGradeDraft((prev) => ({ ...prev, [key]: { ...prev[key], actual: e.target.value, projected: prev[key]?.projected ?? '' } }))}
-                          placeholder="—"
-                        />
-                        <label htmlFor={`hypo-${key}`} className="sr-only">Hypothetical {name} score</label>
-                        <input
-                          id={`hypo-${key}`}
-                          type="number"
-                          min={0}
-                          max={100}
-                          className="form-input grade-entry-hypothetical"
-                          value={gradeDraft[key]?.projected ?? ''}
-                          onChange={(e) => setGradeDraft((prev) => ({ ...prev, [key]: { ...prev[key], projected: e.target.value, actual: prev[key]?.actual ?? '' } }))}
-                          placeholder="What if?"
-                        />
-                      </div>
-                    );
-                  })}
-                  <div className="grade-entry-actions">
-                    <button type="button" className="btn btn-primary btn-sm" onClick={handleSaveActualGrades} disabled={busy} aria-busy={busy}>
-                      {busy ? 'Saving…' : 'Save grades'}
-                    </button>
-                    <button type="button" className="btn btn-ghost btn-sm" onClick={handleCalculate}>
-                      Calculate
-                    </button>
+              // Side-by-side region: the calculator cards ("Enter your
+              // grades", "Current grade", "Target grade") in the main column,
+              // the Professor's rules reference panel in a sticky sidebar so
+              // it stays visible across every calculator interaction, not just
+              // data entry (syllabus-review-redesign-spec.md §2C). Collapses
+              // to a single column below 880px -- see .grade-calculator-layout
+              // in index.css for why that breakpoint and not the 640px one.
+              <div className="grade-calculator-layout">
+                <div className="grade-calculator-main">
+                  <div className="card">
+                    <h3 className="card-heading">Enter your grades</h3>
+                    <p className="empty-state">Leave a field blank if you don't know it yet — blank never counts as zero.</p>
+                    {scoreableNames.map((name) => {
+                      const key = `${detail.confirmed_grade_model?.categories.some((c) => c.name === name) ? 'category' : 'assessment'}:${name}`;
+                      return (
+                        <div className="grade-entry-row" key={key}>
+                          <label htmlFor={`actual-${key}`}>{name}</label>
+                          <input
+                            id={`actual-${key}`}
+                            type="number"
+                            min={0}
+                            max={100}
+                            className="form-input"
+                            value={gradeDraft[key]?.actual ?? ''}
+                            onChange={(e) => setGradeDraft((prev) => ({ ...prev, [key]: { ...prev[key], actual: e.target.value, projected: prev[key]?.projected ?? '' } }))}
+                            placeholder="—"
+                          />
+                          <label htmlFor={`hypo-${key}`} className="sr-only">Hypothetical {name} score</label>
+                          <input
+                            id={`hypo-${key}`}
+                            type="number"
+                            min={0}
+                            max={100}
+                            className="form-input grade-entry-hypothetical"
+                            value={gradeDraft[key]?.projected ?? ''}
+                            onChange={(e) => setGradeDraft((prev) => ({ ...prev, [key]: { ...prev[key], projected: e.target.value, actual: prev[key]?.actual ?? '' } }))}
+                            placeholder="What if?"
+                          />
+                        </div>
+                      );
+                    })}
+                    <div className="grade-entry-actions">
+                      <button type="button" className="btn btn-primary btn-sm" onClick={handleSaveActualGrades} disabled={busy} aria-busy={busy}>
+                        {busy ? 'Saving…' : 'Save grades'}
+                      </button>
+                      <button type="button" className="btn btn-ghost btn-sm" onClick={handleCalculate}>
+                        Calculate
+                      </button>
+                    </div>
                   </div>
-                </div>
 
-                {calcError && <p className="login-error" role="alert">{calcError}</p>}
+                  {calcError && <p className="login-error" role="alert">{calcError}</p>}
 
-                {calcResult && (
-                  <div className="card" role="status" aria-live="polite">
-                    <h3 className="card-heading">Current grade</h3>
-                    <p className="overview-stat-value">{calcResult.current_grade !== null ? `${calcResult.current_grade}%` : '—'}</p>
-                    <p className="empty-state">
-                      {calcResult.completed_weight !== null
-                        ? `Based on ${calcResult.completed_weight}% of the course completed.`
-                        : 'No grades entered yet.'}
-                    </p>
-
-                    <h3 className="card-heading">Projected grade</h3>
-                    {calcResult.projected_grade !== null ? (
-                      <p className="overview-stat-value">{calcResult.projected_grade}%</p>
-                    ) : (
-                      <p className="empty-state">Enter a hypothetical score for every remaining component to see your projected grade.</p>
-                    )}
-
-                    {calcResult.applied_rules.filter((r) => r.changed_calculation).map((rule, i) => (
-                      <p key={i} className="grade-rule-explanation">
-                        {rule.rule_type === 'replacement'
-                          ? `${rule.source} replacement applied: your ${rule.source} score replaces your ${rule.target} score in this scenario.`
-                          : `${rule.description}`}
+                  {calcResult && (
+                    <div className="card" role="status" aria-live="polite">
+                      <h3 className="card-heading">Current grade</h3>
+                      <p className="overview-stat-value">{calcResult.current_grade !== null ? `${calcResult.current_grade}%` : '—'}</p>
+                      <p className="empty-state">
+                        {calcResult.completed_weight !== null
+                          ? `Based on ${calcResult.completed_weight}% of the course completed.`
+                          : 'No grades entered yet.'}
                       </p>
-                    ))}
 
-                    <button type="button" className="btn btn-ghost btn-sm" onClick={() => setShowBreakdown((v) => !v)}>
-                      {showBreakdown ? 'Hide breakdown' : 'Show breakdown'}
+                      <h3 className="card-heading">Projected grade</h3>
+                      {calcResult.projected_grade !== null ? (
+                        <p className="overview-stat-value">{calcResult.projected_grade}%</p>
+                      ) : (
+                        <p className="empty-state">Enter a hypothetical score for every remaining component to see your projected grade.</p>
+                      )}
+
+                      {calcResult.applied_rules.filter((r) => r.changed_calculation).map((rule, i) => (
+                        <p key={i} className="grade-rule-explanation">
+                          {rule.rule_type === 'replacement'
+                            ? `${rule.source} replacement applied: your ${rule.source} score replaces your ${rule.target} score in this scenario.`
+                            : `${rule.description}`}
+                        </p>
+                      ))}
+
+                      <button type="button" className="btn btn-ghost btn-sm" onClick={() => setShowBreakdown((v) => !v)}>
+                        {showBreakdown ? 'Hide breakdown' : 'Show breakdown'}
+                      </button>
+                      {showBreakdown && (
+                        <div className="real-course-table" role="table" aria-label="Calculation breakdown">
+                          {calcResult.components.map((c) => (
+                            <div className="real-course-row" role="row" key={c.name}>
+                              <span role="cell">{c.name}</span>
+                              <span role="cell">entered: {c.original_score ?? '—'}</span>
+                              <span role="cell">effective: {c.effective_score ?? '—'}</span>
+                              <span role="cell">weight: {formatPercent(c.weight_percent)}</span>
+                              <span role="cell">contribution: {c.contribution ?? '—'}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="card">
+                    <h3 className="card-heading">Target grade</h3>
+                    <label htmlFor="target-component" className="form-label">Solve for</label>
+                    <select id="target-component" className="form-input" value={targetComponent} onChange={(e) => setTargetComponent(e.target.value)}>
+                      <option value="">Choose a component</option>
+                      {scoreableNames.map((name) => (
+                        <option key={name} value={name}>{name}</option>
+                      ))}
+                    </select>
+                    <label htmlFor="target-letter" className="form-label">Target grade</label>
+                    <select id="target-letter" className="form-input" value={targetLetter} onChange={(e) => setTargetLetter(e.target.value)}>
+                      <option value="">Custom number…</option>
+                      {(detail.confirmed_grade_model?.grade_thresholds ?? []).map((t) => (
+                        <option key={t.letter} value={t.letter}>{t.letter}</option>
+                      ))}
+                    </select>
+                    {!targetLetter && (
+                      <>
+                        <label htmlFor="target-numeric" className="form-label">Numeric target</label>
+                        <input id="target-numeric" type="number" className="form-input" value={targetNumeric} onChange={(e) => setTargetNumeric(e.target.value)} />
+                      </>
+                    )}
+                    <button type="button" className="btn btn-primary btn-sm" onClick={handleSolveTarget} disabled={!targetComponent}>
+                      Solve
                     </button>
-                    {showBreakdown && (
-                      <div className="real-course-table" role="table" aria-label="Calculation breakdown">
-                        {calcResult.components.map((c) => (
-                          <div className="real-course-row" role="row" key={c.name}>
-                            <span role="cell">{c.name}</span>
-                            <span role="cell">entered: {c.original_score ?? '—'}</span>
-                            <span role="cell">effective: {c.effective_score ?? '—'}</span>
-                            <span role="cell">weight: {formatPercent(c.weight_percent)}</span>
-                            <span role="cell">contribution: {c.contribution ?? '—'}</span>
-                          </div>
-                        ))}
-                      </div>
+
+                    {targetError && <p className="login-error" role="alert">{targetError}</p>}
+
+                    {targetResult && (
+                      <p role="status" aria-live="polite" className="grade-target-result">
+                        {targetResult.already_achieved && "You've already reached this target under the grades and assumptions entered."}
+                        {!targetResult.already_achieved && targetResult.feasible && targetResult.required_score !== null &&
+                          `You need about ${targetResult.required_score}% on the ${targetResult.target_component} to finish with ${targetResult.target_label ? `an ${targetResult.target_label}` : 'this target'}.`}
+                        {!targetResult.already_achieved && !targetResult.feasible && targetResult.required_score !== null &&
+                          `You would need ${targetResult.required_score}% on the ${targetResult.target_component}. This target isn't reachable under the current assumptions.`}
+                        {targetResult.required_score === null && "CampusIQ needs more grades entered to solve for this target."}
+                      </p>
                     )}
                   </div>
-                )}
 
-                <div className="card">
-                  <h3 className="card-heading">Target grade</h3>
-                  <label htmlFor="target-component" className="form-label">Solve for</label>
-                  <select id="target-component" className="form-input" value={targetComponent} onChange={(e) => setTargetComponent(e.target.value)}>
-                    <option value="">Choose a component</option>
-                    {scoreableNames.map((name) => (
-                      <option key={name} value={name}>{name}</option>
-                    ))}
-                  </select>
-                  <label htmlFor="target-letter" className="form-label">Target grade</label>
-                  <select id="target-letter" className="form-input" value={targetLetter} onChange={(e) => setTargetLetter(e.target.value)}>
-                    <option value="">Custom number…</option>
-                    {(detail.confirmed_grade_model?.grade_thresholds ?? []).map((t) => (
-                      <option key={t.letter} value={t.letter}>{t.letter}</option>
-                    ))}
-                  </select>
-                  {!targetLetter && (
-                    <>
-                      <label htmlFor="target-numeric" className="form-label">Numeric target</label>
-                      <input id="target-numeric" type="number" className="form-input" value={targetNumeric} onChange={(e) => setTargetNumeric(e.target.value)} />
-                    </>
-                  )}
-                  <button type="button" className="btn btn-primary btn-sm" onClick={handleSolveTarget} disabled={!targetComponent}>
-                    Solve
-                  </button>
-
-                  {targetError && <p className="login-error" role="alert">{targetError}</p>}
-
-                  {targetResult && (
-                    <p role="status" aria-live="polite" className="grade-target-result">
-                      {targetResult.already_achieved && "You've already reached this target under the grades and assumptions entered."}
-                      {!targetResult.already_achieved && targetResult.feasible && targetResult.required_score !== null &&
-                        `You need about ${targetResult.required_score}% on the ${targetResult.target_component} to finish with ${targetResult.target_label ? `an ${targetResult.target_label}` : 'this target'}.`}
-                      {!targetResult.already_achieved && !targetResult.feasible && targetResult.required_score !== null &&
-                        `You would need ${targetResult.required_score}% on the ${targetResult.target_component}. This target isn't reachable under the current assumptions.`}
-                      {targetResult.required_score === null && "CampusIQ needs more grades entered to solve for this target."}
-                    </p>
+                  {!showCutoffReview ? (
+                    <button
+                      type="button"
+                      className="btn btn-ghost btn-sm grade-cutoff-revisit-toggle"
+                      onClick={() => setShowCutoffReview(true)}
+                    >
+                      Review letter-grade cutoffs
+                    </button>
+                  ) : (
+                    <div className="card grade-cutoff-revisit">
+                      <p className="empty-state">
+                        Saving a change here sends your calculator back for a quick re-confirm.
+                      </p>
+                      <CutoffTable
+                        key={detail.id}
+                        detail={detail}
+                        busy={busy}
+                        onSubmitCorrections={handleCutoffTableCorrections}
+                      />
+                      <button
+                        type="button"
+                        className="btn btn-ghost btn-sm"
+                        onClick={() => setShowCutoffReview(false)}
+                      >
+                        Done
+                      </button>
+                    </div>
                   )}
                 </div>
-              </>
+
+                <div className="grade-calculator-aside">
+                  <ProfessorsRules model={detail.confirmed_grade_model ?? detail.extracted_grade_model} />
+                </div>
+              </div>
             )}
           </>
         )}
@@ -1164,52 +1214,144 @@ function GeneralFindings({
 }
 
 /**
- * Clarifying questions for overlapping letter-grade cutoffs (spec §2A),
- * shown at the top of the review step. A cleanly-resolvable pair
- * (cutoff_overlap_resolution.resolved) is offered as a propose/confirm
- * question with the "higher grade wins the tie" default; the raw
- * overlapping_grade_thresholds finding for it is filtered out of the
- * review list (see reviewFindings). Once answered (clarifying_answers) it
- * shows only a one-line confirmation and never asks again. Unresolved
- * overlaps get an action that routes to the same manual threshold editor
- * as "No, let me set it myself" -- the backend deliberately never guesses
- * at those, so there is no default to propose.
+ * Unified letter-grade cutoff table for the review step -- one row per
+ * grade_thresholds entry, sourced from confirmed_grade_model ??
+ * extracted_grade_model. Replaces the three earlier card-based UIs
+ * (overlap propose/confirm, per-threshold value affirm, manual bounds
+ * editor) with a single view:
+ *
+ *  - Every row's minimum/maximum is editable in place. Saving diffs the
+ *    draft and emits set_minimum / set_maximum for the bounds that
+ *    changed, plus an auto-appended confirm_threshold_value for each
+ *    letter touched (thresholdEditCorrections) -- so a student who types a
+ *    bound is never re-prompted to affirm the value they just entered.
+ *  - A resolvable overlap (cutoff_overlap_resolution.resolved) shows a
+ *    cross-row banner proposing "higher grade wins the tie", confirmable
+ *    in one click (resolve_cutoff_overlap). Its raw
+ *    overlapping_grade_thresholds finding is filtered from the review list
+ *    (reviewFindings). An unresolved overlap shows only a note -- editing
+ *    the two rows directly is the fix, and its raw finding stays.
+ *  - A row with an open claim_evidence_consistency_unverifiable /
+ *    claim_evidence_value_mismatch finding and no pending edit shows its
+ *    current value with a "Yes, that's correct" affirm
+ *    (confirm_threshold_value). Once answered (clarifying_answers) the row
+ *    shows a one-line confirmation and never asks again.
+ *
+ * Keyed on `detail.id` by the caller (stable across correction submits, so
+ * switching profiles still forces a fresh mount). The edit draft is NOT
+ * discarded on every submit: when a submit brings back new server values,
+ * only bounds the student has not touched adopt them -- an in-progress edit
+ * in another row survives a sibling row's affirm/resolve (see the
+ * serverDraft sync effect below).
  */
-function CutoffOverlapQuestions({
+function CutoffTable({
   detail,
   busy,
-  onConfirmPair,
-  onManualEdit,
+  onSubmitCorrections,
 }: {
   detail: SyllabusProfileDetail;
   busy: boolean;
-  onConfirmPair: (winner: string) => void;
-  onManualEdit: (letters: [string, string]) => void;
+  onSubmitCorrections: (corrections: SyllabusProfileDetail['corrections']) => void;
 }) {
-  const resolution = detail.cutoff_overlap_resolution ?? { schema_version: '', resolved: [], unresolved: [] };
-  const answers = detail.clarifying_answers ?? {};
   const model = detail.confirmed_grade_model ?? detail.extracted_grade_model;
-  const rangeOf = (letter: string): string | null => {
-    const t = model?.grade_thresholds.find((th) => th.letter === letter);
-    return t && t.minimum !== null && t.maximum !== null ? `${t.minimum}–${t.maximum}` : null;
-  };
+  const thresholds = model?.grade_thresholds ?? [];
+  const thresholdOf = (letter: string): SyllabusThreshold | null =>
+    thresholds.find((t) => t.letter === letter) ?? null;
 
-  const open = resolution.resolved.filter((r) => !(clarifyingKey(r.winner, r.loser) in answers));
-  const answered = resolution.resolved.filter((r) => clarifyingKey(r.winner, r.loser) in answers);
-  const unresolved = resolution.unresolved;
+  const answers = detail.clarifying_answers ?? {};
+  const rawFindings = (detail.confirmed_reconciliation ?? detail.reconciliation)?.findings ?? [];
 
-  if (open.length === 0 && answered.length === 0 && unresolved.length === 0) return null;
+  // Letters with an open (unanswered) per-threshold value-claim finding,
+  // and letters already affirmed -- both normalized lowercase to match a
+  // row regardless of casing.
+  const openValueLetters = new Set<string>();
+  for (const finding of rawFindings) {
+    if (!CLAIM_EVIDENCE_THRESHOLD_CODES.has(finding.code)) continue;
+    const letter = thresholdFindingLetter(finding);
+    if (letter && !(valueClaimKey(letter) in answers)) openValueLetters.add(letter.trim().toLowerCase());
+  }
+  const answeredValueLetters = new Set(
+    Object.keys(answers)
+      .filter((k) => k.startsWith('claim_evidence:threshold:'))
+      .map((k) => (answers[k]?.letter ?? k.slice('claim_evidence:threshold:'.length)).trim().toLowerCase()),
+  );
+
+  const resolution = detail.cutoff_overlap_resolution ?? { schema_version: '', resolved: [], unresolved: [] };
+  const openResolved = resolution.resolved.filter((r) => !(clarifyingKey(r.winner, r.loser) in answers));
+  const answeredResolved = resolution.resolved.filter((r) => clarifyingKey(r.winner, r.loser) in answers);
+
+  // Server-truth bound values, recomputed only when the grade model itself
+  // changes (a correction submit brought back a new `detail`) -- keyed on
+  // `model`, not the `?? []` fallback, so it can't churn identity between
+  // renders. Doubles as the initial draft and as the baseline the sync
+  // effect diffs against.
+  const serverDraft = useMemo((): Record<string, string> => {
+    const d: Record<string, string> = {};
+    for (const t of model?.grade_thresholds ?? []) {
+      d[`${t.letter}:minimum`] = t.minimum != null ? String(t.minimum) : '';
+      d[`${t.letter}:maximum`] = t.maximum != null ? String(t.maximum) : '';
+    }
+    return d;
+  }, [model]);
+  const [draft, setDraft] = useState<Record<string, string>>(serverDraft);
+
+  // The table is no longer remounted on every correction submit (the caller
+  // key is now just `detail.id`). Instead, when new server values arrive,
+  // adopt them ONLY for bounds the student hasn't edited (draft still equals
+  // the previous server value); a genuinely edited bound keeps the in-flight
+  // value. Preserves the old "fresh values after a real data change" intent
+  // without discarding a half-typed edit in another row when a sibling row's
+  // affirm/resolve submits.
+  const prevServerDraft = useRef(serverDraft);
+  useEffect(() => {
+    if (prevServerDraft.current === serverDraft) return;
+    const prevServer = prevServerDraft.current;
+    prevServerDraft.current = serverDraft;
+    setDraft((current) => {
+      const next: Record<string, string> = {};
+      for (const key of Object.keys(serverDraft)) {
+        const userEdited = (current[key] ?? '') !== (prevServer[key] ?? '');
+        next[key] = userEdited ? (current[key] ?? '') : serverDraft[key];
+      }
+      return next;
+    });
+  }, [serverDraft]);
+
+  function boundString(t: SyllabusThreshold | null, bound: 'minimum' | 'maximum'): string {
+    const current = bound === 'minimum' ? t?.minimum : t?.maximum;
+    return current != null ? String(current) : '';
+  }
+  function rowDirty(letter: string): boolean {
+    const t = thresholdOf(letter);
+    return (
+      (draft[`${letter}:minimum`] ?? '').trim() !== boundString(t, 'minimum') ||
+      (draft[`${letter}:maximum`] ?? '').trim() !== boundString(t, 'maximum')
+    );
+  }
+  const anyDirty = thresholds.some((t) => rowDirty(t.letter));
+
+  function handleSave() {
+    const corrections = thresholdEditCorrections(thresholds.map((t) => t.letter), thresholdOf, draft);
+    if (corrections.length > 0) onSubmitCorrections(corrections);
+  }
+
+  if (thresholds.length === 0) return null;
 
   return (
-    <div className="grade-cutoff-questions" aria-label="Cutoff conflicts">
-      {open.map((r) => {
-        const wRange = rangeOf(r.winner);
-        const lRange = rangeOf(r.loser);
+    <div className="grade-cutoff-table" data-testid="cutoff-table" aria-label="Letter grade cutoffs">
+      <h4 className="card-heading">Letter grade cutoffs</h4>
+      <p className="empty-state">Check each grade's range against your syllabus. Edit any value that's wrong.</p>
+
+      {openResolved.map((r) => {
+        const w = thresholdOf(r.winner);
+        const l = thresholdOf(r.loser);
+        const haveRanges =
+          w?.minimum != null && w?.maximum != null && l?.minimum != null && l?.maximum != null;
         return (
-          <div className="grade-cutoff-question" key={`open:${r.winner},${r.loser}`} data-cutoff-pair={`${r.winner},${r.loser}`}>
+          <div className="grade-cutoff-banner" key={`open:${r.winner},${r.loser}`} data-cutoff-pair={`${r.winner},${r.loser}`}>
             <p className="grade-cutoff-question-text">
-              {wRange && lRange
-                ? `Your syllabus lists ${r.winner} as ${wRange} and ${r.loser} as ${lRange} — these overlap at ${r.boundary}. `
+              {haveRanges
+                ? `Your syllabus lists ${r.winner} as ${w?.minimum}–${w?.maximum} and ${r.loser} as ${l?.minimum}–${l?.maximum} — these overlap at ${r.boundary}. `
                 : `${r.winner} and ${r.loser} overlap at ${r.boundary}. `}
               We'll default to the higher grade winning ties, so {r.boundary} is {r.winner}, not {r.loser}. Sound right?
             </p>
@@ -1219,205 +1361,109 @@ function CutoffOverlapQuestions({
                 className="btn btn-primary btn-sm"
                 disabled={busy}
                 aria-busy={busy}
-                onClick={() => onConfirmPair(r.winner)}
+                onClick={() => onSubmitCorrections([{ target_type: 'threshold', operation: 'resolve_cutoff_overlap', threshold_letter: r.winner }])}
               >
                 Yes, that's right
               </button>
-              <button
-                type="button"
-                className="btn btn-ghost btn-sm"
-                disabled={busy}
-                onClick={() => onManualEdit([r.winner, r.loser])}
-              >
-                No, let me set it myself
-              </button>
             </div>
+            <p className="grade-cutoff-banner-hint">Or edit the {r.winner} and {r.loser} rows below and save.</p>
           </div>
         );
       })}
 
-      {answered.map((r) => (
+      {resolution.unresolved.map((u) => (
+        <p
+          className="grade-cutoff-banner grade-cutoff-banner--manual"
+          key={`unresolved:${u.letters[0]},${u.letters[1]}`}
+          data-cutoff-pair={`${u.letters[0]},${u.letters[1]}`}
+        >
+          The cutoffs for {u.letters[0]} and {u.letters[1]} overlap and CampusIQ can't pick a safe default — edit those
+          rows below and save.
+        </p>
+      ))}
+
+      <div className="grade-cutoff-table-rows" role="table" aria-label="Cutoffs">
+        <div className="grade-cutoff-row grade-cutoff-row--head" role="row">
+          <span role="columnheader">Grade</span>
+          <span role="columnheader">Minimum</span>
+          <span role="columnheader">Maximum</span>
+          <span role="columnheader">Status</span>
+        </div>
+        {thresholds.map((t) => {
+          const dirty = rowDirty(t.letter);
+          const key = t.letter.trim().toLowerCase();
+          return (
+            <div className="grade-cutoff-row" role="row" key={t.letter} data-threshold-letter={t.letter}>
+              <span className="grade-cutoff-row-letter" role="cell">{t.letter}</span>
+              <span role="cell">
+                <label htmlFor={`cutoff-${t.letter}-min`} className="sr-only">{t.letter} minimum</label>
+                <input
+                  id={`cutoff-${t.letter}-min`}
+                  type="number"
+                  inputMode="numeric"
+                  className="form-input"
+                  placeholder="—"
+                  value={draft[`${t.letter}:minimum`] ?? ''}
+                  onChange={(e) => setDraft((p) => ({ ...p, [`${t.letter}:minimum`]: e.target.value }))}
+                />
+              </span>
+              <span role="cell">
+                <label htmlFor={`cutoff-${t.letter}-max`} className="sr-only">{t.letter} maximum</label>
+                <input
+                  id={`cutoff-${t.letter}-max`}
+                  type="number"
+                  inputMode="numeric"
+                  className="form-input"
+                  placeholder="—"
+                  value={draft[`${t.letter}:maximum`] ?? ''}
+                  onChange={(e) => setDraft((p) => ({ ...p, [`${t.letter}:maximum`]: e.target.value }))}
+                />
+              </span>
+              <span className="grade-cutoff-row-status" role="cell">
+                {dirty ? (
+                  <span className="grade-cutoff-row-note">edited — save below</span>
+                ) : openValueLetters.has(key) ? (
+                  <span className="grade-cutoff-row-affirm">
+                    <span className="grade-cutoff-row-note">
+                      {t.letter}: {formatThresholdRange(t)} — we couldn't confirm this against your syllabus.
+                    </span>
+                    <button
+                      type="button"
+                      className="btn btn-primary btn-sm"
+                      disabled={busy}
+                      aria-busy={busy}
+                      onClick={() => onSubmitCorrections([{ target_type: 'threshold', operation: 'confirm_threshold_value', threshold_letter: t.letter }])}
+                    >
+                      Yes, that's correct
+                    </button>
+                  </span>
+                ) : answeredValueLetters.has(key) ? (
+                  <span className="grade-cutoff-resolved" data-threshold-letter={t.letter}>
+                    ✓ {t.letter} cutoff confirmed as correct.
+                  </span>
+                ) : null}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+
+      {answeredResolved.map((r) => (
         <p className="grade-cutoff-resolved" key={`done:${r.winner},${r.loser}`} data-cutoff-pair={`${r.winner},${r.loser}`}>
           ✓ Cutoff conflict resolved: {r.boundary} counts as {r.winner}, not {r.loser}.
         </p>
       ))}
 
-      {unresolved.map((u) => (
-        <div
-          className="grade-cutoff-question grade-cutoff-question--manual"
-          key={`unresolved:${u.letters[0]},${u.letters[1]}`}
-          data-cutoff-pair={`${u.letters[0]},${u.letters[1]}`}
-        >
-          <p className="grade-cutoff-question-text">
-            The cutoffs for {u.letters[0]} and {u.letters[1]} overlap and CampusIQ can't pick a safe default — set them
-            yourself.
-          </p>
-          <div className="grade-cutoff-question-actions">
-            <button
-              type="button"
-              className="btn btn-ghost btn-sm"
-              disabled={busy}
-              onClick={() => onManualEdit([u.letters[0], u.letters[1]])}
-            >
-              Set the cutoffs
-            </button>
-          </div>
+      {anyDirty && (
+        <div className="grade-cutoff-question-actions">
+          <button type="button" className="btn btn-primary btn-sm" disabled={busy} aria-busy={busy} onClick={handleSave}>
+            Save cutoffs
+          </button>
+          <button type="button" className="btn btn-ghost btn-sm" disabled={busy} onClick={() => setDraft(serverDraft)}>
+            Cancel
+          </button>
         </div>
-      ))}
-    </div>
-  );
-}
-
-/**
- * Affirm-only clarifying questions for per-threshold values reconciliation
- * could not verify against the syllabus text
- * (claim_evidence_consistency_unverifiable / claim_evidence_value_mismatch).
- * "Yes, that's correct" records a CONFIRM_THRESHOLD_VALUE correction, which
- * suppresses the finding without touching the threshold or its evidence
- * (backend: corrections._apply_confirm_threshold_value). No "let me edit it"
- * branch by design -- the value is affirmed as extracted, or the syllabus
- * is re-uploaded. Once answered (clarifying_answers) a letter shows only a
- * one-line confirmation and never asks again.
- */
-function ThresholdValueQuestions({
-  open,
-  answeredLetters,
-  busy,
-  onConfirm,
-}: {
-  open: { letter: string; finding: SyllabusFinding }[];
-  answeredLetters: string[];
-  busy: boolean;
-  onConfirm: (letter: string) => void;
-}) {
-  if (open.length === 0 && answeredLetters.length === 0) return null;
-
-  return (
-    <div className="grade-cutoff-questions" aria-label="Unconfirmed grade cutoff values">
-      {open.map(({ letter, finding }) => (
-        <div className="grade-cutoff-question" key={`value:${letter}`} data-threshold-letter={letter}>
-          <p className="grade-cutoff-question-text">
-            {findingCopy(finding)} Is the {letter} cutoff correct as we read it from your syllabus?
-          </p>
-          <div className="grade-cutoff-question-actions">
-            <button
-              type="button"
-              className="btn btn-primary btn-sm"
-              disabled={busy}
-              aria-busy={busy}
-              onClick={() => onConfirm(letter)}
-            >
-              Yes, that's correct
-            </button>
-          </div>
-        </div>
-      ))}
-
-      {answeredLetters.map((letter) => (
-        <p className="grade-cutoff-resolved" key={`value-done:${letter}`} data-threshold-letter={letter}>
-          ✓ {letter} cutoff confirmed as correct.
-        </p>
-      ))}
-    </div>
-  );
-}
-
-/**
- * Minimal manual editor for the two thresholds of an overlapping pair --
- * the target of both "No, let me set it myself" (on a resolvable pair) and
- * "Set the cutoffs" (on an unresolved overlap the backend won't guess at).
- * Renders both bounds of both thresholds; only fields the student actually
- * changed become SET_MINIMUM / SET_MAXIMUM corrections.
- */
-function ManualThresholdEditor({
-  pair,
-  detail,
-  busy,
-  onSubmit,
-  onCancel,
-}: {
-  pair: [string, string];
-  detail: SyllabusProfileDetail;
-  busy: boolean;
-  onSubmit: (corrections: SyllabusProfileDetail['corrections']) => void;
-  onCancel: () => void;
-}) {
-  const model = detail.confirmed_grade_model ?? detail.extracted_grade_model;
-  const thresholdOf = (letter: string) => model?.grade_thresholds.find((t) => t.letter === letter) ?? null;
-
-  const [draft, setDraft] = useState<Record<string, string>>(() => {
-    const d: Record<string, string> = {};
-    for (const letter of pair) {
-      const t = thresholdOf(letter);
-      d[`${letter}:minimum`] = t?.minimum != null ? String(t.minimum) : '';
-      d[`${letter}:maximum`] = t?.maximum != null ? String(t.maximum) : '';
-    }
-    return d;
-  });
-
-  function submit() {
-    const corrections: SyllabusProfileDetail['corrections'] = [];
-    for (const letter of pair) {
-      const t = thresholdOf(letter);
-      for (const bound of ['minimum', 'maximum'] as const) {
-        const raw = (draft[`${letter}:${bound}`] ?? '').trim();
-        if (raw === '') continue;
-        const value = Number(raw);
-        if (Number.isNaN(value)) continue;
-        const current = bound === 'minimum' ? t?.minimum : t?.maximum;
-        if (current != null && current === value) continue;
-        corrections.push({
-          target_type: 'threshold',
-          operation: bound === 'minimum' ? 'set_minimum' : 'set_maximum',
-          threshold_letter: letter,
-          value,
-        });
-      }
-    }
-    if (corrections.length === 0) {
-      onCancel();
-      return;
-    }
-    onSubmit(corrections);
-  }
-
-  return (
-    <div className="grade-cutoff-editor" data-testid="cutoff-manual-editor" data-cutoff-pair={`${pair[0]},${pair[1]}`}>
-      <p className="grade-cutoff-editor-heading">
-        Set the cutoffs for {pair[0]} and {pair[1]}
-      </p>
-      {pair.map((letter) => (
-        <div className="grade-cutoff-editor-row" key={letter}>
-          <span className="grade-cutoff-editor-letter">{letter}</span>
-          <label htmlFor={`cutoff-${letter}-min`} className="sr-only">{letter} minimum</label>
-          <input
-            id={`cutoff-${letter}-min`}
-            type="number"
-            className="form-input"
-            placeholder="min"
-            value={draft[`${letter}:minimum`] ?? ''}
-            onChange={(e) => setDraft((p) => ({ ...p, [`${letter}:minimum`]: e.target.value }))}
-          />
-          <span aria-hidden="true">–</span>
-          <label htmlFor={`cutoff-${letter}-max`} className="sr-only">{letter} maximum</label>
-          <input
-            id={`cutoff-${letter}-max`}
-            type="number"
-            className="form-input"
-            placeholder="max"
-            value={draft[`${letter}:maximum`] ?? ''}
-            onChange={(e) => setDraft((p) => ({ ...p, [`${letter}:maximum`]: e.target.value }))}
-          />
-        </div>
-      ))}
-      <div className="grade-cutoff-question-actions">
-        <button type="button" className="btn btn-primary btn-sm" disabled={busy} aria-busy={busy} onClick={submit}>
-          Save cutoffs
-        </button>
-        <button type="button" className="btn btn-ghost btn-sm" disabled={busy} onClick={onCancel}>
-          Cancel
-        </button>
-      </div>
+      )}
     </div>
   );
 }
