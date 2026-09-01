@@ -686,6 +686,43 @@ def test_tamu_mixed_requirement_keeps_cross_listing_atomic_and_applies_prerequis
     assert {candidate.course_codes[-2] for candidate in candidates.feasible_candidates} == {"MATH 251", "MATH 253"}
 
 
+def test_cross_listing_collapses_to_the_alias_on_the_student_transcript():
+    """The student took the "PHYS 217/ENGR 217" cross-listed course under
+    PHYS 217. The other option in the group is still open, so the group is
+    deferred -- but the cross-listed slot must be recognised as done via
+    the PHYS 217 alias, not re-proposed under ENGR 217 (the alias the
+    lexical tie-break would otherwise pick). Candidates should cover only
+    the genuinely-remaining option."""
+    groups = [group("Second Year — Fall — Required Courses", "enumerated_all")]
+    group_id = groups[0]["id"]
+    options = [option("lab", group_id, 0), option("stat", group_id, 1, "or")]
+    rows = [
+        course("lab", code="PHYS 217/ENGR 217"),
+        course("stat", code="ECEN 303"),
+        course("stat", code="STAT 211"),
+    ]
+    catalog_by_code = {
+        "PHYS 217/ENGR 217": ["PHYS 217", "ENGR 217"],
+        "ECEN 303": ["ECEN 303"],
+        "STAT 211": ["STAT 211"],
+    }
+    credits = {code: 3 for values in catalog_by_code.values() for code in values}
+    records = [{"course_code": "PHYS 217", "status": "completed", "counts_toward_credit": True, "credit_hours": 3}]
+    result = run(groups, options, rows, {}, credits, catalog_by_code=catalog_by_code, records=records)
+
+    candidates = result.candidate_sets[0]
+    every_code = {
+        code
+        for bucket in (candidates.feasible_candidates, candidates.excluded_candidates)
+        for candidate in bucket
+        for code in candidate.course_codes
+    }
+    assert "ENGR 217" not in every_code
+    assert "PHYS 217" not in every_code  # already done, never re-proposed
+    assert {tuple(c.course_codes) for c in candidates.feasible_candidates} == {("ECEN 303",), ("STAT 211",)}
+    assert decision(result, group_id).state == RequirementDecisionState.CHOICE_REQUIRED
+
+
 def test_direct_course_code_or_produces_both_feasible_candidates():
     groups = [group("pick", "enumerated_all")]
     options = [option("direct-or", "pick", 0, "or")]

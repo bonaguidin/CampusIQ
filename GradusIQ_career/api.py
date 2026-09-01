@@ -3437,8 +3437,10 @@ def _build_academic_schedule_state(
     groups = evaluate_requirement_tree(
         raw.groups, raw.options, raw.option_courses, raw.course_records, raw.catalog_by_gid, raw.catalog_by_code
     )
+    already_satisfied = satisfied_course_codes(raw.course_records)
     courses, unscheduled = scope_schedule_input(
-        groups, raw.options, raw.option_courses, raw.catalog_by_gid, raw.catalog_credit_by_code, raw.catalog_by_code
+        groups, raw.options, raw.option_courses, raw.catalog_by_gid, raw.catalog_credit_by_code,
+        raw.catalog_by_code, already_satisfied,
     )
     catalog_institution = resolve_institution(institution_name)
     catalog_repo = LocalCatalogRepository()
@@ -3469,7 +3471,6 @@ def _build_academic_schedule_state(
         local_catalog_fingerprint=catalog_repo.semantic_fingerprint(catalog_institution),
         reconstruction_date=reconstruction_date,
     )
-    already_satisfied = satisfied_course_codes(raw.course_records)
     starting_year, starting_season = starting_term
     max_terms = _count_long_terms(
         starting_year, starting_season, graduation_term[0], graduation_term[1]

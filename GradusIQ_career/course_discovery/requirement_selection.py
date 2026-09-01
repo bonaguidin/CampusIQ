@@ -246,6 +246,7 @@ def _option_variants(
     catalog_by_gid: Mapping[str, str],
     catalog_by_code: Mapping[str, list[str]],
     credits: Mapping[str, float],
+    transcript_course_codes: set[str],
 ) -> tuple[list[tuple[str, ...]], bool]:
     """Resolve one option into academically equivalent course paths.
 
@@ -255,6 +256,12 @@ def _option_variants(
     codes when it is cross-listed, but it still represents one course: an AND
     option therefore takes one code from each row rather than flattening every
     alias into separately required courses.
+
+    ``transcript_course_codes`` is the set of codes the student has on their
+    own course_records (completed or in progress); a cross-listing collapses
+    to whichever alias is on the transcript, so a course the student has
+    already taken under one department's code is recognised as done rather
+    than re-proposed under the other's.
     """
     rows = courses_by_option.get(str(option["id"]), [])
     resolved_rows: list[tuple[str, ...]] = []
@@ -268,11 +275,17 @@ def _option_variants(
             resolved = tuple(str(code) for code in catalog_by_code.get(str(course_code), []) if code)
             if len(resolved) > 1:
                 # A slash-joined direct code is one cross-listed course, not
-                # several separately selectable alternatives. Match
-                # scheduler_scope's canonical representative rule: prefer
-                # the first lexical alias with usable credit data.
+                # several separately selectable alternatives -- collapse to a
+                # single canonical representative. Prefer the alias on the
+                # student's transcript; else the first lexical alias with
+                # usable credit data, matching scheduler_scope's rule.
+                on_transcript = sorted(code for code in resolved if code in transcript_course_codes)
                 usable = sorted(code for code in resolved if float(credits.get(code, 0)) > 0)
-                resolved = (usable[0] if usable else sorted(resolved)[0],)
+                resolved = (
+                    on_transcript[0] if on_transcript
+                    else usable[0] if usable
+                    else sorted(resolved)[0],
+                )
         else:
             resolved = ()
         if not resolved:
@@ -301,7 +314,7 @@ def _leaf_choices(
     variants: list[tuple[dict[str, Any], list[tuple[str, ...]], bool]] = []
     for option in opts:
         option_variants, unresolved = _option_variants(
-            option, courses_by_option, catalog_by_gid, catalog_by_code, credits
+            option, courses_by_option, catalog_by_gid, catalog_by_code, credits, satisfied
         )
         variants.append((option, option_variants, unresolved))
 
@@ -619,7 +632,7 @@ def select_structured_requirements(
             for option in options_by_group.get(group_id, []):
                 variants, unresolved = _option_variants(
                     option, courses_by_option, catalog_by_gid, catalog_by_code,
-                    catalog_credit_by_code
+                    catalog_credit_by_code, satisfied
                 )
                 if not unresolved or variants:
                     continue

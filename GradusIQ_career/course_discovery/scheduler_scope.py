@@ -89,8 +89,10 @@ def scope_schedule_input(
     catalog_by_gid: Mapping[str, str],
     catalog_credit_by_code: Mapping[str, float],
     catalog_by_code: Mapping[str, list[str]] | None = None,
+    transcript_course_codes: set[str] | None = None,
 ) -> tuple[list[CourseToSchedule], list[UnscheduledRequirement]]:
     catalog_by_code = catalog_by_code or {}
+    transcript_course_codes = transcript_course_codes or set()
     options_by_group: dict[str, list[dict]] = {}
     for option in options:
         options_by_group.setdefault(option["requirement_group_id"], []).append(dict(option))
@@ -160,15 +162,22 @@ def scope_schedule_input(
             if requirement_codes & seen:
                 continue
             # A cross-listed requirement (>1 code) picks whichever
-            # alternative has usable catalog credit-hours, preferring the
-            # lexicographically-first when more than one does -- it is ONE
+            # alternative has usable catalog credit-hours -- it is ONE
             # course under two department codes, so exactly one
             # CourseToSchedule is emitted, never one per code (see
             # _leaf_course_requirements' docstring on why the flat-set
-            # shape this replaced would have double-scheduled it).
+            # shape this replaced would have double-scheduled it). An alias
+            # on the student's transcript is preferred (so this schedules
+            # under the code the student will actually see); otherwise the
+            # lexicographically-first with usable credit data. In practice a
+            # transcript alias also makes `requirement_codes & matched`
+            # above true and the requirement is skipped before reaching
+            # here, so this is a belt-and-braces tie-break.
             chosen_code: str | None = None
             chosen_credit: float | None = None
-            for candidate in sorted(requirement_codes):
+            for candidate in sorted(
+                requirement_codes, key=lambda code: (code not in transcript_course_codes, code)
+            ):
                 credit_hours = catalog_credit_by_code.get(candidate)
                 if credit_hours is not None and credit_hours > 0:
                     chosen_code = candidate
