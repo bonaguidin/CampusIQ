@@ -40,6 +40,7 @@ const DECISION_ORDER = {
   CHOICE_REQUIRED: 1,
   ADVISER_REVIEW: 2,
   DATA_UNRESOLVED: 3,
+  EXCLUDED: 4,
 };
 
 export function buildDegreeScheduleDecisions(schedule) {

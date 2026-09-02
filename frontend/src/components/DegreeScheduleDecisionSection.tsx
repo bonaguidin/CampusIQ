@@ -2,7 +2,8 @@ import { useState } from 'react';
 import type { DegreeScheduleResult, RequirementCandidate } from '../api/degreeSchedule.mjs';
 import { buildDegreeScheduleDecisions, formatCredits } from '../lib/degreeSchedulePresentation.mjs';
 
-type SelectionAction = 'choose' | 'change' | 'clear';
+type SelectionAction = 'choose' | 'change';
+type MutationAction = 'choose' | 'change' | 'clear' | 'restore';
 
 function CandidatePath({ candidate, optionNumber, requirementName, selected, changing, busy, loading, interactive, onChoose }: {
   candidate: RequirementCandidate; optionNumber: number; requirementName: string;
@@ -37,13 +38,14 @@ function CandidatePath({ candidate, optionNumber, requirementName, selected, cha
   );
 }
 
-export function DegreeScheduleDecisionSection({ schedule, mutation, message, interactive, onChoose, onClear }: {
+export function DegreeScheduleDecisionSection({ schedule, mutation, message, interactive, onChoose, onClear, onRestore }: {
   schedule: DegreeScheduleResult;
-  mutation: { requirementGroupId: string; action: SelectionAction; candidateId?: string } | null;
+  mutation: { requirementGroupId: string; action: MutationAction; candidateId?: string } | null;
   message: string | null;
   interactive: boolean;
   onChoose: (requirementGroupId: string, candidate: RequirementCandidate, action: SelectionAction) => void;
   onClear: (requirementGroupId: string) => void;
+  onRestore: (requirementGroupId: string) => void;
 }) {
   const presentation = buildDegreeScheduleDecisions(schedule);
   const [editingRequirementId, setEditingRequirementId] = useState<string | null>(null);
@@ -121,10 +123,25 @@ export function DegreeScheduleDecisionSection({ schedule, mutation, message, int
                 {item.state === 'CHOICE_REQUIRED' && 'Choice required'}
                 {item.state === 'ADVISER_REVIEW' && "Can't auto-verify"}
                 {item.state === 'DATA_UNRESOLVED' && 'Course data unavailable'}
+                {item.state === 'EXCLUDED' && 'Set aside'}
               </strong>{item.state === 'CHOICE_REQUIRED' && <span>{item.validOptionLabel}</span>}</div></div>
               {item.state === 'CHOICE_REQUIRED' && candidates(item, false)}
               {item.state === 'ADVISER_REVIEW' && <p>We can't automatically verify this requirement is satisfied — check with your adviser.</p>}
               {item.state === 'DATA_UNRESOLVED' && <p>CampusIQ does not yet have enough structured course data to resolve this requirement.</p>}
+              {item.state === 'EXCLUDED' && (
+                <>
+                  <p>You removed this course from your plan. It's still required — add it back to resolve this requirement.</p>
+                  {interactive && (
+                    <div className="degree-schedule-choice-actions">
+                      <button type="button" className="btn btn-secondary btn-sm" disabled={busy}
+                        aria-busy={mutation?.requirementGroupId === item.requirementGroupId && mutation.action === 'restore'}
+                        onClick={() => onRestore(item.requirementGroupId)}>
+                        {mutation?.requirementGroupId === item.requirementGroupId && mutation.action === 'restore' ? 'Adding…' : 'Add it back'}
+                      </button>
+                    </div>
+                  )}
+                </>
+              )}
             </li>
           ))}
           {presentation.legacyRequirements.map((requirement) => (

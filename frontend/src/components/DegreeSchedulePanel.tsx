@@ -4,6 +4,7 @@ import {
   fetchDegreeSchedule,
   isSkippedDegreeSchedule,
   updateDegreeScheduleChoices,
+  updateDegreeScheduleExclusions,
   type DegreeScheduleResponse,
   type RequirementCandidate,
 } from '../api/degreeSchedule.mjs';
@@ -55,7 +56,7 @@ export function DegreeSchedulePanel({
   const { state, trigger, replaceResult } = useAnalysisRun(load);
   const [choiceMutation, setChoiceMutation] = useState<{
     requirementGroupId: string;
-    action: 'choose' | 'change' | 'clear';
+    action: 'choose' | 'change' | 'clear' | 'restore';
     candidateId?: string;
   } | null>(null);
   const [choiceMessage, setChoiceMessage] = useState<string | null>(null);
@@ -131,6 +132,31 @@ export function DegreeSchedulePanel({
     );
   }, [schedule, saveChoices]);
 
+  const restoreExcluded = useCallback((requirementGroupId: string) => {
+    if (!schedule || !accessToken || mutationInFlight.current) return;
+    mutationInFlight.current = true;
+    setChoiceMutation({ requirementGroupId, action: 'restore' });
+    setChoiceMessage(null);
+    void (async () => {
+      try {
+        await updateDegreeScheduleExclusions(accessToken, {
+          scheduleVersion: schedule.schedule_version,
+          excludedGroupIds: schedule.exclusion_state.excluded_group_ids.filter(
+            (id) => id !== requirementGroupId,
+          ),
+        });
+        await refreshSchedule();
+      } catch (error) {
+        const code = error instanceof DegreeScheduleChoiceError ? error.code : 'UNKNOWN_ERROR';
+        try { await refreshSchedule(); } catch { /* retain the current rendered schedule */ }
+        setChoiceMessage(choiceConflictMessage(code));
+      } finally {
+        mutationInFlight.current = false;
+        setChoiceMutation(null);
+      }
+    })();
+  }, [schedule, accessToken, refreshSchedule]);
+
   return (
     <Fragment>
       <section className="card degree-schedule-panel" aria-labelledby="degree-schedule-title">
@@ -199,7 +225,8 @@ export function DegreeSchedulePanel({
           )}
 
           <DegreeScheduleDecisionSection schedule={schedule} mutation={choiceMutation}
-            message={choiceMessage} interactive={!identity.slug} onChoose={chooseCandidate} onClear={clearChoice} />
+            message={choiceMessage} interactive={!identity.slug} onChoose={chooseCandidate} onClear={clearChoice}
+            onRestore={restoreExcluded} />
         </>
       )}
       </section>

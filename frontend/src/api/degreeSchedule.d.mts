@@ -77,7 +77,8 @@ export type RequirementDecisionState =
   | 'LOCKED'
   | 'CHOICE_REQUIRED'
   | 'ADVISER_REVIEW'
-  | 'DATA_UNRESOLVED';
+  | 'DATA_UNRESOLVED'
+  | 'EXCLUDED';
 
 export interface RequirementDecision {
   requirement_group_id: string;
@@ -120,6 +121,10 @@ export interface PersistedSelectionState {
   failure: PersistedSelectionFailure | null;
 }
 
+export interface PersistedExclusionState {
+  excluded_group_ids: string[];
+}
+
 export interface ScheduleResult {
   student_id: string;
   program_id: string;
@@ -134,6 +139,7 @@ export interface DegreeScheduleResult extends ScheduleResult {
   decisions: RequirementDecision[];
   candidate_sets: RequirementCandidateSet[];
   selection_state: PersistedSelectionState;
+  exclusion_state: PersistedExclusionState;
 }
 
 export type DegreeScheduleSkipped = FeatureResult<Record<string, never>>;
@@ -166,3 +172,19 @@ export declare function updateDegreeScheduleChoices(
   token: string,
   request: DegreeScheduleChoiceWriteRequest,
 ): Promise<DegreeScheduleChoiceWriteResponse>;
+
+export interface DegreeScheduleExclusionWriteRequest {
+  scheduleVersion: string;
+  excludedGroupIds: string[];
+}
+
+export interface DegreeScheduleExclusionWriteResponse {
+  status: DegreeScheduleChoiceWriteStatus;
+  schedule_version: string;
+  excluded_group_ids: string[];
+}
+
+export declare function updateDegreeScheduleExclusions(
+  token: string,
+  request: DegreeScheduleExclusionWriteRequest,
+): Promise<DegreeScheduleExclusionWriteResponse>;
