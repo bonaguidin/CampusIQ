@@ -44,7 +44,7 @@ def course(option_id, gid=None, unresolved=None, code=None):
 def run(
     groups, options, option_courses, catalog, credits, *, catalog_by_code=None,
     records=None, prerequisites=None, max_terms=4, career_ranks=None,
-    locks=None,
+    locks=None, excluded=None,
 ):
     records = records or []
     catalog_by_code = catalog_by_code or {}
@@ -66,6 +66,7 @@ def run(
         starting_year=2026, starting_season="Fall", max_terms=max_terms,
         career_rank_by_candidate_id=career_ranks,
         locked_selections=locks or (),
+        excluded_group_ids=excluded or (),
     )
 
 
@@ -846,3 +847,138 @@ def test_or_clause_prereq_with_no_alternative_anywhere_still_blocks():
 
     assert selected(result) == []
     assert decision(result, "needs-or-prereq").state == RequirementDecisionState.ADVISER_REVIEW
+
+
+# ---------------------------------------------------------------------------
+# Student-excluded (set-aside) single-mandatory requirements --
+# supabase/migrations/20260903120000_degree_requirement_exclusions.sql
+# ---------------------------------------------------------------------------
+
+
+def _solo_mandatory_fixture():
+    """One genuinely no-choice enumerated_all group: exactly one option, one
+    course, logic 'and'. Without exclusion this is the textbook
+    sole-feasible -> AUTO_SELECTED case."""
+    groups = [group("solo", "enumerated_all")]
+    options = [option("solo-opt", "solo", 0)]
+    rows = [course("solo-opt", code="SOLO 101")]
+    return groups, options, rows, {}, {"SOLO 101": 3}, {"SOLO 101": ["SOLO 101"]}
+
+
+def test_excluded_single_mandatory_group_resolves_to_excluded_not_auto_selected():
+    """The AUTO_SELECTED trap regression. A single-mandatory group with
+    exactly one feasible candidate, once excluded, must resolve to EXCLUDED
+    with the candidate held off the feasible-count -- it must never silently
+    re-derive AUTO_SELECTED, on this reconstruction or any repeat of it."""
+    groups, options, rows, catalog, credits, by_code = _solo_mandatory_fixture()
+
+    baseline = run(groups, options, rows, catalog, credits, catalog_by_code=by_code)
+    assert decision(baseline, "solo").state == RequirementDecisionState.AUTO_SELECTED
+    assert selected(baseline) == ["SOLO 101"]
+    auto_candidate_id = decision(baseline, "solo").selected_candidate_id
+    assert auto_candidate_id is not None
+
+    result = run(
+        groups, options, rows, catalog, credits,
+        catalog_by_code=by_code, excluded=["solo"],
+    )
+    solo = decision(result, "solo")
+    assert solo.state == RequirementDecisionState.EXCLUDED
+    # Held off the feasible-count -- this is what stops the AUTO_SELECTED
+    # re-derivation.
+    assert solo.feasible_candidate_ids == []
+    assert solo.selected_candidate_id is None
+    # Underlying candidate preserved for the one-click restore.
+    assert auto_candidate_id in solo.excluded_candidate_ids
+    # Not scheduled, still surfaced for review.
+    assert "SOLO 101" not in selected(result)
+    assert "solo" in {item.requirement_group_id for item in result.unscheduled}
+
+    # Idempotent across repeated reconstructions -- still EXCLUDED, never
+    # flips back to AUTO_SELECTED.
+    again = run(
+        groups, options, rows, catalog, credits,
+        catalog_by_code=by_code, excluded=["solo"],
+    )
+    assert decision(again, "solo").state == RequirementDecisionState.EXCLUDED
+    assert "SOLO 101" not in selected(again)
+
+
+def test_excluded_group_is_not_scheduled_even_on_the_career_ranked_path():
+    """Career Optimization schedules the full winning combination, so the
+    exclusion has to be enforced there too -- an excluded group's course must
+    not appear in the ranked schedule, and the group must still surface as
+    unscheduled."""
+    groups, options, rows, catalog, credits, by_code = _solo_mandatory_fixture()
+    result = run(
+        groups, options, rows, catalog, credits,
+        catalog_by_code=by_code, excluded=["solo"], career_ranks={},
+    )
+    assert decision(result, "solo").state == RequirementDecisionState.EXCLUDED
+    assert "SOLO 101" not in selected(result)
+    assert "solo" in {item.requirement_group_id for item in result.unscheduled}
+
+
+def test_excluding_one_group_does_not_touch_a_sibling_choice_required_group():
+    """The forced-EXCLUDED branch runs before the feasible-count branching
+    and must only affect the named group -- a multi-candidate sibling keeps
+    its CHOICE_REQUIRED state and all its feasible candidates untouched."""
+    groups = [
+        group("solo", "enumerated_all"),
+        group("pick", "enumerated_at_least_n", n=1),
+    ]
+    options = [
+        option("solo-opt", "solo", 0),
+        option("pick-a", "pick", 0), option("pick-b", "pick", 1),
+    ]
+    rows = [
+        course("solo-opt", code="SOLO 101"),
+        course("pick-a", code="PICK 1"), course("pick-b", code="PICK 2"),
+    ]
+    by_code = {"SOLO 101": ["SOLO 101"], "PICK 1": ["PICK 1"], "PICK 2": ["PICK 2"]}
+    credits = {"SOLO 101": 3, "PICK 1": 3, "PICK 2": 3}
+
+    baseline = run(groups, options, rows, {}, credits, catalog_by_code=by_code)
+    assert decision(baseline, "pick").state == RequirementDecisionState.CHOICE_REQUIRED
+
+    result = run(groups, options, rows, {}, credits, catalog_by_code=by_code, excluded=["solo"])
+    assert decision(result, "solo").state == RequirementDecisionState.EXCLUDED
+    pick = decision(result, "pick")
+    assert pick.state == RequirementDecisionState.CHOICE_REQUIRED
+    assert len(pick.feasible_candidate_ids) == 2
+    pick_set = next(s for s in result.candidate_sets if s.requirement_group_id == "pick")
+    assert len(pick_set.feasible_candidates) == 2
+
+
+def test_scope_schedule_input_diverts_only_the_excluded_no_choice_leaf():
+    """The scheduler-scope half of the mechanism: an excluded no-choice leaf
+    is deferred as SELECTION_DEFERRED instead of scheduled, while a
+    non-excluded sibling still schedules normally."""
+    raw_groups = [
+        {"id": "keep", "coursedog_rule_id": "keep", "parent_group_id": None, "name": "Keep",
+         "group_type": "enumerated_all", "n_required": None, "credit_hours_required": None,
+         "requires_manual_definition": False},
+        {"id": "drop", "coursedog_rule_id": "drop", "parent_group_id": None, "name": "Drop",
+         "group_type": "enumerated_all", "n_required": None, "credit_hours_required": None,
+         "requires_manual_definition": False},
+    ]
+    options = [
+        {"id": "keep-opt", "requirement_group_id": "keep", "option_index": 0, "logic": "and"},
+        {"id": "drop-opt", "requirement_group_id": "drop", "option_index": 0, "logic": "and"},
+    ]
+    option_courses = [
+        {"requirement_group_option_id": "keep-opt", "coursedog_group_id": None,
+         "unresolved_course_ref": None, "course_code": "KEEP 1"},
+        {"requirement_group_option_id": "drop-opt", "coursedog_group_id": None,
+         "unresolved_course_ref": None, "course_code": "DROP 1"},
+    ]
+    by_code = {"KEEP 1": ["KEEP 1"], "DROP 1": ["DROP 1"]}
+
+    evaluated = evaluate_requirement_tree(raw_groups, options, option_courses, [], {}, by_code)
+    courses, unscheduled = scope_schedule_input(
+        evaluated, options, option_courses, {}, {"KEEP 1": 3.0, "DROP 1": 3.0}, by_code,
+        excluded_group_ids={"drop"},
+    )
+
+    assert [c.course_code for c in courses] == ["KEEP 1"]
+    assert [(u.name, u.reason) for u in unscheduled] == [("Drop", "SELECTION_DEFERRED")]

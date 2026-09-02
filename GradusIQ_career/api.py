@@ -93,6 +93,9 @@ from GradusIQ_career.planning.requirement_selections import (
     RequirementSelectionIdentity,
     load_requirement_selection_identities,
 )
+from GradusIQ_career.planning.requirement_exclusions import (
+    load_requirement_exclusion_group_ids,
+)
 from GradusIQ_career.planning.search import CatalogSearchError, search_catalog
 from GradusIQ_career.planning.term_view import (
     TermsView,
@@ -163,6 +166,9 @@ from GradusIQ_career.degree_plan_career_optimization import (
 from GradusIQ_career.degree_schedule_version import build_degree_schedule_version
 from GradusIQ_career.degree_schedule_choice_service import (
     write_degree_schedule_choices,
+)
+from GradusIQ_career.degree_schedule_exclusion_service import (
+    write_degree_schedule_exclusions,
 )
 from GradusIQ_career.demo.profile_adapter import build_demo_intelligence_profile, local_course_records
 from GradusIQ_career.demo.local_requirement_tree import (
@@ -3287,6 +3293,7 @@ class _AcademicScheduleState:
     active_selections: tuple[RequirementSelectionIdentity, ...]
     selection_state_status: str
     selection_state_failure: LockedSelectionFailure | None
+    active_exclusions: tuple[str, ...] = ()
 
 
 def _no_program_result() -> FeatureResult:
@@ -3347,6 +3354,11 @@ def _reconstruct_academic_schedule(
         if apply_persisted_selections
         else ()
     )
+    active_exclusions = (
+        load_requirement_exclusion_group_ids(client, str(student_id), str(program_id))
+        if apply_persisted_selections
+        else ()
+    )
     institution_rows = client.table("institutions").select("name").eq("id", institution_id).execute().data
     institution_name = institution_rows[0]["name"] if institution_rows else None
 
@@ -3355,6 +3367,7 @@ def _reconstruct_academic_schedule(
         raw=raw, expected_graduation=expected_graduation, terms_view=terms_view,
         reconstruction_date=reconstruction_date,
         active_selections=active_selections,
+        active_exclusions=active_exclusions,
     )
 
 
@@ -3403,6 +3416,9 @@ def _degree_schedule_payload(state: _AcademicScheduleState) -> dict:
             else None
         ),
     }
+    payload["exclusion_state"] = {
+        "excluded_group_ids": list(getattr(state, "active_exclusions", ())),
+    }
     return payload
 
 
@@ -3410,6 +3426,7 @@ def _build_academic_schedule_state(
     *, student_id: str, program_id: str, institution_name: str | None, raw: Any,
     expected_graduation: str | None, terms_view: Any, reconstruction_date: date,
     active_selections: tuple[RequirementSelectionIdentity, ...] = (),
+    active_exclusions: tuple[str, ...] = (),
 ) -> _AcademicScheduleState | FeatureResult:
     """Pure computation shared by the Postgres-backed and local-demo schedule
     paths -- no I/O of any kind. Given the same RawTreeInputs/TermsView shape
@@ -3438,9 +3455,11 @@ def _build_academic_schedule_state(
         raw.groups, raw.options, raw.option_courses, raw.course_records, raw.catalog_by_gid, raw.catalog_by_code
     )
     already_satisfied = satisfied_course_codes(raw.course_records)
+    excluded_group_ids = set(active_exclusions)
     courses, unscheduled = scope_schedule_input(
         groups, raw.options, raw.option_courses, raw.catalog_by_gid, raw.catalog_credit_by_code,
         raw.catalog_by_code, already_satisfied,
+        excluded_group_ids=excluded_group_ids,
     )
     catalog_institution = resolve_institution(institution_name)
     catalog_repo = LocalCatalogRepository()
@@ -3479,6 +3498,7 @@ def _build_academic_schedule_state(
         student_id=str(student_id), program_id=str(program_id),
         catalog_by_code=raw.catalog_by_code,
         starting_year=starting_year, starting_season=starting_season, max_terms=max_terms,
+        excluded_group_ids=excluded_group_ids,
     )
     unlocked_selection = select_structured_requirements(
         groups, raw.groups, raw.options, raw.option_courses, raw.catalog_by_gid,
@@ -3529,6 +3549,7 @@ def _build_academic_schedule_state(
         active_selections=active_selections,
         selection_state_status=selection_state_status,
         selection_state_failure=selection_state_failure,
+        active_exclusions=tuple(active_exclusions),
     )
 
 
@@ -3701,6 +3722,110 @@ def put_me_schedule_choices(
     }
 
 
+class DegreeScheduleExclusionsPutRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    schedule_version: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    excluded_group_ids: list[UUID]
+
+    @model_validator(mode="after")
+    def unique_requirements(self):
+        ids = [str(item) for item in self.excluded_group_ids]
+        if len(ids) != len(set(ids)):
+            raise ValueError("excluded_group_ids must not contain duplicates")
+        return self
+
+
+@router.put(
+    "/api/v2/student/me/schedule/exclusions",
+    dependencies=[Depends(authorize_proxy_request)],
+)
+def put_me_schedule_exclusions(
+    request: Request, body: DegreeScheduleExclusionsPutRequest
+) -> dict:
+    """Validate and atomically replace the caller's complete set of
+    student-excluded (set-aside) requirement groups. Structurally mirrors
+    put_me_schedule_choices -- same schedule_version + revision CAS, same
+    409 conflict codes -- for the opposite intent."""
+    reconstruction_date = capture_reconstruction_date()
+    session_client = _session_client(request)
+    student_id = str(_resolve_session_student_id(session_client))
+    program_id = _resolve_program_id_for_student(session_client, student_id)
+    if program_id is None:
+        raise HTTPException(
+            status_code=409, detail={"code": "SCHEDULE_VERSION_CONFLICT"}
+        )
+    program_id = str(program_id)
+    institution_id = str(_home_institution_id(session_client, student_id))
+    try:
+        institution_rows = (
+            session_client.table("institutions")
+            .select("name")
+            .eq("id", institution_id)
+            .execute()
+            .data
+            or []
+        )
+    except Exception as exc:  # noqa: BLE001 -- RLS/transport boundary
+        raise HTTPException(status_code=502, detail="Could not resolve institution.") from exc
+    catalog_institution = resolve_institution(
+        institution_rows[0].get("name") if institution_rows else None
+    )
+    if catalog_institution is None:
+        raise HTTPException(
+            status_code=409, detail={"code": "SCHEDULE_VERSION_CONFLICT"}
+        )
+    catalog_repo = LocalCatalogRepository()
+    semantic_snapshot = build_degree_schedule_semantic_snapshot(
+        institution=catalog_institution,
+        local_catalog_fingerprint=catalog_repo.semantic_fingerprint(catalog_institution),
+        reconstruction_date=reconstruction_date,
+    )
+    try:
+        service_client = build_service_client()
+    except SupabaseConfigError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+    def reconstruct():
+        current = _reconstruct_academic_schedule(
+            request, reconstruction_date=reconstruction_date
+        )
+        if isinstance(current, FeatureResult):
+            raise HTTPException(
+                status_code=409, detail={"code": "SCHEDULE_VERSION_CONFLICT"}
+            )
+        return current
+
+    try:
+        outcome = write_degree_schedule_exclusions(
+            service_client=service_client,
+            student_id=student_id,
+            program_id=program_id,
+            institution_id=institution_id,
+            semantic_snapshot=semantic_snapshot,
+            submitted_schedule_version=body.schedule_version,
+            excluded_group_ids=[str(item) for item in body.excluded_group_ids],
+            reconstruct=reconstruct,
+        )
+    except HTTPException:
+        raise
+    except Exception as exc:  # noqa: BLE001 -- trusted RPC/academic boundary
+        raise HTTPException(
+            status_code=502, detail="Schedule exclusions are unavailable."
+        ) from exc
+
+    if outcome.conflict is not None:
+        detail: dict[str, Any] = {"code": outcome.conflict.value}
+        if outcome.unknown_group_ids:
+            detail["unknown_group_ids"] = list(outcome.unknown_group_ids)
+        raise HTTPException(status_code=409, detail=detail)
+    return {
+        "status": outcome.status.value,
+        "schedule_version": outcome.schedule_version,
+        "excluded_group_ids": list(outcome.excluded_group_ids),
+    }
+
+
 def _technical_elective_candidates_from_state(state: _AcademicScheduleState) -> dict:
     """Shared by the /me and demo technical-electives routes: given an already
     -built _AcademicScheduleState, find every matched freeform technical/
@@ -3823,6 +3948,7 @@ def _reconstruct_academic_schedule_for_demo(
         expected_graduation=student.get("expected_graduation"), terms_view=terms_view,
         reconstruction_date=today,
         active_selections=(),
+        active_exclusions=(),
     )
 
 
@@ -3985,6 +4111,7 @@ def post_me_schedule_career_optimize(
             max_terms=state.max_terms,
             career_rank_by_candidate_id=career_ranks,
             locked_selections=persisted_locks,
+            excluded_group_ids=set(state.active_exclusions),
         )
         return schedule_courses(
             state.student_id, state.program_id, selection.courses,

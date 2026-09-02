@@ -188,12 +188,30 @@ _DATA_EXCLUSION_REASONS = {
 
 def _requirement_decisions(
     candidate_sets: list[RequirementCandidateSet],
+    excluded_group_ids: set[str],
 ) -> list[RequirementDecision]:
     """Apply baseline 0/1/2+ semantics after global feasibility is final."""
     decisions: list[RequirementDecision] = []
     for candidate_set in candidate_sets:
         feasible_ids = [candidate.candidate_id for candidate in candidate_set.feasible_candidates]
         excluded_ids = [candidate.candidate_id for candidate in candidate_set.excluded_candidates]
+        if candidate_set.requirement_group_id in excluded_group_ids:
+            # The student set this requirement aside. It is still required, and
+            # its underlying candidate is academically fine -- but the decision
+            # is forced to EXCLUDED here, BEFORE the sole-feasible -> AUTO_SELECTED
+            # branch below, so a single-mandatory group can never silently
+            # re-derive AUTO_SELECTED on the next reconstruction. The candidate
+            # ids are preserved under excluded_candidate_ids so a one-click
+            # restore has the evidence it needs.
+            decisions.append(RequirementDecision(
+                requirement_group_id=candidate_set.requirement_group_id,
+                requirement_name=candidate_set.requirement_name,
+                state=RequirementDecisionState.EXCLUDED,
+                feasible_candidate_ids=[],
+                excluded_candidate_ids=feasible_ids + excluded_ids,
+                selected_candidate_id=None,
+            ))
+            continue
         if len(feasible_ids) == 1:
             state = RequirementDecisionState.AUTO_SELECTED
             selected = feasible_ids[0]
@@ -532,6 +550,7 @@ def select_structured_requirements(
     credit_hour_cap: float = 15.0,
     career_rank_by_candidate_id: Mapping[str, int] | None = None,
     locked_selections: Iterable[LockedRequirementSelection] = (),
+    excluded_group_ids: Iterable[str] = (),
 ) -> RequirementSelectionResult:
     """Globally select among structured deferred requirements.
 
@@ -540,8 +559,14 @@ def select_structured_requirements(
     no-choice schedule. Candidate prerequisites with unrepresented approval
     or standing restrictions are excluded. A combination must schedule with
     no prerequisite limitations inside the graduation horizon.
+
+    ``excluded_group_ids`` are requirement groups the student deliberately set
+    aside. Their candidates are still evaluated (so a restore has evidence),
+    but the decision is forced to EXCLUDED and their courses are never
+    scheduled -- including in the career-ranked full combination.
     """
     career_ranks = normalized_career_rank_map(career_rank_by_candidate_id)
+    excluded_group_ids = set(excluded_group_ids)
     locks = tuple(locked_selections)
     locks_by_requirement: dict[str, LockedRequirementSelection] = {}
     for lock in locks:
@@ -671,7 +696,7 @@ def select_structured_requirements(
     manual.extend(retained_structured)
     if not choices_by_requirement:
         candidate_sets = _candidate_sets(requirement_order, evidence_by_requirement)
-        decisions = _requirement_decisions(candidate_sets)
+        decisions = _requirement_decisions(candidate_sets, excluded_group_ids)
         failure = _validate_locks(
             locks_by_requirement, set(by_id), candidate_sets, decisions
         )
@@ -812,7 +837,9 @@ def select_structured_requirements(
         ))
 
     unconstrained_candidate_sets = _candidate_sets(requirement_order, evidence_by_requirement)
-    unconstrained_decisions = _requirement_decisions(unconstrained_candidate_sets)
+    unconstrained_decisions = _requirement_decisions(
+        unconstrained_candidate_sets, excluded_group_ids
+    )
     lock_failure = _validate_locks(
         locks_by_requirement, set(by_id), unconstrained_candidate_sets,
         unconstrained_decisions,
@@ -902,7 +929,7 @@ def select_structured_requirements(
 
     winning = best.choices
     candidate_sets = _candidate_sets(requirement_order, evidence_by_requirement)
-    decisions = _requirement_decisions(candidate_sets)
+    decisions = _requirement_decisions(candidate_sets, excluded_group_ids)
     if locks_by_requirement:
         decisions = [
             RequirementDecision(
@@ -915,7 +942,10 @@ def select_structured_requirements(
                     item.requirement_group_id
                 ].candidate_id,
             )
+            # A group the student excluded keeps its EXCLUDED decision even if a
+            # stale lock row also names it -- the exclusion is the newer intent.
             if item.requirement_group_id in locks_by_requirement
+            and item.state != RequirementDecisionState.EXCLUDED
             else item
             for item in decisions
         ]
@@ -924,14 +954,21 @@ def select_structured_requirements(
         for decision in decisions
         if decision.state == RequirementDecisionState.AUTO_SELECTED
     }
-    resolved_requirement_ids = auto_selected_ids | set(locks_by_requirement)
+    resolved_requirement_ids = (
+        auto_selected_ids | set(locks_by_requirement)
+    ) - excluded_group_ids
     # Career Optimization deliberately retains its existing behavior: after
     # academic feasibility has been established it may select the ranked full
     # combination. Baseline reconstruction selects only sole-feasible paths.
-    choices_to_schedule = winning if career_rank_by_candidate_id is not None else tuple(
+    # Either way, a group the student excluded is never scheduled.
+    choices_to_schedule = tuple(
         choice
         for (deferred, _), choice in zip(choices_by_requirement, winning)
-        if deferred.requirement_group_id in resolved_requirement_ids
+        if deferred.requirement_group_id not in excluded_group_ids
+        and (
+            career_rank_by_candidate_id is not None
+            or deferred.requirement_group_id in resolved_requirement_ids
+        )
     )
     selected = [
         CourseToSchedule(
@@ -944,11 +981,22 @@ def select_structured_requirements(
         for choice in choices_to_schedule
         for code in choice.courses
     ]
-    final_unscheduled = manual if career_rank_by_candidate_id is not None else [
-        item
-        for item in unscheduled
-        if item.requirement_group_id not in resolved_requirement_ids
-    ]
+    if career_rank_by_candidate_id is not None:
+        # The ranked path schedules the full winning combination, so its only
+        # residual unscheduled items are the manual ones -- plus any group the
+        # student excluded, which must still surface for review.
+        excluded_deferred = [
+            deferred
+            for deferred, _ in choices_by_requirement
+            if deferred.requirement_group_id in excluded_group_ids
+        ]
+        final_unscheduled = list(manual) + excluded_deferred
+    else:
+        final_unscheduled = [
+            item
+            for item in unscheduled
+            if item.requirement_group_id not in resolved_requirement_ids
+        ]
     return RequirementSelectionResult(
         courses=base_courses + selected,
         unscheduled=final_unscheduled,
