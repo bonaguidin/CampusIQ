@@ -741,6 +741,74 @@ test('Grade Calculator: non-blocking informational findings are filtered from th
   assert.equal(await page.getByText("doesn't say exactly how many assessments are in this category").count(), 0)
 })
 
+test('Grade Calculator: missing_grade_scale is relocated from the review list to the target-grade card', { timeout: 45_000 }, async (t) => {
+  const NO_SCALE_MODEL = { ...EXTRACTED_MODEL, grade_thresholds: [], rules: [], warnings: [] }
+  const REVIEW_RECON = {
+    status: 'needs_student_review',
+    findings: [
+      // relocated -> explained in the target-grade card, NOT the review list
+      { code: 'missing_grade_scale', severity: 'warning', message: "This syllabus doesn't specify a letter-grade scale.", field: null },
+      // genuinely blocking -> keeps the review list non-empty
+      { code: 'grading_method_unknown', severity: 'warning', message: 'grading_method could not be determined from the syllabus', field: 'grading_method' },
+    ],
+    evidence_coverage: { total_claims: 4, supported_claims: 4, coverage_ratio: 1, unsupported_claims: [] },
+  }
+
+  // phase drives which detail payload the GET returns:
+  //   'review'         -> not ready, review list on screen
+  //   'ready-noscale'  -> ready, confirmed model has no grade_thresholds
+  //   'ready-withscale'-> ready, confirmed model has grade_thresholds
+  let phase = 'review'
+  const readyDetail = (thresholds) => detail({
+    review_state: 'confirmed',
+    calculator_ready: true,
+    extracted_grade_model: { ...NO_SCALE_MODEL, grade_thresholds: thresholds },
+    confirmed_grade_model: { ...NO_SCALE_MODEL, grade_thresholds: thresholds },
+    reconciliation: RECONCILIATION_ACCEPTED,
+    confirmed_reconciliation: RECONCILIATION_ACCEPTED,
+  })
+
+  const page = await mountCutoffPanel(t, 'grade-calculator-missing-scale-relocated', async (path, method, request, response) => {
+    if (path === `/api/v2/student/me/syllabus-grade-profiles/${PROFILE_ID}` && method === 'GET') {
+      if (phase === 'review') json(response, 200, detail({ extracted_grade_model: NO_SCALE_MODEL, reconciliation: REVIEW_RECON }))
+      else if (phase === 'ready-noscale') json(response, 200, readyDetail([]))
+      else json(response, 200, readyDetail(CUTOFF_MODEL.grade_thresholds))
+      return true
+    }
+    return false
+  })
+
+  // --- half 1: the finding is filtered out of the review list ---
+  await page.getByRole('heading', { name: 'Needs your review' }).waitFor()
+  // the blocking finding is still shown, so the review list isn't just empty
+  assert.ok((await page.locator('[data-finding-code="grading_method_unknown"]').count()) >= 1)
+  // missing_grade_scale is filtered out entirely -- neither the code nor its old copy
+  assert.equal(await page.locator('[data-finding-code="missing_grade_scale"]').count(), 0)
+  assert.equal(await page.getByText("doesn't specify a letter-grade scale").count(), 0)
+  // and the relocated note does not leak into the review step
+  assert.equal(await page.locator('.grade-no-scale-note').count(), 0)
+
+  // --- half 2 (the one that matters): the note is pinned to grade_thresholds
+  //     being empty -- the same expression the letter <select> branches on --
+  //     not to the presence of the finding ---
+  phase = 'ready-noscale'
+  await page.getByRole('button', { name: '← Back to your calculators' }).click()
+  await page.locator('.grade-profile-row-button', { hasText: 'PHYS 207' }).click()
+  await page.getByRole('heading', { name: 'Enter your grades' }).waitFor()
+  await page.locator('.grade-no-scale-note').getByText("This syllabus doesn't list letter-grade cutoffs").waitFor()
+
+  // with grade_thresholds present the note is gone, even though nothing about
+  // the (now accepted) reconciliation changed
+  phase = 'ready-withscale'
+  await page.getByRole('button', { name: '← Back to your calculators' }).click()
+  await page.locator('.grade-profile-row-button', { hasText: 'PHYS 207' }).click()
+  await page.getByRole('heading', { name: 'Enter your grades' }).waitFor()
+  // the letter dropdown is now populated from grade_thresholds...
+  assert.ok((await page.locator('#target-letter option').count()) > 1)
+  // ...and the relocated note is gone
+  assert.equal(await page.locator('.grade-no-scale-note').count(), 0)
+})
+
 // --- per-threshold value-claim clarifying questions ------------------------------
 
 // One otherwise-clean threshold whose evidence uses ">= / <" phrasing the

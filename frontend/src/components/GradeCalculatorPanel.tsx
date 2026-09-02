@@ -37,7 +37,6 @@ const FINDING_COPY: Record<string, string> = {
   unknown_weight: "We couldn't determine this category's weight.",
   unknown_assessment_count: "The syllabus doesn't say exactly how many assessments are in this category.",
   ambiguous_rule: "We found a grading rule, but couldn't determine exactly how it works.",
-  missing_grade_scale: "This syllabus doesn't specify a letter-grade scale.",
   category_weight_validation: 'The category weights in this syllabus may not add up to 100%.',
   grading_method_unknown: "We couldn't determine how this course is graded.",
   missing_claim_evidence: "We found this value, but couldn't confirm it against the syllabus text.",
@@ -192,11 +191,16 @@ const RULE_INFO_FINDING_CODES: ReadonlySet<string> = new Set([
 // moot since PR #64: the per-category count is never entered or displayed
 // anymore (one average per category). NOT rule findings, so kept separate
 // from RULE_INFO_FINDING_CODES.
-// (missing_grade_scale is also non-blocking but still meaningful -- no
-// letter-grade projection without a scale -- so it stays visible for now;
-// see planning-docs/outstanding-fixes.md.)
 const NON_BLOCKING_INFO_FINDING_CODES: ReadonlySet<string> = new Set([
   'unknown_assessment_count',
+]);
+
+// Findings whose explanation lives elsewhere in the UI rather than in the
+// review list. Unlike NON_BLOCKING_INFO_FINDING_CODES these are not moot --
+// missing_grade_scale is explained in the target-grade card, at the point
+// where the student sees the letter dropdown collapsed.
+const RELOCATED_FINDING_CODES: ReadonlySet<string> = new Set([
+  'missing_grade_scale',
 ]);
 
 // Order-independent key for a letter pair, so an overlapping_grade_thresholds
@@ -724,13 +728,20 @@ export function GradeCalculatorPanel({ accessToken, courses, institutionName }: 
   //   makeup) -- shown in the Professor's rules panel instead.
   // - NON_BLOCKING_INFO_FINDING_CODES: non-blocking informational with no
   //   correction path (unknown_assessment_count).
+  // - RELOCATED_FINDING_CODES: explained elsewhere in the UI
+  //   (missing_grade_scale -> the target-grade card).
   // - overlapping_grade_thresholds for a cleanly-resolvable pair --
   //   handled by the CutoffTable's "higher grade wins" banner.
   //   Unresolved overlaps keep their raw finding.
   const reviewFindings = useMemo(() => {
     const resolvedPairs = resolvedOverlapPairKeys(detail?.cutoff_overlap_resolution);
     return ((detail?.confirmed_reconciliation ?? detail?.reconciliation)?.findings ?? []).filter((finding) => {
-      if (RULE_INFO_FINDING_CODES.has(finding.code) || NON_BLOCKING_INFO_FINDING_CODES.has(finding.code)) return false;
+      if (
+        RULE_INFO_FINDING_CODES.has(finding.code) ||
+        NON_BLOCKING_INFO_FINDING_CODES.has(finding.code) ||
+        RELOCATED_FINDING_CODES.has(finding.code)
+      )
+        return false;
       if (finding.code === 'overlapping_grade_thresholds') {
         const pair = overlapFindingPair(finding);
         if (pair && resolvedPairs.has(cutoffPairKey(pair[0], pair[1]))) return false;
@@ -949,6 +960,12 @@ export function GradeCalculatorPanel({ accessToken, courses, institutionName }: 
                         <option key={t.letter} value={t.letter}>{t.letter}</option>
                       ))}
                     </select>
+                    {(detail.confirmed_grade_model?.grade_thresholds ?? []).length === 0 && (
+                      <p className="empty-state grade-no-scale-note">
+                        This syllabus doesn't list letter-grade cutoffs, so we can't project a letter grade.
+                        You can still set a numeric target and everything else in the calculator works normally.
+                      </p>
+                    )}
                     {!targetLetter && (
                       <>
                         <label htmlFor="target-numeric" className="form-label">Numeric target</label>
