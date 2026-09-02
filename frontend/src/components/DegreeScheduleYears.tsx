@@ -66,7 +66,7 @@ function SemesterColumn({ semester }: { semester: DegreeScheduleSemester }) {
                 {semester.suggestedCourses.map((course) => (
                   <li key={course.course_code} className="degree-schedule-semester-course">
                     <div className="degree-schedule-course-row">
-                      <strong>{course.course_code}</strong>
+                      <span><strong>{course.course_code}</strong></span>
                       <span>{course.credit_hours} credits</span>
                     </div>
                   </li>

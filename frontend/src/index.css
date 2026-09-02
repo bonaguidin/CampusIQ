@@ -2463,7 +2463,24 @@ a {
 .degree-schedule-course-row span {
   color: var(--muted);
   font-size: var(--text-sm);
+}
+
+/* nowrap belongs only on the credits value / term-total label -- NOT the
+   code(+title) wrapper span in a scheduled row. That span is first-child
+   and holds a course title that must be free to wrap; keeping it nowrap
+   pushed the sibling credits span past the card's clipped edge
+   (.degree-schedule-semester { overflow: hidden }). */
+.degree-schedule-term-header span,
+.degree-schedule-course-row span:last-child {
   white-space: nowrap;
+}
+
+/* The code(+title) wrapper span is a flex item; flex items default to
+   min-width: auto and refuse to shrink below their content, so a long
+   title overflows the column instead of wrapping. */
+.degree-schedule-course-row span:first-child {
+  min-width: 0;
+  overflow-wrap: break-word;
 }
 
 .degree-schedule-courses,
