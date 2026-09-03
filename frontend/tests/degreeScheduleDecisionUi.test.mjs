@@ -4,8 +4,15 @@ import { chromium } from 'playwright'
 import { createServer } from 'vite'
 import { planningRoutes } from './fixtures/planningRoutes.mjs'
 
-const candidate = (id, codes, credits) => ({
-  candidate_id: id, requirement_group_id: 'choice', requirement_name: 'Statistical Methods',
+// Phase 3: decisions no longer live in a standalone "Decisions needed" /
+// "Your academic choices" section -- LOCKED / CHOICE_REQUIRED / EXCLUDED
+// cards are rendered inside the term column the backend resolved for each
+// (schedule.decisions[].resolved_term_key), and ADVISER_REVIEW /
+// DATA_UNRESOLVED / freeform-manual-review requirements are not surfaced at
+// all. RESELECTION_REQUIRED stays a top-level alert above the year grid.
+
+const candidate = (id, requirementId, requirementName, codes, credits, termIndex) => ({
+  candidate_id: id, requirement_group_id: requirementId, requirement_name: requirementName,
   course_codes: codes, unresolved_course_codes: [],
   candidate_courses: codes.map((code, index) => ({
     course_code: code,
@@ -14,35 +21,76 @@ const candidate = (id, codes, credits) => ({
   })),
   existing_contribution: 0, additional_course_count: codes.length,
   additional_credits: credits.reduce((total, value) => total + value, 0),
-  academic_feasibility: 'FEASIBLE', completion_term_index: 1,
+  academic_feasibility: 'FEASIBLE', completion_term_index: termIndex,
   limitations: [], source_order: [], exclusion_reasons: [], exclusion_details: [],
 })
 
-test('Degree Schedule decisions are actionable, grouped, deduplicated, and responsive', { timeout: 60_000 }, async (t) => {
-  const single = candidate('single', ['ABC 123'], [3])
-  const multi = candidate('multi', ['CEE 2302', 'CS 3377'], [3, 3])
+const excludedCandidate = (id, requirementId, requirementName, code) => ({
+  candidate_id: id, requirement_group_id: requirementId, requirement_name: requirementName,
+  course_codes: [code], unresolved_course_codes: [],
+  candidate_courses: [{ course_code: code, title: `${code} catalog title`, credits: 3 }],
+  existing_contribution: 0, additional_course_count: 1, additional_credits: 3,
+  academic_feasibility: 'EXCLUDED', completion_term_index: null,
+  limitations: [], source_order: [], exclusion_reasons: ['UNSCHEDULABLE'], exclusion_details: [],
+})
+
+test('Degree Schedule decisions render on their resolved term card; non-card states are absent; reselection stays top-level', { timeout: 60_000 }, async (t) => {
+  const histPrimary = candidate('hist-1301', 'locked', 'American History', ['HIST 1301'], [3], 0)
+  const histAlt = candidate('hist-1302', 'locked', 'American History', ['HIST 1302'], [3], 1)
+  const statSingle = candidate('single', 'choice', 'Statistical Methods', ['ABC 123'], [3], 1)
+  const statMulti = candidate('multi', 'choice', 'Statistical Methods', ['CEE 2302', 'CS 3377'], [3, 3], 2)
+  const techExcluded = excludedCandidate('excl-1', 'excluded', 'Technical Elective', 'CSCE 4901')
+  const mysteryExcluded = excludedCandidate('excl-2', 'excluded-noterm', 'Mystery Elective', 'MYST 1000')
+
   const schedule = {
     student_id: 'sid', program_id: 'pid', status: 'SCHEDULED', failure: null,
     schedule_version: `sha256:${'a'.repeat(64)}`,
-    selection_state: { status: 'NONE', selections: [], failure: null },
-    terms: [{ term_key: '2026-Fall', total_credit_hours: 3, courses: [{ course_code: 'MATH 2413', credit_hours: 3, requirement_group_id: 'auto', limitations: [] }] }],
+    selection_state: {
+      status: 'APPLIED',
+      selections: [{ requirement_group_id: 'locked', candidate_id: 'hist-1301', course_codes: ['HIST 1301'] }],
+      failure: null,
+    },
+    exclusion_state: { excluded_group_ids: ['excluded', 'excluded-noterm'] },
+    terms: [{
+      term_key: '2027-Fall', total_credit_hours: 6, courses: [
+        { course_code: 'MATH 2413', credit_hours: 3, requirement_group_id: 'auto', limitations: [] },
+        { course_code: 'HIST 1301', credit_hours: 3, requirement_group_id: 'locked', limitations: [] },
+      ],
+    }],
     decisions: [
-      { requirement_group_id: 'auto', requirement_name: 'Calculus', state: 'AUTO_SELECTED', feasible_candidate_ids: ['auto'], excluded_candidate_ids: [], selected_candidate_id: 'auto' },
-      { requirement_group_id: 'choice', requirement_name: 'Statistical Methods', state: 'CHOICE_REQUIRED', feasible_candidate_ids: ['single', 'multi'], excluded_candidate_ids: [], selected_candidate_id: null },
-      { requirement_group_id: 'review', requirement_name: 'Restricted Elective', state: 'ADVISER_REVIEW', feasible_candidate_ids: [], excluded_candidate_ids: ['reviewed'], selected_candidate_id: null },
-      { requirement_group_id: 'unknown', requirement_name: 'Unstructured Requirement', state: 'DATA_UNRESOLVED', feasible_candidate_ids: [], excluded_candidate_ids: ['unknown'], selected_candidate_id: null },
+      { requirement_group_id: 'auto', requirement_name: 'Calculus', state: 'AUTO_SELECTED', feasible_candidate_ids: ['auto'], excluded_candidate_ids: [], selected_candidate_id: 'auto', resolved_term_key: null },
+      { requirement_group_id: 'locked', requirement_name: 'American History', state: 'LOCKED', feasible_candidate_ids: ['hist-1301', 'hist-1302'], excluded_candidate_ids: [], selected_candidate_id: 'hist-1301', resolved_term_key: '2027-Fall' },
+      { requirement_group_id: 'choice', requirement_name: 'Statistical Methods', state: 'CHOICE_REQUIRED', feasible_candidate_ids: ['single', 'multi'], excluded_candidate_ids: [], selected_candidate_id: null, resolved_term_key: '2028-Spring' },
+      { requirement_group_id: 'excluded', requirement_name: 'Technical Elective', state: 'EXCLUDED', feasible_candidate_ids: [], excluded_candidate_ids: ['excl-1'], selected_candidate_id: null, resolved_term_key: '2028-Fall' },
+      { requirement_group_id: 'excluded-noterm', requirement_name: 'Mystery Elective', state: 'EXCLUDED', feasible_candidate_ids: [], excluded_candidate_ids: ['excl-2'], selected_candidate_id: null, resolved_term_key: null },
+      { requirement_group_id: 'review', requirement_name: 'Restricted Elective', state: 'ADVISER_REVIEW', feasible_candidate_ids: [], excluded_candidate_ids: ['reviewed'], selected_candidate_id: null, resolved_term_key: null },
+      { requirement_group_id: 'unknown', requirement_name: 'Unstructured Requirement', state: 'DATA_UNRESOLVED', feasible_candidate_ids: [], excluded_candidate_ids: ['unknown'], selected_candidate_id: null, resolved_term_key: null },
     ],
-    candidate_sets: [{ requirement_group_id: 'choice', requirement_name: 'Statistical Methods', feasible_candidates: [single, multi], excluded_candidates: [] }],
+    candidate_sets: [
+      { requirement_group_id: 'locked', requirement_name: 'American History', feasible_candidates: [histPrimary, histAlt], excluded_candidates: [] },
+      { requirement_group_id: 'choice', requirement_name: 'Statistical Methods', feasible_candidates: [statSingle, statMulti], excluded_candidates: [] },
+      { requirement_group_id: 'excluded', requirement_name: 'Technical Elective', feasible_candidates: [], excluded_candidates: [techExcluded] },
+      { requirement_group_id: 'excluded-noterm', requirement_name: 'Mystery Elective', feasible_candidates: [], excluded_candidates: [mysteryExcluded] },
+    ],
     unscheduled: [
       { requirement_group_id: 'choice', name: 'Statistical Methods', reason: 'SELECTION_DEFERRED' },
       { requirement_group_id: 'ucc', name: 'University Core Curriculum', reason: 'FREEFORM_MANUAL_REVIEW' },
     ],
   }
+
   const putBodies = []
-  let nextPutConflict = null
-  const planning = planningRoutes({ terms: [] })
+  // Only 2025-Fall is a real (past) calendar term; every future column is
+  // driven by schedule.terms + resolved_term_key, so the columns carrying
+  // decision cards are unambiguously 'future' regardless of the wall clock.
+  const planning = planningRoutes({
+    terms: [{
+      key: '2025-Fall', id: 'term-1', label: 'Fall 2025', year: 2025, season: 'Fall',
+      sequence: 1, start_date: '2025-08-25', end_date: '2025-12-10', enrolled: true, is_upcoming: false,
+    }],
+    upcomingTermKey: '2027-Fall',
+  })
   const apiPlugin = {
-    name: 'degree-schedule-decisions-api',
+    name: 'degree-schedule-term-decisions-api',
     configureServer(server) {
       server.middlewares.use((request, response, next) => {
         const path = request.url?.split('?')[0]
@@ -58,19 +106,14 @@ test('Degree Schedule decisions are actionable, grouped, deduplicated, and respo
           request.on('end', () => {
             const body = JSON.parse(raw)
             putBodies.push(body)
-            if (nextPutConflict) {
-              response.statusCode = 409
-              response.setHeader('content-type', 'application/json')
-              response.end(JSON.stringify({ detail: { code: nextPutConflict } }))
-              nextPutConflict = null
-              return
-            }
-            const chosen = body.selections[0]
+            const chosen = body.selections.find((selection) => selection.requirement_group_id === 'choice')
             schedule.schedule_version = `sha256:${'b'.repeat(64)}`
             schedule.selection_state = { status: 'APPLIED', selections: body.selections, failure: null }
-            schedule.decisions = schedule.decisions.map((decision) => decision.requirement_group_id === chosen.requirement_group_id
-              ? { ...decision, state: 'LOCKED', selected_candidate_id: chosen.candidate_id }
-              : decision)
+            if (chosen) {
+              schedule.decisions = schedule.decisions.map((decision) => decision.requirement_group_id === 'choice'
+                ? { ...decision, state: 'LOCKED', selected_candidate_id: chosen.candidate_id }
+                : decision)
+            }
             response.setHeader('content-type', 'application/json')
             response.end(JSON.stringify({ status: 'APPLIED', schedule_version: schedule.schedule_version, selections: body.selections }))
           })
@@ -87,7 +130,7 @@ test('Degree Schedule decisions are actionable, grouped, deduplicated, and respo
   }
   const server = await createServer({
     root: new URL('..', import.meta.url).pathname,
-    cacheDir: new URL('../node_modules/.vite-degree-schedule-decisions', import.meta.url).pathname,
+    cacheDir: new URL('../node_modules/.vite-degree-schedule-term-decisions', import.meta.url).pathname,
     logLevel: 'silent', plugins: [apiPlugin], server: { host: '127.0.0.1' },
   })
   await server.listen()
@@ -102,40 +145,71 @@ test('Degree Schedule decisions are actionable, grouped, deduplicated, and respo
   await page.getByRole('button', { name: 'Academic' }).click()
   await page.getByRole('button', { name: 'Course Discovery' }).click()
 
-  const section = page.locator('.degree-schedule-decisions')
-  await section.getByText('Decisions needed to complete your plan').waitFor()
-  assert.equal(await section.getByText('Statistical Methods').count(), 1)
-  assert.equal(await section.getByText('2 valid options').count(), 1)
-  assert.equal(await section.getByText('ABC 123').count(), 1)
-  assert.equal(await section.getByText('CEE 2302', { exact: true }).count(), 1)
-  assert.equal(await section.getByText('CS 3377', { exact: true }).count(), 1)
-  assert.equal(await section.getByText('6 credits total').count(), 1)
-  assert.equal(await section.getByText("Can't auto-verify").count(), 2)
-  assert.equal(await section.getByText('Course data unavailable').count(), 1)
-  assert.equal(await section.getByText('University Core Curriculum').count(), 1)
-  assert.equal(await section.getByText('Calculus').count(), 0)
-  assert.doesNotMatch(await section.textContent(), /Recommended|Best option|UNKNOWN 999|null/)
-  assert.equal(await section.getByRole('button', { name: /Choose ABC 123 for Statistical Methods/ }).count(), 1)
-  assert.equal(await section.getByRole('button', { name: /Choose CEE 2302 and CS 3377 for Statistical Methods/ }).count(), 1)
+  const years = page.locator('.degree-schedule-years')
+  await years.waitFor()
 
-  await section.getByRole('button', { name: /Choose CEE 2302 and CS 3377 for Statistical Methods/ }).click()
-  await section.getByText('Your academic choices').waitFor()
+  // The "Third year" tab only exists because the EXCLUDED decision resolves
+  // to 2028-Fall -- waiting for it proves /me/terms, the schedule, and the
+  // decision bucketing have all landed before any assertion runs.
+  await page.getByRole('tab', { name: 'Third year' }).waitFor()
+
+  // The standalone decision section is gone entirely.
+  assert.equal(await page.getByText('Decisions needed to complete your plan').count(), 0)
+  assert.equal(await page.getByText('Your academic choices').count(), 0)
+
+  // ── Second year: LOCKED on Fall, CHOICE_REQUIRED on Spring ──────────────
+  await page.getByRole('tab', { name: 'Second year' }).click()
+  await page.getByRole('region', { name: 'Fall 2027' }).waitFor()
+
+  const fall2027 = page.getByRole('region', { name: 'Fall 2027' })
+  await fall2027.getByText('American History').waitFor()
+  assert.equal(await fall2027.getByText('Selected', { exact: true }).count() >= 1, true)
+  assert.equal(await fall2027.getByRole('button', { name: 'Change choice' }).count(), 1)
+  assert.equal(await fall2027.getByRole('button', { name: 'Clear choice' }).count(), 1)
+
+  const spring2028 = page.getByRole('region', { name: 'Spring 2028' })
+  await spring2028.getByText('Statistical Methods').waitFor()
+  assert.equal(await spring2028.getByText('Choice required').count(), 1)
+  assert.equal(await spring2028.getByText('2 valid options').count(), 1)
+  assert.match(await spring2028.textContent(), /may shift depending on which option/)
+  assert.equal(await spring2028.getByText('ABC 123').count(), 1)
+  assert.equal(await spring2028.getByText('CEE 2302', { exact: true }).count(), 1)
+  assert.equal(await spring2028.getByText('CS 3377', { exact: true }).count(), 1)
+  assert.equal(await spring2028.getByRole('button', { name: /Choose ABC 123 for Statistical Methods/ }).count(), 1)
+  assert.equal(await spring2028.getByRole('button', { name: /Choose CEE 2302 and CS 3377 for Statistical Methods/ }).count(), 1)
+
+  // ── Third year: EXCLUDED on Fall, with an estimate label ───────────────
+  await page.getByRole('tab', { name: 'Third year' }).click()
+  const fall2028 = page.getByRole('region', { name: 'Fall 2028' })
+  await fall2028.getByText('Technical Elective').waitFor()
+  assert.equal(await fall2028.getByText('Set aside').count(), 1)
+  assert.equal(await fall2028.getByText('Est. Fall 2028').count(), 1)
+  assert.equal(await fall2028.getByText('CSCE 4901').count(), 1)
+  assert.equal(await fall2028.getByRole('button', { name: 'Add it back' }).count(), 1)
+
+  // ── Non-card states produce zero UI anywhere on the page ───────────────
+  const pageText = await page.locator('body').textContent()
+  assert.doesNotMatch(pageText, /Mystery Elective/)
+  assert.doesNotMatch(pageText, /Restricted Elective/)
+  assert.doesNotMatch(pageText, /Unstructured Requirement/)
+  assert.doesNotMatch(pageText, /University Core Curriculum/)
+  assert.doesNotMatch(pageText, /Can't auto-verify/)
+  assert.doesNotMatch(pageText, /need adviser review/)
+
+  // ── Choosing an option persists it and the card locks in place ─────────
+  await page.getByRole('tab', { name: 'Second year' }).click()
+  await spring2028.getByRole('button', { name: /Choose CEE 2302 and CS 3377 for Statistical Methods/ }).click()
+  // The choice card flips to the LOCKED treatment in place (Change/Clear).
+  await spring2028.getByRole('button', { name: 'Change choice' }).waitFor()
+  assert.equal(await spring2028.locator('.degree-schedule-decision-card.is-locked').count(), 1)
   assert.equal(putBodies.length, 1)
-  assert.deepEqual(putBodies[0], {
-    schedule_version: `sha256:${'a'.repeat(64)}`,
-    selections: [{ requirement_group_id: 'choice', candidate_id: 'multi', course_codes: ['CEE 2302', 'CS 3377'] }],
+  assert.deepEqual(putBodies[0].selections.find((s) => s.requirement_group_id === 'choice'), {
+    requirement_group_id: 'choice', candidate_id: 'multi', course_codes: ['CEE 2302', 'CS 3377'],
   })
-  assert.equal(await section.getByText('Selected', { exact: true }).count() >= 1, true)
-  assert.equal(await section.getByRole('button', { name: 'Change choice' }).count(), 1)
-  assert.equal(await section.getByRole('button', { name: 'Clear choice' }).count(), 1)
+  assert.equal(await spring2028.getByRole('button', { name: 'Change choice' }).count(), 1)
+  assert.equal(await spring2028.getByRole('button', { name: 'Clear choice' }).count(), 1)
 
-  nextPutConflict = 'SCHEDULE_VERSION_CONFLICT'
-  await section.getByRole('button', { name: 'Change choice' }).click()
-  await section.getByRole('button', { name: /Change to ABC 123 for Statistical Methods/ }).click()
-  await section.getByText(/degree plan changed while you were choosing/).waitFor()
-  assert.equal(putBodies.length, 2)
-  assert.equal(await section.getByText('Selected', { exact: true }).count() >= 1, true)
-
+  // ── RESELECTION_REQUIRED is a top-level alert, not a term-card entry ───
   schedule.selection_state = {
     status: 'RESELECTION_REQUIRED',
     selections: [{ requirement_group_id: 'choice', candidate_id: 'removed', course_codes: ['OLD 1000'] }],
@@ -148,21 +222,16 @@ test('Degree Schedule decisions are actionable, grouped, deduplicated, and respo
     ? { ...decision, state: 'CHOICE_REQUIRED', selected_candidate_id: null }
     : decision)
   await page.getByRole('button', { name: 'Refresh', exact: true }).click()
-  await section.getByText('Your saved course choice needs attention').waitFor()
-  assert.equal(await section.getByRole('button', { name: 'Clear saved choice' }).count(), 1)
-  assert.equal(await section.getByRole('button', { name: /Choose ABC 123 for Statistical Methods/ }).count(), 1)
 
-  const multiPath = section.locator('.degree-schedule-candidate-path').filter({ hasText: 'CEE 2302' })
-  assert.equal(await multiPath.getByText('CS 3377', { exact: true }).count(), 1)
-  await page.setViewportSize({ width: 390, height: 844 })
-  assert.equal(await section.evaluate((element) => element.scrollWidth <= element.clientWidth), true)
-  assert.equal(await multiPath.evaluate((element) => element.scrollWidth <= element.clientWidth), true)
-  assert.equal(await section.getByRole('button', { name: 'Clear saved choice' }).isVisible(), true)
-
-  await section.getByRole('button', { name: /Choose ABC 123 for Statistical Methods/ }).click()
-  await section.getByText('Your academic choices').waitFor()
-  assert.equal(putBodies.length, 3)
-  assert.deepEqual(putBodies[2].selections, [{
-    requirement_group_id: 'choice', candidate_id: 'single', course_codes: ['ABC 123'],
-  }])
+  const reselection = page.locator('.degree-schedule-reselection')
+  await reselection.getByText('Your saved course choice needs attention').waitFor()
+  assert.equal(await reselection.getByRole('button', { name: 'Clear saved choice' }).count(), 1)
+  // It sits above the year grid, not inside any term column.
+  assert.equal(await page.locator('.degree-schedule-semester .degree-schedule-reselection').count(), 0)
+  const orderOk = await page.evaluate(() => {
+    const alert = document.querySelector('.degree-schedule-reselection')
+    const grid = document.querySelector('.degree-schedule-years')
+    return Boolean(alert && grid) && (alert.compareDocumentPosition(grid) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0
+  })
+  assert.equal(orderOk, true)
 })
