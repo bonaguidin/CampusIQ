@@ -2725,6 +2725,18 @@ a {
   text-wrap: pretty;
 }
 
+/* An individual course line inside a decision option matches a scheduled-term
+   row (.degree-schedule-course-row): the code is the same small, muted,
+   bold-weight text and its credits sit right-aligned and muted (the
+   space-between + muted credits span above already handle the layout). Only
+   the per-course line matches -- the option-level container keeps its
+   bordered "this is a decision" framing. */
+.degree-schedule-candidate-courses > li > div > strong {
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--muted);
+}
+
 /* Degree Schedule: year tabs (reuses .academic-tabs/.academic-tab, the
    segmented underline control from AcademicSnapshot) + two semester
    columns per year. */
