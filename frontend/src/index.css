@@ -2866,6 +2866,15 @@ a {
   padding: var(--sp-2) 0;
 }
 
+/* "If you have room" -- scheduler-placed courses shown as optional headroom.
+   No badge (that family is reserved for acted-on rows: --added / grade /
+   in-progress); it recedes instead, muted body text one step below the
+   planned and decision rows it now sits beneath. */
+.degree-schedule-suggested--elective .degree-schedule-semester-course,
+.degree-schedule-suggested--elective .degree-schedule-semester-course strong {
+  color: var(--muted);
+}
+
 /* Phase 3: LOCKED / CHOICE_REQUIRED / EXCLUDED decisions relocated onto the
    term column they resolve to. Sits above the planned/suggested/add stack;
    reuses the decision-card + candidate-path look from the retired standalone

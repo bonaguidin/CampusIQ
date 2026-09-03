@@ -277,9 +277,26 @@ function SemesterColumn({ semester, identity, busyCode, mutation, onAdd, onRemov
             </ul>
           )}
 
+          <div className="degree-schedule-suggested degree-schedule-add">
+            <h6>Plan a course</h6>
+            <CourseSearchAdd
+              identity={identity}
+              alreadyAddedCodes={addedCodes}
+              onAdd={(result) => onAdd(semester, result)}
+              busyCode={busyCode}
+              inputId={`degree-schedule-course-search-${semester.termKey}`}
+            />
+          </div>
+
+          {/* Scheduler-placed no-choice courses for this term, shown last as
+              the lowest-priority, non-actionable content in the column: read
+              only, no badge, no add control -- framed as optional headroom
+              rather than a commitment. Reconciled against `planned` upstream
+              in buildDegreeScheduleYears (a course the student already added
+              is dropped from here). */}
           {semester.suggestedCourses.length > 0 && (
-            <div className="degree-schedule-suggested">
-              <h6>Suggested courses</h6>
+            <div className="degree-schedule-suggested degree-schedule-suggested--elective">
+              <h6>If you have room</h6>
               <ul className="degree-schedule-semester-courses">
                 {semester.suggestedCourses.map((course) => (
                   <li key={course.course_code} className="degree-schedule-semester-course">
@@ -292,17 +309,6 @@ function SemesterColumn({ semester, identity, busyCode, mutation, onAdd, onRemov
               </ul>
             </div>
           )}
-
-          <div className="degree-schedule-suggested degree-schedule-add">
-            <h6>Plan a course</h6>
-            <CourseSearchAdd
-              identity={identity}
-              alreadyAddedCodes={addedCodes}
-              onAdd={(result) => onAdd(semester, result)}
-              busyCode={busyCode}
-              inputId={`degree-schedule-course-search-${semester.termKey}`}
-            />
-          </div>
         </>
       )}
     </section>
