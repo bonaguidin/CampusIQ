@@ -90,6 +90,12 @@ export interface AddPlannedCourseInput {
   title?: string | null;
   credit_hours?: number | null;
   catalog_course_id?: string | null;
+  /**
+   * Set only by the year-view add action. Forces a planned_courses row even
+   * inside the 30-day activation window -- see PlannedCourseRequest.force_planned.
+   * The response is always `kind: 'planned'` when this is true.
+   */
+  force_planned?: boolean;
 }
 
 /**

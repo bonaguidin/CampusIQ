@@ -71,7 +71,7 @@ function sumCredits(courses) {
 }
 
 /**
- * Builds the year-tabbed, two-column data this view renders, merging three
+ * Builds the year-tabbed, two-column data this view renders, merging four
  * sources that otherwise never meet:
  *  - realTerms (GET /terms): calendar terms, used for status + real dates
  *  - courseRecords (GET /course-records, passed down from the dashboard's
@@ -81,11 +81,21 @@ function sumCredits(courses) {
  *    nothing is confirmed until enrollment) and, per product decision, as
  *    the "Suggested courses" section, since it is the only real
  *    recommendation data currently exposed by any endpoint.
+ *  - plannedCourses (GET /planned-courses): courses the student added to a
+ *    future term themselves. Rendered only in the 'future' branch, in their
+ *    own `planned` array with the "Added" treatment. A planned code also
+ *    present in the scheduler's plan for that term is shown once, here --
+ *    the suggestion is dropped (see below), matching the plannedCodes
+ *    (case-insensitive) convention.
+ *
+ * plannedCourses defaults to [] so callers that predate it (and tests) keep
+ * working unchanged.
  */
-export function buildDegreeScheduleYears({ realTerms, scheduleTerms, courseRecords, gradingSchema, today }) {
+export function buildDegreeScheduleYears({ realTerms, scheduleTerms, courseRecords, gradingSchema, today, plannedCourses }) {
   const terms = Array.isArray(realTerms) ? realTerms : []
   const schedule = Array.isArray(scheduleTerms) ? scheduleTerms : []
   const records = Array.isArray(courseRecords) ? courseRecords : []
+  const planned = Array.isArray(plannedCourses) ? plannedCourses : []
 
   const termsByKey = new Map(terms.map((term) => [term.key, term]))
   const scheduleByKey = new Map(schedule.map((term) => [term.term_key, term]))
@@ -135,20 +145,47 @@ export function buildDegreeScheduleYears({ realTerms, scheduleTerms, courseRecor
             gradeBadge: state === 'past' ? formatGradeBadge(record.letter_grade, gradingSchema) : null,
           })),
           suggestedCourses: [],
+          planned: [],
         }
       }
 
       const scheduled = scheduleByKey.get(termKey) ?? null
+
+      // A planned row always carries a real term_id (ensure_term_row makes one
+      // on add); a term with no materialized id therefore has none, by
+      // construction -- same guard the past/in_progress branch applies to
+      // course_records.
+      const plannedForTerm = realTerm?.id == null
+        ? []
+        : planned
+            .filter((row) => row.term_id === realTerm.id)
+            .map((row) => ({
+              id: row.id,
+              course_code: row.course_code,
+              title: row.title ?? null,
+              credit_hours: row.credit_hours,
+            }))
+
+      // Reconcile against the scheduler's plan: a course the student already
+      // added is shown once, under the added treatment -- drop the matching
+      // suggestion. Case-insensitive, matching plannedCodes (termPlanning.mjs).
+      const plannedCodeSet = new Set(
+        plannedForTerm.map((row) => String(row.course_code ?? '').toUpperCase()),
+      )
+
       return {
         season,
         termKey,
         state,
         totalCreditsLabel: 'Not scheduled',
         courses: [],
-        suggestedCourses: (scheduled?.courses ?? []).map((course) => ({
-          course_code: course.course_code,
-          credit_hours: course.credit_hours,
-        })),
+        suggestedCourses: (scheduled?.courses ?? [])
+          .filter((course) => !plannedCodeSet.has(String(course.course_code ?? '').toUpperCase()))
+          .map((course) => ({
+            course_code: course.course_code,
+            credit_hours: course.credit_hours,
+          })),
+        planned: plannedForTerm,
       }
     }),
   }))

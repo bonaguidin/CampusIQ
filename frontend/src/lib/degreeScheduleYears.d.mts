@@ -1,4 +1,4 @@
-import type { PlanningTerm, GradingSchema } from './termPlanning.mjs';
+import type { PlanningTerm, GradingSchema, PlannedCourse } from './termPlanning.mjs';
 import type { TermPlan } from '../api/degreeSchedule.mjs';
 
 export type SemesterSeason = 'Fall' | 'Spring';
@@ -26,6 +26,15 @@ export interface DegreeScheduleSuggestedCourse {
   credit_hours: number;
 }
 
+/** A course the student added to a future term themselves (planned_courses).
+ * `id` is the planned_courses row id, needed for the row's Remove action. */
+export interface DegreeSchedulePlannedCourse {
+  id: string;
+  course_code: string;
+  title: string | null;
+  credit_hours: number | null;
+}
+
 export interface DegreeScheduleSemester {
   season: SemesterSeason;
   termKey: string;
@@ -33,6 +42,7 @@ export interface DegreeScheduleSemester {
   totalCreditsLabel: string | null;
   courses: DegreeScheduleYearCourse[];
   suggestedCourses: DegreeScheduleSuggestedCourse[];
+  planned: DegreeSchedulePlannedCourse[];
 }
 
 export interface DegreeScheduleYear {
@@ -59,4 +69,5 @@ export declare function buildDegreeScheduleYears(input: {
   courseRecords: CourseRecordLike[];
   gradingSchema: GradingSchema | null;
   today: Date;
+  plannedCourses?: PlannedCourse[];
 }): DegreeScheduleYear[];

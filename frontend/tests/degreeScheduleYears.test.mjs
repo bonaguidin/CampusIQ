@@ -34,6 +34,18 @@ const record = (over) => ({
   ...over,
 })
 
+const plannedRow = (over) => ({
+  id: `plan-${over.course_code}`,
+  term_id: null,
+  course_code: 'XXXX 000',
+  title: null,
+  credit_hours: 3,
+  catalog_course_id: null,
+  created_at: '2026-09-01T00:00:00Z',
+  kind: 'planned',
+  ...over,
+})
+
 const GRADING_SCHEMA = {
   institutionId: 'inst-1',
   usesPlusMinus: true,
@@ -220,4 +232,114 @@ test('a real term with no materialized id (never enrolled) matches no course_rec
   const fall = years[0].semesters[0]
   assert.equal(fall.state, 'past')
   assert.deepEqual(fall.courses, [])
+})
+
+// ── plannedCourses (student-added, future terms only) ───────────────────────
+
+test('plannedCourses is optional: absent input yields an empty planned array on every semester', () => {
+  const years = buildDegreeScheduleYears({
+    realTerms: [term({ year: 2027, season: 'Spring', start_date: '2027-01-19', end_date: '2027-05-11' })],
+    scheduleTerms: [],
+    courseRecords: [],
+    gradingSchema: null,
+    today: TODAY,
+  })
+  for (const year of years) {
+    for (const semester of year.semesters) assert.deepEqual(semester.planned, [])
+  }
+})
+
+test('a student-added course for a future term appears in semester.planned with id/code/title/credits', () => {
+  const spring2027 = term({ year: 2027, season: 'Spring', start_date: '2027-01-19', end_date: '2027-05-11' })
+  const years = buildDegreeScheduleYears({
+    realTerms: [spring2027],
+    scheduleTerms: [],
+    courseRecords: [],
+    gradingSchema: null,
+    today: TODAY,
+    plannedCourses: [
+      plannedRow({ id: 'p1', course_code: 'CSCE 469', title: 'Special Topics', credit_hours: 3, term_id: spring2027.id }),
+    ],
+  })
+  const spring = years[0].semesters.find((s) => s.termKey === '2027-Spring')
+  assert.equal(spring.state, 'future')
+  assert.deepEqual(spring.planned, [
+    { id: 'p1', course_code: 'CSCE 469', title: 'Special Topics', credit_hours: 3 },
+  ])
+})
+
+test('a course in BOTH the scheduler plan and the student plan for one term appears once, under planned, not suggested (case-insensitive)', () => {
+  const spring2027 = term({ year: 2027, season: 'Spring', start_date: '2027-01-19', end_date: '2027-05-11' })
+  const years = buildDegreeScheduleYears({
+    realTerms: [spring2027],
+    scheduleTerms: [
+      {
+        term_key: '2027-Spring',
+        total_credit_hours: 6,
+        courses: [
+          { course_code: 'CSCE 314', credit_hours: 3, requirement_group_id: 'g1', limitations: [] },
+          { course_code: 'CSCE 331', credit_hours: 3, requirement_group_id: 'g2', limitations: [] },
+        ],
+      },
+    ],
+    courseRecords: [],
+    gradingSchema: null,
+    today: TODAY,
+    plannedCourses: [
+      // lower-case on purpose -- the reconciliation is case-insensitive
+      plannedRow({ id: 'p1', course_code: 'csce 314', title: null, credit_hours: 3, term_id: spring2027.id }),
+    ],
+  })
+  const spring = years[0].semesters.find((s) => s.termKey === '2027-Spring')
+  assert.deepEqual(spring.planned.map((c) => c.course_code), ['csce 314'])
+  assert.deepEqual(spring.suggestedCourses.map((c) => c.course_code), ['CSCE 331'])
+})
+
+test('a planned row is not shown against a future term with no materialized academic_terms id', () => {
+  const spring2027 = term({ year: 2027, season: 'Spring', id: null, start_date: '2027-01-19', end_date: '2027-05-11' })
+  const years = buildDegreeScheduleYears({
+    realTerms: [spring2027],
+    scheduleTerms: [],
+    courseRecords: [],
+    gradingSchema: null,
+    today: TODAY,
+    plannedCourses: [plannedRow({ id: 'p1', course_code: 'CSCE 469', term_id: null })],
+  })
+  const spring = years[0].semesters.find((s) => s.termKey === '2027-Spring')
+  assert.deepEqual(spring.planned, [])
+})
+
+test('removing a planned row from the input removes it from the term card (disappears on next load)', () => {
+  const spring2027 = term({ year: 2027, season: 'Spring', start_date: '2027-01-19', end_date: '2027-05-11' })
+  const args = {
+    realTerms: [spring2027],
+    scheduleTerms: [],
+    courseRecords: [],
+    gradingSchema: null,
+    today: TODAY,
+  }
+  const withRow = buildDegreeScheduleYears({
+    ...args,
+    plannedCourses: [plannedRow({ id: 'p1', course_code: 'CSCE 469', term_id: spring2027.id })],
+  })
+  assert.equal(withRow[0].semesters.find((s) => s.termKey === '2027-Spring').planned.length, 1)
+
+  const afterRemoval = buildDegreeScheduleYears({ ...args, plannedCourses: [] })
+  assert.deepEqual(afterRemoval[0].semesters.find((s) => s.termKey === '2027-Spring').planned, [])
+})
+
+test('planned rows never appear on a past or in-progress term card', () => {
+  const fall2025 = term({ year: 2025, season: 'Fall', start_date: '2025-08-25', end_date: '2025-12-10' })
+  const years = buildDegreeScheduleYears({
+    realTerms: [fall2025],
+    scheduleTerms: [],
+    courseRecords: [],
+    gradingSchema: null,
+    today: TODAY,
+    // A stray planned row pointing at a past term must not surface here.
+    plannedCourses: [plannedRow({ id: 'p1', course_code: 'HIST 101', term_id: fall2025.id })],
+  })
+  const fall = years[0].semesters[0]
+  assert.equal(fall.state, 'past')
+  assert.deepEqual(fall.planned, [])
 })

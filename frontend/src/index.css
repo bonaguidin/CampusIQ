@@ -2837,6 +2837,17 @@ a {
   text-transform: uppercase;
 }
 
+/* Student-added (planned_courses) rows in a future term. Third tint in this
+   family, deliberately achromatic: --gold means "in progress" and --ready
+   green means "completed" -- both encode a fact about real coursework. A
+   planned addition is speculative, not a fact, so it takes --pending, the
+   theme's designated no-semantic-hue neutral (see :root). */
+.degree-schedule-badge--added {
+  color: var(--pending);
+  background: var(--pending-tint);
+  text-transform: uppercase;
+}
+
 .degree-schedule-suggested {
   padding: var(--sp-3) var(--sp-4);
   border-top: 1px solid var(--line);
