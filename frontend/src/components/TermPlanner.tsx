@@ -1,11 +1,8 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  MIN_SEARCH_LENGTH,
-  SEARCH_DEBOUNCE_MS,
   TERM_STATUS_LABELS,
   currentGradeOptions,
   finalGradeOptions,
-  formatCredits,
   formatTermDates,
   isTermActivated,
   pickDefaultTermKey,
@@ -29,9 +26,9 @@ import {
   fetchTerms,
   finalizeCourseGrade,
   removePlannedCourse,
-  searchCatalog,
 } from '../api/planning';
 import type { AnalysisIdentity } from '../api/analysisApi.mjs';
+import { CourseSearchAdd } from './CourseSearchAdd';
 
 /**
  * The Academic Record's term view: a term dropdown, that term's coursework, and
@@ -87,9 +84,6 @@ export function TermPlanner({ identity, courses, onCourseRecordsChanged }: TermP
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [planned, setPlanned] = useState<PlannedCourse[]>([]);
   const [termsLoaded, setTermsLoaded] = useState(false);
-  const [query, setQuery] = useState('');
-  const [results, setResults] = useState<CatalogSearchResult[]>([]);
-  const [searching, setSearching] = useState(false);
   const [busyCode, setBusyCode] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [gradingSchema, setGradingSchema] = useState<GradingSchema | null>(null);
@@ -324,28 +318,6 @@ export function TermPlanner({ identity, courses, onCourseRecordsChanged }: TermP
     </div>
   );
 
-  // Debounced search. The timer is cleared on every keystroke and on unmount,
-  // so at most one request is in flight per pause.
-  const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(() => {
-    if (searchTimer.current) clearTimeout(searchTimer.current);
-    const trimmed = query.trim();
-    if (trimmed.length < MIN_SEARCH_LENGTH) {
-      setResults([]);
-      setSearching(false);
-      return undefined;
-    }
-    setSearching(true);
-    searchTimer.current = setTimeout(() => {
-      void (async () => {
-        const result = await searchCatalog(identity, trimmed);
-        setResults(result.results);
-        setSearching(false);
-      })();
-    }, SEARCH_DEBOUNCE_MS);
-    return () => { if (searchTimer.current) clearTimeout(searchTimer.current); };
-  }, [query, identity]);
-
   async function handleAdd(result: CatalogSearchResult) {
     if (!selectedTerm) return;
     setBusyCode(result.code);
@@ -521,58 +493,18 @@ export function TermPlanner({ identity, courses, onCourseRecordsChanged }: TermP
       {canPlan && (
         <section className="term-search">
           <h3 className="term-courses-heading">Plan a course</h3>
-          <label className="term-search-label" htmlFor="course-search">
-            Search your course catalog by code or title
-          </label>
-          <input
-            id="course-search"
-            className="term-search-input"
-            type="search"
-            value={query}
-            placeholder="e.g. CSCE 121 or Data Structures"
-            onChange={(event) => setQuery(event.target.value)}
-            autoComplete="off"
+          <CourseSearchAdd
+            identity={identity}
+            alreadyAddedCodes={alreadyPlanned}
+            onAdd={(result) => { void handleAdd(result); }}
+            busyCode={busyCode}
+            hint={willActivateOnAdd ? (
+              <p className="term-search-hint term-search-hint--activation">
+                {selectedTerm?.label} starts soon &mdash; courses you add here will be treated as
+                current (in progress), not planned.
+              </p>
+            ) : null}
           />
-          {willActivateOnAdd && (
-            <p className="term-search-hint term-search-hint--activation">
-              {selectedTerm?.label} starts soon &mdash; courses you add here will be treated as
-              current (in progress), not planned.
-            </p>
-          )}
-          {query.trim().length > 0 && query.trim().length < MIN_SEARCH_LENGTH && (
-            <p className="term-search-hint">Keep typing…</p>
-          )}
-          {searching && <p className="term-search-hint">Searching…</p>}
-          {!searching && query.trim().length >= MIN_SEARCH_LENGTH && results.length === 0 && (
-            <p className="term-search-hint">
-              No matches. Search matches the start of a course code or title.
-            </p>
-          )}
-          {results.length > 0 && (
-            <ul className="term-search-results">
-              {results.map((result) => {
-                const isPlanned = alreadyPlanned.has(result.code.toUpperCase());
-                const credits = formatCredits(result.credit_min, result.credit_max);
-                return (
-                  <li className="term-search-result" key={result.id}>
-                    <span className="term-search-result-main">
-                      <strong>{result.code}</strong>
-                      <small>{result.title}</small>
-                    </span>
-                    {credits && <span className="term-search-result-credits">{credits}</span>}
-                    <button
-                      type="button"
-                      className="btn btn-primary btn-sm"
-                      disabled={isPlanned || busyCode === result.code}
-                      onClick={() => { void handleAdd(result); }}
-                    >
-                      {isPlanned ? 'Planned' : busyCode === result.code ? 'Adding…' : 'Add'}
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
         </section>
       )}
     </div>
