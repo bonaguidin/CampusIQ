@@ -34,8 +34,12 @@ from GradusIQ_career.course_discovery.requirement_candidates import (
     RequirementDecision,
     RequirementDecisionState,
 )
+from GradusIQ_career.course_discovery.catalog import LocalCatalogRepository
+from GradusIQ_career.course_discovery.models import CatalogInstitution
+from GradusIQ_career.course_discovery.requirement_satisfaction import evaluate_requirement_tree
 from GradusIQ_career.course_discovery.requirement_selection import RequirementSelectionResult
 from GradusIQ_career.course_discovery.requirement_selection import LockedSelectionFailureCode
+from GradusIQ_career.course_discovery.requirement_selection import structured_candidate_codes
 from GradusIQ_career.degree_schedule_choice_service import ChoiceWriteOutcome
 from GradusIQ_career.course_discovery.scheduler import ScheduledCourse, ScheduleResult, TermPlan
 from GradusIQ_career.degree_schedule_semantics import DegreeScheduleSemanticSnapshot
@@ -1155,6 +1159,125 @@ def test_schedule_payload_serializes_tamu_choice_and_zero_feasible_evidence():
         "title": "Experimental Physics and Engineering Lab",
         "credits": 2.0,
     }]
+    json.dumps(payload)
+
+
+def test_schedule_payload_enriches_candidate_courses_under_a_deeply_nested_tamu_leaf():
+    """Regression for the audit finding: on TAMU Computer Engineering the
+    course-bearing requirement groups sit three levels deep (compound_all
+    year -> compound_all season -> enumerated_all leaf). _build_academic_
+    schedule_state seeds its display-enrichment catalog off
+    structured_candidate_codes(); when that walk stopped at roots + direct
+    children it returned nothing for such a program, so every decision
+    option's courses (CSCE 221 / ECEN 214 / ECEN 303 / MATH 308) rendered
+    with title=None and credits=None even though the local catalog has full
+    data for all of them. This drives the real requirements tree shape and
+    the real LocalCatalogRepository through the same relevant_codes ->
+    catalog_by_code -> _degree_schedule_payload chain api.py uses.
+    """
+    def _group(rule_id, group_type, *, parent=None, n=None):
+        return {
+            "id": rule_id, "coursedog_rule_id": rule_id, "parent_group_id": parent,
+            "name": rule_id, "group_type": group_type, "n_required": n,
+            "credit_hours_required": None, "notes_html": None,
+            "requires_manual_definition": False,
+        }
+
+    def _option(option_id, group_id, index, logic="and"):
+        return {"id": option_id, "requirement_group_id": group_id, "option_index": index, "logic": logic}
+
+    def _course(option_id, code):
+        return {
+            "requirement_group_option_id": option_id,
+            "coursedog_group_id": None, "unresolved_course_ref": None, "course_code": code,
+        }
+
+    leaf = "Second Year — Spring — Required Courses"
+    raw_groups = [
+        _group("Second Year", "compound_all"),
+        _group("Second Year — Spring", "compound_all", parent="Second Year"),
+        _group(leaf, "enumerated_all", parent="Second Year — Spring"),
+    ]
+    options = [
+        _option("o-0", leaf, 0), _option("o-1", leaf, 1), _option("o-2", leaf, 2, "or"),
+        _option("o-3", leaf, 3),
+    ]
+    option_courses = [
+        _course("o-0", "CSCE 221"), _course("o-1", "ECEN 214"),
+        _course("o-2", "ECEN 303"), _course("o-2", "STAT 211"), _course("o-3", "MATH 308"),
+    ]
+    targets = ["CSCE 221", "ECEN 214", "ECEN 303", "MATH 308"]
+    raw_catalog_by_code = {c: [c] for c in ("CSCE 221", "ECEN 214", "ECEN 303", "STAT 211", "MATH 308")}
+
+    evaluated = evaluate_requirement_tree(
+        raw_groups, options, option_courses, [], {}, raw_catalog_by_code
+    )
+
+    # Exactly api.py:_build_academic_schedule_state -> relevant_codes -> catalog_by_code.
+    repo = LocalCatalogRepository()
+    candidate_codes = structured_candidate_codes(
+        evaluated, raw_groups, options, option_courses, {}, raw_catalog_by_code
+    )
+    assert set(targets).issubset(candidate_codes)
+    catalog_by_code = {
+        code: record
+        for code in sorted(candidate_codes)
+        if (record := repo.get(CatalogInstitution.TAMU, code)) is not None
+    }
+
+    def _cand(candidate_id, codes):
+        return RequirementCandidate(
+            candidate_id=candidate_id, requirement_group_id=leaf, requirement_name=leaf,
+            course_codes=codes,
+            existing_contribution=0, additional_course_count=len(codes), additional_credits=14,
+            academic_feasibility=AcademicFeasibility.FEASIBLE, completion_term_index=0,
+        )
+
+    # The `or` option (ECEN 303 / STAT 211) is what makes this a real choice.
+    candidate_sets = [
+        RequirementCandidateSet(
+            requirement_group_id=leaf, requirement_name=leaf,
+            feasible_candidates=[
+                _cand("cand-a", targets),
+                _cand("cand-b", ["CSCE 221", "ECEN 214", "STAT 211", "MATH 308"]),
+            ],
+        ),
+    ]
+    decisions = [RequirementDecision(
+        requirement_group_id=leaf, requirement_name=leaf,
+        state=RequirementDecisionState.CHOICE_REQUIRED,
+        feasible_candidate_ids=["cand-a", "cand-b"],
+    )]
+    state = SimpleNamespace(
+        student_id="s", program_id="p", starting_year=2026, starting_season="Fall", max_terms=4,
+        academic_schedule=ScheduleResult(student_id="s", program_id="p"),
+        academic_selection=RequirementSelectionResult(
+            candidate_sets=candidate_sets, decisions=decisions,
+        ),
+        catalog_by_code=catalog_by_code,
+        raw=SimpleNamespace(
+            groups=[], options=[], option_courses=[], course_records=[],
+            catalog_credit_by_code={c: float(catalog_by_code[c].credit_min) for c in targets},
+        ),
+        prerequisites={code: StructuredPrerequisite() for code in targets},
+        semantic_snapshot=DegreeScheduleSemanticSnapshot(
+            planner_contract_version="1",
+            local_catalog_fingerprint="sha256:" + "a" * 64,
+            reconstruction_date=date(2026, 8, 19),
+        ),
+        active_selections=(),
+    )
+
+    payload = api._degree_schedule_payload(state)
+    enriched = payload["candidate_sets"][0]["feasible_candidates"][0]["candidate_courses"]
+    assert enriched == [
+        {"course_code": "CSCE 221", "title": "Data Structures and Algorithms", "credits": 4.0},
+        {"course_code": "ECEN 214", "title": "Electrical Circuit Theory", "credits": 4.0},
+        {"course_code": "ECEN 303", "title": "Random Signals and Systems", "credits": 3.0},
+        {"course_code": "MATH 308", "title": "Differential Equations", "credits": 3.0},
+    ]
+    # No entry silently degraded to the "code not in catalog" shape.
+    assert all(item["title"] is not None and item["credits"] for item in enriched)
     json.dumps(payload)
 
 

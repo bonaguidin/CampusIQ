@@ -13,7 +13,7 @@ from dataclasses import dataclass
 from enum import Enum
 from itertools import combinations, product
 import re
-from typing import Any, Iterable, Mapping
+from typing import Any, Iterable, Iterator, Mapping
 
 from pydantic import Field
 
@@ -435,6 +435,23 @@ def _choices_for_group(
     )
 
 
+def _iter_groups_deep(
+    groups: Iterable[RequirementGroupResult],
+) -> Iterator[RequirementGroupResult]:
+    """Every group in the tree, at any depth (pre-order).
+
+    evaluate_requirement_tree returns only the roots, each carrying nested
+    ``children``. TAMU's real trees run three levels deep (compound_all year
+    -> compound_all season -> enumerated_* leaf), and the course rows live on
+    the leaves, so any traversal that stops at a fixed depth silently misses
+    them. This matches select_structured_requirements' own fully-recursive
+    ``by_id`` index -- the two paths must agree on which groups exist.
+    """
+    for group in groups:
+        yield group
+        yield from _iter_groups_deep(group.children)
+
+
 def structured_candidate_codes(
     groups: list[RequirementGroupResult],
     raw_groups: list[Mapping[str, Any]],
@@ -454,11 +471,19 @@ def structured_candidate_codes(
     course_code's 2 resolved codes are both added directly -- there is no
     "one CourseToSchedule per requirement" double-counting risk here,
     since nothing downstream of this set builds a schedule from it.
+
+    The tree is walked to full depth: a non-satisfied group carries relevant
+    candidate courses no matter how deeply it is nested (TAMU's leaves sit at
+    depth 2). A fixed depth-1 walk here silently dropped every deep leaf's
+    codes from the caller's catalog-enrichment lookup, so those candidate
+    courses rendered with no title and no credits.
     """
     catalog_by_code = catalog_by_code or {}
-    deferred_ids = {group.id for group in groups if group.status != RequirementGroupStatus.SATISFIED}
-    child_ids = {child.id for group in groups for child in group.children}
-    relevant = deferred_ids | child_ids
+    relevant = {
+        group.id
+        for group in _iter_groups_deep(groups)
+        if group.status != RequirementGroupStatus.SATISFIED
+    }
     option_ids = {str(o["id"]) for o in options if str(o["requirement_group_id"]) in relevant}
     codes: set[str] = set()
     for row in option_courses:

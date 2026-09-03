@@ -612,6 +612,61 @@ def test_structured_candidate_codes_coursedog_group_id_path_unaffected():
     assert without_param == with_unrelated_param == {"AAA 100"}
 
 
+def test_structured_candidate_codes_walks_full_tree_depth_not_just_two_levels():
+    """Regression: TAMU Computer Engineering nests its course-bearing leaves
+    three deep -- compound_all year -> compound_all season -> enumerated_*
+    leaf -- and every course row lives on the leaf. A traversal that stopped
+    at roots + direct children collected nothing for such a program, so the
+    caller's catalog-enrichment lookup never loaded those codes and their
+    candidate_courses rendered with no title and no credits. The walk must
+    reach every non-satisfied group at any depth, matching
+    select_structured_requirements' own fully-recursive group index.
+    """
+    raw_groups = [
+        group("Second Year", "compound_all"),
+        group("Second Year — Spring", "compound_all", parent="Second Year"),
+        group("Second Year — Spring — Required Courses", "enumerated_all",
+              parent="Second Year — Spring"),
+        group("Second Year — Spring — Select one of the following",
+              "enumerated_at_least_n", n=1, parent="Second Year — Spring"),
+    ]
+    required_id = "Second Year — Spring — Required Courses"
+    choose_id = "Second Year — Spring — Select one of the following"
+    options = [
+        option("o-csce-221", required_id, 0),
+        option("o-ecen-303", required_id, 1, "or"),
+        option("o-math-308", required_id, 2),
+        option("o-engl-210", choose_id, 0),
+        option("o-comm-205", choose_id, 1),
+    ]
+    option_courses = [
+        course("o-csce-221", code="CSCE 221"),
+        course("o-ecen-303", code="ECEN 303"),
+        course("o-ecen-303", code="STAT 211"),
+        course("o-math-308", code="MATH 308"),
+        course("o-engl-210", code="ENGL 210"),
+        course("o-comm-205", code="COMM 205"),
+    ]
+    catalog_by_code = {
+        "CSCE 221": ["CSCE 221"], "ECEN 303": ["ECEN 303"], "STAT 211": ["STAT 211"],
+        "MATH 308": ["MATH 308"], "ENGL 210": ["ENGL 210"], "COMM 205": ["COMM 205"],
+    }
+    evaluated = evaluate_requirement_tree(
+        raw_groups, options, option_courses, [], {}, catalog_by_code
+    )
+    # The leaves really are at depth 2 (roots -> season -> leaf).
+    assert [g.id for g in evaluated] == ["Second Year"]
+    assert [g.id for g in evaluated[0].children] == ["Second Year — Spring"]
+    assert {g.id for g in evaluated[0].children[0].children} == {required_id, choose_id}
+
+    codes = structured_candidate_codes(
+        evaluated, raw_groups, options, option_courses, {}, catalog_by_code
+    )
+    assert codes == {
+        "CSCE 221", "ECEN 303", "STAT 211", "MATH 308", "ENGL 210", "COMM 205",
+    }
+
+
 def test_tamu_mixed_fixed_and_or_requirement_preserves_complete_candidate_paths():
     groups = [group("First Year — Fall — Required Courses", "enumerated_all")]
     options = [
