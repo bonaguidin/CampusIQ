@@ -2607,8 +2607,7 @@ a {
 }
 
 .degree-schedule-decision-heading,
-.degree-schedule-candidate-header,
-.degree-schedule-candidate-courses > li {
+.degree-schedule-candidate-header {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
@@ -2622,8 +2621,7 @@ a {
 }
 
 .degree-schedule-decision-heading span,
-.degree-schedule-candidate-header span,
-.degree-schedule-candidate-courses > li > span {
+.degree-schedule-candidate-header span {
   color: var(--muted);
   font-size: var(--text-sm);
   font-variant-numeric: tabular-nums;
@@ -2703,7 +2701,17 @@ a {
   background: var(--surface);
 }
 
+/* A per-course line inside a decision option is now the exact
+   .degree-schedule-course-row the Fall / planned lists use -- an <li>
+   wrapping the flex row (code+title span / credits span) with the
+   "Planned course" badge stacked below it. The <li> is a plain block (it
+   was a flex row only to hold the older bare code-div + credits-span
+   shape); the shared .degree-schedule-course-row rules then style it
+   identically to a .degree-schedule-semester-course row, including the
+   title <small> on its own line. Only the per-course line matches -- the
+   option-level container keeps its bordered "this is a decision" framing. */
 .degree-schedule-candidate-courses > li {
+  display: block;
   padding: var(--sp-3);
   border-top: 1px solid var(--line);
 }
@@ -2712,29 +2720,10 @@ a {
   border-top: 0;
 }
 
-.degree-schedule-candidate-courses > li > div {
-  display: grid;
-  min-width: 0;
-  gap: var(--sp-1);
-}
-
-.degree-schedule-candidate-courses > li > div > span {
+.degree-schedule-candidate-courses > li .degree-schedule-course-row small {
+  display: block;
   color: var(--muted);
   font-size: var(--text-sm);
-  overflow-wrap: anywhere;
-  text-wrap: pretty;
-}
-
-/* An individual course line inside a decision option matches a scheduled-term
-   row (.degree-schedule-course-row): the code is the same small, muted,
-   bold-weight text and its credits sit right-aligned and muted (the
-   space-between + muted credits span above already handle the layout). Only
-   the per-course line matches -- the option-level container keeps its
-   bordered "this is a decision" framing. */
-.degree-schedule-candidate-courses > li > div > strong {
-  font-size: var(--text-sm);
-  font-weight: 700;
-  color: var(--muted);
 }
 
 /* Degree Schedule: year tabs (reuses .academic-tabs/.academic-tab, the
@@ -2860,6 +2849,25 @@ a {
   text-transform: uppercase;
 }
 
+/* "Planned course" marker on every course line inside a decision option --
+   now a sibling of the .degree-schedule-course-row div, stacked below it,
+   the same place the Fall list carries its grade / in-progress badges.
+   Those courses are prospective -- they enter the plan only if the student
+   picks that option -- so this parallels .degree-schedule-badge--added on a
+   confirmed planned row, but in the institution accent (--accent /
+   --accent-tint) instead of --added's achromatic --pending, so a decision
+   option's courses read as a distinct fourth state. --accent is
+   institution-themed (TAMU maroon, SMU blue, ...): accent-coloured text on
+   the 7%-opacity --accent-tint is effectively brand-on-white and stays
+   legible for every institution. The two-class selector keeps it ahead of
+   the base .degree-schedule-badge font-size and any inherited row colour. */
+.degree-schedule-candidate-courses .degree-schedule-badge--decision {
+  color: var(--accent);
+  background: var(--accent-tint);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+}
+
 .degree-schedule-suggested {
   padding: var(--sp-3) var(--sp-4);
   border-top: 1px solid var(--line);
@@ -2922,6 +2930,49 @@ a {
   font-family: var(--font-data);
   font-size: var(--text-sm);
   overflow-wrap: anywhere;
+}
+
+/* The per-term "Edit courses" popup (EditCoursesDialog). New but deliberately
+   conventional: the fixed inset-0 scrim + centered --surface panel that
+   .rv-confirming and .tour-overlay both already use. z-index 90 clears the
+   sticky commit bar (40) and sits below GuidedTour's 100. Not a shared
+   primitive -- scoped to this one control. */
+.degree-schedule-edit-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--sp-4);
+  background: var(--overlay-backdrop);
+}
+
+.degree-schedule-edit-dialog {
+  width: min(32rem, 100%);
+  max-height: 85vh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: var(--sp-5);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-top: 3px solid var(--accent);
+  border-radius: var(--radius);
+  box-shadow: 0 18px 48px var(--shadow-ink);
+  outline: none;
+}
+
+.degree-schedule-edit-title {
+  margin: 0 0 var(--sp-3);
+  font-size: var(--text-md);
+}
+
+.degree-schedule-edit-footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: var(--sp-4);
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--line);
 }
 
 .career-optimization {
@@ -3188,8 +3239,7 @@ a {
     gap: var(--sp-2);
   }
 
-  .degree-schedule-decision-heading,
-  .degree-schedule-candidate-courses > li {
+  .degree-schedule-decision-heading {
     align-items: flex-start;
     flex-direction: column;
   }

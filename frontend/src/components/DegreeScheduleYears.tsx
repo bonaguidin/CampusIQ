@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   addPlannedCourse,
   fetchGradingSchema,
@@ -17,7 +17,7 @@ import { buildDegreeScheduleYears } from '../lib/degreeScheduleYears.mjs';
 import type { DegreeScheduleSemester, DegreeScheduleTermDecision, DegreeScheduleYear } from '../lib/degreeScheduleYears.mjs';
 import { displayTermKey, formatCredits } from '../lib/degreeSchedulePresentation.mjs';
 import type { TermPlan } from '../api/degreeSchedule.mjs';
-import { CourseSearchAdd } from './CourseSearchAdd';
+import { EditCoursesDialog } from './EditCoursesDialog';
 
 interface CourseRecordLike {
   id: string;
@@ -76,8 +76,25 @@ function DecisionCandidatePath({ candidate, optionNumber, requirementName, selec
       <ul className="degree-schedule-candidate-courses" aria-label={`Courses included in option ${optionNumber}`}>
         {candidate.candidate_courses.map((course) => (
           <li key={course.course_code}>
-            <div><strong>{course.course_code}</strong>{course.title !== null && <span>{course.title}</span>}</div>
-            {course.credits !== null && <span>{formatCredits(course.credits)}</span>}
+            {/* The exact .degree-schedule-course-row shape the Fall/planned
+                lists use, so a decision option's courses read as the same
+                kind of row. With the backend tree-traversal fix (a3c4746)
+                real title + credits arrive by default; 'Credits unavailable'
+                is now the genuine-exception path (an unresolved course code),
+                not the common case -- if it fires constantly, something
+                upstream is still wrong. */}
+            <div className="degree-schedule-course-row">
+              <span>
+                <strong>{course.course_code}</strong>
+                {course.title && <small>{course.title}</small>}
+              </span>
+              <span>{course.credits !== null ? `${course.credits} credits` : 'Credits unavailable'}</span>
+            </div>
+            {/* Prospective -- these courses enter the plan only if this option
+                is chosen -- so the same marker a confirmed planned row carries,
+                in the institution accent rather than --added's achromatic grey.
+                Sibling of the row div (stacked below), matching the Fall list. */}
+            <span className="degree-schedule-badge degree-schedule-badge--decision">Planned course</span>
           </li>
         ))}
       </ul>
@@ -179,21 +196,36 @@ function TermDecisionCard({ decision, mutation, onChoose, onClear, onRestore }: 
   );
 }
 
-function SemesterColumn({ semester, identity, busyCode, mutation, onAdd, onRemove, onChoose, onClear, onRestore }: {
+function SemesterColumn({ semester, identity, busyCode, mutation, isEditOpen, onOpenEdit, onCloseEdit, onAdd, onRemove, onChoose, onClear, onRestore }: {
   semester: DegreeScheduleSemester;
   identity: AnalysisIdentity;
   busyCode: string | null;
   mutation: DegreeScheduleChoiceMutation | null;
+  // Only one "Edit courses" popup may be open across the whole grid, so which
+  // term (if any) owns it is lifted to DegreeScheduleYears -- this column just
+  // reports whether it's the open one and asks to open/close.
+  isEditOpen: boolean;
+  onOpenEdit: () => void;
+  onCloseEdit: () => void;
   onAdd: (semester: DegreeScheduleSemester, result: CatalogSearchResult) => void;
   onRemove: (id: string) => void;
   onChoose: (requirementGroupId: string, candidate: RequirementCandidate, action: 'choose' | 'change') => void;
   onClear: (requirementGroupId: string) => void;
   onRestore: (requirementGroupId: string) => void;
 }) {
+  const editTriggerRef = useRef<HTMLButtonElement>(null);
+
   const addedCodes = useMemo(
     () => new Set(semester.planned.map((course) => course.course_code.toUpperCase())),
     [semester.planned],
   );
+
+  // Closing always returns focus to the trigger, per the dialog a11y contract.
+  // Both the footer "Confirm" button and Escape route through here.
+  const closeEdit = useCallback(() => {
+    onCloseEdit();
+    editTriggerRef.current?.focus();
+  }, [onCloseEdit]);
 
   return (
     <section className="degree-schedule-semester" aria-label={`${semester.season} ${semester.termKey.split('-')[0]}`}>
@@ -246,10 +278,19 @@ function SemesterColumn({ semester, identity, busyCode, mutation, onAdd, onRemov
             </ul>
           )}
 
-          {semester.planned.length === 0 && semester.suggestedCourses.length === 0 && semester.decisions.length === 0 && (
+          {/* Keys on planned + decisions only. Scheduler headroom no longer
+              renders on the card -- it moved into the Edit-courses popup --
+              and "No courses confirmed yet." stays literally true whether or
+              not the scheduler produced any, so a term that has only headroom
+              should still show this line pointing at the Edit courses button
+              rather than a bare, contextless button. */}
+          {semester.planned.length === 0 && semester.decisions.length === 0 && (
             <p className="empty-state">No courses confirmed yet.</p>
           )}
 
+          {/* Read-only on the card: code / credits / "Added" badge. Adding and
+              removing both live in the Edit-courses popup now (the Remove
+              button moved there), so the card stays a summary. */}
           {semester.planned.length > 0 && (
             <ul className="degree-schedule-semester-courses">
               {semester.planned.map((course) => (
@@ -263,14 +304,6 @@ function SemesterColumn({ semester, identity, busyCode, mutation, onAdd, onRemov
                   </div>
                   <div className="degree-schedule-course-row">
                     <span className="degree-schedule-badge degree-schedule-badge--added">Added</span>
-                    <button
-                      type="button"
-                      className="btn btn-ghost btn-sm"
-                      onClick={() => onRemove(course.id)}
-                      aria-label={`Remove ${course.course_code} from your plan`}
-                    >
-                      Remove
-                    </button>
                   </div>
                 </li>
               ))}
@@ -278,36 +311,30 @@ function SemesterColumn({ semester, identity, busyCode, mutation, onAdd, onRemov
           )}
 
           <div className="degree-schedule-suggested degree-schedule-add">
-            <h6>Plan a course</h6>
-            <CourseSearchAdd
-              identity={identity}
-              alreadyAddedCodes={addedCodes}
-              onAdd={(result) => onAdd(semester, result)}
-              busyCode={busyCode}
-              inputId={`degree-schedule-course-search-${semester.termKey}`}
-            />
+            <button
+              ref={editTriggerRef}
+              type="button"
+              className="btn btn-secondary btn-sm"
+              aria-haspopup="dialog"
+              onClick={onOpenEdit}
+            >
+              Edit courses
+            </button>
           </div>
 
-          {/* Scheduler-placed no-choice courses for this term, shown last as
-              the lowest-priority, non-actionable content in the column: read
-              only, no badge, no add control -- framed as optional headroom
-              rather than a commitment. Reconciled against `planned` upstream
-              in buildDegreeScheduleYears (a course the student already added
-              is dropped from here). */}
-          {semester.suggestedCourses.length > 0 && (
-            <div className="degree-schedule-suggested degree-schedule-suggested--elective">
-              <h6>If you have room</h6>
-              <ul className="degree-schedule-semester-courses">
-                {semester.suggestedCourses.map((course) => (
-                  <li key={course.course_code} className="degree-schedule-semester-course">
-                    <div className="degree-schedule-course-row">
-                      <span><strong>{course.course_code}</strong></span>
-                      <span>{course.credit_hours} credits</span>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </div>
+          {isEditOpen && (
+            <EditCoursesDialog
+              termKey={semester.termKey}
+              termLabel={displayTermKey(semester.termKey)}
+              identity={identity}
+              plannedCourses={semester.planned}
+              suggestedCourses={semester.suggestedCourses}
+              alreadyAddedCodes={addedCodes}
+              busyCode={busyCode}
+              onAdd={(result) => onAdd(semester, result)}
+              onRemove={onRemove}
+              onClose={closeEdit}
+            />
           )}
         </>
       )}
@@ -332,6 +359,11 @@ export function DegreeScheduleYears({
   const [busyCode, setBusyCode] = useState<string | null>(null);
   const [addError, setAddError] = useState<string | null>(null);
   const [activeYearKey, setActiveYearKey] = useState<number | null>(null);
+  // The termKey of the one future term whose "Edit courses" popup is open, or
+  // null. A single value is the whole single-popup-at-a-time guarantee:
+  // opening another term's popup just reassigns it.
+  const [editingTermKey, setEditingTermKey] = useState<string | null>(null);
+  const handleCloseEdit = useCallback(() => setEditingTermKey(null), []);
 
   const identity = useMemo<AnalysisIdentity>(() => ({ slug: null, accessToken }), [accessToken]);
 
@@ -456,7 +488,7 @@ export function DegreeScheduleYears({
             aria-selected={activeYear.yearKey === year.yearKey}
             aria-controls={`degree-schedule-year-panel-${year.yearKey}`}
             className={`academic-tab${activeYear.yearKey === year.yearKey ? ' academic-tab--active' : ''}`}
-            onClick={() => setActiveYearKey(year.yearKey)}
+            onClick={() => { setActiveYearKey(year.yearKey); setEditingTermKey(null); }}
           >
             {year.label}
           </button>
@@ -478,6 +510,9 @@ export function DegreeScheduleYears({
             identity={identity}
             busyCode={busyCode}
             mutation={mutation}
+            isEditOpen={editingTermKey === semester.termKey}
+            onOpenEdit={() => setEditingTermKey(semester.termKey)}
+            onCloseEdit={handleCloseEdit}
             onAdd={handleAddPlanned}
             onRemove={handleRemovePlanned}
             onChoose={onChoose}

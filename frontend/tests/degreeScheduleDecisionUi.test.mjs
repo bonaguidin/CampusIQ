@@ -178,6 +178,36 @@ test('Degree Schedule decisions render on their resolved term card; non-card sta
   assert.equal(await spring2028.getByRole('button', { name: /Choose ABC 123 for Statistical Methods/ }).count(), 1)
   assert.equal(await spring2028.getByRole('button', { name: /Choose CEE 2302 and CS 3377 for Statistical Methods/ }).count(), 1)
 
+  // ── A decision-option course row is the shared .degree-schedule-course-row
+  //    shape: real title + credits visible, "Planned course" badge stacked
+  //    below it in the institution accent (not the muted row default) ──────
+  const cee2302Row = spring2028
+    .locator('.degree-schedule-candidate-courses > li')
+    .filter({ hasText: 'CEE 2302' })
+  await cee2302Row.first().waitFor()
+  assert.equal(await cee2302Row.locator('.degree-schedule-course-row').count(), 1)
+  assert.equal(await cee2302Row.getByText('CEE 2302 catalog title').count(), 1)
+  assert.match(await cee2302Row.textContent(), /3 credits/)
+  // The fixture leaves ABC 123 with null credits -- the genuine exception path.
+  const abc123Row = spring2028
+    .locator('.degree-schedule-candidate-courses > li')
+    .filter({ hasText: 'ABC 123' })
+  assert.match(await abc123Row.textContent(), /Credits unavailable/)
+  // The badge resolves to --accent, not --muted.
+  const badgeColors = await page.evaluate(() => {
+    const el = document.querySelector('.degree-schedule-candidate-courses .degree-schedule-badge--decision')
+    const probe = document.createElement('span')
+    document.body.append(probe)
+    probe.style.color = 'var(--accent)'
+    const accent = getComputedStyle(probe).color
+    probe.style.color = 'var(--muted)'
+    const muted = getComputedStyle(probe).color
+    probe.remove()
+    return { badge: getComputedStyle(el).color, accent, muted }
+  })
+  assert.equal(badgeColors.badge, badgeColors.accent)
+  assert.notEqual(badgeColors.badge, badgeColors.muted)
+
   // ── Third year: EXCLUDED on Fall, with an estimate label ───────────────
   await page.getByRole('tab', { name: 'Third year' }).click()
   const fall2028 = page.getByRole('region', { name: 'Fall 2028' })
@@ -195,6 +225,31 @@ test('Degree Schedule decisions render on their resolved term card; non-card sta
   assert.doesNotMatch(pageText, /University Core Curriculum/)
   assert.doesNotMatch(pageText, /Can't auto-verify/)
   assert.doesNotMatch(pageText, /need adviser review/)
+
+  // ── Edit-courses popup: opens, is modal, Escape/Confirm close it, focus
+  //    returns to the trigger, and it never stacks across terms ────────────
+  await page.getByRole('tab', { name: 'Second year' }).click()
+  await fall2027.getByRole('button', { name: 'Edit courses' }).click()
+  const editDialog = page.getByRole('dialog', { name: 'Edit courses · Fall 2027' })
+  await editDialog.waitFor()
+  assert.equal(await editDialog.getAttribute('aria-modal'), 'true')
+  assert.equal(await page.getByRole('dialog').count(), 1)
+  // Escape closes it and hands focus back to the button that opened it.
+  await page.keyboard.press('Escape')
+  await editDialog.waitFor({ state: 'detached' })
+  assert.equal(
+    await page.evaluate(() => document.activeElement?.textContent?.trim()),
+    'Edit courses',
+  )
+  // A different term opens its own popup -- still exactly one, and it is that
+  // term's (the modal scrim is what keeps a second from ever being opened on
+  // top; the single editingTermKey string is the model-level guarantee).
+  await spring2028.getByRole('button', { name: 'Edit courses' }).click()
+  await page.getByRole('dialog', { name: 'Edit courses · Spring 2028' }).waitFor()
+  assert.equal(await page.getByRole('dialog').count(), 1)
+  // The footer "Confirm" button is close-only.
+  await page.getByRole('dialog').getByRole('button', { name: 'Confirm' }).click()
+  assert.equal(await page.getByRole('dialog').count(), 0)
 
   // ── Choosing an option persists it and the card locks in place ─────────
   await page.getByRole('tab', { name: 'Second year' }).click()
