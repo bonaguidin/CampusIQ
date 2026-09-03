@@ -37,7 +37,7 @@ from GradusIQ_career.course_discovery.requirement_candidates import (
 from GradusIQ_career.course_discovery.requirement_selection import RequirementSelectionResult
 from GradusIQ_career.course_discovery.requirement_selection import LockedSelectionFailureCode
 from GradusIQ_career.degree_schedule_choice_service import ChoiceWriteOutcome
-from GradusIQ_career.course_discovery.scheduler import ScheduleResult
+from GradusIQ_career.course_discovery.scheduler import ScheduledCourse, ScheduleResult, TermPlan
 from GradusIQ_career.degree_schedule_semantics import DegreeScheduleSemanticSnapshot
 from GradusIQ_career.planning import term_view as term_view_module
 from test_api_v2_me_routes import _canonical_profile
@@ -1155,6 +1155,143 @@ def test_schedule_payload_serializes_tamu_choice_and_zero_feasible_evidence():
         "title": "Experimental Physics and Engineering Lab",
         "credits": 2.0,
     }]
+    json.dumps(payload)
+
+
+def test_schedule_payload_resolves_decision_term_keys_per_state():
+    """Phase 3: each decision carries the term card it should render on.
+
+    LOCKED -> the term its course actually landed in; CHOICE_REQUIRED ->
+    min(completion_term_index) over feasible candidates, mapped through the
+    scheduler's own Fall<->Spring cadence; EXCLUDED -> the excluded
+    candidate's completion_term_index (None when it never joined a feasible
+    combination); AUTO_SELECTED / ADVISER_REVIEW / DATA_UNRESOLVED -> None.
+    """
+
+    def feasible(candidate_id, requirement_id, code, term_index):
+        return RequirementCandidate(
+            candidate_id=candidate_id, requirement_group_id=requirement_id,
+            requirement_name=requirement_id, course_codes=[code],
+            existing_contribution=0, additional_course_count=1, additional_credits=3,
+            academic_feasibility=AcademicFeasibility.FEASIBLE,
+            completion_term_index=term_index,
+        )
+
+    def excluded(candidate_id, requirement_id, code, reason):
+        return RequirementCandidate(
+            candidate_id=candidate_id, requirement_group_id=requirement_id,
+            requirement_name=requirement_id, course_codes=[code],
+            existing_contribution=0, additional_course_count=1, additional_credits=3,
+            academic_feasibility=AcademicFeasibility.EXCLUDED,
+            completion_term_index=None, exclusion_reasons=[reason],
+        )
+
+    candidate_sets = [
+        RequirementCandidateSet(
+            requirement_group_id="locked", requirement_name="American History",
+            feasible_candidates=[
+                feasible("hist-1301", "locked", "HIST 1301", 0),
+                feasible("hist-1302", "locked", "HIST 1302", 1),
+            ],
+        ),
+        RequirementCandidateSet(
+            requirement_group_id="choice", requirement_name="Statistical Methods",
+            feasible_candidates=[
+                feasible("stat-early", "choice", "STAT 3011", 1),
+                feasible("stat-late", "choice", "STAT 4011", 3),
+            ],
+        ),
+        RequirementCandidateSet(
+            requirement_group_id="excluded", requirement_name="Technical Elective",
+            feasible_candidates=[feasible("tech-1", "excluded", "CSCE 4901", 2)],
+        ),
+        RequirementCandidateSet(
+            requirement_group_id="excluded-noterm", requirement_name="Mystery Elective",
+            excluded_candidates=[excluded(
+                "myst-1", "excluded-noterm", "MYST 1000",
+                CandidateExclusionReason.UNSCHEDULABLE,
+            )],
+        ),
+        RequirementCandidateSet(
+            requirement_group_id="review", requirement_name="Restricted Elective",
+            excluded_candidates=[excluded(
+                "rev-1", "review", "REV 1000",
+                CandidateExclusionReason.RESTRICTION_REQUIRES_REVIEW,
+            )],
+        ),
+    ]
+    decisions = [
+        RequirementDecision(
+            requirement_group_id="locked", requirement_name="American History",
+            state=RequirementDecisionState.LOCKED,
+            feasible_candidate_ids=["hist-1301", "hist-1302"],
+            selected_candidate_id="hist-1301",
+        ),
+        RequirementDecision(
+            requirement_group_id="choice", requirement_name="Statistical Methods",
+            state=RequirementDecisionState.CHOICE_REQUIRED,
+            feasible_candidate_ids=["stat-early", "stat-late"],
+        ),
+        RequirementDecision(
+            requirement_group_id="excluded", requirement_name="Technical Elective",
+            state=RequirementDecisionState.EXCLUDED,
+            excluded_candidate_ids=["tech-1"],
+        ),
+        RequirementDecision(
+            requirement_group_id="excluded-noterm", requirement_name="Mystery Elective",
+            state=RequirementDecisionState.EXCLUDED,
+            excluded_candidate_ids=["myst-1"],
+        ),
+        RequirementDecision(
+            requirement_group_id="review", requirement_name="Restricted Elective",
+            state=RequirementDecisionState.ADVISER_REVIEW,
+            excluded_candidate_ids=["rev-1"],
+        ),
+    ]
+    schedule = ScheduleResult(
+        student_id="s", program_id="p",
+        terms=[
+            TermPlan(
+                term_key="2026-Fall", total_credit_hours=3,
+                courses=[ScheduledCourse(
+                    course_code="HIST 1301", credit_hours=3, requirement_group_id="locked",
+                )],
+            ),
+            TermPlan(term_key="2027-Spring", total_credit_hours=0, courses=[]),
+        ],
+    )
+    state = SimpleNamespace(
+        student_id="s", program_id="p", starting_year=2026, starting_season="Fall",
+        max_terms=8, academic_schedule=schedule,
+        academic_selection=RequirementSelectionResult(
+            candidate_sets=candidate_sets, decisions=decisions,
+        ),
+        catalog_by_code={}, raw=SimpleNamespace(
+            groups=[], options=[], option_courses=[], course_records=[],
+            catalog_credit_by_code={},
+        ),
+        prerequisites={},
+        semantic_snapshot=DegreeScheduleSemanticSnapshot(
+            planner_contract_version="1",
+            local_catalog_fingerprint="sha256:" + "a" * 64,
+            reconstruction_date=date(2026, 8, 19),
+        ),
+        active_selections=(),
+    )
+
+    payload = api._degree_schedule_payload(state)
+    resolved = {item["requirement_group_id"]: item["resolved_term_key"] for item in payload["decisions"]}
+
+    # LOCKED joins to the term HIST 1301 actually landed in.
+    assert resolved["locked"] == "2026-Fall"
+    # CHOICE_REQUIRED -> min index 1 from start (2026-Fall) -> one long term on.
+    assert resolved["choice"] == "2027-Spring"
+    # EXCLUDED -> the excluded candidate's index 2 -> two long terms on.
+    assert resolved["excluded"] == "2027-Fall"
+    # EXCLUDED with no resolvable index stays None (frontend drops it).
+    assert resolved["excluded-noterm"] is None
+    # ADVISER_REVIEW / DATA_UNRESOLVED carry no term signal.
+    assert resolved["review"] is None
     json.dumps(payload)
 
 

@@ -102,6 +102,7 @@ from GradusIQ_career.planning.term_view import (
     build_terms_view,
     capture_reconstruction_date,
     fetch_terms_view,
+    term_key,
 )
 from GradusIQ_career.planning.lifecycle import (
     CourseNotEditable,
@@ -3396,12 +3397,78 @@ def _reconstruct_academic_schedule(
     )
 
 
+def _resolve_decision_term_keys(state: _AcademicScheduleState) -> dict[str, str | None]:
+    """Map each requirement decision to the term card it belongs on.
+
+    LOCKED joins to the term its course was actually scheduled into.
+    CHOICE_REQUIRED / EXCLUDED resolve the relevant candidate's
+    completion_term_index -- an ordinal over long terms counted from the plan
+    start -- to a term key, advancing by the same Fall<->Spring cadence
+    schedule_courses itself uses (_next_long_term). AUTO_SELECTED is invisible
+    in the planner UI; ADVISER_REVIEW / DATA_UNRESOLVED carry no term signal
+    (zero feasible candidates by construction), so both resolve to None.
+    """
+
+    def term_key_for_index(index: int) -> str:
+        year, season = state.starting_year, state.starting_season
+        for _ in range(index):
+            year, season = _next_long_term(year, season)
+        return term_key(year, season)
+
+    candidates_by_id: dict[str, Any] = {}
+    for candidate_set in state.academic_selection.candidate_sets:
+        for candidate in (
+            list(candidate_set.feasible_candidates)
+            + list(candidate_set.excluded_candidates)
+        ):
+            candidates_by_id[candidate.candidate_id] = candidate
+
+    def earliest_index(candidate_ids: list[str]) -> int | None:
+        indices = [
+            candidates_by_id[cid].completion_term_index
+            for cid in candidate_ids
+            if cid in candidates_by_id
+            and candidates_by_id[cid].completion_term_index is not None
+        ]
+        return min(indices) if indices else None
+
+    resolved: dict[str, str | None] = {}
+    for decision in state.academic_selection.decisions:
+        group_id = decision.requirement_group_id
+        if decision.state == "LOCKED":
+            selected = candidates_by_id.get(decision.selected_candidate_id or "")
+            selected_codes = set(selected.course_codes) if selected is not None else set()
+            placed: str | None = None
+            for scheduled_term in state.academic_schedule.terms:
+                if any(
+                    course.course_code in selected_codes
+                    or course.requirement_group_id == group_id
+                    for course in scheduled_term.courses
+                ):
+                    placed = scheduled_term.term_key
+                    break
+            resolved[group_id] = placed
+        elif decision.state == "CHOICE_REQUIRED":
+            index = earliest_index(list(decision.feasible_candidate_ids))
+            resolved[group_id] = term_key_for_index(index) if index is not None else None
+        elif decision.state == "EXCLUDED":
+            index = earliest_index(list(decision.excluded_candidate_ids))
+            resolved[group_id] = term_key_for_index(index) if index is not None else None
+        else:
+            resolved[group_id] = None
+    return resolved
+
+
 def _degree_schedule_payload(state: _AcademicScheduleState) -> dict:
     """Add internal academic decision evidence to the public schedule shape."""
     payload = state.academic_schedule.model_dump(mode="json")
     payload["schedule_version"] = build_degree_schedule_version(state)
+    resolved_term_keys = _resolve_decision_term_keys(state)
     payload["decisions"] = [
-        decision.model_dump(mode="json")
+        {
+            **decision.model_dump(mode="json"),
+            "resolved_term_key": resolved_term_keys.get(decision.requirement_group_id),
+        }
         for decision in state.academic_selection.decisions
     ]
     payload["candidate_sets"] = []
