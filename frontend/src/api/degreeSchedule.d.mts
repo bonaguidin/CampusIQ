@@ -87,6 +87,12 @@ export interface RequirementDecision {
   feasible_candidate_ids: string[];
   excluded_candidate_ids: string[];
   selected_candidate_id: string | null;
+  // Phase 3: the term card this decision renders on, resolved server-side.
+  // LOCKED -> the term its course was scheduled into; CHOICE_REQUIRED /
+  // EXCLUDED -> the relevant candidate's completion_term_index mapped to a
+  // term key; null for AUTO_SELECTED / ADVISER_REVIEW / DATA_UNRESOLVED, and
+  // for an EXCLUDED decision whose candidate never joined a feasible plan.
+  resolved_term_key: string | null;
 }
 
 export type PersistedSelectionStatus = 'NONE' | 'APPLIED' | 'RESELECTION_REQUIRED';

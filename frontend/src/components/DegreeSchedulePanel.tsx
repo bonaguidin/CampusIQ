@@ -221,7 +221,17 @@ export function DegreeSchedulePanel({
               <DegreeScheduleTerms terms={schedule.terms} ariaLabel="Academic degree schedule" />
             )
           ) : (
-            <DegreeScheduleYears accessToken={accessToken ?? ''} scheduleTerms={schedule.terms} courses={courses} />
+            <DegreeScheduleYears
+              accessToken={accessToken ?? ''}
+              scheduleTerms={schedule.terms}
+              courses={courses}
+              decisions={schedule.decisions}
+              candidateSets={schedule.candidate_sets}
+              mutation={choiceMutation}
+              onChoose={chooseCandidate}
+              onClear={clearChoice}
+              onRestore={restoreExcluded}
+            />
           )}
 
           <DegreeScheduleDecisionSection schedule={schedule} mutation={choiceMutation}

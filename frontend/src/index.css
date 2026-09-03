@@ -2866,6 +2866,43 @@ a {
   padding: var(--sp-2) 0;
 }
 
+/* Phase 3: LOCKED / CHOICE_REQUIRED / EXCLUDED decisions relocated onto the
+   term column they resolve to. Sits above the planned/suggested/add stack;
+   reuses the decision-card + candidate-path look from the retired standalone
+   section, tightened for the narrower column. */
+.degree-schedule-term-decisions {
+  list-style: none;
+  margin: 0;
+  display: grid;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  border-top: 1px solid var(--line);
+}
+
+.degree-schedule-term-decision {
+  padding: var(--sp-3);
+}
+
+.degree-schedule-decision-card h6 {
+  margin: 0;
+  font-size: var(--text-sm);
+  font-weight: 700;
+  text-wrap: balance;
+}
+
+.degree-schedule-term-decision .degree-schedule-decision-heading > div {
+  display: grid;
+  justify-items: end;
+  gap: 2px;
+}
+
+.degree-schedule-term-decision-codes {
+  margin: var(--sp-2) 0 0;
+  font-family: var(--font-data);
+  font-size: var(--text-sm);
+  overflow-wrap: anywhere;
+}
+
 .career-optimization {
   display: grid;
   gap: var(--sp-4);

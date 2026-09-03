@@ -70,6 +70,61 @@ function sumCredits(courses) {
   return courses.reduce((total, course) => total + (Number(course.credit_hours) || 0), 0)
 }
 
+/** The three decision states Phase 3 relocates onto term cards. Everything
+ * else (AUTO_SELECTED, ADVISER_REVIEW, DATA_UNRESOLVED) is deliberately not
+ * surfaced anywhere in the planner UI -- see planning-docs Phase 3. */
+export const TERM_CARD_DECISION_STATES = ['LOCKED', 'CHOICE_REQUIRED', 'EXCLUDED']
+
+/**
+ * Resolves the decisions the backend serialized (schedule.decisions +
+ * schedule.candidate_sets) into per-term buckets, keyed by the
+ * `resolved_term_key` the server already computed.
+ *
+ *  - Only LOCKED / CHOICE_REQUIRED / EXCLUDED are carried; the rest return
+ *    nothing.
+ *  - A decision with no `resolved_term_key` is dropped entirely (this is the
+ *    documented behaviour for an EXCLUDED candidate that never joined a
+ *    feasible combination, and a fail-safe for the others).
+ *  - `candidates` holds the feasible candidates for LOCKED/CHOICE_REQUIRED
+ *    and the excluded candidate(s) for EXCLUDED, purely for course-code
+ *    display; the action handlers key off requirementGroupId + candidate_id.
+ */
+export function bucketDecisionsByTerm(decisions, candidateSets) {
+  const byTermKey = new Map()
+  if (!Array.isArray(decisions) || decisions.length === 0) return byTermKey
+
+  const candidateById = new Map()
+  for (const set of Array.isArray(candidateSets) ? candidateSets : []) {
+    for (const candidate of [...(set.feasible_candidates ?? []), ...(set.excluded_candidates ?? [])]) {
+      candidateById.set(candidate.candidate_id, candidate)
+    }
+  }
+
+  for (const decision of decisions) {
+    if (!TERM_CARD_DECISION_STATES.includes(decision.state)) continue
+    const termKey = decision.resolved_term_key
+    if (!termKey) continue
+
+    const ids = decision.state === 'EXCLUDED'
+      ? decision.excluded_candidate_ids ?? []
+      : decision.feasible_candidate_ids ?? []
+    const candidates = ids.map((id) => candidateById.get(id)).filter(Boolean)
+
+    const entry = {
+      requirementGroupId: decision.requirement_group_id,
+      requirementName: decision.requirement_name,
+      state: decision.state,
+      selectedCandidateId: decision.selected_candidate_id ?? null,
+      candidates,
+      termKey,
+    }
+    const bucket = byTermKey.get(termKey) ?? []
+    bucket.push(entry)
+    byTermKey.set(termKey, bucket)
+  }
+  return byTermKey
+}
+
 /**
  * Builds the year-tabbed, two-column data this view renders, merging four
  * sources that otherwise never meet:
@@ -89,9 +144,13 @@ function sumCredits(courses) {
  *    (case-insensitive) convention.
  *
  * plannedCourses defaults to [] so callers that predate it (and tests) keep
- * working unchanged.
+ * working unchanged. decisions/candidateSets likewise default to [] -- when
+ * present, LOCKED/CHOICE_REQUIRED/EXCLUDED decisions are bucketed onto the
+ * term card the backend resolved for each (semester.decisions); a decision
+ * whose resolved term falls beyond every scheduled/enrolled year adds that
+ * year to the grid, the same way a scheduler-only term already does.
  */
-export function buildDegreeScheduleYears({ realTerms, scheduleTerms, courseRecords, gradingSchema, today, plannedCourses }) {
+export function buildDegreeScheduleYears({ realTerms, scheduleTerms, courseRecords, gradingSchema, today, plannedCourses, decisions, candidateSets }) {
   const terms = Array.isArray(realTerms) ? realTerms : []
   const schedule = Array.isArray(scheduleTerms) ? scheduleTerms : []
   const records = Array.isArray(courseRecords) ? courseRecords : []
@@ -99,6 +158,7 @@ export function buildDegreeScheduleYears({ realTerms, scheduleTerms, courseRecor
 
   const termsByKey = new Map(terms.map((term) => [term.key, term]))
   const scheduleByKey = new Map(schedule.map((term) => [term.term_key, term]))
+  const decisionsByTermKey = bucketDecisionsByTerm(decisions, candidateSets)
 
   const yearKeys = new Set()
   for (const term of terms) {
@@ -106,7 +166,7 @@ export function buildDegreeScheduleYears({ realTerms, scheduleTerms, courseRecor
     const yearKey = academicYearKey(term.year, term.season)
     if (yearKey !== null) yearKeys.add(yearKey)
   }
-  for (const termKey of scheduleByKey.keys()) {
+  for (const termKey of [...scheduleByKey.keys(), ...decisionsByTermKey.keys()]) {
     const match = /^(\d{4})-(Fall|Spring)$/.exec(termKey)
     if (!match) continue
     yearKeys.add(academicYearKey(Number(match[1]), match[2]))
@@ -146,6 +206,12 @@ export function buildDegreeScheduleYears({ realTerms, scheduleTerms, courseRecor
           })),
           suggestedCourses: [],
           planned: [],
+          // A past/in-progress term is satisfied coursework -- the requirement
+          // pipeline never emits a decision for it (scope_schedule_input's
+          // SATISFIED early-return), and resolved_term_key is always a future
+          // term anyway. Hard-empty here so a decision can never surface on
+          // one of these columns regardless of upstream data.
+          decisions: [],
         }
       }
 
@@ -186,6 +252,7 @@ export function buildDegreeScheduleYears({ realTerms, scheduleTerms, courseRecor
             credit_hours: course.credit_hours,
           })),
         planned: plannedForTerm,
+        decisions: decisionsByTermKey.get(termKey) ?? [],
       }
     }),
   }))

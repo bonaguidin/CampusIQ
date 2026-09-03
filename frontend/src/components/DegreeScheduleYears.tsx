@@ -7,9 +7,15 @@ import {
   removePlannedCourse,
 } from '../api/planning';
 import type { AnalysisIdentity } from '../api/analysisApi.mjs';
+import type {
+  RequirementCandidate,
+  RequirementCandidateSet,
+  RequirementDecision,
+} from '../api/degreeSchedule.mjs';
 import type { CatalogSearchResult, GradingSchema, PlannedCourse, PlanningTerm } from '../lib/termPlanning.mjs';
 import { buildDegreeScheduleYears } from '../lib/degreeScheduleYears.mjs';
-import type { DegreeScheduleSemester, DegreeScheduleYear } from '../lib/degreeScheduleYears.mjs';
+import type { DegreeScheduleSemester, DegreeScheduleTermDecision, DegreeScheduleYear } from '../lib/degreeScheduleYears.mjs';
+import { displayTermKey, formatCredits } from '../lib/degreeSchedulePresentation.mjs';
 import type { TermPlan } from '../api/degreeSchedule.mjs';
 import { CourseSearchAdd } from './CourseSearchAdd';
 
@@ -23,18 +29,166 @@ interface CourseRecordLike {
   status: string;
 }
 
+type DecisionAction = 'choose' | 'change' | 'clear' | 'restore';
+
+export interface DegreeScheduleChoiceMutation {
+  requirementGroupId: string;
+  action: DecisionAction;
+  candidateId?: string;
+}
+
 interface DegreeScheduleYearsProps {
   accessToken: string;
   scheduleTerms: TermPlan[];
   courses: CourseRecordLike[];
+  // Phase 3: the decision evidence the backend serializes alongside the
+  // schedule. LOCKED/CHOICE_REQUIRED/EXCLUDED decisions render on the term
+  // card the backend resolved for each; everything else is ignored here.
+  decisions: RequirementDecision[];
+  candidateSets: RequirementCandidateSet[];
+  mutation: DegreeScheduleChoiceMutation | null;
+  onChoose: (requirementGroupId: string, candidate: RequirementCandidate, action: 'choose' | 'change') => void;
+  onClear: (requirementGroupId: string) => void;
+  onRestore: (requirementGroupId: string) => void;
 }
 
-function SemesterColumn({ semester, identity, busyCode, onAdd, onRemove }: {
+// One grouped academic path inside a decision card. Trimmed from the retired
+// DegreeScheduleDecisionSection's CandidatePath -- same markup/classes so the
+// existing candidate-path CSS carries over unchanged.
+function DecisionCandidatePath({ candidate, optionNumber, requirementName, selected, changing, busy, loading, onChoose }: {
+  candidate: RequirementCandidate;
+  optionNumber: number;
+  requirementName: string;
+  selected: boolean;
+  changing: boolean;
+  busy: boolean;
+  loading: boolean;
+  onChoose: () => void;
+}) {
+  const isMultiCourse = candidate.candidate_courses.length > 1;
+  return (
+    <li className={`degree-schedule-candidate-path${selected ? ' is-selected' : ''}`}>
+      <div className="degree-schedule-candidate-header">
+        <strong>Option {optionNumber}</strong>
+        {selected && <span className="degree-schedule-selected-label">Selected</span>}
+        {isMultiCourse && candidate.additional_credits !== null && <span>{formatCredits(candidate.additional_credits)} total</span>}
+      </div>
+      <ul className="degree-schedule-candidate-courses" aria-label={`Courses included in option ${optionNumber}`}>
+        {candidate.candidate_courses.map((course) => (
+          <li key={course.course_code}>
+            <div><strong>{course.course_code}</strong>{course.title !== null && <span>{course.title}</span>}</div>
+            {course.credits !== null && <span>{formatCredits(course.credits)}</span>}
+          </li>
+        ))}
+      </ul>
+      {!selected && (
+        <div className="degree-schedule-candidate-action">
+          <button type="button" className="btn btn-secondary btn-sm" disabled={busy} aria-busy={loading}
+            aria-label={`${changing ? 'Change to' : 'Choose'} ${candidate.course_codes.join(' and ')} for ${requirementName}`}
+            onClick={onChoose}>
+            {loading ? `${changing ? 'Changing' : 'Choosing'}…` : `${changing ? 'Change to' : 'Choose'} option`}
+          </button>
+        </div>
+      )}
+    </li>
+  );
+}
+
+// A single relocated decision, rendered inside its resolved term column
+// alongside the scheduled/planned/suggested rows.
+function TermDecisionCard({ decision, mutation, onChoose, onClear, onRestore }: {
+  decision: DegreeScheduleTermDecision;
+  mutation: DegreeScheduleChoiceMutation | null;
+  onChoose: (requirementGroupId: string, candidate: RequirementCandidate, action: 'choose' | 'change') => void;
+  onClear: (requirementGroupId: string) => void;
+  onRestore: (requirementGroupId: string) => void;
+}) {
+  const [changing, setChanging] = useState(false);
+  const busy = mutation !== null;
+  const rgid = decision.requirementGroupId;
+  const rowBusy = mutation?.requirementGroupId === rgid;
+  const { requirementName, candidates, selectedCandidateId } = decision;
+
+  if (decision.state === 'LOCKED') {
+    const selected = candidates.find((candidate) => candidate.candidate_id === selectedCandidateId) ?? candidates[0] ?? null;
+    const shown = changing ? candidates : selected ? [selected] : [];
+    return (
+      <li className="degree-schedule-decision-card is-locked degree-schedule-term-decision">
+        <div className="degree-schedule-decision-heading"><h6>{requirementName}</h6><strong>Selected</strong></div>
+        <ol className="degree-schedule-candidate-list">
+          {shown.map((candidate, index) => (
+            <DecisionCandidatePath key={candidate.candidate_id} candidate={candidate} optionNumber={index + 1}
+              requirementName={requirementName} selected={candidate.candidate_id === selectedCandidateId}
+              changing busy={busy} loading={mutation?.candidateId === candidate.candidate_id}
+              onChoose={() => onChoose(rgid, candidate, 'change')} />
+          ))}
+        </ol>
+        <div className="degree-schedule-choice-actions">
+          <button type="button" className="btn btn-secondary btn-sm" disabled={busy}
+            onClick={() => setChanging((value) => !value)}>
+            {changing ? 'Cancel change' : 'Change choice'}
+          </button>
+          <button type="button" className="btn btn-ghost btn-sm" disabled={busy}
+            aria-busy={rowBusy && mutation?.action === 'clear'}
+            onClick={() => onClear(rgid)}>
+            {rowBusy && mutation?.action === 'clear' ? 'Clearing…' : 'Clear choice'}
+          </button>
+        </div>
+      </li>
+    );
+  }
+
+  if (decision.state === 'EXCLUDED') {
+    const codes = [...new Set(candidates.flatMap((candidate) => candidate.course_codes))];
+    return (
+      <li className="degree-schedule-decision-card degree-schedule-term-decision">
+        <div className="degree-schedule-decision-heading">
+          <h6>{requirementName}</h6>
+          <div><strong>Set aside</strong><span>{`Est. ${displayTermKey(decision.termKey)}`}</span></div>
+        </div>
+        {codes.length > 0 && <p className="degree-schedule-term-decision-codes">{codes.join(', ')}</p>}
+        <p>You set this requirement aside. It's still required. The term shown is an estimate of where it would land, not a confirmed placement — add it back to schedule it.</p>
+        <div className="degree-schedule-choice-actions">
+          <button type="button" className="btn btn-secondary btn-sm" disabled={busy}
+            aria-busy={rowBusy && mutation?.action === 'restore'}
+            onClick={() => onRestore(rgid)}>
+            {rowBusy && mutation?.action === 'restore' ? 'Adding…' : 'Add it back'}
+          </button>
+        </div>
+      </li>
+    );
+  }
+
+  // CHOICE_REQUIRED
+  return (
+    <li className="degree-schedule-decision-card degree-schedule-term-decision">
+      <div className="degree-schedule-decision-heading">
+        <h6>{requirementName}</h6>
+        <div><strong>Choice required</strong><span>{`${candidates.length} valid option${candidates.length === 1 ? '' : 's'}`}</span></div>
+      </div>
+      <p>Pick an option to schedule this requirement. This term is an estimate — it may shift depending on which option you choose.</p>
+      <ol className="degree-schedule-candidate-list">
+        {candidates.map((candidate, index) => (
+          <DecisionCandidatePath key={candidate.candidate_id} candidate={candidate} optionNumber={index + 1}
+            requirementName={requirementName} selected={false} changing={false}
+            busy={busy} loading={mutation?.candidateId === candidate.candidate_id}
+            onChoose={() => onChoose(rgid, candidate, 'choose')} />
+        ))}
+      </ol>
+    </li>
+  );
+}
+
+function SemesterColumn({ semester, identity, busyCode, mutation, onAdd, onRemove, onChoose, onClear, onRestore }: {
   semester: DegreeScheduleSemester;
   identity: AnalysisIdentity;
   busyCode: string | null;
+  mutation: DegreeScheduleChoiceMutation | null;
   onAdd: (semester: DegreeScheduleSemester, result: CatalogSearchResult) => void;
   onRemove: (id: string) => void;
+  onChoose: (requirementGroupId: string, candidate: RequirementCandidate, action: 'choose' | 'change') => void;
+  onClear: (requirementGroupId: string) => void;
+  onRestore: (requirementGroupId: string) => void;
 }) {
   const addedCodes = useMemo(
     () => new Set(semester.planned.map((course) => course.course_code.toUpperCase())),
@@ -77,7 +231,22 @@ function SemesterColumn({ semester, identity, busyCode, onAdd, onRemove }: {
 
       {semester.state === 'future' && (
         <>
-          {semester.planned.length === 0 && semester.suggestedCourses.length === 0 && (
+          {semester.decisions.length > 0 && (
+            <ul className="degree-schedule-term-decisions">
+              {semester.decisions.map((decision) => (
+                <TermDecisionCard
+                  key={decision.requirementGroupId}
+                  decision={decision}
+                  mutation={mutation}
+                  onChoose={onChoose}
+                  onClear={onClear}
+                  onRestore={onRestore}
+                />
+              ))}
+            </ul>
+          )}
+
+          {semester.planned.length === 0 && semester.suggestedCourses.length === 0 && semester.decisions.length === 0 && (
             <p className="empty-state">No courses confirmed yet.</p>
           )}
 
@@ -140,7 +309,17 @@ function SemesterColumn({ semester, identity, busyCode, onAdd, onRemove }: {
   );
 }
 
-export function DegreeScheduleYears({ accessToken, scheduleTerms, courses }: DegreeScheduleYearsProps) {
+export function DegreeScheduleYears({
+  accessToken,
+  scheduleTerms,
+  courses,
+  decisions,
+  candidateSets,
+  mutation,
+  onChoose,
+  onClear,
+  onRestore,
+}: DegreeScheduleYearsProps) {
   const [terms, setTerms] = useState<PlanningTerm[]>([]);
   const [gradingSchema, setGradingSchema] = useState<GradingSchema | null>(null);
   const [planned, setPlanned] = useState<PlannedCourse[]>([]);
@@ -184,8 +363,17 @@ export function DegreeScheduleYears({ accessToken, scheduleTerms, courses }: Deg
   const today = useMemo(() => new Date(), []);
 
   const years: DegreeScheduleYear[] = useMemo(
-    () => buildDegreeScheduleYears({ realTerms: terms, scheduleTerms, courseRecords: courses, gradingSchema, today, plannedCourses: planned }),
-    [terms, scheduleTerms, courses, gradingSchema, today, planned],
+    () => buildDegreeScheduleYears({
+      realTerms: terms,
+      scheduleTerms,
+      courseRecords: courses,
+      gradingSchema,
+      today,
+      plannedCourses: planned,
+      decisions,
+      candidateSets,
+    }),
+    [terms, scheduleTerms, courses, gradingSchema, today, planned, decisions, candidateSets],
   );
 
   const handleAddPlanned = useCallback(async (semester: DegreeScheduleSemester, result: CatalogSearchResult) => {
@@ -283,8 +471,12 @@ export function DegreeScheduleYears({ accessToken, scheduleTerms, courses }: Deg
             semester={semester}
             identity={identity}
             busyCode={busyCode}
+            mutation={mutation}
             onAdd={handleAddPlanned}
             onRemove={handleRemovePlanned}
+            onChoose={onChoose}
+            onClear={onClear}
+            onRestore={onRestore}
           />
         ))}
       </div>

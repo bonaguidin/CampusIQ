@@ -1,5 +1,10 @@
 import type { PlanningTerm, GradingSchema, PlannedCourse } from './termPlanning.mjs';
-import type { TermPlan } from '../api/degreeSchedule.mjs';
+import type {
+  RequirementCandidate,
+  RequirementCandidateSet,
+  RequirementDecision,
+  TermPlan,
+} from '../api/degreeSchedule.mjs';
 
 export type SemesterSeason = 'Fall' | 'Spring';
 export type SemesterState = 'past' | 'in_progress' | 'future';
@@ -35,6 +40,21 @@ export interface DegreeSchedulePlannedCourse {
   credit_hours: number | null;
 }
 
+/** Phase 3: a LOCKED / CHOICE_REQUIRED / EXCLUDED decision relocated onto
+ * the term card the backend resolved for it. `candidates` are the feasible
+ * candidates (LOCKED/CHOICE_REQUIRED) or the excluded candidate(s)
+ * (EXCLUDED), carried for course-code display only. */
+export type TermCardDecisionState = 'LOCKED' | 'CHOICE_REQUIRED' | 'EXCLUDED';
+
+export interface DegreeScheduleTermDecision {
+  requirementGroupId: string;
+  requirementName: string;
+  state: TermCardDecisionState;
+  selectedCandidateId: string | null;
+  candidates: RequirementCandidate[];
+  termKey: string;
+}
+
 export interface DegreeScheduleSemester {
   season: SemesterSeason;
   termKey: string;
@@ -43,6 +63,7 @@ export interface DegreeScheduleSemester {
   courses: DegreeScheduleYearCourse[];
   suggestedCourses: DegreeScheduleSuggestedCourse[];
   planned: DegreeSchedulePlannedCourse[];
+  decisions: DegreeScheduleTermDecision[];
 }
 
 export interface DegreeScheduleYear {
@@ -63,6 +84,13 @@ export declare function semesterState(
   realTerm: PlanningTerm | null | undefined,
   today: Date,
 ): SemesterState;
+export declare const TERM_CARD_DECISION_STATES: TermCardDecisionState[];
+
+export declare function bucketDecisionsByTerm(
+  decisions: RequirementDecision[] | null | undefined,
+  candidateSets: RequirementCandidateSet[] | null | undefined,
+): Map<string, DegreeScheduleTermDecision[]>;
+
 export declare function buildDegreeScheduleYears(input: {
   realTerms: PlanningTerm[];
   scheduleTerms: TermPlan[];
@@ -70,4 +98,6 @@ export declare function buildDegreeScheduleYears(input: {
   gradingSchema: GradingSchema | null;
   today: Date;
   plannedCourses?: PlannedCourse[];
+  decisions?: RequirementDecision[];
+  candidateSets?: RequirementCandidateSet[];
 }): DegreeScheduleYear[];

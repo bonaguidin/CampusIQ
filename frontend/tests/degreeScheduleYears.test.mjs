@@ -4,6 +4,7 @@ import assert from 'node:assert/strict'
 import {
   academicYearKey,
   academicYearLabel,
+  bucketDecisionsByTerm,
   buildDegreeScheduleYears,
   formatGradeBadge,
   semesterState,
@@ -342,4 +343,180 @@ test('planned rows never appear on a past or in-progress term card', () => {
   const fall = years[0].semesters[0]
   assert.equal(fall.state, 'past')
   assert.deepEqual(fall.planned, [])
+})
+
+// ── decisions relocated onto term cards (Phase 3) ───────────────────────────
+
+const feasibleCandidate = (over) => ({
+  candidate_id: `cand-${over.candidate_id ?? 'x'}`,
+  requirement_group_id: over.requirement_group_id ?? 'rg',
+  requirement_name: over.requirement_name ?? 'Requirement',
+  course_codes: over.course_codes ?? ['XXX 100'],
+  unresolved_course_codes: [],
+  candidate_courses: (over.course_codes ?? ['XXX 100']).map((code) => ({
+    course_code: code, title: `${code} title`, credits: 3,
+  })),
+  existing_contribution: 0,
+  additional_course_count: (over.course_codes ?? ['XXX 100']).length,
+  additional_credits: 3,
+  academic_feasibility: 'FEASIBLE',
+  completion_term_index: over.completion_term_index ?? 0,
+  limitations: [], source_order: [], exclusion_reasons: [], exclusion_details: [],
+  ...over,
+})
+
+const excludedCandidate = (over) => ({
+  ...feasibleCandidate(over),
+  academic_feasibility: 'EXCLUDED',
+  completion_term_index: null,
+  exclusion_reasons: ['UNSCHEDULABLE'],
+})
+
+const decision = (over) => ({
+  requirement_group_id: over.requirement_group_id,
+  requirement_name: over.requirement_name ?? over.requirement_group_id,
+  state: over.state,
+  feasible_candidate_ids: over.feasible_candidate_ids ?? [],
+  excluded_candidate_ids: over.excluded_candidate_ids ?? [],
+  selected_candidate_id: over.selected_candidate_id ?? null,
+  resolved_term_key: over.resolved_term_key ?? null,
+})
+
+const flatDecisions = (years) =>
+  years.flatMap((year) => year.semesters.flatMap((semester) =>
+    semester.decisions.map((entry) => ({ termKey: semester.termKey, state: semester.state, entry }))))
+
+test('a LOCKED decision lands on the term card matching its resolved_term_key', () => {
+  const hist = feasibleCandidate({ candidate_id: 'hist', requirement_group_id: 'locked', course_codes: ['HIST 1301'] })
+  const histAlt = feasibleCandidate({ candidate_id: 'hist-alt', requirement_group_id: 'locked', course_codes: ['HIST 1302'], completion_term_index: 1 })
+  const years = buildDegreeScheduleYears({
+    realTerms: [], courseRecords: [], gradingSchema: null, today: TODAY,
+    scheduleTerms: [{ term_key: '2027-Spring', total_credit_hours: 3, courses: [{ course_code: 'HIST 1301', credit_hours: 3, requirement_group_id: 'locked', limitations: [] }] }],
+    decisions: [decision({
+      requirement_group_id: 'locked', requirement_name: 'American History', state: 'LOCKED',
+      feasible_candidate_ids: [hist.candidate_id, histAlt.candidate_id], selected_candidate_id: hist.candidate_id,
+      resolved_term_key: '2027-Spring',
+    })],
+    candidateSets: [{ requirement_group_id: 'locked', requirement_name: 'American History', feasible_candidates: [hist, histAlt], excluded_candidates: [] }],
+  })
+  const placed = flatDecisions(years)
+  assert.equal(placed.length, 1)
+  assert.equal(placed[0].termKey, '2027-Spring')
+  assert.equal(placed[0].entry.state, 'LOCKED')
+  assert.equal(placed[0].entry.selectedCandidateId, hist.candidate_id)
+  // both feasible candidates are carried for the "Change choice" affordance
+  assert.deepEqual(placed[0].entry.candidates.map((c) => c.candidate_id), [hist.candidate_id, histAlt.candidate_id])
+})
+
+test('an EXCLUDED decision with a resolvable term renders on that term; one without renders nowhere', () => {
+  const excl = excludedCandidate({ candidate_id: 'excl', requirement_group_id: 'excluded', course_codes: ['CSCE 4901'] })
+  const orphan = excludedCandidate({ candidate_id: 'orphan', requirement_group_id: 'excluded-noterm', course_codes: ['MYST 1000'] })
+  const years = buildDegreeScheduleYears({
+    realTerms: [], scheduleTerms: [], courseRecords: [], gradingSchema: null, today: TODAY,
+    decisions: [
+      decision({ requirement_group_id: 'excluded', requirement_name: 'Technical Elective', state: 'EXCLUDED', excluded_candidate_ids: [excl.candidate_id], resolved_term_key: '2028-Fall' }),
+      decision({ requirement_group_id: 'excluded-noterm', requirement_name: 'Mystery Elective', state: 'EXCLUDED', excluded_candidate_ids: [orphan.candidate_id], resolved_term_key: null }),
+    ],
+    candidateSets: [
+      { requirement_group_id: 'excluded', requirement_name: 'Technical Elective', feasible_candidates: [], excluded_candidates: [excl] },
+      { requirement_group_id: 'excluded-noterm', requirement_name: 'Mystery Elective', feasible_candidates: [], excluded_candidates: [orphan] },
+    ],
+  })
+  const placed = flatDecisions(years)
+  assert.equal(placed.length, 1)
+  assert.equal(placed[0].termKey, '2028-Fall')
+  assert.equal(placed[0].entry.state, 'EXCLUDED')
+  assert.deepEqual(placed[0].entry.candidates.map((c) => c.course_codes).flat(), ['CSCE 4901'])
+  // the orphan never appears anywhere
+  assert.equal(
+    years.flatMap((y) => y.semesters).flatMap((s) => s.decisions).some((d) => d.requirementGroupId === 'excluded-noterm'),
+    false,
+  )
+})
+
+test('a CHOICE_REQUIRED whose options span two terms renders once, on the backend-resolved (earliest) term', () => {
+  const early = feasibleCandidate({ candidate_id: 'early', requirement_group_id: 'choice', course_codes: ['STAT 3011'], completion_term_index: 1 })
+  const late = feasibleCandidate({ candidate_id: 'late', requirement_group_id: 'choice', course_codes: ['STAT 4011'], completion_term_index: 3 })
+  const years = buildDegreeScheduleYears({
+    realTerms: [], scheduleTerms: [], courseRecords: [], gradingSchema: null, today: TODAY,
+    decisions: [decision({
+      requirement_group_id: 'choice', requirement_name: 'Statistical Methods', state: 'CHOICE_REQUIRED',
+      feasible_candidate_ids: [early.candidate_id, late.candidate_id],
+      resolved_term_key: '2027-Spring', // backend already picked min(completion_term_index)
+    })],
+    candidateSets: [{ requirement_group_id: 'choice', requirement_name: 'Statistical Methods', feasible_candidates: [early, late], excluded_candidates: [] }],
+  })
+  const placed = flatDecisions(years)
+  assert.equal(placed.length, 1)
+  assert.equal(placed[0].termKey, '2027-Spring')
+  assert.equal(placed[0].entry.state, 'CHOICE_REQUIRED')
+  assert.deepEqual(placed[0].entry.candidates.map((c) => c.candidate_id), [early.candidate_id, late.candidate_id])
+})
+
+test('ADVISER_REVIEW / DATA_UNRESOLVED / freeform-manual-review produce zero decision output and no extra years', () => {
+  const years = buildDegreeScheduleYears({
+    realTerms: [term({ year: 2026, season: 'Fall', start_date: '2026-08-24', end_date: '2026-12-10' })],
+    scheduleTerms: [], courseRecords: [], gradingSchema: null, today: TODAY,
+    decisions: [
+      decision({ requirement_group_id: 'review', state: 'ADVISER_REVIEW', excluded_candidate_ids: ['r'], resolved_term_key: null }),
+      decision({ requirement_group_id: 'data', state: 'DATA_UNRESOLVED', excluded_candidate_ids: ['d'], resolved_term_key: null }),
+      // even if some upstream bug handed one a term, a non-card state must not render
+      decision({ requirement_group_id: 'review2', state: 'ADVISER_REVIEW', excluded_candidate_ids: ['r2'], resolved_term_key: '2099-Fall' }),
+    ],
+    candidateSets: [],
+  })
+  // no decision anywhere, and 2099 did not spawn a year tab
+  assert.deepEqual(flatDecisions(years), [])
+  assert.equal(years.some((y) => y.yearKey === 2099), false)
+  for (const year of years) for (const semester of year.semesters) assert.deepEqual(semester.decisions, [])
+})
+
+test('bucketDecisionsByTerm ignores AUTO_SELECTED outright', () => {
+  const auto = feasibleCandidate({ candidate_id: 'auto', requirement_group_id: 'auto' })
+  const buckets = bucketDecisionsByTerm(
+    [decision({ requirement_group_id: 'auto', state: 'AUTO_SELECTED', feasible_candidate_ids: [auto.candidate_id], selected_candidate_id: auto.candidate_id, resolved_term_key: '2027-Fall' })],
+    [{ requirement_group_id: 'auto', requirement_name: 'auto', feasible_candidates: [auto], excluded_candidates: [] }],
+  )
+  assert.equal(buckets.size, 0)
+})
+
+test('a decision never lands on a past or in-progress column even if its resolved term collides with one', () => {
+  const past = term({ year: 2025, season: 'Fall', start_date: '2025-08-25', end_date: '2025-12-10' })
+  const current = term({ year: 2026, season: 'Fall', start_date: '2026-08-24', end_date: '2026-12-10' })
+  const cand = feasibleCandidate({ candidate_id: 'x', requirement_group_id: 'choice', course_codes: ['CS 1000'] })
+  const years = buildDegreeScheduleYears({
+    realTerms: [past, current], scheduleTerms: [], courseRecords: [], gradingSchema: null, today: TODAY,
+    decisions: [
+      decision({ requirement_group_id: 'choice', state: 'CHOICE_REQUIRED', feasible_candidate_ids: [cand.candidate_id, 'y'], requirement_name: 'Backdated Choice', resolved_term_key: '2025-Fall' }),
+      decision({ requirement_group_id: 'choice2', state: 'CHOICE_REQUIRED', feasible_candidate_ids: [cand.candidate_id, 'y'], requirement_name: 'Current-term Choice', resolved_term_key: '2026-Fall' }),
+    ],
+    candidateSets: [
+      { requirement_group_id: 'choice', requirement_name: 'Backdated Choice', feasible_candidates: [cand, { ...cand, candidate_id: 'y' }], excluded_candidates: [] },
+      { requirement_group_id: 'choice2', requirement_name: 'Current-term Choice', feasible_candidates: [cand, { ...cand, candidate_id: 'y' }], excluded_candidates: [] },
+    ],
+  })
+  for (const { state } of flatDecisions(years)) assert.equal(state, 'future')
+  const past2025 = years.flatMap((y) => y.semesters).find((s) => s.termKey === '2025-Fall')
+  const current2026 = years.flatMap((y) => y.semesters).find((s) => s.termKey === '2026-Fall')
+  assert.equal(past2025.state, 'past')
+  assert.deepEqual(past2025.decisions, [])
+  assert.notEqual(current2026.state, 'future') // in_progress on TODAY
+  assert.deepEqual(current2026.decisions, [])
+})
+
+test('a decision resolving beyond every scheduled/enrolled year adds that year to the grid', () => {
+  const cand = feasibleCandidate({ candidate_id: 'x', requirement_group_id: 'choice', course_codes: ['CS 4000'], completion_term_index: 4 })
+  const years = buildDegreeScheduleYears({
+    realTerms: [term({ year: 2026, season: 'Fall', start_date: '2026-08-24', end_date: '2026-12-10' })],
+    scheduleTerms: [], courseRecords: [], gradingSchema: null, today: TODAY,
+    decisions: [decision({
+      requirement_group_id: 'choice', requirement_name: 'Deep Elective', state: 'CHOICE_REQUIRED',
+      feasible_candidate_ids: [cand.candidate_id, 'y'], resolved_term_key: '2028-Fall',
+    })],
+    candidateSets: [{ requirement_group_id: 'choice', requirement_name: 'Deep Elective', feasible_candidates: [cand, { ...cand, candidate_id: 'y' }], excluded_candidates: [] }],
+  })
+  assert.equal(years.some((y) => y.yearKey === 2028), true)
+  const fall2028 = years.flatMap((y) => y.semesters).find((s) => s.termKey === '2028-Fall')
+  assert.equal(fall2028.decisions.length, 1)
+  assert.equal(fall2028.decisions[0].requirementName, 'Deep Elective')
 })
