@@ -2862,6 +2862,14 @@ class PlannedCourseRequest(BaseModel):
     `catalog_course_id` is accepted but never trusted for display -- title and
     credit_hours are taken from this body, which is what the student saw in the
     search result they clicked.
+
+    `force_planned` is set only by the year-view "add a course" action, which
+    offers planning strictly for terms it renders as 'future'. It guarantees a
+    planned_courses row even if the term is already inside its 30-day
+    activation window -- `add_course_respecting_activation`'s straight-to-
+    course_records promotion is intentional for TermPlanner and must not fire
+    for this caller. Default False; TermPlanner never sends it, so its
+    behavior is unchanged.
     """
 
     course_code: str
@@ -2871,6 +2879,7 @@ class PlannedCourseRequest(BaseModel):
     title: str | None = None
     credit_hours: float | None = None
     catalog_course_id: str | None = None
+    force_planned: bool = False
 
 
 @router.get(
@@ -2920,6 +2929,9 @@ def post_me_planned_course(request: Request, body: PlannedCourseRequest) -> dict
     that has already activated must never pass through a brief "planned"
     state, so this route decides which table to write to before writing
     anything.
+
+    Exception: body.force_planned (year-view add) skips that decision and
+    always writes a planned_courses row. See PlannedCourseRequest.
     """
     client = _session_client(request)
     student_id = _resolve_session_student_id(client)
@@ -2935,18 +2947,31 @@ def post_me_planned_course(request: Request, body: PlannedCourseRequest) -> dict
                 body.season,
                 label=body.term_label,
             )
-            result = add_course_respecting_activation(
-                client,
-                student_id,
-                institution_id,
-                term_id=term_id,
-                year=body.year,
-                season=body.season,
-                course_code=body.course_code,
-                title=body.title,
-                credit_hours=body.credit_hours,
-                catalog_course_id=body.catalog_course_id,
-            )
+            if body.force_planned:
+                planned = add_planned(
+                    client,
+                    student_id,
+                    institution_id,
+                    course_code=body.course_code,
+                    term_id=term_id,
+                    title=body.title,
+                    credit_hours=body.credit_hours,
+                    catalog_course_id=body.catalog_course_id,
+                )
+                result = planned.to_dict()
+            else:
+                result = add_course_respecting_activation(
+                    client,
+                    student_id,
+                    institution_id,
+                    term_id=term_id,
+                    year=body.year,
+                    season=body.season,
+                    course_code=body.course_code,
+                    title=body.title,
+                    credit_hours=body.credit_hours,
+                    catalog_course_id=body.catalog_course_id,
+                )
         else:
             planned = add_planned(
                 client,
