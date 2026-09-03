@@ -1622,6 +1622,97 @@ def test_no_expected_graduation_returns_200_skipped(client, monkeypatch):
     assert body["missing_fields"][0]["path"] == "students.expected_graduation"
 
 
+class _MissingRelationError(Exception):
+    """Shaped like a PostgREST schema-cache miss for a table that isn't there."""
+
+    def __init__(self):
+        super().__init__(
+            "{'message': \"Could not find the table "
+            "'public.degree_requirement_exclusions' in the schema cache\", "
+            "'code': 'PGRST205'}"
+        )
+        self.code = "PGRST205"
+        self.message = (
+            "Could not find the table 'public.degree_requirement_exclusions' "
+            "in the schema cache"
+        )
+
+
+class _ExclusionsTableMissingClient(FakeClient):
+    """FakeClient that raises on any query against degree_requirement_exclusions,
+    reproducing the state of a database the exclusions migration hasn't reached."""
+
+    def table(self, name):
+        if name == "degree_requirement_exclusions":
+            class _Raising:
+                def select(self, *a, **k):
+                    return self
+
+                def eq(self, *a, **k):
+                    return self
+
+                def execute(self):
+                    raise _MissingRelationError()
+
+            return _Raising()
+        return super().table(name)
+
+
+def test_load_requirement_exclusion_group_ids_degrades_when_table_missing():
+    from GradusIQ_career.planning.requirement_exclusions import (
+        load_requirement_exclusion_group_ids,
+    )
+
+    client = _ExclusionsTableMissingClient({})
+    assert load_requirement_exclusion_group_ids(client, "stu", "prog") == ()
+
+
+def test_load_requirement_exclusion_group_ids_reraises_unrelated_error():
+    from GradusIQ_career.planning.requirement_exclusions import (
+        load_requirement_exclusion_group_ids,
+    )
+
+    class _AuthError(Exception):
+        pass
+
+    class _AuthFailingClient(FakeClient):
+        def table(self, name):
+            class _Raising:
+                def select(self, *a, **k):
+                    return self
+
+                def eq(self, *a, **k):
+                    return self
+
+                def execute(self):
+                    raise _AuthError("JWT expired")
+
+            return _Raising()
+
+    with pytest.raises(_AuthError):
+        load_requirement_exclusion_group_ids(_AuthFailingClient({}), "stu", "prog")
+
+
+# Defense-in-depth: the exclusions migration can be written, tested, and
+# shipped in code while its schema dependency stays unapplied (this exact
+# failure mode took every schedule route to a 502 on 2026-09-02). A missing
+# degree_requirement_exclusions relation must degrade to "no exclusions", not
+# propagate an uncaught error out of _reconstruct_academic_schedule.
+def test_missing_exclusions_table_still_returns_200_schedule(client, monkeypatch):
+    tables, student_id, _program_id = _schedule_tables()
+    fake = _ExclusionsTableMissingClient(tables)
+    monkeypatch.setattr(api, "build_client_for_token", lambda token: fake)
+    _freeze_today(monkeypatch, date(2026, 8, 19))
+
+    response = client.get(URL, headers={"Authorization": "Bearer good-token"})
+    assert response.status_code == 200
+    body = response.json()
+    assert body["status"] == "SCHEDULED"
+    assert body["student_id"] == student_id
+    # active_exclusions treated as empty -> nothing set aside in the payload
+    assert body["exclusion_state"]["excluded_group_ids"] == []
+
+
 # 4. Over-constrained: an expected_graduation in the immediate past relative
 #    to the starting term forces max_terms down to 0 against a non-empty
 #    course list -- schedule_courses()'s own over-constrained detection
