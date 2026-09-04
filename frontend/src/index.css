@@ -2731,10 +2731,44 @@ a {
    one candidate there, so the grouping box distinguished nothing). Undo the
    surface-tint background .degree-schedule-candidate-courses normally gets
    from sitting inside a .degree-schedule-candidate-path box, and restore
-   the gap the removed .degree-schedule-candidate-list ol used to supply. */
-.degree-schedule-decision-card > .degree-schedule-candidate-courses {
+   the gap the removed .degree-schedule-candidate-list ol used to supply.
+   Also applies to .degree-schedule-locked-decision -- the LOCKED
+   non-changing card's boxless wrapper (see below) -- since it renders the
+   same course list without the .degree-schedule-decision-card ancestor. */
+.degree-schedule-decision-card > .degree-schedule-candidate-courses,
+.degree-schedule-locked-decision > .degree-schedule-candidate-courses {
   margin-top: var(--sp-3);
   background: none;
+}
+
+/* LOCKED, non-changing decision card: full visual parity with the Fall/
+   planned plain rows it sits beside -- no border, no background (it
+   deliberately does NOT use .degree-schedule-decision-card), no heading at
+   all (that requirement-name signal moved to the term header's "Required
+   courses" note -- see .degree-schedule-semester-header span below), just
+   the .degree-schedule-term-decision padding it's paired with in JSX. */
+
+/* Plain text-style "Change choice" / "Clear choice" actions for the
+   non-changing LOCKED card -- no border/background convention existed
+   elsewhere in the codebase for this (checked: .btn-ghost still renders a
+   border and hover tint), so this is a new, minimal link-style button. */
+.degree-schedule-text-action {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.degree-schedule-text-action:hover:not(:disabled) {
+  text-decoration: underline;
+}
+
+.degree-schedule-text-action:disabled {
+  color: var(--muted);
+  cursor: default;
 }
 
 /* Degree Schedule: year tabs (reuses .academic-tabs/.academic-tab, the
