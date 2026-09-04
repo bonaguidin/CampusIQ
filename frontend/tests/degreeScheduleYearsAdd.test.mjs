@@ -140,7 +140,11 @@ test('the Added badge is defined in the filled-tint family, achromatic (neutral)
 
 test('a decision-option course row uses the exact .degree-schedule-course-row shape, badge stacked below', async () => {
   const years = await readFile(YEARS, 'utf8')
-  const path = years.slice(years.indexOf('degree-schedule-candidate-courses'))
+  // The per-course row markup lives in the shared CandidateCourseRows helper
+  // now -- reused by DecisionCandidatePath's "Option N" box and a LOCKED
+  // card's boxless course list alike -- rather than being inlined at each
+  // .degree-schedule-candidate-courses call site.
+  const path = years.slice(years.indexOf('function CandidateCourseRows'))
   // Same row div as the Fall / planned lists: code+title span, then credits span.
   assert.match(path, /<div className="degree-schedule-course-row">\s*<span>\s*<strong>\{course\.course_code\}<\/strong>\s*\{course\.title && <small>\{course\.title\}<\/small>\}\s*<\/span>/)
   // Real credits by default; the fallback is the genuine-exception path.

@@ -2726,6 +2726,17 @@ a {
   font-size: var(--text-sm);
 }
 
+/* A LOCKED, not-changing decision card renders its course rows directly
+   inside the outer card -- no bordered "Option N" box (there's only ever
+   one candidate there, so the grouping box distinguished nothing). Undo the
+   surface-tint background .degree-schedule-candidate-courses normally gets
+   from sitting inside a .degree-schedule-candidate-path box, and restore
+   the gap the removed .degree-schedule-candidate-list ol used to supply. */
+.degree-schedule-decision-card > .degree-schedule-candidate-courses {
+  margin-top: var(--sp-3);
+  background: none;
+}
+
 /* Degree Schedule: year tabs (reuses .academic-tabs/.academic-tab, the
    segmented underline control from AcademicSnapshot) + two semester
    columns per year. */

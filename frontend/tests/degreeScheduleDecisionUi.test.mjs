@@ -167,6 +167,29 @@ test('Degree Schedule decisions render on their resolved term card; non-card sta
   assert.equal(await fall2027.getByRole('button', { name: 'Change choice' }).count(), 1)
   assert.equal(await fall2027.getByRole('button', { name: 'Clear choice' }).count(), 1)
 
+  // ── A LOCKED card has exactly one candidate, already chosen -- the nested
+  //    "Option 1" box was pure redundancy and is gone. Its course rows
+  //    render directly inside the card, with no bordered wrapper. ─────────
+  assert.equal(await fall2027.getByText('Option 1').count(), 0)
+  assert.equal(await fall2027.locator('.degree-schedule-candidate-path').count(), 0)
+  const histRow = fall2027.locator('.degree-schedule-candidate-courses > li').filter({ hasText: 'HIST 1301' })
+  await histRow.first().waitFor()
+  assert.equal(await histRow.locator('.degree-schedule-course-row').count(), 1)
+  assert.equal(await histRow.getByText('3 credits').count(), 1)
+  assert.equal(await histRow.getByText('Planned course').count(), 1)
+
+  // ── "Change choice" on a LOCKED card flips to a genuine multi-candidate
+  //    menu (this fixture's American History group has 2 feasible
+  //    candidates) -- that view still needs the "Option N" box to
+  //    distinguish them, the same reason CHOICE_REQUIRED keeps it. ────────
+  await fall2027.getByRole('button', { name: 'Change choice' }).click()
+  assert.equal(await fall2027.getByText('Option 1').count(), 1)
+  assert.equal(await fall2027.getByText('Option 2').count(), 1)
+  assert.equal(await fall2027.locator('.degree-schedule-candidate-path').count(), 2)
+  await fall2027.getByRole('button', { name: 'Cancel change' }).click()
+  assert.equal(await fall2027.getByText('Option 1').count(), 0)
+  assert.equal(await fall2027.locator('.degree-schedule-candidate-path').count(), 0)
+
   const spring2028 = page.getByRole('region', { name: 'Spring 2028' })
   await spring2028.getByText('Statistical Methods').waitFor()
   assert.equal(await spring2028.getByText('Choice required').count(), 1)
@@ -177,6 +200,14 @@ test('Degree Schedule decisions render on their resolved term card; non-card sta
   assert.equal(await spring2028.getByText('CS 3377', { exact: true }).count(), 1)
   assert.equal(await spring2028.getByRole('button', { name: /Choose ABC 123 for Statistical Methods/ }).count(), 1)
   assert.equal(await spring2028.getByRole('button', { name: /Choose CEE 2302 and CS 3377 for Statistical Methods/ }).count(), 1)
+
+  // ── CHOICE_REQUIRED is untouched: 2 genuinely distinct candidates still
+  //    render as 2 separate bordered "Option N" boxes -- that grouping is
+  //    load-bearing there (it's the only signal for which courses belong to
+  //    which valid combination). ──────────────────────────────────────────
+  assert.equal(await spring2028.locator('.degree-schedule-candidate-path').count(), 2)
+  assert.equal(await spring2028.getByText('Option 1').count(), 1)
+  assert.equal(await spring2028.getByText('Option 2').count(), 1)
 
   // ── A decision-option course row is the shared .degree-schedule-course-row
   //    shape: real title + credits visible, "Planned course" badge stacked

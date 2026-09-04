@@ -9,6 +9,7 @@ import {
 } from '../api/planning';
 import type { AnalysisIdentity } from '../api/analysisApi.mjs';
 import type {
+  CandidateCourseDisplay,
   RequirementCandidate,
   RequirementCandidateSet,
   RequirementDecision,
@@ -63,6 +64,40 @@ interface DegreeScheduleYearsProps {
   onRestore: (requirementGroupId: string) => void;
 }
 
+// The per-course rows shared by a decision option's box (DecisionCandidatePath,
+// below) and a LOCKED card's bare course list (TermDecisionCard) -- identical
+// row shape either way, only the surrounding wrapper (bordered "Option N" box
+// vs. no box at all) differs.
+function CandidateCourseRows({ courses }: { courses: CandidateCourseDisplay[] }) {
+  return (
+    <>
+      {courses.map((course) => (
+        <li key={course.course_code}>
+          {/* The exact .degree-schedule-course-row shape the Fall/planned
+              lists use, so a decision option's courses read as the same
+              kind of row. With the backend tree-traversal fix (a3c4746)
+              real title + credits arrive by default; 'Credits unavailable'
+              is now the genuine-exception path (an unresolved course code),
+              not the common case -- if it fires constantly, something
+              upstream is still wrong. */}
+          <div className="degree-schedule-course-row">
+            <span>
+              <strong>{course.course_code}</strong>
+              {course.title && <small>{course.title}</small>}
+            </span>
+            <span>{course.credits !== null ? `${course.credits} credits` : 'Credits unavailable'}</span>
+          </div>
+          {/* Prospective -- these courses enter the plan only if this option
+              is chosen -- so the same marker a confirmed planned row carries,
+              in the institution accent rather than --added's achromatic grey.
+              Sibling of the row div (stacked below), matching the Fall list. */}
+          <span className="degree-schedule-badge degree-schedule-badge--decision">Planned course</span>
+        </li>
+      ))}
+    </>
+  );
+}
+
 // One grouped academic path inside a decision card. Trimmed from the retired
 // DegreeScheduleDecisionSection's CandidatePath -- same markup/classes so the
 // existing candidate-path CSS carries over unchanged.
@@ -85,29 +120,7 @@ function DecisionCandidatePath({ candidate, optionNumber, requirementName, selec
         {isMultiCourse && candidate.additional_credits !== null && <span>{formatCredits(candidate.additional_credits)} total</span>}
       </div>
       <ul className="degree-schedule-candidate-courses" aria-label={`Courses included in option ${optionNumber}`}>
-        {candidate.candidate_courses.map((course) => (
-          <li key={course.course_code}>
-            {/* The exact .degree-schedule-course-row shape the Fall/planned
-                lists use, so a decision option's courses read as the same
-                kind of row. With the backend tree-traversal fix (a3c4746)
-                real title + credits arrive by default; 'Credits unavailable'
-                is now the genuine-exception path (an unresolved course code),
-                not the common case -- if it fires constantly, something
-                upstream is still wrong. */}
-            <div className="degree-schedule-course-row">
-              <span>
-                <strong>{course.course_code}</strong>
-                {course.title && <small>{course.title}</small>}
-              </span>
-              <span>{course.credits !== null ? `${course.credits} credits` : 'Credits unavailable'}</span>
-            </div>
-            {/* Prospective -- these courses enter the plan only if this option
-                is chosen -- so the same marker a confirmed planned row carries,
-                in the institution accent rather than --added's achromatic grey.
-                Sibling of the row div (stacked below), matching the Fall list. */}
-            <span className="degree-schedule-badge degree-schedule-badge--decision">Planned course</span>
-          </li>
-        ))}
+        <CandidateCourseRows courses={candidate.candidate_courses} />
       </ul>
       {!selected && (
         <div className="degree-schedule-candidate-action">
@@ -139,18 +152,41 @@ function TermDecisionCard({ decision, mutation, onChoose, onClear, onRestore }: 
 
   if (decision.state === 'LOCKED') {
     const selected = candidates.find((candidate) => candidate.candidate_id === selectedCandidateId) ?? candidates[0] ?? null;
-    const shown = changing ? candidates : selected ? [selected] : [];
+    const isMultiCourse = (selected?.candidate_courses.length ?? 0) > 1;
     return (
       <li className="degree-schedule-decision-card is-locked degree-schedule-term-decision">
-        <div className="degree-schedule-decision-heading"><h6>{requirementName}</h6><strong>Selected</strong></div>
-        <ol className="degree-schedule-candidate-list">
-          {shown.map((candidate, index) => (
-            <DecisionCandidatePath key={candidate.candidate_id} candidate={candidate} optionNumber={index + 1}
-              requirementName={requirementName} selected={candidate.candidate_id === selectedCandidateId}
-              changing busy={busy} loading={mutation?.candidateId === candidate.candidate_id}
-              onChoose={() => onChoose(rgid, candidate, 'change')} />
-          ))}
-        </ol>
+        <div className="degree-schedule-decision-heading">
+          <h6>{requirementName}</h6>
+          <div>
+            <strong>Selected</strong>
+            {/* Only the single-candidate (non-changing) view: while changing,
+                candidates.length is a real menu of alternatives -- same shape
+                as CHOICE_REQUIRED -- so each option's own header already
+                shows its total via DecisionCandidatePath, and repeating it up
+                here would be the redundancy, not the fix. */}
+            {!changing && isMultiCourse && selected?.additional_credits != null && (
+              <span>{formatCredits(selected.additional_credits)} total</span>
+            )}
+          </div>
+        </div>
+        {changing ? (
+          <ol className="degree-schedule-candidate-list">
+            {candidates.map((candidate, index) => (
+              <DecisionCandidatePath key={candidate.candidate_id} candidate={candidate} optionNumber={index + 1}
+                requirementName={requirementName} selected={candidate.candidate_id === selectedCandidateId}
+                changing busy={busy} loading={mutation?.candidateId === candidate.candidate_id}
+                onChoose={() => onChoose(rgid, candidate, 'change')} />
+            ))}
+          </ol>
+        ) : selected ? (
+          // A LOCKED, not-changing card has exactly one candidate -- the
+          // "Option 1" heading and its bordered box existed only to
+          // distinguish between candidates, which there's nothing to do here.
+          // Course rows render directly inside the outer card instead.
+          <ul className="degree-schedule-candidate-courses" aria-label={`Courses satisfying ${requirementName}`}>
+            <CandidateCourseRows courses={selected.candidate_courses} />
+          </ul>
+        ) : null}
         <div className="degree-schedule-choice-actions">
           <button type="button" className="btn btn-secondary btn-sm" disabled={busy}
             onClick={() => setChanging((value) => !value)}>
