@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   TERM_STATUS_LABELS,
   currentGradeOptions,
+  existingCourseStatusIndex,
   finalGradeOptions,
   formatTermDates,
   isTermActivated,
@@ -12,6 +13,7 @@ import {
 } from '../lib/termPlanning.mjs';
 import type {
   CatalogSearchResult,
+  CrossListingMap,
   GradingSchema,
   PendingFinalGrade,
   PlannedCourse,
@@ -20,6 +22,7 @@ import type {
 import {
   addPlannedCourse,
   editInProgressCourse,
+  fetchCrossListings,
   fetchGradingSchema,
   fetchPendingFinalGrades,
   fetchPlannedCourses,
@@ -87,6 +90,7 @@ export function TermPlanner({ identity, courses, onCourseRecordsChanged }: TermP
   const [busyCode, setBusyCode] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [gradingSchema, setGradingSchema] = useState<GradingSchema | null>(null);
+  const [crossListings, setCrossListings] = useState<CrossListingMap>({});
   const [pendingGrades, setPendingGrades] = useState<PendingFinalGrade[]>([]);
   const [finalizeDrafts, setFinalizeDrafts] = useState<Record<string, string>>({});
   const [finalizeBusyId, setFinalizeBusyId] = useState<string | null>(null);
@@ -136,6 +140,26 @@ export function TermPlanner({ identity, courses, onCourseRecordsChanged }: TermP
 
   const currentGradeLetters = useMemo(() => currentGradeOptions(gradingSchema), [gradingSchema]);
   const finalGradeLetters = useMemo(() => finalGradeOptions(gradingSchema), [gradingSchema]);
+
+  // Same "load once" shape as gradingSchema above. Powers CourseSearchAdd's
+  // cross-listing-aware duplicate check: a course already in progress,
+  // completed, or planned under its OTHER departmental code must not look
+  // freely addable just because the exact searched code is new.
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      const result = await fetchCrossListings(identity);
+      if (!cancelled) setCrossListings(result.crossListings);
+    })();
+    return () => { cancelled = true; };
+  }, [identity]);
+
+  // Student-wide (every term, not just the one selected in the dropdown):
+  // see existingCourseStatusIndex.
+  const existingCourseIndex = useMemo(
+    () => existingCourseStatusIndex(courses, planned),
+    [courses, planned],
+  );
 
   // "How did last semester go?" -- confirmed courses from an ended term still
   // sitting at in_progress. Loaded once on mount alongside planned courses;
@@ -496,6 +520,8 @@ export function TermPlanner({ identity, courses, onCourseRecordsChanged }: TermP
           <CourseSearchAdd
             identity={identity}
             alreadyAddedCodes={alreadyPlanned}
+            crossListings={crossListings}
+            existingCourseIndex={existingCourseIndex}
             onAdd={(result) => { void handleAdd(result); }}
             busyCode={busyCode}
             hint={willActivateOnAdd ? (

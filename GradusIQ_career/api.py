@@ -116,6 +116,7 @@ from GradusIQ_career.planning.lifecycle import (
 from GradusIQ_career.action_planning import build_action_plan, dependency_order
 from GradusIQ_career.course_discovery.agent import CourseDiscoveryAgent
 from GradusIQ_career.course_discovery.catalog import LocalCatalogRepository
+from GradusIQ_career.course_discovery.cross_listing import cross_listing_map
 from GradusIQ_career.degree_schedule_semantics import (
     DegreeScheduleSemanticSnapshot,
     build_degree_schedule_semantic_snapshot,
@@ -3031,6 +3032,36 @@ def get_me_catalog_search(request: Request, q: str = "", limit: int = 20) -> dic
         raise HTTPException(status_code=502, detail=str(exc)) from exc
 
     return {"results": [row.to_dict() for row in results], "query": q}
+
+
+@router.get(
+    "/api/v2/student/me/catalog/cross-listings",
+    dependencies=[Depends(authorize_proxy_request)],
+)
+def get_me_catalog_cross_listings(request: Request) -> dict:
+    """code -> its cross-listed partner codes, for the caller's home
+    institution's whole catalog -- one small bulk read, fetched once and
+    cached client-side (mirroring /me/grading-schema), not a round trip per
+    search keystroke or per already-added code.
+
+    Backed by LocalCatalogRepository (the in-process JSON catalog that
+    carries a real cross_listings field), not course_catalog -- the Supabase
+    table CourseSearchAdd's own search hits has no such column. See
+    cross_listing.py's module comment for why a from-scratch resolver was
+    built rather than reusing canonical_course_code or the prerequisite
+    parser's slash-chain regex.
+    """
+    client = _session_client(request)
+    student_id = _resolve_session_student_id(client)
+    institution_id = _home_institution_id(client, student_id)
+
+    institution_rows = client.table("institutions").select("name").eq("id", institution_id).execute().data
+    institution_name = institution_rows[0]["name"] if institution_rows else None
+    catalog_institution = resolve_institution(institution_name)
+    if catalog_institution is None:
+        return {"cross_listings": {}}
+
+    return {"cross_listings": cross_listing_map(LocalCatalogRepository(), catalog_institution)}
 
 
 @router.get(

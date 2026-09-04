@@ -6351,6 +6351,14 @@ a {
   font-size: 0.875rem;
 }
 
+/* The cross-listing-alias note ("Already in progress as CSCE 222.") --
+   inherits the muted/small treatment above (it is itself a <small>), plus
+   italics so it reads as an explanation of why Add is disabled, not as a
+   second description line under the title. */
+.term-search-result-note {
+  font-style: italic;
+}
+
 @media (max-width: 640px) {
   .term-planner-header {
     align-items: flex-start;

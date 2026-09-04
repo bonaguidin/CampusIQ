@@ -165,3 +165,50 @@ test('decision-option rows resolve the "Planned course" badge to --accent, not t
   assert.match(badge.slice(0, 200), /background: var\(--accent-tint\)/)
   assert.match(badge.slice(0, 200), /font-size: var\(--text-xs\)/)
 })
+
+// ── cross-listing-aware duplicate detection in the add-course search ───────
+
+test('CourseSearchAdd computes a cross-listed match only when the exact code is not already added', async () => {
+  const search = await readFile(SEARCH, 'utf8')
+  assert.match(search, /import \{[\s\S]*?findCrossListedMatch[\s\S]*?\} from '\.\.\/lib\/termPlanning\.mjs'/)
+  // Gated on !isAdded: an identical code keeps the existing "Planned"
+  // treatment untouched, this check only covers the alias case.
+  assert.match(
+    search,
+    /const crossListedMatch = !isAdded && existingCourseIndex\s*\n\s*\? findCrossListedMatch\(result\.code, crossListings, existingCourseIndex\)\s*\n\s*: null;/,
+  )
+})
+
+test('CourseSearchAdd shows a specific note and disables Add for a cross-listed match, without touching the exact-match "Planned" case', async () => {
+  const search = await readFile(SEARCH, 'utf8')
+  // The note names the matched code and its status -- not a silent disable.
+  assert.match(
+    search,
+    /\{`Already \$\{STATUS_PHRASE\[crossListedMatch\.status\]\} as \$\{crossListedMatch\.code\}\.`\}/,
+  )
+  assert.match(search, /className="term-search-result-note"/)
+  // Both isAdded and a cross-listed match disable Add; only isAdded keeps
+  // the pre-existing "Planned" button label.
+  assert.match(search, /disabled=\{isBlocked \|\| busyCode === result\.code\}/)
+  assert.match(
+    search,
+    /isAdded \? 'Planned' : crossListedMatch \? 'Added' : busyCode === result\.code \? 'Adding…' : 'Add'/,
+  )
+})
+
+test('EditCoursesDialog and TermPlanner both thread crossListings/existingCourseIndex through to CourseSearchAdd', async () => {
+  const [dialog, planner] = await Promise.all([readFile(DIALOG, 'utf8'), readFile(TERM_PLANNER, 'utf8')])
+  for (const source of [dialog, planner]) {
+    assert.match(source, /crossListings=\{crossListings\}/)
+    assert.match(source, /existingCourseIndex=\{existingCourseIndex\}/)
+  }
+})
+
+test('DegreeScheduleYears fetches cross-listings once and feeds the same student-wide index to every term column', async () => {
+  const years = await readFile(YEARS, 'utf8')
+  assert.match(years, /fetchCrossListings\(identity\)/)
+  assert.match(years, /existingCourseStatusIndex\(courses, planned\)/)
+  // Also threaded into buildDegreeScheduleYears, for the suggested-vs-planned
+  // reconciliation (Part 4) -- not just the add-time check (Part 2).
+  assert.match(years, /crossListings,\s*\n\s*\}\),/)
+})

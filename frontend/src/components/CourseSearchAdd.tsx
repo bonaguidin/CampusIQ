@@ -2,11 +2,23 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import {
   MIN_SEARCH_LENGTH,
   SEARCH_DEBOUNCE_MS,
+  findCrossListedMatch,
   formatCredits,
 } from '../lib/termPlanning.mjs';
-import type { CatalogSearchResult } from '../lib/termPlanning.mjs';
+import type {
+  CatalogSearchResult,
+  CrossListingMap,
+  ExistingCourseStatus,
+} from '../lib/termPlanning.mjs';
 import { searchCatalog } from '../api/planning';
 import type { AnalysisIdentity } from '../api/analysisApi.mjs';
+
+/** "Already in progress as CSCE 222.", etc. -- see findCrossListedMatch. */
+const STATUS_PHRASE: Record<ExistingCourseStatus, string> = {
+  in_progress: 'in progress',
+  completed: 'completed',
+  planned: 'planned',
+};
 
 /**
  * The debounced catalog search + results list, extracted verbatim from
@@ -22,6 +34,8 @@ import type { AnalysisIdentity } from '../api/analysisApi.mjs';
 export function CourseSearchAdd({
   identity,
   alreadyAddedCodes,
+  crossListings = {},
+  existingCourseIndex,
   onAdd,
   busyCode,
   inputId = 'course-search',
@@ -32,6 +46,22 @@ export function CourseSearchAdd({
   identity: AnalysisIdentity;
   /** Uppercased course codes already added to this term, for disabling Add. */
   alreadyAddedCodes: Set<string>;
+  /**
+   * code -> its cross-listed partner codes (GET /me/catalog/cross-listings),
+   * paired with existingCourseIndex below to catch "the student already has
+   * this course under its OTHER department code" -- a case alreadyAddedCodes'
+   * exact-string match cannot see. Both optional: a caller with nothing to
+   * check against (e.g. not yet loaded) simply gets no alias matches, same
+   * as before this check existed.
+   */
+  crossListings?: CrossListingMap;
+  /**
+   * Every code the student already has evidence for, student-wide (not
+   * term-scoped like alreadyAddedCodes) -- course_records rows
+   * (in_progress/completed, any term) and planned_courses rows (any term).
+   * See existingCourseStatusIndex.
+   */
+  existingCourseIndex?: Map<string, ExistingCourseStatus>;
   onAdd: (result: CatalogSearchResult) => void;
   busyCode: string | null;
   inputId?: string;
@@ -92,21 +122,33 @@ export function CourseSearchAdd({
         <ul className="term-search-results">
           {results.map((result) => {
             const isAdded = alreadyAddedCodes.has(result.code.toUpperCase());
+            // Only checked when the exact code is not already the match --
+            // an identical code takes the existing, unchanged "Planned"
+            // treatment below, no note needed for that case.
+            const crossListedMatch = !isAdded && existingCourseIndex
+              ? findCrossListedMatch(result.code, crossListings, existingCourseIndex)
+              : null;
+            const isBlocked = isAdded || crossListedMatch !== null;
             const credits = formatCredits(result.credit_min, result.credit_max);
             return (
               <li className="term-search-result" key={result.id}>
                 <span className="term-search-result-main">
                   <strong>{result.code}</strong>
                   <small>{result.title}</small>
+                  {crossListedMatch && (
+                    <small className="term-search-result-note">
+                      {`Already ${STATUS_PHRASE[crossListedMatch.status]} as ${crossListedMatch.code}.`}
+                    </small>
+                  )}
                 </span>
                 {credits && <span className="term-search-result-credits">{credits}</span>}
                 <button
                   type="button"
                   className="btn btn-primary btn-sm"
-                  disabled={isAdded || busyCode === result.code}
+                  disabled={isBlocked || busyCode === result.code}
                   onClick={() => { onAdd(result); }}
                 >
-                  {isAdded ? 'Planned' : busyCode === result.code ? 'Adding…' : 'Add'}
+                  {isAdded ? 'Planned' : crossListedMatch ? 'Added' : busyCode === result.code ? 'Adding…' : 'Add'}
                 </button>
               </li>
             );

@@ -6,9 +6,12 @@ import {
   SEASON_ORDER,
   catalogSearchUrl,
   currentGradeOptions,
+  existingCourseStatusIndex,
   finalGradeOptions,
+  findCrossListedMatch,
   formatCredits,
   formatTermDates,
+  normalizeCrossListingsPayload,
   normalizeGradingSchemaPayload,
   normalizePlannedPayload,
   normalizeSearchPayload,
@@ -317,4 +320,90 @@ test('normalizeGradingSchemaPayload reads uses_plus_minus and grades off a 200',
 test('normalizeGradingSchemaPayload rejects non-200 and malformed bodies without throwing', () => {
   assert.deepEqual(normalizeGradingSchemaPayload(502, null), { ok: false, schema: null })
   assert.deepEqual(normalizeGradingSchemaPayload(200, undefined), { ok: false, schema: null })
+})
+
+// ── cross-listing-aware duplicate detection ─────────────────────────────────
+
+test('normalizeCrossListingsPayload uppercases both codes and partners', () => {
+  const result = normalizeCrossListingsPayload(200, {
+    cross_listings: { 'csce 222': ['ecen 222'], 'ECEN 222': ['CSCE 222'] },
+  })
+  assert.equal(result.ok, true)
+  assert.deepEqual(result.crossListings, { 'CSCE 222': ['ECEN 222'], 'ECEN 222': ['CSCE 222'] })
+})
+
+test('normalizeCrossListingsPayload rejects non-200 and malformed bodies without throwing', () => {
+  assert.deepEqual(normalizeCrossListingsPayload(502, null), { ok: false, crossListings: {} })
+  assert.deepEqual(normalizeCrossListingsPayload(200, { cross_listings: 'not an object' }), {
+    ok: true,
+    crossListings: {},
+  })
+})
+
+test('existingCourseStatusIndex is student-wide, not scoped to one term', () => {
+  const courseRecords = [
+    { course_code: 'CSCE 222', status: 'in_progress', term_id: 'fall-2026' },
+    { course_code: 'MATH 251', status: 'completed', term_id: 'spring-2026' },
+    { course_code: 'CSCE 999', status: 'dropped', term_id: 'fall-2026' },
+  ]
+  const plannedCourses = [{ course_code: 'ENGL 210', term_id: 'fall-2028' }]
+
+  const index = existingCourseStatusIndex(courseRecords, plannedCourses)
+
+  assert.equal(index.get('CSCE 222'), 'in_progress')
+  assert.equal(index.get('MATH 251'), 'completed')
+  assert.equal(index.get('ENGL 210'), 'planned')
+  // 'dropped' is deliberately excluded -- a dropped course is not a reason to
+  // block re-planning it or its cross-listed alias later.
+  assert.equal(index.has('CSCE 999'), false)
+})
+
+test('existingCourseStatusIndex prefers in_progress over completed over planned for the same code', () => {
+  const courseRecords = [
+    { course_code: 'CSCE 222', status: 'completed', term_id: 't1' },
+    { course_code: 'CSCE 222', status: 'in_progress', term_id: 't2' },
+  ]
+  const plannedCourses = [{ course_code: 'CSCE 222', term_id: 't3' }]
+
+  const index = existingCourseStatusIndex(courseRecords, plannedCourses)
+
+  assert.equal(index.get('CSCE 222'), 'in_progress')
+})
+
+test('existingCourseStatusIndex is case-insensitive and tolerates missing arrays', () => {
+  const index = existingCourseStatusIndex([{ course_code: 'csce 222', status: 'in_progress' }], null)
+  assert.equal(index.get('CSCE 222'), 'in_progress')
+  assert.deepEqual([...existingCourseStatusIndex(undefined, undefined).entries()], [])
+})
+
+test('findCrossListedMatch finds a cross-listed alias regardless of which code is searched', () => {
+  const crossListings = { 'CSCE 222': ['ECEN 222'], 'ECEN 222': ['CSCE 222'] }
+  const existingIndex = new Map([['CSCE 222', 'in_progress']])
+
+  // Searching the code that is NOT the one on record still resolves, because
+  // the map is keyed both ways (it comes from the backend already listing
+  // both directions -- see cross_listing.py's module comment).
+  const match = findCrossListedMatch('ECEN 222', crossListings, existingIndex)
+  assert.deepEqual(match, { code: 'CSCE 222', status: 'in_progress' })
+})
+
+test('findCrossListedMatch returns null for a non-cross-listed code', () => {
+  const crossListings = { 'CSCE 222': ['ECEN 222'] }
+  const existingIndex = new Map([['MATH 251', 'completed']])
+  assert.equal(findCrossListedMatch('CSCE 121', crossListings, existingIndex), null)
+})
+
+test('findCrossListedMatch returns null when the cross-listed partner is not something the student already has', () => {
+  const crossListings = { 'CSCE 222': ['ECEN 222'] }
+  const existingIndex = new Map()
+  assert.equal(findCrossListedMatch('CSCE 222', crossListings, existingIndex), null)
+})
+
+test('findCrossListedMatch is case-insensitive on the searched code', () => {
+  const crossListings = { 'CSCE 222': ['ECEN 222'] }
+  const existingIndex = new Map([['ECEN 222', 'planned']])
+  assert.deepEqual(findCrossListedMatch('csce 222', crossListings, existingIndex), {
+    code: 'ECEN 222',
+    status: 'planned',
+  })
 })

@@ -1,4 +1,4 @@
-import type { PlanningTerm, GradingSchema, PlannedCourse } from './termPlanning.mjs';
+import type { PlanningTerm, GradingSchema, PlannedCourse, CrossListingMap } from './termPlanning.mjs';
 import type {
   RequirementCandidate,
   RequirementCandidateSet,
@@ -100,4 +100,7 @@ export declare function buildDegreeScheduleYears(input: {
   plannedCourses?: PlannedCourse[];
   decisions?: RequirementDecision[];
   candidateSets?: RequirementCandidateSet[];
+  /** code -> cross-listed partner codes, for reconciling a suggested course
+   * against its cross-listed planned twin, not just an exact-code match. */
+  crossListings?: CrossListingMap;
 }): DegreeScheduleYear[];

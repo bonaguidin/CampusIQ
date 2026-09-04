@@ -1,6 +1,10 @@
 import { useEffect, useRef } from 'react';
 import type { AnalysisIdentity } from '../api/analysisApi.mjs';
-import type { CatalogSearchResult } from '../lib/termPlanning.mjs';
+import type {
+  CatalogSearchResult,
+  CrossListingMap,
+  ExistingCourseStatus,
+} from '../lib/termPlanning.mjs';
 import type {
   DegreeSchedulePlannedCourse,
   DegreeScheduleSuggestedCourse,
@@ -31,6 +35,8 @@ export function EditCoursesDialog({
   plannedCourses,
   suggestedCourses,
   alreadyAddedCodes,
+  crossListings,
+  existingCourseIndex,
   busyCode,
   onAdd,
   onRemove,
@@ -45,6 +51,9 @@ export function EditCoursesDialog({
   suggestedCourses: DegreeScheduleSuggestedCourse[];
   /** Uppercased course codes already planned for this term, for disabling Add. */
   alreadyAddedCodes: Set<string>;
+  /** See CourseSearchAdd -- passed straight through for the cross-listing-aware check. */
+  crossListings: CrossListingMap;
+  existingCourseIndex: Map<string, ExistingCourseStatus>;
   busyCode: string | null;
   onAdd: (result: CatalogSearchResult) => void;
   onRemove: (id: string) => void;
@@ -114,6 +123,8 @@ export function EditCoursesDialog({
           <CourseSearchAdd
             identity={identity}
             alreadyAddedCodes={alreadyAddedCodes}
+            crossListings={crossListings}
+            existingCourseIndex={existingCourseIndex}
             onAdd={onAdd}
             busyCode={busyCode}
             inputId={`degree-schedule-course-search-${termKey}`}

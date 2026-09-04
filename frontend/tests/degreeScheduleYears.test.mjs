@@ -296,6 +296,56 @@ test('a course in BOTH the scheduler plan and the student plan for one term appe
   assert.deepEqual(spring.suggestedCourses.map((c) => c.course_code), ['CSCE 331'])
 })
 
+test('a suggested course cross-listed with a planned one is dropped too, not just an exact-code match', () => {
+  const spring2027 = term({ year: 2027, season: 'Spring', start_date: '2027-01-19', end_date: '2027-05-11' })
+  const years = buildDegreeScheduleYears({
+    realTerms: [spring2027],
+    scheduleTerms: [
+      {
+        term_key: '2027-Spring',
+        total_credit_hours: 6,
+        courses: [
+          // The scheduler suggests ECEN 222, the same course as CSCE 222
+          // under its other departmental code.
+          { course_code: 'ECEN 222', credit_hours: 3, requirement_group_id: 'g1', limitations: [] },
+          { course_code: 'CSCE 331', credit_hours: 3, requirement_group_id: 'g2', limitations: [] },
+        ],
+      },
+    ],
+    courseRecords: [],
+    gradingSchema: null,
+    today: TODAY,
+    plannedCourses: [
+      plannedRow({ id: 'p1', course_code: 'CSCE 222', title: null, credit_hours: 3, term_id: spring2027.id }),
+    ],
+    crossListings: { 'CSCE 222': ['ECEN 222'], 'ECEN 222': ['CSCE 222'] },
+  })
+  const spring = years[0].semesters.find((s) => s.termKey === '2027-Spring')
+  assert.deepEqual(spring.planned.map((c) => c.course_code), ['CSCE 222'])
+  // ECEN 222 is gone -- CSCE 331 (unrelated) still shows.
+  assert.deepEqual(spring.suggestedCourses.map((c) => c.course_code), ['CSCE 331'])
+})
+
+test('with no crossListings map at all, reconciliation still works via exact match (backward compatible)', () => {
+  const spring2027 = term({ year: 2027, season: 'Spring', start_date: '2027-01-19', end_date: '2027-05-11' })
+  const years = buildDegreeScheduleYears({
+    realTerms: [spring2027],
+    scheduleTerms: [
+      { term_key: '2027-Spring', total_credit_hours: 3, courses: [
+        { course_code: 'CSCE 314', credit_hours: 3, requirement_group_id: 'g1', limitations: [] },
+      ] },
+    ],
+    courseRecords: [],
+    gradingSchema: null,
+    today: TODAY,
+    plannedCourses: [
+      plannedRow({ id: 'p1', course_code: 'CSCE 314', title: null, credit_hours: 3, term_id: spring2027.id }),
+    ],
+  })
+  const spring = years[0].semesters.find((s) => s.termKey === '2027-Spring')
+  assert.deepEqual(spring.suggestedCourses, [])
+})
+
 test('a planned row is not shown against a future term with no materialized academic_terms id', () => {
   const spring2027 = term({ year: 2027, season: 'Spring', id: null, start_date: '2027-01-19', end_date: '2027-05-11' })
   const years = buildDegreeScheduleYears({

@@ -150,11 +150,12 @@ export function bucketDecisionsByTerm(decisions, candidateSets) {
  * whose resolved term falls beyond every scheduled/enrolled year adds that
  * year to the grid, the same way a scheduler-only term already does.
  */
-export function buildDegreeScheduleYears({ realTerms, scheduleTerms, courseRecords, gradingSchema, today, plannedCourses, decisions, candidateSets }) {
+export function buildDegreeScheduleYears({ realTerms, scheduleTerms, courseRecords, gradingSchema, today, plannedCourses, decisions, candidateSets, crossListings }) {
   const terms = Array.isArray(realTerms) ? realTerms : []
   const schedule = Array.isArray(scheduleTerms) ? scheduleTerms : []
   const records = Array.isArray(courseRecords) ? courseRecords : []
   const planned = Array.isArray(plannedCourses) ? plannedCourses : []
+  const crossListingMap = crossListings && typeof crossListings === 'object' ? crossListings : {}
 
   const termsByKey = new Map(terms.map((term) => [term.key, term]))
   const scheduleByKey = new Map(schedule.map((term) => [term.term_key, term]))
@@ -235,9 +236,20 @@ export function buildDegreeScheduleYears({ realTerms, scheduleTerms, courseRecor
       // Reconcile against the scheduler's plan: a course the student already
       // added is shown once, under the added treatment -- drop the matching
       // suggestion. Case-insensitive, matching plannedCodes (termPlanning.mjs).
-      const plannedCodeSet = new Set(
-        plannedForTerm.map((row) => String(row.course_code ?? '').toUpperCase()),
-      )
+      // Cross-listing-aware: a planned CSCE 222 must also drop a suggested
+      // ECEN 222 (the same course under its other departmental code), not
+      // just an exact-code match -- otherwise the suggestion sits unfiltered
+      // next to its own cross-listed twin. Done by pre-expanding the set with
+      // each planned code's cross-listed partners, so the .has() check below
+      // stays a single, unchanged lookup.
+      const plannedCodeSet = new Set()
+      for (const row of plannedForTerm) {
+        const code = String(row.course_code ?? '').toUpperCase()
+        plannedCodeSet.add(code)
+        for (const partner of crossListingMap[code] ?? []) {
+          plannedCodeSet.add(String(partner).toUpperCase())
+        }
+      }
 
       return {
         season,

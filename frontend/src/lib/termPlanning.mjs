@@ -4,6 +4,7 @@ export const CATALOG_SEARCH_URL = '/api/v2/student/me/catalog/search'
 export const COURSE_RECORDS_URL = '/api/v2/student/me/course-records'
 export const PENDING_FINAL_GRADES_URL = '/api/v2/student/me/course-records/pending-final-grades'
 export const GRADING_SCHEMA_URL = '/api/v2/student/me/grading-schema'
+export const CROSS_LISTINGS_URL = '/api/v2/student/me/catalog/cross-listings'
 
 /**
  * Mirrors lifecycle.ACTIVATION_WINDOW_DAYS (GradusIQ_career/planning/lifecycle.py).
@@ -308,6 +309,77 @@ export function normalizeSearchPayload(status, body) {
     return { ok: false, results: [] }
   }
   return { ok: true, results: Array.isArray(body.results) ? body.results : [] }
+}
+
+export function normalizeCrossListingsPayload(status, body) {
+  if (status !== 200 || !body || typeof body !== 'object') {
+    return { ok: false, crossListings: {} }
+  }
+  const raw = body.cross_listings && typeof body.cross_listings === 'object' ? body.cross_listings : {}
+  const crossListings = {}
+  for (const [code, partners] of Object.entries(raw)) {
+    if (!Array.isArray(partners)) continue
+    crossListings[String(code).toUpperCase()] = partners.map((partner) => String(partner).toUpperCase())
+  }
+  return { ok: true, crossListings }
+}
+
+/**
+ * code -> the status ('in_progress' | 'completed' | 'planned') of the
+ * strongest evidence the student already has that course under THIS exact
+ * code, student-wide (every term, not just the one being edited) -- unlike
+ * plannedCodes()/alreadyAddedCodes, which are deliberately this-term-only
+ * affordances for "don't re-add the identical row you're looking at".
+ *
+ * This is the other half of the cross-listing check: a course_records row
+ * from a past/current term (in_progress or completed) and a planned_courses
+ * row anywhere both count as "already have this", so a cross-listed alias
+ * search hit can be matched against it regardless of which term it lives in.
+ * 'dropped' course_records rows are deliberately excluded -- a dropped course
+ * is not a reason to block re-planning it (or its cross-listed alias) later.
+ *
+ * When a code somehow appears under more than one status, in_progress wins
+ * over completed wins over planned -- the most concrete evidence should
+ * drive the copy, matching the order a student would think of them in.
+ */
+const STATUS_PRIORITY = { in_progress: 0, completed: 1, planned: 2 }
+
+export function existingCourseStatusIndex(courseRecords, plannedCourses) {
+  const index = new Map()
+  const consider = (code, statusValue) => {
+    const key = String(code ?? '').toUpperCase()
+    if (!key) return
+    const current = index.get(key)
+    if (!current || STATUS_PRIORITY[statusValue] < STATUS_PRIORITY[current]) {
+      index.set(key, statusValue)
+    }
+  }
+  for (const row of Array.isArray(courseRecords) ? courseRecords : []) {
+    if (row.status === 'in_progress' || row.status === 'completed') consider(row.course_code, row.status)
+  }
+  for (const row of Array.isArray(plannedCourses) ? plannedCourses : []) {
+    consider(row.course_code, 'planned')
+  }
+  return index
+}
+
+/**
+ * If `code` is cross-listed (per `crossListings`, from GET
+ * /me/catalog/cross-listings) with something the student already has (per
+ * `existingIndex`, from existingCourseStatusIndex above), returns the
+ * matched partner code and its status. Returns null for an exact match --
+ * callers already have a cheaper, existing check (alreadyAddedCodes.has) for
+ * "the searched code itself is already planned in this term"; this function
+ * answers only the alias case.
+ */
+export function findCrossListedMatch(code, crossListings, existingIndex) {
+  const upper = String(code ?? '').toUpperCase()
+  const partners = crossListings?.[upper] ?? []
+  for (const partner of partners) {
+    const status = existingIndex.get(partner)
+    if (status) return { code: partner, status }
+  }
+  return null
 }
 
 export function normalizePendingFinalGradesPayload(status, body) {

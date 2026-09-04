@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   addPlannedCourse,
+  fetchCrossListings,
   fetchGradingSchema,
   fetchPlannedCourses,
   fetchTerms,
@@ -12,7 +13,17 @@ import type {
   RequirementCandidateSet,
   RequirementDecision,
 } from '../api/degreeSchedule.mjs';
-import type { CatalogSearchResult, GradingSchema, PlannedCourse, PlanningTerm } from '../lib/termPlanning.mjs';
+import {
+  existingCourseStatusIndex,
+} from '../lib/termPlanning.mjs';
+import type {
+  CatalogSearchResult,
+  CrossListingMap,
+  ExistingCourseStatus,
+  GradingSchema,
+  PlannedCourse,
+  PlanningTerm,
+} from '../lib/termPlanning.mjs';
 import { buildDegreeScheduleYears } from '../lib/degreeScheduleYears.mjs';
 import type { DegreeScheduleSemester, DegreeScheduleTermDecision, DegreeScheduleYear } from '../lib/degreeScheduleYears.mjs';
 import { displayTermKey, formatCredits } from '../lib/degreeSchedulePresentation.mjs';
@@ -196,7 +207,7 @@ function TermDecisionCard({ decision, mutation, onChoose, onClear, onRestore }: 
   );
 }
 
-function SemesterColumn({ semester, identity, busyCode, mutation, isEditOpen, onOpenEdit, onCloseEdit, onAdd, onRemove, onChoose, onClear, onRestore }: {
+function SemesterColumn({ semester, identity, busyCode, mutation, isEditOpen, onOpenEdit, onCloseEdit, onAdd, onRemove, onChoose, onClear, onRestore, crossListings, existingCourseIndex }: {
   semester: DegreeScheduleSemester;
   identity: AnalysisIdentity;
   busyCode: string | null;
@@ -212,6 +223,9 @@ function SemesterColumn({ semester, identity, busyCode, mutation, isEditOpen, on
   onChoose: (requirementGroupId: string, candidate: RequirementCandidate, action: 'choose' | 'change') => void;
   onClear: (requirementGroupId: string) => void;
   onRestore: (requirementGroupId: string) => void;
+  /** See CourseSearchAdd -- fetched once by DegreeScheduleYears, passed through unchanged. */
+  crossListings: CrossListingMap;
+  existingCourseIndex: Map<string, ExistingCourseStatus>;
 }) {
   const editTriggerRef = useRef<HTMLButtonElement>(null);
 
@@ -330,6 +344,8 @@ function SemesterColumn({ semester, identity, busyCode, mutation, isEditOpen, on
               plannedCourses={semester.planned}
               suggestedCourses={semester.suggestedCourses}
               alreadyAddedCodes={addedCodes}
+              crossListings={crossListings}
+              existingCourseIndex={existingCourseIndex}
               busyCode={busyCode}
               onAdd={(result) => onAdd(semester, result)}
               onRemove={onRemove}
@@ -355,6 +371,7 @@ export function DegreeScheduleYears({
 }: DegreeScheduleYearsProps) {
   const [terms, setTerms] = useState<PlanningTerm[]>([]);
   const [gradingSchema, setGradingSchema] = useState<GradingSchema | null>(null);
+  const [crossListings, setCrossListings] = useState<CrossListingMap>({});
   const [planned, setPlanned] = useState<PlannedCourse[]>([]);
   const [busyCode, setBusyCode] = useState<string | null>(null);
   const [addError, setAddError] = useState<string | null>(null);
@@ -396,6 +413,27 @@ export function DegreeScheduleYears({
     return () => { cancelled = true; };
   }, [identity]);
 
+  // Fetched once and cached, same shape as gradingSchema -- see
+  // fetchCrossListings. Powers the cross-listing-aware duplicate check in
+  // CourseSearchAdd (a course already in progress/completed/planned under
+  // its OTHER departmental code must not look freely addable).
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      const result = await fetchCrossListings(identity);
+      if (!cancelled) setCrossListings(result.crossListings);
+    })();
+    return () => { cancelled = true; };
+  }, [identity]);
+
+  // Student-wide (every term, not just the one being edited): a course
+  // already in progress/completed anywhere in course_records, or already
+  // planned anywhere in planned_courses. See existingCourseStatusIndex.
+  const existingCourseIndex = useMemo(
+    () => existingCourseStatusIndex(courses, planned),
+    [courses, planned],
+  );
+
   // Captured once per mount, matching TermPlanner's reasoning: a semester's
   // state must not change mid-render as the clock ticks past midnight.
   const today = useMemo(() => new Date(), []);
@@ -410,8 +448,9 @@ export function DegreeScheduleYears({
       plannedCourses: planned,
       decisions,
       candidateSets,
+      crossListings,
     }),
-    [terms, scheduleTerms, courses, gradingSchema, today, planned, decisions, candidateSets],
+    [terms, scheduleTerms, courses, gradingSchema, today, planned, decisions, candidateSets, crossListings],
   );
 
   const handleAddPlanned = useCallback(async (semester: DegreeScheduleSemester, result: CatalogSearchResult) => {
@@ -518,6 +557,8 @@ export function DegreeScheduleYears({
             onChoose={onChoose}
             onClear={onClear}
             onRestore={onRestore}
+            crossListings={crossListings}
+            existingCourseIndex={existingCourseIndex}
           />
         ))}
       </div>
