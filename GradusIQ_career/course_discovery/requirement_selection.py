@@ -38,6 +38,44 @@ _UNSAFE_GROUP_NOTES = re.compile(
     re.IGNORECASE,
 )
 
+# A course-code token (e.g. "CSCE 313", "MATH 251"). Used to tell a
+# needs_review clause that may hide a real course prerequisite
+# ("...or concurrent enrollment in CSCE 313") from one that is pure prose
+# the parser simply had no rule for ("knowledge of computer algebra
+# system") -- only the former is a scheduling obligation worth gating a
+# candidate on. StructuredPrerequisite.restrictions is never gated at all
+# (its own model contract: "Informational only -- not enforced by the
+# scheduler").
+#
+# INTERIM HEURISTIC, not a permanent design: the real fix is upstream, in
+# course_discovery/prerequisites.py's clause classifier -- course-free
+# competency prose like "knowledge of computer algebra system" belongs in
+# StructuredPrerequisite.restrictions (informational, per its own
+# contract), not needs_review, the same way "also taught at Galveston and
+# Qatar campuses" already does. That parser change is catalog-wide
+# (affects every SMU/TAMU college's semantic fingerprint) and was
+# deliberately deferred rather than bundled here. This regex is a
+# consumer-local patch scoped to this one gate so a candidate isn't
+# excluded today for text that will eventually be reclassified as
+# .restrictions upstream; it should be retired (not extended) once that
+# parser work lands, not treated as the intended long-term shape of this
+# gate.
+_NEEDS_REVIEW_COURSE_REF = re.compile(r"\b[A-Z]{2,4}\s?\d{3,4}\b")
+
+
+def _needs_review_blocks_scheduling(
+    prerequisites: Mapping[str, StructuredPrerequisite], course_codes: Iterable[str]
+) -> bool:
+    """True when a candidate course carries a needs_review clause that names
+    a course -- the only shape that can hide an unmodelled scheduling
+    dependency. A course-free needs_review clause is informational and does
+    not exclude the candidate."""
+    for code in course_codes:
+        for clause in prerequisites.get(code, StructuredPrerequisite()).needs_review:
+            if _NEEDS_REVIEW_COURSE_REF.search(clause):
+                return True
+    return False
+
 
 class SelectionSearchStats(StrictModel):
     candidate_combinations_before_pruning: int = 0
@@ -659,11 +697,7 @@ def select_structured_requirements(
                 evidence.exclusion_reasons.add(CandidateExclusionReason.MISSING_CREDIT_DATA)
                 evidence.exclusion_details.add("one or more candidate courses have no positive credit value")
                 continue
-            if any(prerequisites.get(code, StructuredPrerequisite()).restrictions for code in choice.courses):
-                evidence.exclusion_reasons.add(CandidateExclusionReason.RESTRICTION_REQUIRES_REVIEW)
-                evidence.exclusion_details.add("one or more candidate courses carry an unrepresented restriction")
-                continue
-            if any(prerequisites.get(code, StructuredPrerequisite()).needs_review for code in choice.courses):
+            if _needs_review_blocks_scheduling(prerequisites, choice.courses):
                 evidence.exclusion_reasons.add(CandidateExclusionReason.PREREQUISITE_NEEDS_REVIEW)
                 evidence.exclusion_details.add("one or more candidate prerequisites require manual review")
                 continue
