@@ -1729,11 +1729,31 @@ function CategoryWeightEditor({
   // only shown while weight is still genuinely unknown; once answered, the
   // category's row status is driven by the claim-evidence checks below
   // instead, and this note would just be wrong to keep displaying.
+  // Two distinct steps, deliberately not collapsed into one predicate: (1)
+  // find the category by name alone, (2) only then decide whether to
+  // suppress it. related_field is untyped free text (extraction.py:132,
+  // "the category/assessment/rule this concerns") with no guarantee it
+  // names a category at all -- it could name an assessment or rule
+  // instead, or just not match anything (typo, extraction drift). If both
+  // steps were one `&&` condition, a genuine no-match would be
+  // indistinguishable from step 2's intentional suppression and both would
+  // silently vanish. A real no-match is surfaced instead (see
+  // unmatchedUnknownWeightFindings below), never dropped.
   const unknownWeightByCategory = new Map<string, SyllabusFinding>();
+  const unmatchedUnknownWeightFindings: SyllabusFinding[] = [];
   for (const f of rawFindings) {
     if (f.code !== 'unknown_weight' || !f.field) continue;
-    const match = categories.find((c) => normalizeName(c.name) === normalizeName(f.field as string) && c.weight === null);
-    if (match) unknownWeightByCategory.set(match.name, f);
+    const match = categories.find((c) => normalizeName(c.name) === normalizeName(f.field as string));
+    if (!match) {
+      unmatchedUnknownWeightFindings.push(f);
+      continue;
+    }
+    // Suppress once the category's weight is actually known -- the "we
+    // couldn't determine this weight" text goes factually stale the moment
+    // `weight` is set (most commonly via this editor's own set_weight
+    // correction, which never clears the ExtractionWarning backing this
+    // finding).
+    if (match.weight === null) unknownWeightByCategory.set(match.name, f);
   }
 
   // Per-category claim-evidence findings -- see the component docstring for
@@ -1842,6 +1862,26 @@ function CategoryWeightEditor({
       {totalFinding && totalFinding.severity !== 'valid' && (
         <InlineFinding finding={totalFinding} onDismiss={() => {}} dismissible={false} />
       )}
+
+      {/* related_field named something that doesn't match any category in
+          this model -- can't anchor it to a row, so it renders here instead
+          of disappearing. unknown_weight is non-blocking backend-side, so
+          this is purely informational: no affirm affordance, no blocking
+          styling (plain warning glyph, same as every other unknown_weight
+          note). Custom copy (not findingCopy's generic text) so the student
+          sees exactly what the extractor said, verbatim. */}
+      {unmatchedUnknownWeightFindings.map((f, i) => (
+        <p
+          key={`unmatched-unknown-weight-${i}`}
+          className="grade-inline-finding grade-inline-finding--warning"
+          data-finding-code={f.code}
+        >
+          <span className="grade-inline-finding-glyph" aria-hidden="true">·</span>
+          <span className="grade-inline-finding-text">
+            The syllabus doesn't state a weight for "{f.field}", but CampusIQ couldn't match that to one of the categories below.
+          </span>
+        </p>
+      ))}
 
       <div className="grade-weight-table-rows" role="table" aria-label="Category weights">
         <div className="grade-weight-row grade-weight-row--head" role="row">

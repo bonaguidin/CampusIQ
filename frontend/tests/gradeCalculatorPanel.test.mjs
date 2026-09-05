@@ -1493,3 +1493,44 @@ test('Grade Calculator: a category weight mismatch renders as blocking with no a
   assert.equal(await row.getByRole('button', { name: "Yes, that's correct" }).count(), 0)
   assert.equal(await row.getByRole('button', { name: /confirm/i }).count(), 0)
 })
+
+test('Grade Calculator: an unknown_weight finding that matches no category renders unattached instead of disappearing', { timeout: 45_000 }, async (t) => {
+  // related_field is untyped free text (extraction.py:132) -- it can name
+  // an assessment or rule instead of a category, or just not match
+  // anything. "Final Project" matches none of WEIGHT_GAP_MODEL's three
+  // categories (Homework assignment / midterm exam / final exam).
+  const RECON_UNMATCHED = {
+    status: 'needs_student_review',
+    findings: [
+      { code: 'category_weight_validation', severity: 'warning', message: 'category weights sum to 70.0, not 100 (possibly incomplete extraction)', field: 'categories' },
+      { code: 'unknown_weight', severity: 'warning', message: 'The total weight for the Final Project is not explicitly stated.', field: 'Final Project' },
+    ],
+    evidence_coverage: { total_claims: 3, supported_claims: 3, coverage_ratio: 1, unsupported_claims: [] },
+  }
+  const page = await mountCutoffPanel(t, 'grade-calculator-unknown-weight-unmatched', async (path, method, request, response) => {
+    if (path === `/api/v2/student/me/syllabus-grade-profiles/${PROFILE_ID}` && method === 'GET') {
+      json(response, 200, detail({ extracted_grade_model: WEIGHT_GAP_MODEL, reconciliation: RECON_UNMATCHED }))
+      return true
+    }
+    return false
+  })
+
+  const table = page.locator('[data-testid="category-weight-table"]')
+  await table.waitFor()
+
+  // renders unattached in the editor's general area -- not dropped, and
+  // not attached to any of the three (non-matching) category rows
+  await table.getByText('The syllabus doesn\'t state a weight for "Final Project", but CampusIQ couldn\'t match that to one of the categories below.').waitFor()
+  for (const name of ['Homework assignment', 'midterm exam', 'final exam']) {
+    assert.equal(
+      await table.locator(`[data-category-name="${name}"]`).locator('[data-finding-code="unknown_weight"]').count(),
+      0,
+      `unmatched finding must not attach to the ${name} row`,
+    )
+  }
+
+  // informational only: no affirm button, no dismiss button anywhere for it
+  const unmatchedNote = table.locator('[data-finding-code="unknown_weight"]', { hasText: 'Final Project' })
+  await unmatchedNote.waitFor()
+  assert.equal(await unmatchedNote.getByRole('button').count(), 0)
+})
