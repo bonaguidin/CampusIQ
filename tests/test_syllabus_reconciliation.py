@@ -580,6 +580,50 @@ def test_confirmed_value_claim_only_skips_a_finding_it_would_have_emitted():
     ]
 
 
+def test_confirmed_category_value_claim_suppresses_unverifiable_finding():
+    # weight=100 keeps category_weight_validation itself VALID, isolating
+    # the claim_evidence check under test. "2 midterms" (a count fact) has
+    # no percent for _PERCENT_RE to find -- exactly the shape a category
+    # whose weight was just filled in via SET_WEIGHT produces, since
+    # GradeCategory has one shared evidence field, not one per fact.
+    model = GradeModel(
+        grading_method=GradingMethod.WEIGHTED,
+        categories=[GradeCategory(name="Midterm Exam", weight=100, evidence=evidence(1, "2 midterms"))],
+    )
+    unconfirmed = reconcile_grade_model(model, content_from_pages([page(1, "x")]))
+    assert any(f.code == "claim_evidence_consistency_unverifiable" for f in unconfirmed.findings)
+
+    confirmed = reconcile_grade_model(
+        model, content_from_pages([page(1, "x")]), confirmed_category_value_claims={"midterm exam"}
+    )
+    assert not any(f.code == "claim_evidence_consistency_unverifiable" for f in confirmed.findings)
+    assert confirmed.status == ReconciliationStatus.ACCEPTED
+    # the category and its verbatim evidence are returned exactly as given
+    assert confirmed.grade_model.categories[0].weight == 100
+    assert confirmed.grade_model.categories[0].evidence.text == "2 midterms"
+
+
+def test_confirmed_category_value_claim_does_not_suppress_value_mismatch_error():
+    # Deliberately narrower than the threshold path (see
+    # _check_category_weight_consistency): weight=100 (so category_weight_
+    # validation itself stays VALID) but evidence explicitly cites 25% -- a
+    # positive, cited contradiction, not something the checker merely
+    # failed to parse. Affirming it must NOT clear this.
+    model = GradeModel(
+        grading_method=GradingMethod.WEIGHTED,
+        categories=[GradeCategory(name="Midterm Exam", weight=100, evidence=evidence(1, "Midterm Exam (25%)"))],
+    )
+    unconfirmed = reconcile_grade_model(model, content_from_pages([page(1, "x")]))
+    assert any(f.code == "claim_evidence_value_mismatch" for f in unconfirmed.findings)
+    assert unconfirmed.status == ReconciliationStatus.NEEDS_STUDENT_REVIEW
+
+    confirmed = reconcile_grade_model(
+        model, content_from_pages([page(1, "x")]), confirmed_category_value_claims={"midterm exam"}
+    )
+    assert any(f.code == "claim_evidence_value_mismatch" for f in confirmed.findings)
+    assert confirmed.status == ReconciliationStatus.NEEDS_STUDENT_REVIEW
+
+
 def test_unbounded_thresholds_are_allowed():
     model = GradeModel(
         grade_thresholds=[

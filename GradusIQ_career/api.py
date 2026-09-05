@@ -2303,15 +2303,21 @@ def _syllabus_revision_summary(revision_row: dict | None) -> dict | None:
 
 def _confirmed_suppression_sets(
     clarifying_answers: dict,
-) -> tuple[set[frozenset[str]], set[str]]:
+) -> tuple[set[frozenset[str]], set[str], set[str]]:
     """Rebuild reconcile_grade_model's confirmed_cutoff_pairs /
-    confirmed_value_claims from the persisted clarifying_answers keyed log,
-    so a re-reconciliation in the read path honours questions the student
-    has already answered. Keys written by service.apply_student_corrections:
-    'cutoff_overlap:<winner>,<loser>' and 'claim_evidence:threshold:<letter>'.
+    confirmed_value_claims / confirmed_category_value_claims from the
+    persisted clarifying_answers keyed log, so a re-reconciliation in the
+    read path honours questions the student has already answered. Keys
+    written by service.apply_student_corrections: 'cutoff_overlap:
+    <winner>,<loser>', 'claim_evidence:threshold:<letter>', and
+    'claim_evidence:category:<normalized-name>' -- the last is a separate
+    key namespace from the threshold one, not a variant of it, mirroring
+    reconcile_grade_model's separate confirmed_category_value_claims
+    parameter.
     """
     cutoff_pairs: set[frozenset[str]] = set()
     value_claims: set[str] = set()
+    category_value_claims: set[str] = set()
     for key, answer in clarifying_answers.items():
         if not isinstance(answer, dict):
             continue
@@ -2323,7 +2329,11 @@ def _confirmed_suppression_sets(
             letter = answer.get("letter")
             if letter:
                 value_claims.add(str(letter).strip().lower())
-    return cutoff_pairs, value_claims
+        elif key.startswith("claim_evidence:category:"):
+            name = answer.get("category_name")
+            if name:
+                category_value_claims.add(" ".join(str(name).strip().lower().split()))
+    return cutoff_pairs, value_claims, category_value_claims
 
 
 def _syllabus_profile_detail_response(assembled: dict) -> dict:
@@ -2346,7 +2356,7 @@ def _syllabus_profile_detail_response(assembled: dict) -> dict:
     if current_revision is not None and current_revision.get("confirmed_grade_model") is not None:
         confirmed_model = syllabus_read.confirmed_grade_model_from_row(current_revision)
         confirmed_content = syllabus_read.relevant_content_from_row(current_revision)
-        confirmed_cutoff_pairs, confirmed_value_claims = _confirmed_suppression_sets(
+        confirmed_cutoff_pairs, confirmed_value_claims, confirmed_category_value_claims = _confirmed_suppression_sets(
             current_revision.get("clarifying_answers") or {}
         )
         confirmed_reconciliation = reconcile_grade_model(
@@ -2354,6 +2364,7 @@ def _syllabus_profile_detail_response(assembled: dict) -> dict:
             confirmed_content,
             confirmed_cutoff_pairs=confirmed_cutoff_pairs,
             confirmed_value_claims=confirmed_value_claims,
+            confirmed_category_value_claims=confirmed_category_value_claims,
         )
 
     # Cutoff-overlap resolution proposal, computed from whichever grade
