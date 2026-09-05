@@ -86,6 +86,20 @@ RECONCILIATION_SCHEMA_VERSION = "1"
 #   the affected scores unmodified (calculator/rules.py) and simply
 #   surfaces the rule text. They stay in `findings` for display; they no
 #   longer force NEEDS_STUDENT_REVIEW on their own.
+#
+# unknown_weight: an LLM extraction-time self-report about the same fact
+#   category_weight_validation (_wrap_weight_validation, delegating to
+#   validation.validate_category_weights) already checks deterministically
+#   -- whether declared category weights sum to ~100. That check fires its
+#   own WARNING/ERROR whenever they don't, and it is NOT in this set, so it
+#   still gates confirm on its own. unknown_weight itself is unfalsifiable
+#   as a gate: it's an ExtractionWarning, and the only correction that
+#   touches GradeModel.warnings is DISMISS_WARNING -- category/set_weight
+#   (the correction that actually answers "what's the weight") never clears
+#   it, so a student who supplies the missing weight is left blocked by a
+#   note that is now factually stale. Keeping it here as informational (it
+#   stays in `findings` for display) loses nothing category_weight_
+#   validation wasn't already enforcing.
 NON_BLOCKING_WARNING_CODES: frozenset[str] = frozenset(
     {
         "unknown_assessment_count",
@@ -93,6 +107,7 @@ NON_BLOCKING_WARNING_CODES: frozenset[str] = frozenset(
         "non_deterministic_grading_rule",
         "possible_curve",
         "ambiguous_rule",
+        "unknown_weight",
     }
 )
 
