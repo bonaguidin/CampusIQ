@@ -116,9 +116,14 @@ export interface SyllabusCutoffOverlapResolution {
 // apply_student_corrections merges these). Keys in use:
 //   `cutoff_overlap:<winner>,<loser>`   -> { answer, boundary, winner, loser }
 //   `claim_evidence:threshold:<letter>` -> { answer, letter }
+//   `claim_evidence:category:<name>`   -> { answer, category_name }
+// The category key is a separate namespace from the threshold one, not a
+// variant of it -- mirrors reconcile_grade_model's separate
+// confirmed_category_value_claims parameter (see corrections.py's
+// CONFIRM_CATEGORY_VALUE).
 export type SyllabusClarifyingAnswers = Record<
   string,
-  { answer: string; boundary?: number; winner?: string; loser?: string; letter?: string }
+  { answer: string; boundary?: number; winner?: string; loser?: string; letter?: string; category_name?: string }
 >;
 
 export interface SyllabusCategoryScore {

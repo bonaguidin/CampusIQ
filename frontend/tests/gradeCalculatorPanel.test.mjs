@@ -1328,3 +1328,168 @@ test('Grade Calculator: a category_weight_validation instance that is already va
   // a genuinely blocking, unrelated finding still shows in the general list
   assert.ok((await page.locator('[data-finding-code="grading_method_unknown"]').count()) >= 1)
 })
+
+// --- category weight claim-evidence (confirm_category_value) --------------------
+
+// claim_evidence_consistency_unverifiable / claim_evidence_value_mismatch on a
+// category weight cannot exist at extraction time -- _check_category_weight_
+// consistency skips a category outright while weight is null (matches
+// WEIGHT_GAP_MODEL's 'midterm exam' row). They only appear in the SERVER
+// RESPONSE to a set_weight correction, once the category actually has a
+// weight to check against its (possibly stale) evidence text.
+
+test('Grade Calculator: a category claim-evidence finding does not exist on initial load, only appears in the correction response, and affirming it emits confirm_category_value', { timeout: 45_000 }, async (t) => {
+  let corrections = []
+  const RECON_UNVERIFIABLE = {
+    status: 'needs_student_review',
+    findings: [
+      { code: 'category_weight_validation', severity: 'valid', message: 'category weights sum to 100.0', field: 'categories' },
+      { code: 'unknown_weight', severity: 'warning', message: 'The total weight for the midterm exam category is not explicitly stated; each midterm is 15% but the category total is not given.', field: 'midterm exam' },
+      { code: 'claim_evidence_consistency_unverifiable', severity: 'warning', message: "could not deterministically verify category:midterm exam.weight against its cited evidence text ('2 midterms')", field: 'category:midterm exam.weight' },
+    ],
+    evidence_coverage: { total_claims: 3, supported_claims: 3, coverage_ratio: 1, unsupported_claims: [] },
+  }
+  const RECON_CONFIRMED = {
+    status: 'accepted',
+    findings: [
+      { code: 'category_weight_validation', severity: 'valid', message: 'category weights sum to 100.0', field: 'categories' },
+      { code: 'unknown_weight', severity: 'warning', message: 'The total weight for the midterm exam category is not explicitly stated; each midterm is 15% but the category total is not given.', field: 'midterm exam' },
+    ],
+    evidence_coverage: { total_claims: 3, supported_claims: 3, coverage_ratio: 1, unsupported_claims: [] },
+  }
+  const WEIGHT_SET_MODEL = {
+    ...WEIGHT_GAP_MODEL,
+    categories: WEIGHT_GAP_MODEL.categories.map((c) => (c.name === 'midterm exam' ? { ...c, weight: 30 } : c)),
+  }
+
+  const page = await mountCutoffPanel(t, 'grade-calculator-category-claim-evidence-affirm', async (path, method, request, response) => {
+    if (path === `/api/v2/student/me/syllabus-grade-profiles/${PROFILE_ID}` && method === 'GET') {
+      json(response, 200, detail({ extracted_grade_model: WEIGHT_GAP_MODEL, reconciliation: RECON_WEIGHT_GAP }))
+      return true
+    }
+    if (path === `/api/v2/student/me/syllabus-grade-profiles/${PROFILE_ID}/corrections` && method === 'POST') {
+      corrections = JSON.parse(await readBody(request)).corrections
+      const justAffirmed = corrections.some((c) => c.operation === 'confirm_category_value')
+      // calculator_ready stays false throughout (an unrelated finding --
+      // grading_method_unknown -- keeps the model genuinely incomplete) so
+      // the editor stays mounted after affirming and its own "answered"
+      // display (✓ ... confirmed as correct) can be observed directly,
+      // independent of the separate "everything is now accepted" transition
+      // already covered by the cutoff-table equivalent test.
+      const findingsAfterAffirm = [
+        ...RECON_CONFIRMED.findings,
+        { code: 'grading_method_unknown', severity: 'warning', message: 'grading_method could not be determined from the syllabus', field: 'grading_method' },
+      ]
+      json(response, 200, detail({
+        extracted_grade_model: WEIGHT_GAP_MODEL,
+        confirmed_grade_model: WEIGHT_SET_MODEL,
+        calculator_ready: false,
+        reconciliation: RECON_WEIGHT_GAP,
+        confirmed_reconciliation: justAffirmed ? { ...RECON_CONFIRMED, status: 'needs_student_review', findings: findingsAfterAffirm } : RECON_UNVERIFIABLE,
+        corrections,
+        clarifying_answers: justAffirmed ? { 'claim_evidence:category:midterm exam': { answer: 'confirm_value', category_name: 'midterm exam' } } : {},
+      }))
+      return true
+    }
+    return false
+  })
+
+  const table = page.locator('[data-testid="category-weight-table"]')
+  await table.waitFor()
+  const row = table.locator('[data-category-name="midterm exam"]')
+
+  // --- initial load: the claim-evidence finding does not exist yet (the
+  //     category's weight is still null), so there is no affirm banner ---
+  assert.equal(await row.getByRole('button', { name: "Yes, that's correct" }).count(), 0)
+  assert.equal(await table.locator('[data-finding-code="claim_evidence_consistency_unverifiable"]').count(), 0)
+
+  // --- set the weight and save -> the response is the ONLY place this
+  //     finding can appear ---
+  await page.getByLabel('midterm exam weight').fill('30')
+  await page.getByRole('button', { name: 'Save weights' }).click()
+  await page.waitForFunction(() => !document.querySelector('button[aria-busy="true"]'))
+
+  assert.deepEqual(corrections, [
+    { target_type: 'category', operation: 'set_weight', category_name: 'midterm exam', value: 30 },
+  ])
+
+  // the affirm banner now renders reactively against the POST-CORRECTION
+  // findings (detail.confirmed_reconciliation), not any initial-load snapshot
+  await row.getByText("We couldn't confirm midterm exam's weight against your syllabus.").waitFor()
+  const affirmButton = row.getByRole('button', { name: "Yes, that's correct" })
+  await affirmButton.waitFor()
+
+  // unknown_weight is still present in this response's findings (the
+  // backend never clears it), but its text ("we couldn't determine this
+  // category's weight") is now factually wrong -- the weight IS 30 -- so it
+  // must not render here once weight is no longer null
+  assert.equal(await row.locator('[data-finding-code="unknown_weight"]').count(), 0)
+  assert.equal(await row.getByText("couldn't determine this category's weight").count(), 0)
+
+  // --- affirming emits category/confirm_category_value, cumulative with
+  //     the prior set_weight correction ---
+  await affirmButton.click()
+  await page.waitForFunction(() => !document.querySelector('button[aria-busy="true"]'))
+
+  assert.deepEqual(corrections, [
+    { target_type: 'category', operation: 'set_weight', category_name: 'midterm exam', value: 30 },
+    { target_type: 'category', operation: 'confirm_category_value', category_name: 'midterm exam' },
+  ])
+  await row.getByText('✓ midterm exam weight confirmed as correct.').waitFor()
+  assert.equal(await row.getByRole('button', { name: "Yes, that's correct" }).count(), 0)
+})
+
+test('Grade Calculator: a category weight mismatch renders as blocking with no affirm button', { timeout: 45_000 }, async (t) => {
+  const RECON_MISMATCH = {
+    status: 'needs_student_review',
+    findings: [
+      { code: 'category_weight_validation', severity: 'valid', message: 'category weights sum to 100.0', field: 'categories' },
+      { code: 'claim_evidence_value_mismatch', severity: 'error', message: "category:midterm exam.weight claims 30.0, but its cited evidence text ('Midterm Exam (25%)') states 25.0", field: 'category:midterm exam.weight' },
+    ],
+    evidence_coverage: { total_claims: 3, supported_claims: 3, coverage_ratio: 1, unsupported_claims: [] },
+  }
+  const WEIGHT_SET_MODEL = {
+    ...WEIGHT_GAP_MODEL,
+    categories: WEIGHT_GAP_MODEL.categories.map((c) =>
+      c.name === 'midterm exam' ? { ...c, weight: 30, evidence: { page: 1, text: 'Midterm Exam (25%)', confidence: 1.0 } } : c,
+    ),
+  }
+  let corrections = []
+
+  const page = await mountCutoffPanel(t, 'grade-calculator-category-claim-evidence-mismatch', async (path, method, request, response) => {
+    if (path === `/api/v2/student/me/syllabus-grade-profiles/${PROFILE_ID}` && method === 'GET') {
+      json(response, 200, detail({ extracted_grade_model: WEIGHT_GAP_MODEL, reconciliation: RECON_WEIGHT_GAP }))
+      return true
+    }
+    if (path === `/api/v2/student/me/syllabus-grade-profiles/${PROFILE_ID}/corrections` && method === 'POST') {
+      corrections = JSON.parse(await readBody(request)).corrections
+      json(response, 200, detail({
+        extracted_grade_model: WEIGHT_GAP_MODEL,
+        confirmed_grade_model: WEIGHT_SET_MODEL,
+        calculator_ready: false,
+        reconciliation: RECON_WEIGHT_GAP,
+        confirmed_reconciliation: RECON_MISMATCH,
+        corrections,
+      }))
+      return true
+    }
+    return false
+  })
+
+  const table = page.locator('[data-testid="category-weight-table"]')
+  await table.waitFor()
+  await page.getByLabel('midterm exam weight').fill('30')
+  await page.getByRole('button', { name: 'Save weights' }).click()
+  await page.waitForFunction(() => !document.querySelector('button[aria-busy="true"]'))
+
+  const row = table.locator('[data-category-name="midterm exam"]')
+  const mismatchFinding = row.locator('[data-finding-code="claim_evidence_value_mismatch"]')
+  await mismatchFinding.getByText(/You entered 30%, but the syllabus text \("Midterm Exam \(25%\)"\) says 25%/).waitFor()
+
+  // blocking, non-dismissible, and -- unlike the unverifiable case -- never
+  // gets an affirm button anywhere on this row: the backend deliberately
+  // does not suppress claim_evidence_value_mismatch for a category
+  assert.equal(await mismatchFinding.getByRole('button', { name: 'Dismiss this finding' }).count(), 0)
+  assert.equal(await row.getByRole('button', { name: "Yes, that's correct" }).count(), 0)
+  assert.equal(await row.getByRole('button', { name: /confirm/i }).count(), 0)
+})

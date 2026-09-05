@@ -86,6 +86,21 @@ const FINDING_TEMPLATES: Record<string, (finding: SyllabusFinding) => string | n
     if (!finding.field) return null;
     return `Multiple assessments may be the same ("${finding.field.split(':')[0]}") — check for a duplicate.`;
   },
+  // Category-weight mismatches only (field "category:<name>.weight") --
+  // threshold/assessment mismatches never reach findingCopy() for this code
+  // (CutoffTable renders its own inline copy instead), so returning null for
+  // any other field shape falls through to the generic FINDING_COPY entry,
+  // unaffected. Unlike the threshold case, a category mismatch is never
+  // affirmable (reconciliation._check_category_weight_consistency), so the
+  // copy says so plainly rather than implying a fix is one click away.
+  claim_evidence_value_mismatch: (finding) => {
+    if (!finding.field?.startsWith('category:')) return null;
+    const m = /^category:.+\.weight claims ([\d.]+), but its cited evidence text \('(.*)'\) states ([\d.]+)$/.exec(
+      finding.message,
+    );
+    if (!m) return null;
+    return `You entered ${Number(m[1])}%, but the syllabus text ("${m[2]}") says ${Number(m[3])}%. Fix the weight below — this can't be confirmed as-is.`;
+  },
 };
 
 function findingCopy(finding: SyllabusFinding): string {
@@ -262,10 +277,36 @@ function valueClaimKey(letter: string): string {
   return `claim_evidence:threshold:${letter.trim().toLowerCase()}`;
 }
 
-// "threshold:B" -> "B"; null for a finding whose field is any other shape
-// (category:/assessment: claim-evidence findings are not confirmable here).
+// "threshold:B" -> "B"; null for a finding whose field is any other shape.
+// (category: claim-evidence findings have their own confirm path -- see
+// categoryClaimEvidenceCategoryName / categoryValueClaimKey below --
+// keyed separately from this one, never merged into it.)
 function thresholdFindingLetter(finding: SyllabusFinding): string | null {
   const m = /^threshold:(.+)$/.exec(finding.field ?? '');
+  return m ? m[1].trim() : null;
+}
+
+// Backend: reconciliation.py's confirmed_category_value_claims is a
+// SEPARATE, narrower parameter from the threshold one (service.py:
+// _confirmed_category_value_claim_names, api.py: _confirmed_suppression_sets'
+// 'claim_evidence:category:' branch) -- it only suppresses
+// claim_evidence_consistency_unverifiable, never claim_evidence_value_
+// mismatch (reconciliation._check_category_weight_consistency). This mirrors
+// that split on the frontend: a category weight claim is a distinct
+// identifier space from a threshold letter, with its own clarifying-answer
+// key namespace and its own (narrower) affirm eligibility.
+function categoryValueClaimKey(name: string): string {
+  return `claim_evidence:category:${normalizeName(name)}`;
+}
+
+// "category:Midterm Exam.weight" -> "Midterm Exam"; null for any other
+// field shape (assessment:/threshold: claim-evidence findings use their
+// own paths). Greedy on the name group so a category name that itself
+// contains a literal ".weight" substring still resolves against the
+// trailing ".weight" the backend always appends (reconciliation.py's
+// `label = f"category:{category.name}.weight"`).
+function categoryClaimEvidenceCategoryName(finding: SyllabusFinding): string | null {
+  const m = /^category:(.+)\.weight$/.exec(finding.field ?? '');
   return m ? m[1].trim() : null;
 }
 
@@ -1625,16 +1666,41 @@ function SyllabusGradingBreakdown({
  * whose count is known but whose total weight was never stated -- the
  * unknown_weight case) would otherwise never appear at all.
  *
- * category_weight_validation (course-level) and unknown_weight (per-
- * category) are read directly from the raw reconciliation findings --
+ * category_weight_validation (course-level), unknown_weight (per-category,
+ * informational only -- see below), and the per-category claim-evidence
+ * pair are all read directly from the raw reconciliation findings --
  * bypassing reviewFindings/findingsByAnchor, the same way CutoffTable reads
- * CLAIM_EVIDENCE_THRESHOLD_CODES findings itself -- and rendered
- * non-dismissible (InlineFinding's dismissible={false}) whenever their
- * OWN instance is blocking (severity !== 'valid'; category_weight_
- * validation in particular is VALID, not WARNING, once weights sum to
- * ~100, so a clean row shows nothing here rather than a stale "not
- * accepted" note). No ADD_CATEGORY / REMOVE_CATEGORY: only categories
- * already in the model can be edited.
+ * CLAIM_EVIDENCE_THRESHOLD_CODES findings itself. category_weight_
+ * validation renders non-dismissible whenever its OWN instance is blocking
+ * (severity !== 'valid'; it's VALID, not WARNING, once weights sum to ~100,
+ * so a clean total shows nothing here rather than a stale "not accepted"
+ * note). No ADD_CATEGORY / REMOVE_CATEGORY: only categories already in the
+ * model can be edited.
+ *
+ * IMPORTANT lifecycle note, unlike every threshold finding CutoffTable
+ * handles: claim_evidence_consistency_unverifiable / claim_evidence_value_
+ * mismatch on a category weight do NOT exist at extraction time --
+ * _check_category_weight_consistency (reconciliation.py) skips a category
+ * outright while its weight is null, so these findings can only appear
+ * AFTER a set_weight correction has already been submitted and answered
+ * with a fresh server response. `rawFindings` is read from `detail` --
+ * component state overwritten with the server's response on every
+ * submitCorrections call (see submitCorrections/handleReviewCorrections) --
+ * so this reads reactively off the MOST RECENT correction response, not a
+ * stale initial-load snapshot; no separate wiring was needed for that.
+ *
+ * The two claim-evidence codes are handled asymmetrically, mirroring the
+ * backend's own asymmetry (reconciliation._check_category_weight_
+ * consistency): claim_evidence_consistency_unverifiable (WARNING -- the
+ * checker couldn't parse a percent out of the evidence at all) gets the
+ * same "Yes, that's correct" affirm CutoffTable offers for thresholds,
+ * emitting category/confirm_category_value. claim_evidence_value_mismatch
+ * (ERROR -- the evidence WAS parsed and it cites a different number) gets
+ * NO affirm button -- the backend deliberately never suppresses it via
+ * confirmed_category_value_claims, so offering one here would be a UI
+ * promise the backend won't honor. It renders non-dismissible with an
+ * explanation instead; the actual fix is editing the weight/count fields
+ * above, not affirming past a real contradiction.
  */
 function CategoryWeightEditor({
   model,
@@ -1652,12 +1718,54 @@ function CategoryWeightEditor({
 
   const totalFinding = rawFindings.find((f) => f.code === 'category_weight_validation') ?? null;
 
+  // unknown_weight is non-blocking (reconciliation.NON_BLOCKING_WARNING_CODES)
+  // -- category_weight_validation is what actually gates confirm on this
+  // fact. It's kept here rather than moved to the general list because it's
+  // still category-scoped info worth anchoring to the right row, but its
+  // text ("we couldn't determine this category's weight") goes factually
+  // stale the moment `weight` is actually set -- most commonly via this
+  // very editor's own set_weight correction, which never clears the
+  // warning (only DISMISS_WARNING touches GradeModel.warnings). So it's
+  // only shown while weight is still genuinely unknown; once answered, the
+  // category's row status is driven by the claim-evidence checks below
+  // instead, and this note would just be wrong to keep displaying.
   const unknownWeightByCategory = new Map<string, SyllabusFinding>();
   for (const f of rawFindings) {
     if (f.code !== 'unknown_weight' || !f.field) continue;
-    const match = categories.find((c) => normalizeName(c.name) === normalizeName(f.field as string));
+    const match = categories.find((c) => normalizeName(c.name) === normalizeName(f.field as string) && c.weight === null);
     if (match) unknownWeightByCategory.set(match.name, f);
   }
+
+  // Per-category claim-evidence findings -- see the component docstring for
+  // why these can only appear after a set_weight correction, and why the
+  // two codes are handled asymmetrically. `answers` mirrors CutoffTable's
+  // clarifying-answer lookup, but under the SEPARATE 'claim_evidence:
+  // category:' key namespace (categoryValueClaimKey), never the threshold
+  // one.
+  const answers = detail?.clarifying_answers ?? {};
+  const openCategoryValueClaims = new Map<string, SyllabusFinding>();
+  const categoryMismatchByName = new Map<string, SyllabusFinding>();
+  for (const f of rawFindings) {
+    if (!CLAIM_EVIDENCE_THRESHOLD_CODES.has(f.code)) continue;
+    const name = categoryClaimEvidenceCategoryName(f);
+    if (!name) continue;
+    const match = categories.find((c) => normalizeName(c.name) === normalizeName(name));
+    if (!match) continue;
+    if (f.code === 'claim_evidence_value_mismatch') {
+      // Never affirmable -- reconciliation._check_category_weight_consistency
+      // only suppresses claim_evidence_consistency_unverifiable, deliberately
+      // narrower than the threshold path. No key is ever written for this
+      // one, so there's no "answered" state to check here.
+      categoryMismatchByName.set(match.name, f);
+    } else if (!(categoryValueClaimKey(match.name) in answers)) {
+      openCategoryValueClaims.set(match.name, f);
+    }
+  }
+  const answeredCategoryValueClaims = new Set(
+    Object.keys(answers)
+      .filter((k) => k.startsWith('claim_evidence:category:'))
+      .map((k) => (answers[k]?.category_name ?? k.slice('claim_evidence:category:'.length)).trim().toLowerCase()),
+  );
 
   // Server-truth draft, same pattern as CutoffTable's serverDraft/draft
   // pair: recomputed only when the categories themselves change (a
@@ -1745,6 +1853,9 @@ function CategoryWeightEditor({
         {categories.map((c) => {
           const dirty = rowDirty(c.name);
           const unknownWeight = unknownWeightByCategory.get(c.name);
+          const mismatch = categoryMismatchByName.get(c.name);
+          const openClaim = openCategoryValueClaims.get(c.name);
+          const answered = answeredCategoryValueClaims.has(normalizeName(c.name));
           return (
             <div className="grade-weight-row" role="row" key={c.name} data-category-name={c.name}>
               <span className="grade-weight-row-name" role="cell">{c.name}</span>
@@ -1775,7 +1886,33 @@ function CategoryWeightEditor({
               <span className="grade-weight-row-status" role="cell">
                 {dirty ? (
                   <span className="grade-cutoff-row-note">edited — save below</span>
-                ) : unknownWeight && unknownWeight.severity !== 'valid' ? (
+                ) : mismatch ? (
+                  // ERROR, never affirmable -- see the component docstring.
+                  <InlineFinding finding={mismatch} onDismiss={() => {}} dismissible={false} />
+                ) : openClaim ? (
+                  <span className="grade-cutoff-row-affirm">
+                    <span className="grade-cutoff-row-note">
+                      We couldn't confirm {c.name}'s weight against your syllabus.
+                    </span>
+                    <button
+                      type="button"
+                      className="btn btn-primary btn-sm"
+                      disabled={busy}
+                      aria-busy={busy}
+                      onClick={() =>
+                        onSubmitCorrections([
+                          { target_type: 'category', operation: 'confirm_category_value', category_name: c.name },
+                        ])
+                      }
+                    >
+                      Yes, that's correct
+                    </button>
+                  </span>
+                ) : answered ? (
+                  <span className="grade-cutoff-resolved" data-category-name={c.name}>
+                    ✓ {c.name} weight confirmed as correct.
+                  </span>
+                ) : unknownWeight ? (
                   <InlineFinding finding={unknownWeight} onDismiss={() => {}} dismissible={false} />
                 ) : null}
               </span>
