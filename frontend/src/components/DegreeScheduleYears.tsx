@@ -152,23 +152,24 @@ function TermDecisionCard({ decision, mutation, onChoose, onClear, onRestore }: 
 
   if (decision.state === 'LOCKED') {
     const selected = candidates.find((candidate) => candidate.candidate_id === selectedCandidateId) ?? candidates[0] ?? null;
-    const isMultiCourse = (selected?.candidate_courses.length ?? 0) > 1;
     return (
-      <li className="degree-schedule-decision-card is-locked degree-schedule-term-decision">
-        <div className="degree-schedule-decision-heading">
-          <h6>{requirementName}</h6>
-          <div>
-            <strong>Selected</strong>
-            {/* Only the single-candidate (non-changing) view: while changing,
-                candidates.length is a real menu of alternatives -- same shape
-                as CHOICE_REQUIRED -- so each option's own header already
-                shows its total via DecisionCandidatePath, and repeating it up
-                here would be the redundancy, not the fix. */}
-            {!changing && isMultiCourse && selected?.additional_credits != null && (
-              <span>{formatCredits(selected.additional_credits)} total</span>
-            )}
+      // While changing, this is functionally a CHOICE_REQUIRED menu (a real
+      // set of Option N boxes to pick from) so it keeps that boxed
+      // decision-card treatment unchanged. Not-changing is the true LOCKED
+      // resting view -- full visual parity with the Fall/planned plain rows
+      // it sits beside: no border, no background, no "Selected" label, no
+      // per-group credits total (see degree-schedule-locked-decision below).
+      <li className={changing ? 'degree-schedule-decision-card is-locked degree-schedule-term-decision' : 'degree-schedule-locked-decision degree-schedule-term-decision'}>
+        {changing && (
+          <div className="degree-schedule-decision-heading">
+            <h6>{requirementName}</h6>
+            <div><strong>Selected</strong></div>
           </div>
-        </div>
+        )}
+        {/* The resting (non-changing) view carries no heading at all -- the
+            requirement name moved to a "Required courses" note in the term
+            header instead (SemesterColumn), since a per-card heading here
+            was the last thing keeping this from reading as a plain row. */}
         {changing ? (
           <ol className="degree-schedule-candidate-list">
             {candidates.map((candidate, index) => (
@@ -188,11 +189,11 @@ function TermDecisionCard({ decision, mutation, onChoose, onClear, onRestore }: 
           </ul>
         ) : null}
         <div className="degree-schedule-choice-actions">
-          <button type="button" className="btn btn-secondary btn-sm" disabled={busy}
+          <button type="button" className={changing ? 'btn btn-secondary btn-sm' : 'degree-schedule-text-action'} disabled={busy}
             onClick={() => setChanging((value) => !value)}>
             {changing ? 'Cancel change' : 'Change choice'}
           </button>
-          <button type="button" className="btn btn-ghost btn-sm" disabled={busy}
+          <button type="button" className={changing ? 'btn btn-ghost btn-sm' : 'degree-schedule-text-action'} disabled={busy}
             aria-busy={rowBusy && mutation?.action === 'clear'}
             onClick={() => onClear(rgid)}>
             {rowBusy && mutation?.action === 'clear' ? 'Clearing…' : 'Clear choice'}
@@ -270,6 +271,12 @@ function SemesterColumn({ semester, identity, busyCode, mutation, isEditOpen, on
     [semester.planned],
   );
 
+  // The LOCKED card's own heading was removed for full Fall-row parity (see
+  // TermDecisionCard); this is where that "there's a required-courses
+  // decision here" signal now lives instead -- folded into the same header
+  // span as totalCreditsLabel, not a new competing label.
+  const hasLockedDecision = semester.decisions.some((decision) => decision.state === 'LOCKED');
+
   // Closing always returns focus to the trigger, per the dialog a11y contract.
   // Both the footer "Confirm" button and Escape route through here.
   const closeEdit = useCallback(() => {
@@ -281,7 +288,7 @@ function SemesterColumn({ semester, identity, busyCode, mutation, isEditOpen, on
     <section className="degree-schedule-semester" aria-label={`${semester.season} ${semester.termKey.split('-')[0]}`}>
       <div className="degree-schedule-semester-header">
         <h5>{semester.season}</h5>
-        <span>{semester.totalCreditsLabel ?? '—'}</span>
+        <span>{hasLockedDecision ? `${semester.totalCreditsLabel ?? '—'} · Required courses` : (semester.totalCreditsLabel ?? '—')}</span>
       </div>
 
       {(semester.state === 'past' || semester.state === 'in_progress') && (

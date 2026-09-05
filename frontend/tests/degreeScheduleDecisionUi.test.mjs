@@ -162,10 +162,29 @@ test('Degree Schedule decisions render on their resolved term card; non-card sta
   await page.getByRole('region', { name: 'Fall 2027' }).waitFor()
 
   const fall2027 = page.getByRole('region', { name: 'Fall 2027' })
-  await fall2027.getByText('American History').waitFor()
-  assert.equal(await fall2027.getByText('Selected', { exact: true }).count() >= 1, true)
+  await fall2027.getByText('HIST 1301', { exact: true }).waitFor()
+
+  // ── The resting (non-changing) LOCKED view is full visual parity with the
+  //    Fall/planned plain rows: no bordered/backgrounded decision-card, no
+  //    per-card heading naming the requirement, no "Selected" label, no
+  //    per-group credits total. ────────────────────────────────────────────
+  assert.equal(await fall2027.locator('.degree-schedule-locked-decision').count(), 1)
+  assert.equal(await fall2027.locator('.degree-schedule-decision-card').count(), 0)
+  assert.equal(await fall2027.getByText('American History').count(), 0)
+  assert.equal(await fall2027.getByText('Selected', { exact: true }).count(), 0)
+  assert.doesNotMatch(await fall2027.textContent(), /total/)
   assert.equal(await fall2027.getByRole('button', { name: 'Change choice' }).count(), 1)
   assert.equal(await fall2027.getByRole('button', { name: 'Clear choice' }).count(), 1)
+  // Plain text-style actions, not the boxed btn-secondary/btn-ghost pair.
+  assert.equal(await fall2027.locator('.degree-schedule-text-action').count(), 2)
+  assert.equal(await fall2027.getByRole('button', { name: 'Change choice' }).evaluate((el) => el.className), 'degree-schedule-text-action')
+
+  // ── The requirement-name signal moved to the term header: "Required
+  //    courses" rides in the same span as the totalCreditsLabel text (here
+  //    "Not scheduled"), not a new competing label, and only shows up on a
+  //    term that actually has a LOCKED decision. ─────────────────────────
+  const fall2027HeaderNote = fall2027.locator('.degree-schedule-semester-header span')
+  assert.equal(await fall2027HeaderNote.textContent(), 'Not scheduled · Required courses')
 
   // ── A LOCKED card has exactly one candidate, already chosen -- the nested
   //    "Option 1" box was pure redundancy and is gone. Its course rows
@@ -181,17 +200,28 @@ test('Degree Schedule decisions render on their resolved term card; non-card sta
   // ── "Change choice" on a LOCKED card flips to a genuine multi-candidate
   //    menu (this fixture's American History group has 2 feasible
   //    candidates) -- that view still needs the "Option N" box to
-  //    distinguish them, the same reason CHOICE_REQUIRED keeps it. ────────
+  //    distinguish them, the same reason CHOICE_REQUIRED keeps it, and it
+  //    keeps the boxed decision-card treatment + "Selected" label. ────────
   await fall2027.getByRole('button', { name: 'Change choice' }).click()
+  assert.equal(await fall2027.locator('.degree-schedule-decision-card.is-locked').count(), 1)
+  assert.equal(await fall2027.locator('.degree-schedule-locked-decision').count(), 0)
+  assert.equal(await fall2027.getByText('Selected', { exact: true }).count() >= 1, true)
   assert.equal(await fall2027.getByText('Option 1').count(), 1)
   assert.equal(await fall2027.getByText('Option 2').count(), 1)
   assert.equal(await fall2027.locator('.degree-schedule-candidate-path').count(), 2)
   await fall2027.getByRole('button', { name: 'Cancel change' }).click()
   assert.equal(await fall2027.getByText('Option 1').count(), 0)
   assert.equal(await fall2027.locator('.degree-schedule-candidate-path').count(), 0)
+  assert.equal(await fall2027.locator('.degree-schedule-locked-decision').count(), 1)
 
   const spring2028 = page.getByRole('region', { name: 'Spring 2028' })
   await spring2028.getByText('Statistical Methods').waitFor()
+  // No LOCKED decision here yet (CHOICE_REQUIRED only) -- no "Required
+  // courses" note on this term's header.
+  assert.equal(
+    await spring2028.locator('.degree-schedule-semester-header span').textContent(),
+    'Not scheduled',
+  )
   assert.equal(await spring2028.getByText('Choice required').count(), 1)
   assert.equal(await spring2028.getByText('2 valid options').count(), 1)
   assert.match(await spring2028.textContent(), /may shift depending on which option/)
@@ -247,6 +277,9 @@ test('Degree Schedule decisions render on their resolved term card; non-card sta
   assert.equal(await fall2028.getByText('Est. Fall 2028').count(), 1)
   assert.equal(await fall2028.getByText('CSCE 4901').count(), 1)
   assert.equal(await fall2028.getByRole('button', { name: 'Add it back' }).count(), 1)
+  // EXCLUDED is not LOCKED either -- no "Required courses" note here.
+  const fall2028HeaderText = await fall2028.locator('.degree-schedule-semester-header span').textContent()
+  assert.doesNotMatch(fall2028HeaderText, /Required courses/)
 
   // ── Non-card states produce zero UI anywhere on the page ───────────────
   const pageText = await page.locator('body').textContent()
@@ -286,14 +319,22 @@ test('Degree Schedule decisions render on their resolved term card; non-card sta
   await page.getByRole('tab', { name: 'Second year' }).click()
   await spring2028.getByRole('button', { name: /Choose CEE 2302 and CS 3377 for Statistical Methods/ }).click()
   // The choice card flips to the LOCKED treatment in place (Change/Clear).
+  // It lands in the resting (non-changing) view, so it's the boxless
+  // .degree-schedule-locked-decision, not the boxed .is-locked card.
   await spring2028.getByRole('button', { name: 'Change choice' }).waitFor()
-  assert.equal(await spring2028.locator('.degree-schedule-decision-card.is-locked').count(), 1)
+  assert.equal(await spring2028.locator('.degree-schedule-locked-decision').count(), 1)
+  assert.equal(await spring2028.locator('.degree-schedule-decision-card.is-locked').count(), 0)
   assert.equal(putBodies.length, 1)
   assert.deepEqual(putBodies[0].selections.find((s) => s.requirement_group_id === 'choice'), {
     requirement_group_id: 'choice', candidate_id: 'multi', course_codes: ['CEE 2302', 'CS 3377'],
   })
   assert.equal(await spring2028.getByRole('button', { name: 'Change choice' }).count(), 1)
   assert.equal(await spring2028.getByRole('button', { name: 'Clear choice' }).count(), 1)
+  // Now that this decision is LOCKED, the term header picks up the note.
+  assert.equal(
+    await spring2028.locator('.degree-schedule-semester-header span').textContent(),
+    'Not scheduled · Required courses',
+  )
 
   // ── RESELECTION_REQUIRED is a top-level alert, not a term-card entry ───
   schedule.selection_state = {

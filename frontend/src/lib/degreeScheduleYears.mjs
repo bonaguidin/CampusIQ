@@ -1,4 +1,4 @@
-import { termStatus } from './termPlanning.mjs'
+import { termStatus, existingCourseStatusIndex, findCrossListedMatch } from './termPlanning.mjs'
 import { formatCredits } from './degreeSchedulePresentation.mjs'
 
 /**
@@ -126,6 +126,41 @@ export function bucketDecisionsByTerm(decisions, candidateSets) {
 }
 
 /**
+ * Ids of planned_courses rows that are display-duplicates of coursework the
+ * student already has under a cross-listed alias -- either a course_records
+ * row (in_progress/completed) or an earlier planned row for the same real
+ * course under its other departmental code. The add-time check
+ * (CourseSearchAdd's findCrossListedMatch call) blocks new duplicates like
+ * this from being created; this is the retroactive display-only filter for
+ * rows that predate that check (or otherwise slipped through). The
+ * underlying planned_courses row is never written to here -- this only
+ * decides what's rendered, matching the existingCourseStatusIndex /
+ * findCrossListedMatch pair already used for the add-time check, not a new
+ * lookup.
+ *
+ * Student-wide (every term, not just one), same scope as the add-time check.
+ * Rows are walked in input order; the first row for a given course "wins"
+ * and later cross-listed duplicates of it are hidden -- order isn't
+ * otherwise meaningful here, it's just a deterministic tie-break.
+ */
+function hiddenPlannedIds(planned, courseRecords, crossListingMap) {
+  const hidden = new Set()
+  const recordIndex = existingCourseStatusIndex(courseRecords, [])
+  const keptIndex = new Map()
+  for (const row of planned) {
+    const code = String(row.course_code ?? '').toUpperCase()
+    const alreadyHasRecord = findCrossListedMatch(code, crossListingMap, recordIndex)
+    const alreadyKeptPlanned = findCrossListedMatch(code, crossListingMap, keptIndex)
+    if (alreadyHasRecord || alreadyKeptPlanned) {
+      hidden.add(row.id)
+      continue
+    }
+    keptIndex.set(code, 'planned')
+  }
+  return hidden
+}
+
+/**
  * Builds the year-tabbed, two-column data this view renders, merging four
  * sources that otherwise never meet:
  *  - realTerms (GET /terms): calendar terms, used for status + real dates
@@ -156,6 +191,7 @@ export function buildDegreeScheduleYears({ realTerms, scheduleTerms, courseRecor
   const records = Array.isArray(courseRecords) ? courseRecords : []
   const planned = Array.isArray(plannedCourses) ? plannedCourses : []
   const crossListingMap = crossListings && typeof crossListings === 'object' ? crossListings : {}
+  const hiddenIds = hiddenPlannedIds(planned, records, crossListingMap)
 
   const termsByKey = new Map(terms.map((term) => [term.key, term]))
   const scheduleByKey = new Map(schedule.map((term) => [term.term_key, term]))
@@ -222,16 +258,24 @@ export function buildDegreeScheduleYears({ realTerms, scheduleTerms, courseRecor
       // on add); a term with no materialized id therefore has none, by
       // construction -- same guard the past/in_progress branch applies to
       // course_records.
-      const plannedForTerm = realTerm?.id == null
+      const plannedRowsForTerm = realTerm?.id == null
         ? []
-        : planned
-            .filter((row) => row.term_id === realTerm.id)
-            .map((row) => ({
-              id: row.id,
-              course_code: row.course_code,
-              title: row.title ?? null,
-              credit_hours: row.credit_hours,
-            }))
+        : planned.filter((row) => row.term_id === realTerm.id)
+
+      // Display-only: a row cross-listed with something the student already
+      // has (course_records or an earlier planned row -- see hiddenPlannedIds
+      // above) is excluded from what renders, but it still counts as
+      // genuinely planned for the suggested-course reconciliation just below,
+      // so that reconciliation is computed off plannedRowsForTerm (pre-hide),
+      // not plannedForTerm.
+      const plannedForTerm = plannedRowsForTerm
+        .filter((row) => !hiddenIds.has(row.id))
+        .map((row) => ({
+          id: row.id,
+          course_code: row.course_code,
+          title: row.title ?? null,
+          credit_hours: row.credit_hours,
+        }))
 
       // Reconcile against the scheduler's plan: a course the student already
       // added is shown once, under the added treatment -- drop the matching
@@ -243,7 +287,7 @@ export function buildDegreeScheduleYears({ realTerms, scheduleTerms, courseRecor
       // each planned code's cross-listed partners, so the .has() check below
       // stays a single, unchanged lookup.
       const plannedCodeSet = new Set()
-      for (const row of plannedForTerm) {
+      for (const row of plannedRowsForTerm) {
         const code = String(row.course_code ?? '').toUpperCase()
         plannedCodeSet.add(code)
         for (const partner of crossListingMap[code] ?? []) {

@@ -360,6 +360,73 @@ test('a planned row is not shown against a future term with no materialized acad
   assert.deepEqual(spring.planned, [])
 })
 
+// ── cross-listed duplicate planned rows are hidden from display, not deleted ─
+
+test('a planned row cross-listed with an in-progress course_records entry is excluded from semester.planned', () => {
+  const spring2027 = term({ year: 2027, season: 'Spring', start_date: '2027-01-19', end_date: '2027-05-11' })
+  const plannedInput = [
+    plannedRow({ id: 'p1', course_code: 'CSCE 222', title: null, credit_hours: 3, term_id: spring2027.id }),
+  ]
+  const years = buildDegreeScheduleYears({
+    realTerms: [spring2027],
+    scheduleTerms: [],
+    courseRecords: [
+      // ECEN 222 is the same course as planned CSCE 222 under its other
+      // departmental code, already in progress under a *different* term.
+      record({ course_code: 'ECEN 222', status: 'in_progress', term_id: 'term-1' }),
+    ],
+    gradingSchema: null,
+    today: TODAY,
+    plannedCourses: plannedInput,
+    crossListings: { 'CSCE 222': ['ECEN 222'], 'ECEN 222': ['CSCE 222'] },
+  })
+  const spring = years[0].semesters.find((s) => s.termKey === '2027-Spring')
+  assert.deepEqual(spring.planned, [])
+  // Display-only: the input array itself is untouched -- no row was deleted,
+  // it just isn't rendered. Same object reference, same length.
+  assert.equal(plannedInput.length, 1)
+  assert.equal(plannedInput[0].id, 'p1')
+})
+
+test('two planned rows that are cross-listed with each other: the later one is hidden, the earlier one still renders', () => {
+  const spring2027 = term({ year: 2027, season: 'Spring', start_date: '2027-01-19', end_date: '2027-05-11' })
+  const plannedInput = [
+    plannedRow({ id: 'p1', course_code: 'CSCE 222', title: null, credit_hours: 3, term_id: spring2027.id }),
+    // Retroactive bad data: a second planned row for the same real course
+    // under its other departmental code -- the add-time check now prevents
+    // new instances of this, but old data can still have it.
+    plannedRow({ id: 'p2', course_code: 'ECEN 222', title: null, credit_hours: 3, term_id: spring2027.id }),
+  ]
+  const years = buildDegreeScheduleYears({
+    realTerms: [spring2027],
+    scheduleTerms: [],
+    courseRecords: [],
+    gradingSchema: null,
+    today: TODAY,
+    plannedCourses: plannedInput,
+    crossListings: { 'CSCE 222': ['ECEN 222'], 'ECEN 222': ['CSCE 222'] },
+  })
+  const spring = years[0].semesters.find((s) => s.termKey === '2027-Spring')
+  assert.deepEqual(spring.planned.map((c) => c.id), ['p1'])
+  // Neither underlying row was touched.
+  assert.equal(plannedInput.length, 2)
+})
+
+test('a planned row with no cross-listing conflict still renders normally', () => {
+  const spring2027 = term({ year: 2027, season: 'Spring', start_date: '2027-01-19', end_date: '2027-05-11' })
+  const years = buildDegreeScheduleYears({
+    realTerms: [spring2027],
+    scheduleTerms: [],
+    courseRecords: [record({ course_code: 'MATH 251', status: 'completed', term_id: 'term-1' })],
+    gradingSchema: null,
+    today: TODAY,
+    plannedCourses: [plannedRow({ id: 'p1', course_code: 'CSCE 222', term_id: spring2027.id })],
+    crossListings: { 'CSCE 222': ['ECEN 222'], 'ECEN 222': ['CSCE 222'] },
+  })
+  const spring = years[0].semesters.find((s) => s.termKey === '2027-Spring')
+  assert.deepEqual(spring.planned.map((c) => c.id), ['p1'])
+})
+
 test('removing a planned row from the input removes it from the term card (disappears on next load)', () => {
   const spring2027 = term({ year: 2027, season: 'Spring', start_date: '2027-01-19', end_date: '2027-05-11' })
   const args = {
