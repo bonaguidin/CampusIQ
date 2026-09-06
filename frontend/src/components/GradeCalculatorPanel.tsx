@@ -449,7 +449,16 @@ function draftFromSavedState(draft: GradeStateDraft, detail: SyllabusProfileDeta
   return next;
 }
 
-function buildGradeState(draft: GradeStateDraft, useProjectedFallback: boolean) {
+// `allowProjected` splits the two consumers of the draft:
+//   false -> persistence (PUT /grade-state): actuals only, What-if ignored.
+//   true  -> the /calculate path: a non-empty What-if takes PRECEDENCE over
+//            the row's actual. The student is asking "what if this score were
+//            X instead", so the row is submitted as { projected_score } with
+//            no actual_score -- CategoryScoreInput / AssessmentScoreInput
+//            forbid setting both (exactly_one_score), and a projected row is
+//            deliberately pulled out of the completed-weight pool, so the
+//            current grade re-normalises over the remaining real scores.
+function buildGradeState(draft: GradeStateDraft, allowProjected: boolean) {
   const category_scores: { category_name: string; actual_score?: number; projected_score?: number }[] = [];
   const assessment_scores: { assessment_name: string; actual_score?: number; projected_score?: number }[] = [];
   for (const [key, values] of Object.entries(draft)) {
@@ -457,10 +466,10 @@ function buildGradeState(draft: GradeStateDraft, useProjectedFallback: boolean) 
     const actual = values.actual.trim() === '' ? null : Number(values.actual);
     const projected = values.projected.trim() === '' ? null : Number(values.projected);
     let entry: { actual_score?: number; projected_score?: number } | null = null;
-    if (actual !== null && !Number.isNaN(actual)) {
-      entry = { actual_score: actual };
-    } else if (useProjectedFallback && projected !== null && !Number.isNaN(projected)) {
+    if (allowProjected && projected !== null && !Number.isNaN(projected)) {
       entry = { projected_score: projected };
+    } else if (actual !== null && !Number.isNaN(actual)) {
+      entry = { actual_score: actual };
     }
     if (!entry) continue;
     if (kind === 'category') category_scores.push({ category_name: name, ...entry });
@@ -761,8 +770,8 @@ export function GradeCalculatorPanel({ accessToken, courses, institutionName }: 
   // projection and by "Save & calculate". Every call takes a fresh run id;
   // a resolved response whose id has since been superseded is dropped, so
   // out-of-order arrivals never overwrite a newer calculation. Sends
-  // What-If scores as the projected fallback (buildGradeState(..., true))
-  // and never persists anything.
+  // What-If scores with precedence over their row's actual
+  // (buildGradeState(..., true)) and never persists anything.
   async function dispatchCalculation() {
     if (!accessToken || !selectedProfileId) return;
     const runId = ++calcRunIdRef.current;
