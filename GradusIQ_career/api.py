@@ -66,6 +66,7 @@ from GradusIQ_career.syllabus.calculator import (
     AssessmentScoreInput,
     CategoryScoreInput,
     GradeCalculationError,
+    GradeCalculationResult,
     GradeModelNotReadyError,
     StudentGradeState,
     calculate_grade_projection,
@@ -2287,6 +2288,30 @@ def _syllabus_profile_summary(profile_row: dict) -> dict:
     }
 
 
+def _list_card_components(result: GradeCalculationResult) -> list[dict]:
+    """The slice of GradeCalculationResult.components a list card renders: one
+    ring segment per component, sized by weight_percent, filled by
+    effective_score, with status distinguishing an ungraded component
+    (status/effective_score both None) from a real scored zero
+    (effective_score 0.0, status set).
+
+    Deliberately a hand-built projection, not component.model_dump(): the
+    per-assessment detail the detail page needs -- original_score,
+    contribution, earned_points, possible_points -- is intentionally left off
+    the list payload and only served by POST .../{profile_id}/calculate.
+    """
+    return [
+        {
+            "name": component.name,
+            "source_type": component.source_type.value,
+            "weight_percent": component.weight_percent,
+            "effective_score": component.effective_score,
+            "status": component.status.value if component.status is not None else None,
+        }
+        for component in result.components
+    ]
+
+
 def _syllabus_revision_summary(revision_row: dict | None) -> dict | None:
     if revision_row is None:
         return None
@@ -2505,9 +2530,17 @@ def get_me_syllabus_grade_profiles(request: Request) -> dict:
         summary = _syllabus_profile_summary(profile)
         summary["calculator_ready"] = syllabus_read.calculator_ready(profile, current_revision)
 
-        # Current grade is computed from already-saved state only (pure
-        # Python calculator, no LLM/parsing) -- never recomputed via ingestion.
+        # Current grade, letter, and the trimmed per-component breakdown are
+        # computed from already-saved state only (pure Python calculator, no
+        # LLM/parsing) -- never recomputed via ingestion. All three share one
+        # calculate_grade_projection call and one set of failure fallbacks:
+        # anything short of a clean result (not calculator_ready, no saved
+        # grade state, an invalid persisted record, or a calculation error)
+        # leaves current_grade/current_letter_grade None and components []
+        # so a not-yet-scored course renders as an empty ring, never an error.
         summary["current_grade"] = None
+        summary["current_letter_grade"] = None
+        summary["components"] = []
         if summary["calculator_ready"]:
             grade_state_row = syllabus_store.get_grade_state(client, profile_id=profile["id"], student_id=student_id)
             if grade_state_row is not None:
@@ -2516,8 +2549,12 @@ def get_me_syllabus_grade_profiles(request: Request) -> dict:
                     grade_state = syllabus_read.grade_state_from_row(grade_state_row)
                     result = calculate_grade_projection(reconciliation, grade_state)
                     summary["current_grade"] = result.current_grade
+                    summary["current_letter_grade"] = result.current_letter_grade
+                    summary["components"] = _list_card_components(result)
                 except (syllabus_read.PersistedRecordInvalidError, GradeCalculationError):
                     summary["current_grade"] = None
+                    summary["current_letter_grade"] = None
+                    summary["components"] = []
         items.append(summary)
 
     return {"syllabus_grade_profiles": items}
