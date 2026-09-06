@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { fetchPlannedCourses, fetchTerms } from '../api/planning';
 import type { PlannedCourse, PlanningTerm } from '../lib/termPlanning.mjs';
 import type { AcademicCourse } from '../types/studentIntelligenceProfile';
+import { GradeCard } from './GradeCard';
 import {
   SyllabusApiError,
   calculateSyllabusGrade,
@@ -1176,26 +1177,18 @@ export function GradeCalculatorPanel({ accessToken, courses, institutionName }: 
 
           {profiles !== null && profiles.length > 0 && (
             <>
-              <div className="real-course-table" role="table" aria-label="Your grade calculators">
+              <ul className="grade-card-grid" aria-label="Your grade calculators">
                 {profiles.map((p) => (
-                  <div className="real-course-row grade-profile-row" role="row" key={p.id}>
-                    <button type="button" className="grade-profile-row-button" onClick={() => loadDetail(p.id)}>
-                      <span role="cell"><strong>{p.course_code ?? 'Untitled course'}</strong><small>{p.term ?? ''}</small></span>
-                      <span role="cell">{p.review_state === 'confirmed' ? 'Confirmed' : p.review_state === 'reconfirm_required' ? 'Needs reconfirmation' : 'Review needed'}</span>
-                      <span role="cell">{p.current_grade !== null && p.current_grade !== undefined ? `${p.current_grade}%` : '—'}</span>
-                    </button>
-                    <button
-                      type="button"
-                      className="btn btn-ghost btn-sm grade-profile-remove"
-                      onClick={() => handleRemoveProfile(p.id, p.course_code ?? 'this course')}
-                      disabled={removingId === p.id}
-                      aria-label={`Remove grade calculator for ${p.course_code ?? 'this course'}`}
-                    >
-                      {removingId === p.id ? 'Removing…' : 'Remove'}
-                    </button>
-                  </div>
+                  <li key={p.id}>
+                    <GradeCard
+                      profile={p}
+                      onOpen={() => loadDetail(p.id)}
+                      onRemove={() => handleRemoveProfile(p.id, p.course_code ?? 'this course')}
+                      removing={removingId === p.id}
+                    />
+                  </li>
                 ))}
-              </div>
+              </ul>
               <button type="button" className="btn btn-ghost btn-sm" onClick={() => setShowUpload(true)}>
                 Upload another syllabus
               </button>
