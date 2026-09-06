@@ -54,6 +54,13 @@ every downstream sum unchanged -- so `total_weight` still counts the
 parent weight here, and the two layers still agree. When ANY condition
 fails, behavior is exactly as before: the parent category is the only
 component and its assessments stay informational.
+
+This module only reports whether a category COULD be decomposed
+(`decomposable_categories` / `decomposed_assessments`). Whether it
+actually is, for a given calculation, is the calculator's call and
+depends on the student's input -- see engine._build_weighted_components:
+a decomposable category stays a single parent component until the student
+scores at least one of its child assessments.
 """
 
 from dataclasses import dataclass
@@ -92,10 +99,6 @@ class EffectiveCourseWeights:
     @property
     def has_any_component(self) -> bool:
         return bool(self.weighted_categories or self.standalone_weighted_assessments)
-
-    @property
-    def decomposable_category_keys(self) -> frozenset[str]:
-        return frozenset(_normalize_name(c.name) for c in self.decomposable_categories)
 
 
 def _decomposition_children(

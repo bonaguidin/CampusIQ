@@ -28,6 +28,7 @@ from GradusIQ_career.syllabus.models import (
     Assessment,
     GradeCategory,
     GradeModel,
+    GradeThreshold,
     GradingMethod,
     GradingRule,
     GradingRuleType,
@@ -76,14 +77,17 @@ def accepted(
 
 
 CSCE_222_CONTENT = content_for(
-    "Homework assignment (35%) 2 midterms midterm I (Sept. 24) midterm II (Oct. 29) final exam (35%)"
+    "Homework assignment (35%) 2 midterms midterm I (Sept. 24) midterm II (Oct. 29) final exam (35%) "
+    "A = 90-100% B = 80-89% C = 70-79% D = 60-69% F = 0-59%"
 )
 
 
 def csce_222_model() -> GradeModel:
-    """Verbatim shape of the real confirmed_grade_model row: 'midterm exam'
-    weight 30 / count 2 with children 'midterm I' + 'midterm II' at 15 each,
-    and a single-child 'final exam' whose one assessment shares its name.
+    """Shape of the real confirmed_grade_model row: 'midterm exam' weight 30 /
+    count 2 with children 'midterm I' + 'midterm II' at 15 each, and a
+    single-child 'final exam' whose one assessment shares its name. Threshold
+    evidence texts are cleaned to parse (the real row reached ACCEPTED for F
+    via a confirm_threshold_value correction instead).
     """
     return GradeModel(
         grading_method=GradingMethod.WEIGHTED,
@@ -108,6 +112,13 @@ def csce_222_model() -> GradeModel:
                 evidence=evidence("midterm II (Oct. 29)"),
             ),
             Assessment(name="final exam", category="final exam", weight=35, evidence=evidence("final exam (35%)")),
+        ],
+        grade_thresholds=[
+            GradeThreshold(letter="A", minimum=90, maximum=100, evidence=evidence("A = 90-100%")),
+            GradeThreshold(letter="B", minimum=80, maximum=89, evidence=evidence("B = 80-89%")),
+            GradeThreshold(letter="C", minimum=70, maximum=79, evidence=evidence("C = 70-79%")),
+            GradeThreshold(letter="D", minimum=60, maximum=69, evidence=evidence("D = 60-69%")),
+            GradeThreshold(letter="F", minimum=0, maximum=59, evidence=evidence("F = 0-59%")),
         ],
     )
 
@@ -153,15 +164,150 @@ def test_csce_222_children_scorable_parent_not_emitted_total_still_100():
     assert result.current_grade == round(expected, 2)
 
 
-def test_csce_222_scoring_the_decomposable_category_directly_is_rejected():
+def test_csce_222_real_saved_state_scored_by_category_is_unchanged():
+    """The actual saved grade_state for the live CSCE 222 row: a category
+    score for every category, assessment_scores empty. Decomposition is
+    per-request and keyed off child assessment scores, of which there are
+    none -- so nothing decomposes, the three parent CATEGORY components are
+    emitted exactly as before, and the result is identical to pre-change
+    (current_grade 94.0, letter 'A'). No raise, no data loss.
+    """
     reconciliation = accepted(
         csce_222_model(), CSCE_222_CONTENT, confirmed_category_value_claims={"midterm exam"}
     )
     state = StudentGradeState(
-        category_scores=[CategoryScoreInput(category_name="midterm exam", actual_score=88)]
+        category_scores=[
+            CategoryScoreInput(category_name="Homework assignment", actual_score=100),
+            CategoryScoreInput(category_name="midterm exam", actual_score=80),
+            CategoryScoreInput(category_name="final exam", actual_score=100),
+        ],
+        assessment_scores=[],
     )
-    with pytest.raises(GradeInputValidationError, match="through its individual assessments"):
-        calculate_grade_projection(reconciliation, state)
+    result = calculate_grade_projection(reconciliation, state)
+
+    assert [(c.name, c.source_type.value, c.weight_percent) for c in result.components] == [
+        ("Homework assignment", "category", 35.0),
+        ("midterm exam", "category", 30.0),
+        ("final exam", "category", 35.0),
+    ]
+    assert result.current_grade == 94.0
+    assert result.current_letter_grade == "A"
+    assert result.projected_grade == 94.0
+    assert not any("ignored" in w for w in result.warnings)
+
+
+def test_csce_222_child_scores_only_decomposes():
+    reconciliation = accepted(
+        csce_222_model(), CSCE_222_CONTENT, confirmed_category_value_claims={"midterm exam"}
+    )
+    state = StudentGradeState(
+        category_scores=[CategoryScoreInput(category_name="Homework assignment", actual_score=100)],
+        assessment_scores=[
+            AssessmentScoreInput(assessment_name="midterm I", actual_score=80),
+            AssessmentScoreInput(assessment_name="midterm II", actual_score=80),
+            AssessmentScoreInput(assessment_name="final exam", actual_score=100),
+        ],
+    )
+    result = calculate_grade_projection(reconciliation, state)
+
+    by_name = {c.name: c.source_type.value for c in result.components}
+    assert by_name == {
+        "Homework assignment": "category",
+        "midterm I": "assessment",
+        "midterm II": "assessment",
+        "final exam": "assessment",
+    }
+    assert "midterm exam" not in by_name
+    assert result.current_grade == 94.0  # 100*.35 + 80*.15 + 80*.15 + 100*.35
+
+
+def test_csce_222_both_category_and_child_scores_children_win_with_warning():
+    reconciliation = accepted(
+        csce_222_model(), CSCE_222_CONTENT, confirmed_category_value_claims={"midterm exam"}
+    )
+    state = StudentGradeState(
+        category_scores=[
+            CategoryScoreInput(category_name="Homework assignment", actual_score=100),
+            CategoryScoreInput(category_name="midterm exam", actual_score=50),  # should be ignored
+            CategoryScoreInput(category_name="final exam", actual_score=100),
+        ],
+        assessment_scores=[
+            AssessmentScoreInput(assessment_name="midterm I", actual_score=80),
+            AssessmentScoreInput(assessment_name="midterm II", actual_score=80),
+        ],
+    )
+    result = calculate_grade_projection(reconciliation, state)
+
+    by_name = {c.name: c for c in result.components}
+    # 'midterm exam' decomposed (child scores present); 'final exam' did NOT
+    # (no child score for it) and keeps its category score.
+    assert by_name["midterm I"].source_type.value == "assessment"
+    assert by_name["midterm II"].effective_score == 80.0
+    assert "midterm exam" not in by_name
+    assert by_name["final exam"].source_type.value == "category"
+    assert by_name["final exam"].effective_score == 100.0
+
+    assert any(
+        "midterm exam" in w and "category score is ignored" in w for w in result.warnings
+    )
+    # the ignored 50 never reached the math: 100*.35 + 80*.15 + 80*.15 + 100*.35
+    assert result.current_grade == 94.0
+
+
+def test_same_model_switches_decomposition_between_two_calculations():
+    reconciliation = accepted(
+        csce_222_model(), CSCE_222_CONTENT, confirmed_category_value_claims={"midterm exam"}
+    )
+
+    by_category = calculate_grade_projection(
+        reconciliation,
+        StudentGradeState(
+            category_scores=[
+                CategoryScoreInput(category_name="Homework assignment", actual_score=100),
+                CategoryScoreInput(category_name="midterm exam", actual_score=80),
+                CategoryScoreInput(category_name="final exam", actual_score=100),
+            ]
+        ),
+    )
+    assert {c.name for c in by_category.components} == {"Homework assignment", "midterm exam", "final exam"}
+    assert by_category.current_grade == 94.0
+
+    by_children = calculate_grade_projection(
+        reconciliation,
+        StudentGradeState(
+            category_scores=[CategoryScoreInput(category_name="Homework assignment", actual_score=100)],
+            assessment_scores=[
+                AssessmentScoreInput(assessment_name="midterm I", actual_score=70),
+                AssessmentScoreInput(assessment_name="midterm II", actual_score=90),
+                AssessmentScoreInput(assessment_name="final exam", actual_score=100),
+            ],
+        ),
+    )
+    assert {c.name for c in by_children.components} == {
+        "Homework assignment",
+        "midterm I",
+        "midterm II",
+        "final exam",
+    }
+    assert by_children.current_grade == 94.0  # 100*.35 + 70*.15 + 90*.15 + 100*.35
+
+    # and back to category scoring on the very same reconciliation object
+    again = calculate_grade_projection(
+        reconciliation,
+        StudentGradeState(
+            category_scores=[
+                CategoryScoreInput(category_name="Homework assignment", actual_score=100),
+                CategoryScoreInput(category_name="midterm exam", actual_score=80),
+                CategoryScoreInput(category_name="final exam", actual_score=100),
+            ]
+        ),
+    )
+    assert [(c.name, c.source_type.value) for c in again.components] == [
+        ("Homework assignment", "category"),
+        ("midterm exam", "category"),
+        ("final exam", "category"),
+    ]
+    assert again.current_grade == 94.0
 
 
 # --- each gate condition failing independently -> unchanged behavior ------------
