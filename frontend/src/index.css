@@ -6944,7 +6944,6 @@ label.profile-form-check { display: flex; flex-direction: row; align-items: cent
 .grade-inline-finding-dismiss:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 
 .grade-evidence-note { color: var(--muted); font-size: var(--text-xs); }
-.grade-target-result { padding: var(--sp-3); border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
 
 @media (max-width: 640px) {
   .grade-entry-row { grid-template-columns: minmax(0, 1fr); gap: var(--sp-1); }

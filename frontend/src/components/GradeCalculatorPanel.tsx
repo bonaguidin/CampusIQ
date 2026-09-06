@@ -11,7 +11,6 @@ import {
   ingestSyllabus,
   listSyllabusGradeProfiles,
   saveSyllabusGradeState,
-  solveSyllabusTarget,
   submitSyllabusCorrections,
   type SyllabusCalculationResult,
   type SyllabusCategory,
@@ -20,9 +19,15 @@ import {
   type SyllabusProfileDetail,
   type SyllabusProfileSummary,
   type SyllabusRule,
-  type SyllabusTargetResult,
   type SyllabusThreshold,
 } from '../api/syllabusGradeProfiles';
+
+// How long after the last keystroke in a score field the live projection
+// waits before recalculating. The projection is computed server-side (the
+// rules engine, letter thresholds and effective-weight logic have no
+// faithful client-side equivalent that wouldn't drift from the backend), so
+// this debounces the `/calculate` call rather than firing one per keystroke.
+const PROJECTION_DEBOUNCE_MS = 500;
 
 // Presentation copy for machine-readable reconciliation finding codes. The
 // code itself stays available (data-finding-code) for tests/telemetry; this
@@ -210,24 +215,26 @@ const NON_BLOCKING_INFO_FINDING_CODES: ReadonlySet<string> = new Set([
   'unknown_assessment_count',
 ]);
 
-// Findings whose explanation lives elsewhere in the UI rather than in the
-// review list. Unlike NON_BLOCKING_INFO_FINDING_CODES these are not moot --
-// missing_grade_scale is explained in the target-grade card, at the point
-// where the student sees the letter dropdown collapsed.
+// Findings relocated out of the review list because their explanation lives
+// elsewhere in the UI. Unlike NON_BLOCKING_INFO_FINDING_CODES these are not
+// moot.
 //
 // category_weight_validation / unknown_weight are relocated (not filtered
 // like RULE_INFO/NON_BLOCKING_INFO) to the editable category-weight table
 // (SyllabusGradingBreakdown's `editable` mode) as non-dismissible blocking
-// notes -- unlike missing_grade_scale, both codes ARE still backend-blocking
-// (neither is in reconciliation.py's NON_BLOCKING_WARNING_CODES), so they
-// must never render with a dismiss affordance the way GeneralFindings gives
-// every other relocated/general finding. CategoryWeightEditor reads them
-// itself, straight from the raw (confirmed_reconciliation ?? reconciliation)
-// findings -- same pattern CutoffTable already uses for
-// CLAIM_EVIDENCE_THRESHOLD_CODES -- so removing them here only stops the
-// dismissible copy, it does not stop them being shown.
+// notes -- both codes ARE still backend-blocking (neither is in
+// reconciliation.py's NON_BLOCKING_WARNING_CODES), so they must never render
+// with a dismiss affordance the way GeneralFindings gives every other
+// relocated/general finding. CategoryWeightEditor reads them itself, straight
+// from the raw (confirmed_reconciliation ?? reconciliation) findings -- same
+// pattern CutoffTable already uses for CLAIM_EVIDENCE_THRESHOLD_CODES -- so
+// removing them here only stops the dismissible copy, it does not stop them
+// being shown.
+//
+// missing_grade_scale is deliberately NOT in this set: its only explainer was
+// the Target Grade card (removed with the live-projection change), so it now
+// flows through to the review list as a normal non-blocking finding.
 const RELOCATED_FINDING_CODES: ReadonlySet<string> = new Set([
-  'missing_grade_scale',
   'category_weight_validation',
   'unknown_weight',
 ]);
@@ -517,13 +524,16 @@ export function GradeCalculatorPanel({ accessToken, courses, institutionName }: 
   // surface CutoffTable, not manage the return trip.
   const [showCutoffReview, setShowCutoffReview] = useState(false);
 
-  const [targetComponent, setTargetComponent] = useState('');
-  const [targetLetter, setTargetLetter] = useState('');
-  const [targetNumeric, setTargetNumeric] = useState('');
-  const [targetResult, setTargetResult] = useState<SyllabusTargetResult | null>(null);
-  const [targetError, setTargetError] = useState<string | null>(null);
-
   const [removingId, setRemovingId] = useState<string | null>(null);
+
+  // Pending live-projection debounce timer (null when none is scheduled), so
+  // "Save & calculate" can cancel it before running its own calculation.
+  const projectionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Monotonic id for every /calculate dispatch (debounced or button). A
+  // response is only applied if its id is still the latest one issued, so
+  // whichever call was dispatched last wins regardless of network arrival
+  // order -- and the button, by dispatching last, is always authoritative.
+  const calcRunIdRef = useRef(0);
 
   useEffect(() => {
     if (!accessToken) return;
@@ -616,7 +626,7 @@ export function GradeCalculatorPanel({ accessToken, courses, institutionName }: 
     setDetail(null);
     setDetailError(null);
     setCalcResult(null);
-    setTargetResult(null);
+    setCalcError(null);
     setGradeDraft({});
     getSyllabusGradeProfile(accessToken, profileId)
       .then((d) => {
@@ -746,20 +756,81 @@ export function GradeCalculatorPanel({ accessToken, courses, institutionName }: 
     void submitCorrections([...detail.corrections, ...newCorrections], 'Could not save your corrections.');
   }
 
-  async function handleSaveActualGrades() {
+  // The one path that talks to /calculate -- shared by the debounced live
+  // projection and by "Save & calculate". Every call takes a fresh run id;
+  // a resolved response whose id has since been superseded is dropped, so
+  // out-of-order arrivals never overwrite a newer calculation. Sends
+  // What-If scores as the projected fallback (buildGradeState(..., true))
+  // and never persists anything.
+  async function dispatchCalculation() {
+    if (!accessToken || !selectedProfileId) return;
+    const runId = ++calcRunIdRef.current;
+    setCalcError(null);
+    try {
+      const combined = buildGradeState(gradeDraft, true);
+      const result = await calculateSyllabusGrade(accessToken, selectedProfileId, combined);
+      if (runId !== calcRunIdRef.current) return;
+      setCalcResult(result);
+    } catch (err) {
+      if (runId !== calcRunIdRef.current) return;
+      setCalcError(err instanceof SyllabusApiError ? err.message : 'Could not calculate your grade.');
+      setCalcResult(null);
+    }
+  }
+
+  function cancelPendingProjection() {
+    if (projectionTimerRef.current !== null) {
+      clearTimeout(projectionTimerRef.current);
+      projectionTimerRef.current = null;
+    }
+  }
+
+  // Single "Save & calculate" flow: persist the entered actuals, then run
+  // the calculation. Separate endpoints (PUT /grade-state, POST /calculate),
+  // so they're sequenced -- a failed save surfaces before any result, and
+  // the calculation reflects the persisted actuals.
+  async function handleSaveAndCalculate() {
     if (!accessToken || !selectedProfileId || !detail) return;
+
+    // A queued live-projection call must not land after (and overwrite) this
+    // button's calculation. Cancel the pending debounce, and bump the run id
+    // now so any projection request already in flight during the save await
+    // is discarded when it resolves.
+    cancelPendingProjection();
+    calcRunIdRef.current += 1;
+
+    // Snapshot the student's What-If entries before any refetch: a 409
+    // reload re-seeds persisted actuals from the server and would otherwise
+    // clear these, but the conflict concerns persisted actuals only --
+    // hypotheticals are local draft state and should survive.
+    const whatIfSnapshot: Record<string, string> = {};
+    for (const [key, value] of Object.entries(gradeDraft)) {
+      if (value.projected.trim() !== '') whatIfSnapshot[key] = value.projected;
+    }
+
     setBusy(true);
     setActionError(null);
+    let saved = false;
     try {
       const state = actualOnlyState(gradeDraft);
-      const saved = await saveSyllabusGradeState(accessToken, selectedProfileId, state, detail.grade_state_revision);
-      setDetail((prev) => (prev ? { ...prev, grade_state: state, grade_state_revision: saved.revision } : prev));
+      const result = await saveSyllabusGradeState(accessToken, selectedProfileId, state, detail.grade_state_revision);
+      setDetail((prev) => (prev ? { ...prev, grade_state: state, grade_state_revision: result.revision } : prev));
+      saved = true;
     } catch (err) {
       if (err instanceof SyllabusApiError && err.status === 409) {
         setActionError('Your saved grades changed in another session. Reloading the latest values.');
         const fresh = await refreshDetail();
         if (fresh) {
-          setGradeDraft(draftFromSavedState(draftFromModel(fresh.confirmed_grade_model ?? fresh.extracted_grade_model), fresh));
+          setGradeDraft((prev) => {
+            const next: GradeStateDraft = {};
+            for (const key of new Set([...Object.keys(prev), ...Object.keys(whatIfSnapshot)])) {
+              next[key] = {
+                actual: prev[key]?.actual ?? '',
+                projected: whatIfSnapshot[key] ?? prev[key]?.projected ?? '',
+              };
+            }
+            return next;
+          });
         }
       } else {
         setActionError(err instanceof SyllabusApiError ? err.message : 'Could not save your grades.');
@@ -767,35 +838,8 @@ export function GradeCalculatorPanel({ accessToken, courses, institutionName }: 
     } finally {
       setBusy(false);
     }
-  }
 
-  async function handleCalculate() {
-    if (!accessToken || !selectedProfileId) return;
-    setCalcError(null);
-    try {
-      const combined = buildGradeState(gradeDraft, true);
-      const result = await calculateSyllabusGrade(accessToken, selectedProfileId, combined);
-      setCalcResult(result);
-    } catch (err) {
-      setCalcError(err instanceof SyllabusApiError ? err.message : 'Could not calculate your grade.');
-      setCalcResult(null);
-    }
-  }
-
-  async function handleSolveTarget() {
-    if (!accessToken || !selectedProfileId || !targetComponent) return;
-    setTargetError(null);
-    try {
-      const combined = buildGradeState(gradeDraft, true);
-      const target = targetLetter
-        ? { target_component: targetComponent, target_letter: targetLetter }
-        : { target_component: targetComponent, target_grade: Number(targetNumeric) };
-      const result = await solveSyllabusTarget(accessToken, selectedProfileId, combined, target);
-      setTargetResult(result);
-    } catch (err) {
-      setTargetError(err instanceof SyllabusApiError ? err.message : 'Could not solve for that target.');
-      setTargetResult(null);
-    }
+    if (saved) await dispatchCalculation();
   }
 
   const scoreableNames = useMemo(() => {
@@ -815,16 +859,47 @@ export function GradeCalculatorPanel({ accessToken, courses, institutionName }: 
     setShowCutoffReview(false);
   }, [selectedProfileId]);
 
+  // Live projection: any change to an actual OR What-If score recalculates
+  // after a short pause, with no explicit action. Debounced (not per
+  // keystroke) because the calculation is server-side -- see
+  // PROJECTION_DEBOUNCE_MS. Only ever calls /calculate; persistence stays
+  // with "Save & calculate". dispatchCalculation's run-id guard means a
+  // slow response here can't clobber a newer one.
+  useEffect(() => {
+    if (!accessToken || !selectedProfileId || !detail?.calculator_ready) return;
+    const hasAnyEntry = Object.values(gradeDraft).some(
+      (v) => v.actual.trim() !== '' || v.projected.trim() !== '',
+    );
+    if (!hasAnyEntry) return;
+    const handle = setTimeout(() => {
+      projectionTimerRef.current = null;
+      void dispatchCalculation();
+    }, PROJECTION_DEBOUNCE_MS);
+    projectionTimerRef.current = handle;
+    return () => {
+      clearTimeout(handle);
+      if (projectionTimerRef.current === handle) projectionTimerRef.current = null;
+    };
+    // dispatchCalculation reads gradeDraft/accessToken/selectedProfileId at
+    // call time; re-running on gradeDraft is what resets the debounce.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gradeDraft, accessToken, selectedProfileId, detail?.calculator_ready]);
+
   // Findings that don't belong in the review list:
   // - RULE_INFO_FINDING_CODES: rule-informational (curve / late-work /
   //   makeup) -- shown in the Professor's rules panel instead.
   // - NON_BLOCKING_INFO_FINDING_CODES: non-blocking informational with no
   //   correction path (unknown_assessment_count).
-  // - RELOCATED_FINDING_CODES: explained elsewhere in the UI
-  //   (missing_grade_scale -> the target-grade card).
+  // - RELOCATED_FINDING_CODES: category_weight_validation / unknown_weight --
+  //   shown in the editable category-weight table instead, so the dismissible
+  //   copy here is dropped.
   // - overlapping_grade_thresholds for a cleanly-resolvable pair --
   //   handled by the CutoffTable's "higher grade wins" banner.
   //   Unresolved overlaps keep their raw finding.
+  //
+  // missing_grade_scale used to be filtered here and explained in the
+  // Target Grade card; with that card removed it flows through to the
+  // review list like any other non-blocking finding.
   const reviewFindings = useMemo(() => {
     const resolvedPairs = resolvedOverlapPairKeys(detail?.cutoff_overlap_resolution);
     return ((detail?.confirmed_reconciliation ?? detail?.reconciliation)?.findings ?? []).filter((finding) => {
@@ -944,8 +1019,8 @@ export function GradeCalculatorPanel({ accessToken, courses, institutionName }: 
 
             {detail.calculator_ready && (
               // Side-by-side region: the calculator cards ("Enter your
-              // grades", "Current grade", "Target grade") in the main column,
-              // the Professor's rules reference panel in a sticky sidebar so
+              // grades", "Current grade") in the main column, the
+              // Professor's rules reference panel in a sticky sidebar so
               // it stays visible across every calculator interaction, not just
               // data entry (syllabus-review-redesign-spec.md §2C). Collapses
               // to a single column below 880px -- see .grade-calculator-layout
@@ -984,12 +1059,10 @@ export function GradeCalculatorPanel({ accessToken, courses, institutionName }: 
                         </div>
                       );
                     })}
+                    <p className="empty-state">Your grade updates as you type — the What-if column projects a score without saving it.</p>
                     <div className="grade-entry-actions">
-                      <button type="button" className="btn btn-primary btn-sm" onClick={handleSaveActualGrades} disabled={busy} aria-busy={busy}>
-                        {busy ? 'Saving…' : 'Save grades'}
-                      </button>
-                      <button type="button" className="btn btn-ghost btn-sm" onClick={handleCalculate}>
-                        Calculate
+                      <button type="button" className="btn btn-primary btn-sm" onClick={handleSaveAndCalculate} disabled={busy} aria-busy={busy}>
+                        {busy ? 'Saving…' : 'Save & calculate'}
                       </button>
                     </div>
                   </div>
@@ -1039,52 +1112,6 @@ export function GradeCalculatorPanel({ accessToken, courses, institutionName }: 
                       )}
                     </div>
                   )}
-
-                  <div className="card">
-                    <h3 className="card-heading">Target grade</h3>
-                    <label htmlFor="target-component" className="form-label">Solve for</label>
-                    <select id="target-component" className="form-input" value={targetComponent} onChange={(e) => setTargetComponent(e.target.value)}>
-                      <option value="">Choose a component</option>
-                      {scoreableNames.map((name) => (
-                        <option key={name} value={name}>{name}</option>
-                      ))}
-                    </select>
-                    <label htmlFor="target-letter" className="form-label">Target grade</label>
-                    <select id="target-letter" className="form-input" value={targetLetter} onChange={(e) => setTargetLetter(e.target.value)}>
-                      <option value="">Custom number…</option>
-                      {(detail.confirmed_grade_model?.grade_thresholds ?? []).map((t) => (
-                        <option key={t.letter} value={t.letter}>{t.letter}</option>
-                      ))}
-                    </select>
-                    {(detail.confirmed_grade_model?.grade_thresholds ?? []).length === 0 && (
-                      <p className="empty-state grade-no-scale-note">
-                        This syllabus doesn't list letter-grade cutoffs, so we can't project a letter grade.
-                        You can still set a numeric target and everything else in the calculator works normally.
-                      </p>
-                    )}
-                    {!targetLetter && (
-                      <>
-                        <label htmlFor="target-numeric" className="form-label">Numeric target</label>
-                        <input id="target-numeric" type="number" className="form-input" value={targetNumeric} onChange={(e) => setTargetNumeric(e.target.value)} />
-                      </>
-                    )}
-                    <button type="button" className="btn btn-primary btn-sm" onClick={handleSolveTarget} disabled={!targetComponent}>
-                      Solve
-                    </button>
-
-                    {targetError && <p className="login-error" role="alert">{targetError}</p>}
-
-                    {targetResult && (
-                      <p role="status" aria-live="polite" className="grade-target-result">
-                        {targetResult.already_achieved && "You've already reached this target under the grades and assumptions entered."}
-                        {!targetResult.already_achieved && targetResult.feasible && targetResult.required_score !== null &&
-                          `You need about ${targetResult.required_score}% on the ${targetResult.target_component} to finish with ${targetResult.target_label ? `an ${targetResult.target_label}` : 'this target'}.`}
-                        {!targetResult.already_achieved && !targetResult.feasible && targetResult.required_score !== null &&
-                          `You would need ${targetResult.required_score}% on the ${targetResult.target_component}. This target isn't reachable under the current assumptions.`}
-                        {targetResult.required_score === null && "CampusIQ needs more grades entered to solve for this target."}
-                      </p>
-                    )}
-                  </div>
 
                   {!showCutoffReview ? (
                     <button

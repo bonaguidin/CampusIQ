@@ -125,7 +125,7 @@ function json(response, status, body) {
   response.end(JSON.stringify(body))
 }
 
-test('Grade Calculator: empty state, upload, review, confirm, grade entry, calculate, target solve', { timeout: 45_000 }, async (t) => {
+test('Grade Calculator: empty state, upload, review, confirm, grade entry, save & calculate', { timeout: 45_000 }, async (t) => {
   // term id 'term-2' deliberately matches authenticatedDashboardPreview.tsx's
   // ?currentTerm=inprogress fixture (CS 221 / MATH 251, both in_progress),
   // so the eligible-course dropdown genuinely merges two sources under one
@@ -204,16 +204,6 @@ test('Grade Calculator: empty state, upload, review, confirm, grade entry, calcu
             current_letter_grade: null,
             projected_letter_grade: null,
             applied_rules: [],
-            warnings: [],
-          })
-        }
-        if (path === `/api/v2/student/me/syllabus-grade-profiles/${PROFILE_ID}/solve-target` && request.method === 'POST') {
-          const body = JSON.parse(await readBody(request))
-          const required = body.target_grade === 90 ? 90.12 : 78.35
-          return json(response, 200, {
-            target_component: 'Final Exam', target_grade: body.target_grade, target_label: null,
-            required_score: required, feasible: true, already_achieved: false,
-            applied_rules: [{ rule_type: 'replacement', source: 'Final Exam', target: 'Mid-term Exam', changed_calculation: true, description: 'Final replaces Midterm when higher.' }],
             warnings: [],
           })
         }
@@ -355,17 +345,16 @@ test('Grade Calculator: empty state, upload, review, confirm, grade entry, calcu
   await page.fill('#actual-category\\:Mid-term\\ Exam', '78')
   await page.fill('#actual-category\\:Lecture\\ Quizzes', '92')
   await page.fill('#actual-category\\:Recitation\\ Quizzes', '88')
-  await page.getByRole('button', { name: 'Calculate' }).click()
 
+  // --- one button now persists the actuals AND returns the calculation:
+  //     the per-category averages the student typed are what gets persisted
+  //     as category_scores[].actual_score (no per-assessment breakdown), and
+  //     the result card renders from the /calculate response ---
+  await page.getByRole('button', { name: 'Save & calculate' }).click()
   await page.getByText('81.4%').waitFor()
   await page.getByText('Based on 50% of the course completed').waitFor()
-
-  // --- Save grades: the per-category averages the student typed are what
-  //     gets persisted as category_scores[].actual_score (no per-assessment
-  //     breakdown required) ---
-  await page.getByRole('button', { name: 'Save grades' }).click()
   await page.waitForFunction(() => !document.querySelector('button[aria-busy="true"]'))
-  assert.ok(capturedGradeStateBody, 'Save grades sent a grade-state PUT')
+  assert.ok(capturedGradeStateBody, 'Save & calculate sent a grade-state PUT')
   assert.deepEqual(
     [...capturedGradeStateBody.category_scores].sort((a, b) => a.category_name.localeCompare(b.category_name)),
     [
@@ -376,11 +365,10 @@ test('Grade Calculator: empty state, upload, review, confirm, grade entry, calcu
   )
   assert.deepEqual(capturedGradeStateBody.assessment_scores, [])
 
-  // --- target solver ---
-  await page.selectOption('#target-component', 'Final Exam')
-  await page.fill('#target-numeric', '90')
-  await page.getByRole('button', { name: 'Solve' }).click()
-  await page.getByText('90.12').waitFor()
+  // --- the Target Grade card is gone entirely ---
+  assert.equal(await page.locator('#target-component').count(), 0)
+  assert.equal(await page.locator('#target-numeric').count(), 0)
+  assert.equal(await page.getByRole('button', { name: 'Solve' }).count(), 0)
 
   // --- responsive: no horizontal overflow ---
   for (const width of [390, 834, 1280]) {
@@ -741,14 +729,14 @@ test('Grade Calculator: non-blocking informational findings are filtered from th
   assert.equal(await page.getByText("doesn't say exactly how many assessments are in this category").count(), 0)
 })
 
-test('Grade Calculator: missing_grade_scale is relocated from the review list to the target-grade card', { timeout: 45_000 }, async (t) => {
+test('Grade Calculator: missing_grade_scale shows in the review list; no letter-target UI remains in the ready calculator', { timeout: 45_000 }, async (t) => {
   const NO_SCALE_MODEL = { ...EXTRACTED_MODEL, grade_thresholds: [], rules: [], warnings: [] }
   const REVIEW_RECON = {
     status: 'needs_student_review',
     findings: [
-      // relocated -> explained in the target-grade card, NOT the review list
+      // the Target Grade card that used to explain this is gone, so the
+      // finding is no longer filtered -- it flows into the review list
       { code: 'missing_grade_scale', severity: 'warning', message: "This syllabus doesn't specify a letter-grade scale.", field: null },
-      // genuinely blocking -> keeps the review list non-empty
       { code: 'grading_method_unknown', severity: 'warning', message: 'grading_method could not be determined from the syllabus', field: 'grading_method' },
     ],
     evidence_coverage: { total_claims: 4, supported_claims: 4, coverage_ratio: 1, unsupported_claims: [] },
@@ -768,7 +756,7 @@ test('Grade Calculator: missing_grade_scale is relocated from the review list to
     confirmed_reconciliation: RECONCILIATION_ACCEPTED,
   })
 
-  const page = await mountCutoffPanel(t, 'grade-calculator-missing-scale-relocated', async (path, method, request, response) => {
+  const page = await mountCutoffPanel(t, 'grade-calculator-missing-scale-in-review', async (path, method, request, response) => {
     if (path === `/api/v2/student/me/syllabus-grade-profiles/${PROFILE_ID}` && method === 'GET') {
       if (phase === 'review') json(response, 200, detail({ extracted_grade_model: NO_SCALE_MODEL, reconciliation: REVIEW_RECON }))
       else if (phase === 'ready-noscale') json(response, 200, readyDetail([]))
@@ -778,35 +766,25 @@ test('Grade Calculator: missing_grade_scale is relocated from the review list to
     return false
   })
 
-  // --- half 1: the finding is filtered out of the review list ---
+  // --- the finding now appears in the review list (no relocation target) ---
   await page.getByRole('heading', { name: 'Needs your review' }).waitFor()
-  // the blocking finding is still shown, so the review list isn't just empty
   assert.ok((await page.locator('[data-finding-code="grading_method_unknown"]').count()) >= 1)
-  // missing_grade_scale is filtered out entirely -- neither the code nor its old copy
-  assert.equal(await page.locator('[data-finding-code="missing_grade_scale"]').count(), 0)
-  assert.equal(await page.getByText("doesn't specify a letter-grade scale").count(), 0)
-  // and the relocated note does not leak into the review step
+  assert.ok((await page.locator('[data-finding-code="missing_grade_scale"]').count()) >= 1)
+  await page.getByText("doesn't specify a letter-grade scale").waitFor()
+  // the old target-card note never existed here and still doesn't
   assert.equal(await page.locator('.grade-no-scale-note').count(), 0)
 
-  // --- half 2 (the one that matters): the note is pinned to grade_thresholds
-  //     being empty -- the same expression the letter <select> branches on --
-  //     not to the presence of the finding ---
-  phase = 'ready-noscale'
-  await page.getByRole('button', { name: '← Back to your calculators' }).click()
-  await page.locator('.grade-profile-row-button', { hasText: 'PHYS 207' }).click()
-  await page.getByRole('heading', { name: 'Enter your grades' }).waitFor()
-  await page.locator('.grade-no-scale-note').getByText("This syllabus doesn't list letter-grade cutoffs").waitFor()
-
-  // with grade_thresholds present the note is gone, even though nothing about
-  // the (now accepted) reconciliation changed
-  phase = 'ready-withscale'
-  await page.getByRole('button', { name: '← Back to your calculators' }).click()
-  await page.locator('.grade-profile-row-button', { hasText: 'PHYS 207' }).click()
-  await page.getByRole('heading', { name: 'Enter your grades' }).waitFor()
-  // the letter dropdown is now populated from grade_thresholds...
-  assert.ok((await page.locator('#target-letter option').count()) > 1)
-  // ...and the relocated note is gone
-  assert.equal(await page.locator('.grade-no-scale-note').count(), 0)
+  // --- ready calculator: no Target Grade card, with OR without a grade scale ---
+  for (const p of ['ready-noscale', 'ready-withscale']) {
+    phase = p
+    await page.getByRole('button', { name: '← Back to your calculators' }).click()
+    await page.locator('.grade-profile-row-button', { hasText: 'PHYS 207' }).click()
+    await page.getByRole('heading', { name: 'Enter your grades' }).waitFor()
+    assert.equal(await page.locator('#target-letter').count(), 0, `${p}: no target-letter select`)
+    assert.equal(await page.locator('#target-component').count(), 0, `${p}: no target-component select`)
+    assert.equal(await page.locator('.grade-no-scale-note').count(), 0, `${p}: no no-scale note`)
+    assert.equal(await page.getByRole('button', { name: 'Solve' }).count(), 0, `${p}: no Solve button`)
+  }
 })
 
 // --- per-threshold value-claim clarifying questions ------------------------------
@@ -1533,4 +1511,160 @@ test('Grade Calculator: an unknown_weight finding that matches no category rende
   const unmatchedNote = table.locator('[data-finding-code="unknown_weight"]', { hasText: 'Final Project' })
   await unmatchedNote.waitFor()
   assert.equal(await unmatchedNote.getByRole('button').count(), 0)
+})
+
+// --- live projection: merged save+calculate button, and reactive What-if ---------
+
+const PROJECTION_READY_DETAIL = () => detail({
+  review_state: 'confirmed',
+  calculator_ready: true,
+  extracted_grade_model: CUTOFF_MODEL,
+  confirmed_grade_model: CUTOFF_MODEL,
+  reconciliation: RECONCILIATION_ACCEPTED,
+  confirmed_reconciliation: RECONCILIATION_ACCEPTED,
+  grade_state_revision: 4,
+})
+
+function calcResponse(overrides = {}) {
+  return {
+    grading_method: 'weighted',
+    components: [],
+    completed_weight: null,
+    earned_course_percentage: null,
+    current_grade: null,
+    projected_grade: null,
+    current_letter_grade: null,
+    projected_letter_grade: null,
+    applied_rules: [],
+    warnings: [],
+    ...overrides,
+  }
+}
+
+test('Grade Calculator: "Save & calculate" persists the actuals then calculates, in one action', { timeout: 45_000 }, async (t) => {
+  const calls = []
+  let gradeStateBody = null
+
+  const page = await mountCutoffPanel(t, 'grade-calculator-save-and-calculate', async (path, method, request, response) => {
+    if (path === `/api/v2/student/me/syllabus-grade-profiles/${PROFILE_ID}` && method === 'GET') {
+      json(response, 200, PROJECTION_READY_DETAIL())
+      return true
+    }
+    if (path === `/api/v2/student/me/syllabus-grade-profiles/${PROFILE_ID}/grade-state` && method === 'PUT') {
+      calls.push('grade-state')
+      gradeStateBody = JSON.parse(await readBody(request))
+      json(response, 200, { revision: 5, category_scores: gradeStateBody.category_scores, assessment_scores: gradeStateBody.assessment_scores })
+      return true
+    }
+    if (path === `/api/v2/student/me/syllabus-grade-profiles/${PROFILE_ID}/calculate` && method === 'POST') {
+      calls.push('calculate')
+      await readBody(request)
+      json(response, 200, calcResponse({ completed_weight: 35, current_grade: 85 }))
+      return true
+    }
+    return false
+  })
+
+  await page.getByRole('heading', { name: 'Enter your grades' }).waitFor()
+  await page.fill('#actual-category\\:Mid-term\\ Exam', '85')
+  await page.getByRole('button', { name: 'Save & calculate' }).click()
+
+  // the result card renders from the /calculate response
+  await page.getByText('Based on 35% of the course completed').waitFor()
+  await page.locator('.overview-stat-value', { hasText: '85%' }).waitFor()
+  await page.waitForFunction(() => !document.querySelector('button[aria-busy="true"]'))
+
+  // the typed actual was persisted (PUT /grade-state) with the optimistic
+  // revision, then the calculation ran (POST /calculate) -- that order, each once
+  assert.ok(gradeStateBody, 'a grade-state PUT was sent')
+  assert.deepEqual(gradeStateBody.category_scores, [{ category_name: 'Mid-term Exam', actual_score: 85 }])
+  assert.deepEqual(gradeStateBody.assessment_scores, [])
+  assert.equal(gradeStateBody.expected_revision, 4)
+  assert.deepEqual(calls, ['grade-state', 'calculate'])
+})
+
+test('Grade Calculator: entering a What-if score recalculates with no button press and no save', { timeout: 45_000 }, async (t) => {
+  const calls = []
+
+  const page = await mountCutoffPanel(t, 'grade-calculator-reactive-whatif', async (path, method, request, response) => {
+    if (path === `/api/v2/student/me/syllabus-grade-profiles/${PROFILE_ID}` && method === 'GET') {
+      json(response, 200, PROJECTION_READY_DETAIL())
+      return true
+    }
+    if (path === `/api/v2/student/me/syllabus-grade-profiles/${PROFILE_ID}/grade-state` && method === 'PUT') {
+      calls.push('grade-state')
+      json(response, 200, { revision: 5, category_scores: [], assessment_scores: [] })
+      return true
+    }
+    if (path === `/api/v2/student/me/syllabus-grade-profiles/${PROFILE_ID}/calculate` && method === 'POST') {
+      calls.push('calculate')
+      await readBody(request)
+      json(response, 200, calcResponse({ projected_grade: 91.2 }))
+      return true
+    }
+    return false
+  })
+
+  await page.getByRole('heading', { name: 'Enter your grades' }).waitFor()
+
+  // type a hypothetical score -- no button is clicked anywhere after this
+  await page.fill('#hypo-category\\:Mid-term\\ Exam', '95')
+
+  // the projected grade updates on its own
+  await page.locator('.overview-stat-value', { hasText: '91.2%' }).waitFor()
+
+  // and it got there via /calculate only -- the debounced projection never
+  // writes grade-state
+  await page.waitForTimeout(700)
+  assert.deepEqual(calls, ['calculate'])
+})
+
+test('Grade Calculator: clicking "Save & calculate" cancels a pending live projection (one result, from the button)', { timeout: 45_000 }, async (t) => {
+  const calls = []
+  let calcCount = 0
+  let gradeStateCount = 0
+
+  const page = await mountCutoffPanel(t, 'grade-calculator-projection-race', async (path, method, request, response) => {
+    if (path === `/api/v2/student/me/syllabus-grade-profiles/${PROFILE_ID}` && method === 'GET') {
+      json(response, 200, PROJECTION_READY_DETAIL())
+      return true
+    }
+    if (path === `/api/v2/student/me/syllabus-grade-profiles/${PROFILE_ID}/grade-state` && method === 'PUT') {
+      gradeStateCount += 1
+      calls.push('grade-state')
+      await readBody(request)
+      json(response, 200, { revision: 5, category_scores: [{ category_name: 'Mid-term Exam', actual_score: 88 }], assessment_scores: [] })
+      return true
+    }
+    if (path === `/api/v2/student/me/syllabus-grade-profiles/${PROFILE_ID}/calculate` && method === 'POST') {
+      calcCount += 1
+      calls.push('calculate')
+      await readBody(request)
+      // a slow response: a raced debounce call would still be in flight here
+      // and would bump the count if it hadn't been cancelled
+      await new Promise((r) => setTimeout(r, 150))
+      json(response, 200, calcResponse({ completed_weight: 35, current_grade: 88.8 }))
+      return true
+    }
+    return false
+  })
+
+  await page.getByRole('heading', { name: 'Enter your grades' }).waitFor()
+
+  // start the 500ms projection debounce, then immediately commit via the
+  // button -- well inside the debounce window
+  await page.fill('#actual-category\\:Mid-term\\ Exam', '88')
+  await page.getByRole('button', { name: 'Save & calculate' }).click()
+
+  await page.getByText('Based on 35% of the course completed').waitFor()
+  await page.locator('.overview-stat-value', { hasText: '88.8%' }).waitFor()
+  await page.waitForFunction(() => !document.querySelector('button[aria-busy="true"]'))
+
+  // give the cancelled debounce well past its 500ms window to prove it never fires
+  await page.waitForTimeout(900)
+
+  assert.equal(gradeStateCount, 1)
+  assert.equal(calcCount, 1, 'exactly one /calculate ran -- the button cancelled the pending projection')
+  // the one calculation was the button's: preceded by its save
+  assert.deepEqual(calls, ['grade-state', 'calculate'])
 })
