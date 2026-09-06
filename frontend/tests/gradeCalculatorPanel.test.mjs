@@ -1808,6 +1808,38 @@ test('Grade Calculator: the list renders a segmented ring card per calculator', 
   const pointsLabel = await points.locator('svg.grade-card-ring').getAttribute('aria-label')
   assert.match(pointsLabel, /Graded by individual assessments, not weighted categories\./)
 
+  // --- grade colour ramp: a continuous green -> red hue sweep, one step per
+  //     grade, no blue break, A vs B still a clear hue apart ---
+  const hues = await page.evaluate(() => {
+    const root = getComputedStyle(document.documentElement)
+    const parse = (name) => {
+      const m = root.getPropertyValue(name).trim().replace('#', '')
+      return [0, 2, 4].map((i) => parseInt(m.slice(i, i + 2), 16))
+    }
+    const hueOf = ([r, g, b]) => {
+      const rr = r / 255, gg = g / 255, bb = b / 255
+      const max = Math.max(rr, gg, bb), min = Math.min(rr, gg, bb), d = max - min
+      if (d === 0) return 0
+      let h
+      if (max === rr) h = ((gg - bb) / d) % 6
+      else if (max === gg) h = (bb - rr) / d + 2
+      else h = (rr - gg) / d + 4
+      h *= 60
+      return h < 0 ? h + 360 : h
+    }
+    const names = ['--grade-a', '--grade-b', '--grade-c', '--grade-d', '--grade-f']
+    return names.map((n) => ({ rgb: parse(n), hue: hueOf(parse(n)) }))
+  })
+  const H = hues.map((x) => x.hue)
+  // green (~130) monotonically down to red (~0)
+  assert.ok(H[0] > 110 && H[0] < 160, `A is green (hue ${Math.round(H[0])})`)
+  assert.ok(H[4] >= 0 && H[4] < 15, `F is deep red (hue ${Math.round(H[4])})`)
+  for (let i = 1; i < H.length; i += 1) {
+    assert.ok(H[i] < H[i - 1], `hue steps down from grade ${i - 1} (${Math.round(H[i - 1])}) to ${i} (${Math.round(H[i])})`)
+  }
+  assert.ok(H[0] - H[1] > 30, `A and B are a clear hue apart (${Math.round(H[0])} vs ${Math.round(H[1])})`)
+  assert.ok(hues.every((x) => x.rgb[2] <= 90), 'no blue break anywhere on the ramp')
+
   // --- Remove + Upload another are preserved ---
   await page.getByRole('button', { name: /Remove grade calculator for PHYS 207/ }).waitFor()
   await page.getByRole('button', { name: 'Upload another syllabus' }).waitFor()

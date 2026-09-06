@@ -6754,17 +6754,21 @@ label.profile-form-check { display: flex; flex-direction: row; align-items: cent
    enhancement, gated on `pointer: fine`. gradeCardRing.mjs builds the geometry
    and aria-label; this is presentation only. ─────────────────────────────── */
 
-/* Letter-grade colours -- green / blue / amber / coral / muted-red, tuned for
-   the light --surface / white card ground. This is the ONLY colour on a card;
-   an unrecognised or absent letter leaves --grade-color unset and the fill
-   falls back to --muted (neutral). Not institution-themed: a grade's colour
-   must not shift with the school's brand. */
+/* Letter-grade colours -- a continuous green-through-red ramp, one hue step per
+   grade, no blue break. Hues: A~133deg green, B~76deg yellow-green/olive,
+   C~41deg amber, D~15deg red-orange, F~4deg deep red -- larger steps in the
+   green-yellow arc where hue reads less evenly. All held near the same low
+   lightness (relative luminance ~0.11-0.24) so the ramp keeps >=3:1 contrast
+   on both the light card surface and a dark one, and A vs B stay a clear
+   green/olive apart side by side. The ONLY colour on a card; an unrecognised
+   or absent letter leaves --grade-color unset and the fill falls back to
+   --muted (neutral). Not institution-themed. */
 :root {
-  --grade-a: #2E7D57;
-  --grade-b: #2F6DB0;
-  --grade-c: #B7791F;
-  --grade-d: #C2603D;
-  --grade-f: #9E4B4B;
+  --grade-a: #2F7D3E; /* green */
+  --grade-b: #6E8B1F; /* yellow-green / olive */
+  --grade-c: #B07D12; /* amber */
+  --grade-d: #C0522A; /* red-orange */
+  --grade-f: #AE3A31; /* deep red */
 }
 
 .grade-card-grid {
