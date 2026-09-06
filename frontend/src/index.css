@@ -6820,6 +6820,25 @@ label.profile-form-check { display: flex; flex-direction: row; align-items: cent
 .grade-rule-explanation { color: var(--muted); font-size: var(--text-sm); }
 .grade-breakdown-row { display: flex; flex-direction: column; }
 
+/* Editable category-weight table (CategoryWeightEditor): same grid/row/
+   status-column language as .grade-cutoff-* above, one column wider
+   (category name is not a fixed-width letter). */
+.grade-weight-table { display: flex; flex-direction: column; gap: var(--sp-3); }
+.grade-weight-table-rows { display: flex; flex-direction: column; gap: var(--sp-2); }
+.grade-weight-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 5rem) minmax(0, 5rem) minmax(0, 1fr);
+  align-items: center;
+  gap: var(--sp-2);
+}
+.grade-weight-row > span { min-width: 0; overflow-wrap: anywhere; }
+.grade-weight-row--head { color: var(--muted); font-size: var(--text-sm); }
+.grade-weight-row-name { font-weight: 600; }
+.grade-weight-row .form-input { width: 100%; min-width: 0; }
+.grade-weight-row-status { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2); font-size: var(--text-sm); }
+.grade-weight-total { margin: 0; }
+.grade-weight-total-gap { color: var(--muted); font-weight: 400; }
+
 /* Professor's rules -- persistent reference panel next to the calculator
    (ProfessorsRules in GradeCalculatorPanel.tsx). Informational only: no
    dismiss control, no blocking affordance. */

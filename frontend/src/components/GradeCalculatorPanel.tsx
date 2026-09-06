@@ -86,6 +86,21 @@ const FINDING_TEMPLATES: Record<string, (finding: SyllabusFinding) => string | n
     if (!finding.field) return null;
     return `Multiple assessments may be the same ("${finding.field.split(':')[0]}") — check for a duplicate.`;
   },
+  // Category-weight mismatches only (field "category:<name>.weight") --
+  // threshold/assessment mismatches never reach findingCopy() for this code
+  // (CutoffTable renders its own inline copy instead), so returning null for
+  // any other field shape falls through to the generic FINDING_COPY entry,
+  // unaffected. Unlike the threshold case, a category mismatch is never
+  // affirmable (reconciliation._check_category_weight_consistency), so the
+  // copy says so plainly rather than implying a fix is one click away.
+  claim_evidence_value_mismatch: (finding) => {
+    if (!finding.field?.startsWith('category:')) return null;
+    const m = /^category:.+\.weight claims ([\d.]+), but its cited evidence text \('(.*)'\) states ([\d.]+)$/.exec(
+      finding.message,
+    );
+    if (!m) return null;
+    return `You entered ${Number(m[1])}%, but the syllabus text ("${m[2]}") says ${Number(m[3])}%. Fix the weight below — this can't be confirmed as-is.`;
+  },
 };
 
 function findingCopy(finding: SyllabusFinding): string {
@@ -199,8 +214,22 @@ const NON_BLOCKING_INFO_FINDING_CODES: ReadonlySet<string> = new Set([
 // review list. Unlike NON_BLOCKING_INFO_FINDING_CODES these are not moot --
 // missing_grade_scale is explained in the target-grade card, at the point
 // where the student sees the letter dropdown collapsed.
+//
+// category_weight_validation / unknown_weight are relocated (not filtered
+// like RULE_INFO/NON_BLOCKING_INFO) to the editable category-weight table
+// (SyllabusGradingBreakdown's `editable` mode) as non-dismissible blocking
+// notes -- unlike missing_grade_scale, both codes ARE still backend-blocking
+// (neither is in reconciliation.py's NON_BLOCKING_WARNING_CODES), so they
+// must never render with a dismiss affordance the way GeneralFindings gives
+// every other relocated/general finding. CategoryWeightEditor reads them
+// itself, straight from the raw (confirmed_reconciliation ?? reconciliation)
+// findings -- same pattern CutoffTable already uses for
+// CLAIM_EVIDENCE_THRESHOLD_CODES -- so removing them here only stops the
+// dismissible copy, it does not stop them being shown.
 const RELOCATED_FINDING_CODES: ReadonlySet<string> = new Set([
   'missing_grade_scale',
+  'category_weight_validation',
+  'unknown_weight',
 ]);
 
 // Order-independent key for a letter pair, so an overlapping_grade_thresholds
@@ -248,10 +277,36 @@ function valueClaimKey(letter: string): string {
   return `claim_evidence:threshold:${letter.trim().toLowerCase()}`;
 }
 
-// "threshold:B" -> "B"; null for a finding whose field is any other shape
-// (category:/assessment: claim-evidence findings are not confirmable here).
+// "threshold:B" -> "B"; null for a finding whose field is any other shape.
+// (category: claim-evidence findings have their own confirm path -- see
+// categoryClaimEvidenceCategoryName / categoryValueClaimKey below --
+// keyed separately from this one, never merged into it.)
 function thresholdFindingLetter(finding: SyllabusFinding): string | null {
   const m = /^threshold:(.+)$/.exec(finding.field ?? '');
+  return m ? m[1].trim() : null;
+}
+
+// Backend: reconciliation.py's confirmed_category_value_claims is a
+// SEPARATE, narrower parameter from the threshold one (service.py:
+// _confirmed_category_value_claim_names, api.py: _confirmed_suppression_sets'
+// 'claim_evidence:category:' branch) -- it only suppresses
+// claim_evidence_consistency_unverifiable, never claim_evidence_value_
+// mismatch (reconciliation._check_category_weight_consistency). This mirrors
+// that split on the frontend: a category weight claim is a distinct
+// identifier space from a threshold letter, with its own clarifying-answer
+// key namespace and its own (narrower) affirm eligibility.
+function categoryValueClaimKey(name: string): string {
+  return `claim_evidence:category:${normalizeName(name)}`;
+}
+
+// "category:Midterm Exam.weight" -> "Midterm Exam"; null for any other
+// field shape (assessment:/threshold: claim-evidence findings use their
+// own paths). Greedy on the name group so a category name that itself
+// contains a literal ".weight" substring still resolves against the
+// trailing ".weight" the backend always appends (reconciliation.py's
+// `label = f"category:{category.name}.weight"`).
+function categoryClaimEvidenceCategoryName(finding: SyllabusFinding): string | null {
+  const m = /^category:(.+)\.weight$/.exec(finding.field ?? '');
   return m ? m[1].trim() : null;
 }
 
@@ -309,6 +364,41 @@ function thresholdEditCorrections(
       threshold_letter: letter,
     })),
   ];
+}
+
+// The category-editor analog of thresholdEditCorrections: diffs a
+// {name:weight, name:count} draft against each category's current values
+// and emits only the existing category/set_weight + category/set_count
+// corrections (corrections.py's _apply_category_correction already handles
+// both) for fields the student actually touched. A blank field is never
+// submitted as a clear-to-null -- same convention thresholdEditCorrections
+// uses for blank bounds -- so leaving a field empty is a no-op, not a
+// delete. No confirm-style no-op is auto-appended (unlike
+// thresholdEditCorrections' confirm_threshold_value): there is no existing
+// correction type that plays that role for categories, and this build adds
+// none.
+function categoryWeightEditCorrections(
+  categories: SyllabusCategory[],
+  draft: Record<string, string>,
+): SyllabusProfileDetail['corrections'] {
+  const corrections: SyllabusProfileDetail['corrections'] = [];
+  for (const c of categories) {
+    const weightRaw = (draft[`${c.name}:weight`] ?? '').trim();
+    if (weightRaw !== '') {
+      const value = Number(weightRaw);
+      if (!Number.isNaN(value) && value !== c.weight) {
+        corrections.push({ target_type: 'category', operation: 'set_weight', category_name: c.name, value });
+      }
+    }
+    const countRaw = (draft[`${c.name}:count`] ?? '').trim();
+    if (countRaw !== '') {
+      const value = Number(countRaw);
+      if (!Number.isNaN(value) && value !== c.count) {
+        corrections.push({ target_type: 'category', operation: 'set_count', category_name: c.name, value });
+      }
+    }
+  }
+  return corrections;
 }
 
 interface UploadFields {
@@ -647,11 +737,13 @@ export function GradeCalculatorPanel({ accessToken, courses, institutionName }: 
 
   // Every action in the unified CutoffTable -- a per-row bounds edit (with
   // its auto-appended confirm_threshold_value), affirming an unverified
-  // value, confirming a "higher grade wins" overlap default -- lands here
-  // as one appended correction batch.
-  function handleCutoffTableCorrections(newCorrections: SyllabusProfileDetail['corrections']) {
+  // value, confirming a "higher grade wins" overlap default -- plus every
+  // CategoryWeightEditor save (set_weight / set_count) lands here as one
+  // appended correction batch. Corrections are cumulative, so this always
+  // resends detail.corrections plus the new entries (see submitCorrections).
+  function handleReviewCorrections(newCorrections: SyllabusProfileDetail['corrections']) {
     if (!detail || newCorrections.length === 0) return;
-    void submitCorrections([...detail.corrections, ...newCorrections], 'Could not save the cutoffs.');
+    void submitCorrections([...detail.corrections, ...newCorrections], 'Could not save your corrections.');
   }
 
   async function handleSaveActualGrades() {
@@ -810,7 +902,7 @@ export function GradeCalculatorPanel({ accessToken, courses, institutionName }: 
                   key={detail.id}
                   detail={detail}
                   busy={busy}
-                  onSubmitCorrections={handleCutoffTableCorrections}
+                  onSubmitCorrections={handleReviewCorrections}
                 />
                 <GeneralFindings
                   findings={findingsByAnchor.get('general') ?? []}
@@ -818,10 +910,14 @@ export function GradeCalculatorPanel({ accessToken, courses, institutionName }: 
                   onDismissFinding={handleDismissFinding}
                 />
                 <SyllabusGradingBreakdown
-                  model={detail.extracted_grade_model}
+                  model={detail.confirmed_grade_model ?? detail.extracted_grade_model}
                   findingsByAnchor={findingsByAnchor}
                   dismissedFindingKeys={dismissedFindingKeys}
                   onDismissFinding={handleDismissFinding}
+                  editable
+                  detail={detail}
+                  busy={busy}
+                  onSubmitCorrections={handleReviewCorrections}
                 />
                 <SyllabusRulesList
                   model={detail.extracted_grade_model}
@@ -1007,7 +1103,7 @@ export function GradeCalculatorPanel({ accessToken, courses, institutionName }: 
                         key={detail.id}
                         detail={detail}
                         busy={busy}
-                        onSubmitCorrections={handleCutoffTableCorrections}
+                        onSubmitCorrections={handleReviewCorrections}
                       />
                       <button
                         type="button"
@@ -1160,9 +1256,16 @@ const EMPTY_FINDINGS_BY_ANCHOR: Map<string, FindingWithKey[]> = new Map();
 function InlineFinding({
   finding,
   onDismiss,
+  dismissible = true,
 }: {
   finding: SyllabusFinding;
   onDismiss: () => void;
+  // false for a finding that's genuinely blocking confirm (per its own
+  // instance severity) with a real fix action anchored elsewhere -- e.g.
+  // CategoryWeightEditor's category_weight_validation / unknown_weight
+  // notes. The affordance must match the gate: a finding that still blocks
+  // confirm must not offer a dismiss button that makes it look optional.
+  dismissible?: boolean;
 }) {
   return (
     <p className={`grade-inline-finding grade-inline-finding--${finding.severity}`} data-finding-code={finding.code}>
@@ -1170,14 +1273,16 @@ function InlineFinding({
         {finding.severity === 'error' ? '!' : '·'}
       </span>
       <span className="grade-inline-finding-text">{findingCopy(finding)}</span>
-      <button
-        type="button"
-        className="grade-inline-finding-dismiss"
-        onClick={onDismiss}
-        aria-label="Dismiss this finding"
-      >
-        ×
-      </button>
+      {dismissible && (
+        <button
+          type="button"
+          className="grade-inline-finding-dismiss"
+          onClick={onDismiss}
+          aria-label="Dismiss this finding"
+        >
+          ×
+        </button>
+      )}
     </p>
   );
 }
@@ -1485,18 +1590,38 @@ function CutoffTable({
   );
 }
 
+/**
+ * Read-only by default (the original behavior, unchanged: only categories
+ * with a known weight render, in a flat percentage list). `editable` swaps
+ * in CategoryWeightEditor -- used only from the "Needs your review" step,
+ * where category_weight_validation / unknown_weight are genuinely blocking
+ * and need a fix action, not just display.
+ */
 function SyllabusGradingBreakdown({
   model,
   findingsByAnchor = EMPTY_FINDINGS_BY_ANCHOR,
   dismissedFindingKeys = new Set(),
   onDismissFinding = () => {},
+  editable = false,
+  detail = null,
+  busy = false,
+  onSubmitCorrections = () => {},
 }: {
   model: SyllabusGradeModel | null;
   findingsByAnchor?: Map<string, FindingWithKey[]>;
   dismissedFindingKeys?: Set<number>;
   onDismissFinding?: (key: number) => void;
+  editable?: boolean;
+  detail?: SyllabusProfileDetail | null;
+  busy?: boolean;
+  onSubmitCorrections?: (corrections: SyllabusProfileDetail['corrections']) => void;
 }) {
   if (!model) return null;
+
+  if (editable) {
+    return <CategoryWeightEditor model={model} detail={detail} busy={busy} onSubmitCorrections={onSubmitCorrections} />;
+  }
+
   const weighted: SyllabusCategory[] = model.categories.filter((c) => c.weight !== null);
   if (weighted.length === 0) return null;
   const total = weighted.reduce((sum, c) => sum + (c.weight ?? 0), 0);
@@ -1523,6 +1648,338 @@ function SyllabusGradingBreakdown({
         <span role="cell"><strong>Total</strong></span>
         <span role="cell"><strong>{total}%</strong></span>
       </div>
+    </div>
+  );
+}
+
+/**
+ * Inline-editable category weight/count table, following CutoffTable's
+ * pattern exactly: a local draft keyed by field, a per-row dirty check
+ * against server truth, a "Save" that diffs the draft and emits only
+ * existing corrections (category/set_weight, category/set_count --
+ * corrections.py's _apply_category_correction already supports both; no
+ * new correction type is introduced here).
+ *
+ * Renders EVERY category, not just ones with a known weight -- unlike the
+ * read-only breakdown above, a category with weight: null (exactly the
+ * thing a student needs to fill in to close a sub-100 gap, e.g. a category
+ * whose count is known but whose total weight was never stated -- the
+ * unknown_weight case) would otherwise never appear at all.
+ *
+ * category_weight_validation (course-level), unknown_weight (per-category,
+ * informational only -- see below), and the per-category claim-evidence
+ * pair are all read directly from the raw reconciliation findings --
+ * bypassing reviewFindings/findingsByAnchor, the same way CutoffTable reads
+ * CLAIM_EVIDENCE_THRESHOLD_CODES findings itself. category_weight_
+ * validation renders non-dismissible whenever its OWN instance is blocking
+ * (severity !== 'valid'; it's VALID, not WARNING, once weights sum to ~100,
+ * so a clean total shows nothing here rather than a stale "not accepted"
+ * note). No ADD_CATEGORY / REMOVE_CATEGORY: only categories already in the
+ * model can be edited.
+ *
+ * IMPORTANT lifecycle note, unlike every threshold finding CutoffTable
+ * handles: claim_evidence_consistency_unverifiable / claim_evidence_value_
+ * mismatch on a category weight do NOT exist at extraction time --
+ * _check_category_weight_consistency (reconciliation.py) skips a category
+ * outright while its weight is null, so these findings can only appear
+ * AFTER a set_weight correction has already been submitted and answered
+ * with a fresh server response. `rawFindings` is read from `detail` --
+ * component state overwritten with the server's response on every
+ * submitCorrections call (see submitCorrections/handleReviewCorrections) --
+ * so this reads reactively off the MOST RECENT correction response, not a
+ * stale initial-load snapshot; no separate wiring was needed for that.
+ *
+ * The two claim-evidence codes are handled asymmetrically, mirroring the
+ * backend's own asymmetry (reconciliation._check_category_weight_
+ * consistency): claim_evidence_consistency_unverifiable (WARNING -- the
+ * checker couldn't parse a percent out of the evidence at all) gets the
+ * same "Yes, that's correct" affirm CutoffTable offers for thresholds,
+ * emitting category/confirm_category_value. claim_evidence_value_mismatch
+ * (ERROR -- the evidence WAS parsed and it cites a different number) gets
+ * NO affirm button -- the backend deliberately never suppresses it via
+ * confirmed_category_value_claims, so offering one here would be a UI
+ * promise the backend won't honor. It renders non-dismissible with an
+ * explanation instead; the actual fix is editing the weight/count fields
+ * above, not affirming past a real contradiction.
+ */
+function CategoryWeightEditor({
+  model,
+  detail,
+  busy,
+  onSubmitCorrections,
+}: {
+  model: SyllabusGradeModel;
+  detail: SyllabusProfileDetail | null;
+  busy: boolean;
+  onSubmitCorrections: (corrections: SyllabusProfileDetail['corrections']) => void;
+}) {
+  const categories = model.categories;
+  const rawFindings = (detail?.confirmed_reconciliation ?? detail?.reconciliation)?.findings ?? [];
+
+  const totalFinding = rawFindings.find((f) => f.code === 'category_weight_validation') ?? null;
+
+  // unknown_weight is non-blocking (reconciliation.NON_BLOCKING_WARNING_CODES)
+  // -- category_weight_validation is what actually gates confirm on this
+  // fact. It's kept here rather than moved to the general list because it's
+  // still category-scoped info worth anchoring to the right row, but its
+  // text ("we couldn't determine this category's weight") goes factually
+  // stale the moment `weight` is actually set -- most commonly via this
+  // very editor's own set_weight correction, which never clears the
+  // warning (only DISMISS_WARNING touches GradeModel.warnings). So it's
+  // only shown while weight is still genuinely unknown; once answered, the
+  // category's row status is driven by the claim-evidence checks below
+  // instead, and this note would just be wrong to keep displaying.
+  // Two distinct steps, deliberately not collapsed into one predicate: (1)
+  // find the category by name alone, (2) only then decide whether to
+  // suppress it. related_field is untyped free text (extraction.py:132,
+  // "the category/assessment/rule this concerns") with no guarantee it
+  // names a category at all -- it could name an assessment or rule
+  // instead, or just not match anything (typo, extraction drift). If both
+  // steps were one `&&` condition, a genuine no-match would be
+  // indistinguishable from step 2's intentional suppression and both would
+  // silently vanish. A real no-match is surfaced instead (see
+  // unmatchedUnknownWeightFindings below), never dropped.
+  const unknownWeightByCategory = new Map<string, SyllabusFinding>();
+  const unmatchedUnknownWeightFindings: SyllabusFinding[] = [];
+  for (const f of rawFindings) {
+    if (f.code !== 'unknown_weight' || !f.field) continue;
+    const match = categories.find((c) => normalizeName(c.name) === normalizeName(f.field as string));
+    if (!match) {
+      unmatchedUnknownWeightFindings.push(f);
+      continue;
+    }
+    // Suppress once the category's weight is actually known -- the "we
+    // couldn't determine this weight" text goes factually stale the moment
+    // `weight` is set (most commonly via this editor's own set_weight
+    // correction, which never clears the ExtractionWarning backing this
+    // finding).
+    if (match.weight === null) unknownWeightByCategory.set(match.name, f);
+  }
+
+  // Per-category claim-evidence findings -- see the component docstring for
+  // why these can only appear after a set_weight correction, and why the
+  // two codes are handled asymmetrically. `answers` mirrors CutoffTable's
+  // clarifying-answer lookup, but under the SEPARATE 'claim_evidence:
+  // category:' key namespace (categoryValueClaimKey), never the threshold
+  // one.
+  const answers = detail?.clarifying_answers ?? {};
+  const openCategoryValueClaims = new Map<string, SyllabusFinding>();
+  const categoryMismatchByName = new Map<string, SyllabusFinding>();
+  for (const f of rawFindings) {
+    if (!CLAIM_EVIDENCE_THRESHOLD_CODES.has(f.code)) continue;
+    const name = categoryClaimEvidenceCategoryName(f);
+    if (!name) continue;
+    const match = categories.find((c) => normalizeName(c.name) === normalizeName(name));
+    if (!match) continue;
+    if (f.code === 'claim_evidence_value_mismatch') {
+      // Never affirmable -- reconciliation._check_category_weight_consistency
+      // only suppresses claim_evidence_consistency_unverifiable, deliberately
+      // narrower than the threshold path. No key is ever written for this
+      // one, so there's no "answered" state to check here.
+      categoryMismatchByName.set(match.name, f);
+    } else if (!(categoryValueClaimKey(match.name) in answers)) {
+      openCategoryValueClaims.set(match.name, f);
+    }
+  }
+  const answeredCategoryValueClaims = new Set(
+    Object.keys(answers)
+      .filter((k) => k.startsWith('claim_evidence:category:'))
+      .map((k) => (answers[k]?.category_name ?? k.slice('claim_evidence:category:'.length)).trim().toLowerCase()),
+  );
+
+  // Server-truth draft, same pattern as CutoffTable's serverDraft/draft
+  // pair: recomputed only when the categories themselves change (a
+  // correction submit brought back a new model), preserving any in-progress
+  // edit to a field the student hasn't touched.
+  const serverDraft = useMemo((): Record<string, string> => {
+    const d: Record<string, string> = {};
+    for (const c of categories) {
+      d[`${c.name}:weight`] = c.weight != null ? String(c.weight) : '';
+      d[`${c.name}:count`] = c.count != null ? String(c.count) : '';
+    }
+    return d;
+  }, [categories]);
+  const [draft, setDraft] = useState<Record<string, string>>(serverDraft);
+
+  const prevServerDraft = useRef(serverDraft);
+  useEffect(() => {
+    if (prevServerDraft.current === serverDraft) return;
+    const prevServer = prevServerDraft.current;
+    prevServerDraft.current = serverDraft;
+    setDraft((current) => {
+      const next: Record<string, string> = {};
+      for (const key of Object.keys(serverDraft)) {
+        const userEdited = (current[key] ?? '') !== (prevServer[key] ?? '');
+        next[key] = userEdited ? (current[key] ?? '') : serverDraft[key];
+      }
+      return next;
+    });
+  }, [serverDraft]);
+
+  function rowDirty(name: string): boolean {
+    return (draft[`${name}:weight`] ?? '') !== (serverDraft[`${name}:weight`] ?? '')
+      || (draft[`${name}:count`] ?? '') !== (serverDraft[`${name}:count`] ?? '');
+  }
+  const anyDirty = categories.some((c) => rowDirty(c.name));
+
+  // Live running total: a category contributes its typed draft weight if
+  // one is present, otherwise its server weight, otherwise nothing (same
+  // "unweighted categories don't count" semantics the read-only breakdown's
+  // own total already uses) -- so the gap visibly closes keystroke by
+  // keystroke, before Save is ever clicked.
+  let liveTotal = 0;
+  let anyWeighted = false;
+  for (const c of categories) {
+    const raw = (draft[`${c.name}:weight`] ?? '').trim();
+    if (raw !== '') {
+      const value = Number(raw);
+      if (!Number.isNaN(value)) {
+        liveTotal += value;
+        anyWeighted = true;
+        continue;
+      }
+    }
+    if (c.weight != null) {
+      liveTotal += c.weight;
+      anyWeighted = true;
+    }
+  }
+  const roundedTotal = Math.round(liveTotal * 100) / 100;
+  const gap = Math.round((100 - liveTotal) * 100) / 100;
+
+  function handleSave() {
+    const corrections = categoryWeightEditCorrections(categories, draft);
+    if (corrections.length > 0) onSubmitCorrections(corrections);
+  }
+
+  if (categories.length === 0) return null;
+
+  return (
+    <div className="grade-weight-table" data-testid="category-weight-table" aria-label="Grading breakdown">
+      <h4 className="card-heading">Grading breakdown</h4>
+      <p className="empty-state">Check each category's weight and count against your syllabus. Edit any value that's wrong.</p>
+
+      {totalFinding && totalFinding.severity !== 'valid' && (
+        <InlineFinding finding={totalFinding} onDismiss={() => {}} dismissible={false} />
+      )}
+
+      {/* related_field named something that doesn't match any category in
+          this model -- can't anchor it to a row, so it renders here instead
+          of disappearing. unknown_weight is non-blocking backend-side, so
+          this is purely informational: no affirm affordance, no blocking
+          styling (plain warning glyph, same as every other unknown_weight
+          note). Custom copy (not findingCopy's generic text) so the student
+          sees exactly what the extractor said, verbatim. */}
+      {unmatchedUnknownWeightFindings.map((f, i) => (
+        <p
+          key={`unmatched-unknown-weight-${i}`}
+          className="grade-inline-finding grade-inline-finding--warning"
+          data-finding-code={f.code}
+        >
+          <span className="grade-inline-finding-glyph" aria-hidden="true">·</span>
+          <span className="grade-inline-finding-text">
+            The syllabus doesn't state a weight for "{f.field}", but CampusIQ couldn't match that to one of the categories below.
+          </span>
+        </p>
+      ))}
+
+      <div className="grade-weight-table-rows" role="table" aria-label="Category weights">
+        <div className="grade-weight-row grade-weight-row--head" role="row">
+          <span role="columnheader">Category</span>
+          <span role="columnheader">Weight</span>
+          <span role="columnheader">Count</span>
+          <span role="columnheader">Status</span>
+        </div>
+        {categories.map((c) => {
+          const dirty = rowDirty(c.name);
+          const unknownWeight = unknownWeightByCategory.get(c.name);
+          const mismatch = categoryMismatchByName.get(c.name);
+          const openClaim = openCategoryValueClaims.get(c.name);
+          const answered = answeredCategoryValueClaims.has(normalizeName(c.name));
+          return (
+            <div className="grade-weight-row" role="row" key={c.name} data-category-name={c.name}>
+              <span className="grade-weight-row-name" role="cell">{c.name}</span>
+              <span role="cell">
+                <label htmlFor={`weight-${c.name}`} className="sr-only">{c.name} weight</label>
+                <input
+                  id={`weight-${c.name}`}
+                  type="number"
+                  inputMode="decimal"
+                  className="form-input"
+                  placeholder="—"
+                  value={draft[`${c.name}:weight`] ?? ''}
+                  onChange={(e) => setDraft((p) => ({ ...p, [`${c.name}:weight`]: e.target.value }))}
+                />
+              </span>
+              <span role="cell">
+                <label htmlFor={`count-${c.name}`} className="sr-only">{c.name} count</label>
+                <input
+                  id={`count-${c.name}`}
+                  type="number"
+                  inputMode="numeric"
+                  className="form-input"
+                  placeholder="—"
+                  value={draft[`${c.name}:count`] ?? ''}
+                  onChange={(e) => setDraft((p) => ({ ...p, [`${c.name}:count`]: e.target.value }))}
+                />
+              </span>
+              <span className="grade-weight-row-status" role="cell">
+                {dirty ? (
+                  <span className="grade-cutoff-row-note">edited — save below</span>
+                ) : mismatch ? (
+                  // ERROR, never affirmable -- see the component docstring.
+                  <InlineFinding finding={mismatch} onDismiss={() => {}} dismissible={false} />
+                ) : openClaim ? (
+                  <span className="grade-cutoff-row-affirm">
+                    <span className="grade-cutoff-row-note">
+                      We couldn't confirm {c.name}'s weight against your syllabus.
+                    </span>
+                    <button
+                      type="button"
+                      className="btn btn-primary btn-sm"
+                      disabled={busy}
+                      aria-busy={busy}
+                      onClick={() =>
+                        onSubmitCorrections([
+                          { target_type: 'category', operation: 'confirm_category_value', category_name: c.name },
+                        ])
+                      }
+                    >
+                      Yes, that's correct
+                    </button>
+                  </span>
+                ) : answered ? (
+                  <span className="grade-cutoff-resolved" data-category-name={c.name}>
+                    ✓ {c.name} weight confirmed as correct.
+                  </span>
+                ) : unknownWeight ? (
+                  <InlineFinding finding={unknownWeight} onDismiss={() => {}} dismissible={false} />
+                ) : null}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+
+      <p className="grade-weight-total" aria-live="polite">
+        <strong>Total: {anyWeighted ? `${roundedTotal}%` : '—'}</strong>
+        {anyWeighted && Math.abs(gap) > 0.01 && (
+          <span className="grade-weight-total-gap">
+            {gap > 0 ? ` — ${gap}% short of 100%` : ` — ${Math.abs(gap)}% over 100%`}
+          </span>
+        )}
+      </p>
+
+      {anyDirty && (
+        <div className="grade-cutoff-question-actions">
+          <button type="button" className="btn btn-primary btn-sm" disabled={busy} aria-busy={busy} onClick={handleSave}>
+            Save weights
+          </button>
+          <button type="button" className="btn btn-ghost btn-sm" disabled={busy} onClick={() => setDraft(serverDraft)}>
+            Cancel
+          </button>
+        </div>
+      )}
     </div>
   );
 }
