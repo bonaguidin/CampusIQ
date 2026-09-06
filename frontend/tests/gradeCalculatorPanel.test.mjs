@@ -303,7 +303,7 @@ test('Grade Calculator: empty state, upload, review, confirm, grade entry, save 
   assert.equal(await general.getByText('overlapping cutoffs').count(), 0)
 
   await page.getByRole('button', { name: '← Back to your calculators' }).click()
-  await page.locator('.grade-profile-row-button', { hasText: 'PHYS 207' }).click()
+  await page.locator('.grade-card', { hasText: 'PHYS 207' }).click()
   await page.getByRole('heading', { name: 'Needs your review' }).waitFor()
   // reopening re-fetched the same findings and dismissal did not persist
   await page.locator('.grade-inline-findings--general').getByText('overlapping cutoffs').waitFor()
@@ -467,7 +467,7 @@ test('Grade Calculator: remove a calculator from the list (confirm-gated soft de
   await page.getByRole('button', { name: 'Academic' }).click()
   await page.getByRole('button', { name: 'Grade Calculator', exact: true }).click()
 
-  const row = page.locator('.grade-profile-row', { hasText: 'ECEN 248' })
+  const row = page.locator('.grade-card-wrap', { hasText: 'ECEN 248' })
   await row.waitFor()
   const removeButton = row.getByRole('button', { name: /Remove grade calculator for ECEN 248/ })
 
@@ -485,7 +485,7 @@ test('Grade Calculator: remove a calculator from the list (confirm-gated soft de
   })
   await removeButton.click()
 
-  await page.locator('.grade-profile-row', { hasText: 'ECEN 248' }).waitFor({ state: 'detached' })
+  await page.locator('.grade-card-wrap', { hasText: 'ECEN 248' }).waitFor({ state: 'detached' })
   assert.equal(deleteCount, 1, 'accepting the confirm calls DELETE exactly once')
   await page.getByText('See what you need to reach your target grade').waitFor()
 })
@@ -549,7 +549,7 @@ async function mountCutoffPanel(t, cacheKey, handle) {
   await page.goto(`http://127.0.0.1:${address.port}/authenticated-dashboard-preview.html?mode=complete`)
   await page.getByRole('button', { name: 'Academic' }).click()
   await page.getByRole('button', { name: 'Grade Calculator', exact: true }).click()
-  await page.locator('.grade-profile-row-button', { hasText: 'PHYS 207' }).click()
+  await page.locator('.grade-card', { hasText: 'PHYS 207' }).click()
   return page
 }
 
@@ -696,7 +696,7 @@ test('Grade Calculator: an answered cutoff shows resolved and does not re-ask on
 
   // navigate away and back — still resolved, still no banner
   await page.getByRole('button', { name: '← Back to your calculators' }).click()
-  await page.locator('.grade-profile-row-button', { hasText: 'PHYS 207' }).click()
+  await page.locator('.grade-card', { hasText: 'PHYS 207' }).click()
   await page.locator('.grade-cutoff-resolved[data-cutoff-pair="B,C"]').waitFor()
   assert.equal(await page.locator('.grade-cutoff-banner[data-cutoff-pair="B,C"]').count(), 0)
 })
@@ -778,7 +778,7 @@ test('Grade Calculator: missing_grade_scale shows in the review list; no letter-
   for (const p of ['ready-noscale', 'ready-withscale']) {
     phase = p
     await page.getByRole('button', { name: '← Back to your calculators' }).click()
-    await page.locator('.grade-profile-row-button', { hasText: 'PHYS 207' }).click()
+    await page.locator('.grade-card', { hasText: 'PHYS 207' }).click()
     await page.getByRole('heading', { name: 'Enter your grades' }).waitFor()
     assert.equal(await page.locator('#target-letter').count(), 0, `${p}: no target-letter select`)
     assert.equal(await page.locator('#target-component').count(), 0, `${p}: no target-component select`)
@@ -884,7 +884,7 @@ test('Grade Calculator: an affirmed threshold value shows confirmed and does not
   assert.equal(await page.locator('.grade-cutoff-row[data-threshold-letter="B"] .grade-cutoff-row-affirm').count(), 0)
 
   await page.getByRole('button', { name: '← Back to your calculators' }).click()
-  await page.locator('.grade-profile-row-button', { hasText: 'PHYS 207' }).click()
+  await page.locator('.grade-card', { hasText: 'PHYS 207' }).click()
   await page.locator('.grade-cutoff-resolved[data-threshold-letter="B"]').waitFor()
   assert.equal(await page.locator('.grade-cutoff-row[data-threshold-letter="B"] .grade-cutoff-row-affirm').count(), 0)
 })
@@ -1667,4 +1667,148 @@ test('Grade Calculator: clicking "Save & calculate" cancels a pending live proje
   assert.equal(calcCount, 1, 'exactly one /calculate ran -- the button cancelled the pending projection')
   // the one calculation was the button's: preceded by its save
   assert.deepEqual(calls, ['grade-state', 'calculate'])
+})
+
+// --- course cards: ring segments, states, and the aria-label breakdown ----------
+
+test('Grade Calculator: the list renders a segmented ring card per calculator', { timeout: 30_000 }, async (t) => {
+  const planning = planningRoutes({ terms: [] })
+  const listRows = [
+    {
+      id: 'p-ready', institution: 'tamu', course_code: 'PHYS 207', term: 'Fall 2026', section: '529',
+      review_state: 'confirmed', created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z',
+      calculator_ready: true, current_grade: 85, current_letter_grade: 'B',
+      components: [
+        { name: 'Midterm', source_type: 'category', weight_percent: 30, effective_score: 90, status: 'completed' },
+        { name: 'Final', source_type: 'category', weight_percent: 40, effective_score: null, status: null },
+        { name: 'Project', source_type: 'category', weight_percent: 30, effective_score: 0, status: 'completed' },
+      ],
+    },
+    {
+      id: 'p-setup', institution: 'tamu', course_code: 'ECEN 248', term: 'Fall 2026', section: '501',
+      review_state: 'needs_review', created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z',
+      calculator_ready: false, current_grade: null, current_letter_grade: null, components: [],
+    },
+    {
+      id: 'p-nogap', institution: 'tamu', course_code: 'MATH 251', term: 'Fall 2026', section: '200',
+      review_state: 'confirmed', created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z',
+      calculator_ready: true, current_grade: 63.5, current_letter_grade: null,
+      components: [{ name: 'Exam', source_type: 'category', weight_percent: 100, effective_score: 63.5, status: 'completed' }],
+    },
+    {
+      // categories sum to 70 -> a shortfall segment for the missing 30
+      id: 'p-short', institution: 'tamu', course_code: 'CHEM 101', term: 'Fall 2026', section: '300',
+      review_state: 'confirmed', created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z',
+      calculator_ready: true, current_grade: 78, current_letter_grade: 'C',
+      components: [
+        { name: 'Labs', source_type: 'category', weight_percent: 30, effective_score: 82, status: 'completed' },
+        { name: 'Exams', source_type: 'category', weight_percent: 40, effective_score: null, status: null },
+      ],
+    },
+    {
+      // points-based: all assessments, no categories -> one full-circle arc
+      id: 'p-points', institution: 'tamu', course_code: 'ENGR 102', term: 'Fall 2026', section: '400',
+      review_state: 'confirmed', created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z',
+      calculator_ready: true, current_grade: 91, current_letter_grade: 'A',
+      components: [
+        { name: 'Project 1', source_type: 'assessment', weight_percent: 50, effective_score: 88, status: 'completed' },
+        { name: 'Project 2', source_type: 'assessment', weight_percent: 50, effective_score: 94, status: 'completed' },
+      ],
+    },
+  ]
+
+  const apiPlugin = {
+    name: 'grade-calculator-cards',
+    configureServer(server) {
+      server.middlewares.use((request, response, next) => {
+        const path = request.url?.split('?')[0]
+        if (planning.handle(path, request.method, request, response)) return undefined
+        if (path === '/api/v2/student/me/requirement-satisfaction') return json(response, 404, { detail: 'Not found.' })
+        if (path?.startsWith('/api/v2/student/me/analysis-cache/')) return json(response, 404, { detail: 'Not found.' })
+        if (path === '/api/v2/student/me/syllabus-grade-profiles' && request.method === 'GET') {
+          return json(response, 200, { syllabus_grade_profiles: listRows })
+        }
+        next()
+      })
+    },
+  }
+  const server = await createServer({
+    root: new URL('..', import.meta.url).pathname,
+    cacheDir: new URL('../node_modules/.vite-grade-calculator-cards', import.meta.url).pathname,
+    logLevel: 'silent',
+    plugins: [apiPlugin],
+    server: { host: '127.0.0.1' },
+  })
+  await server.listen()
+  t.after(async () => server.close())
+  const address = server.httpServer?.address()
+  assert.ok(address && typeof address === 'object')
+  const browser = await chromium.launch()
+  t.after(async () => browser.close())
+  const page = await browser.newPage()
+  await page.goto(`http://127.0.0.1:${address.port}/authenticated-dashboard-preview.html?mode=complete`)
+  await page.getByRole('button', { name: 'Academic' }).click()
+  await page.getByRole('button', { name: 'Grade Calculator', exact: true }).click()
+
+  // --- ready card: one ring, three category segments, fill only where graded ---
+  const ready = page.locator('.grade-card', { hasText: 'PHYS 207' })
+  await ready.waitFor()
+  assert.equal(await ready.getAttribute('data-kind'), 'ring')
+  assert.equal(await ready.getAttribute('data-grade'), 'b')
+  assert.equal(await ready.locator('.grade-card-track').count(), 3, 'a track per category')
+  // Midterm 90% is the only graded, non-zero fill; Final is ungraded, Project is a scored 0
+  assert.equal(await ready.locator('.grade-card-fill').count(), 1)
+  await ready.locator('.grade-card-center-primary', { hasText: 'B' }).waitFor()
+  await ready.locator('.grade-card-center-secondary', { hasText: '85%' }).waitFor()
+
+  // --- aria-label carries the full breakdown, so nothing is hover-only ---
+  const label = await ready.locator('svg.grade-card-ring').getAttribute('aria-label')
+  assert.match(label, /PHYS 207, Fall 2026\./)
+  assert.match(label, /Current grade B, 85%\./)
+  assert.match(label, /Midterm: weight 30%, score 90%\./)
+  assert.match(label, /Final: weight 40%, not yet graded\./)
+  assert.match(label, /Project: weight 30%, score 0%\./)
+
+  // --- segments are not individually focusable (decorative to AT) ---
+  assert.equal(await ready.locator('svg.grade-card-ring [tabindex]').count(), 0)
+  assert.equal(await ready.locator('svg.grade-card-ring path[role]').count(), 0)
+
+  // --- setup card: no ring, dashed, and still a tap target that opens ---
+  const setup = page.locator('.grade-card', { hasText: 'ECEN 248' })
+  assert.equal(await setup.getAttribute('data-kind'), 'setup')
+  assert.equal(await setup.locator('svg.grade-card-ring').count(), 0)
+  assert.equal(await setup.locator('.grade-card-track').count(), 0)
+
+  // --- letter-null card: percentage alone, neutral (no data-grade), no dash ---
+  const noLetter = page.locator('.grade-card', { hasText: 'MATH 251' })
+  assert.equal(await noLetter.getAttribute('data-grade'), null)
+  await noLetter.locator('.grade-card-center-primary', { hasText: '63.5%' }).waitFor()
+  assert.equal(await noLetter.locator('.grade-card-center-primary', { hasText: 'B' }).count(), 0)
+
+  // --- sub-100 weights: a distinct shortfall segment, and the aria-label says so ---
+  const short = page.locator('.grade-card', { hasText: 'CHEM 101' })
+  assert.equal(await short.locator('.grade-card-track').count(), 3, '2 categories + 1 shortfall track')
+  assert.equal(await short.locator('.grade-card-track--shortfall').count(), 1)
+  // the shortfall segment is never a hover target
+  assert.equal(await short.locator('.grade-card-seg[data-shortfall] .grade-card-hit').count(), 0)
+  const shortLabel = await short.locator('svg.grade-card-ring').getAttribute('aria-label')
+  assert.match(shortLabel, /Labs: weight 30%, score 82%\./)
+  assert.match(shortLabel, /Exams: weight 40%, not yet graded\./)
+  assert.match(shortLabel, /30% of the course weight is not assigned to any category/)
+
+  // --- points-based: one full-circle arc, no segments, letter + percentage centre ---
+  const points = page.locator('.grade-card', { hasText: 'ENGR 102' })
+  assert.equal(await points.getAttribute('data-kind'), 'categoryless')
+  assert.equal(await points.getAttribute('data-grade'), 'a')
+  assert.equal(await points.locator('.grade-card-track').count(), 1, 'one full-circle track')
+  assert.equal(await points.locator('.grade-card-fill').count(), 1)
+  assert.equal(await points.locator('.grade-card-hit').count(), 0, 'no hover reveal on a categoryless card')
+  await points.locator('.grade-card-center-primary', { hasText: 'A' }).waitFor()
+  await points.locator('.grade-card-center-secondary', { hasText: '91%' }).waitFor()
+  const pointsLabel = await points.locator('svg.grade-card-ring').getAttribute('aria-label')
+  assert.match(pointsLabel, /Graded by individual assessments, not weighted categories\./)
+
+  // --- Remove + Upload another are preserved ---
+  await page.getByRole('button', { name: /Remove grade calculator for PHYS 207/ }).waitFor()
+  await page.getByRole('button', { name: 'Upload another syllabus' }).waitFor()
 })

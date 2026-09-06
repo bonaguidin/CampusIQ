@@ -6746,29 +6746,185 @@ label.profile-form-check { display: flex; flex-direction: row; align-items: cent
 /* ── Grade Calculator (syllabus What-If Calculator) ─────────────────────── */
 
 .grade-calculator-panel { display: flex; flex-direction: column; gap: var(--sp-4); }
-.grade-profile-row-button {
-  display: grid;
-  grid-template-columns: 1fr auto auto;
-  gap: var(--sp-3);
-  align-items: center;
-  width: 100%;
+
+/* ── Course cards: a square card per calculator, ring segmented by category
+   weight and filled by score, one colour per card keyed to the letter grade.
+   The whole card is a single tap target that opens the course; the Remove
+   button is the only nested control. Segment hover is desktop-only progressive
+   enhancement, gated on `pointer: fine`. gradeCardRing.mjs builds the geometry
+   and aria-label; this is presentation only. ─────────────────────────────── */
+
+/* Letter-grade colours -- green / blue / amber / coral / muted-red, tuned for
+   the light --surface / white card ground. This is the ONLY colour on a card;
+   an unrecognised or absent letter leaves --grade-color unset and the fill
+   falls back to --muted (neutral). Not institution-themed: a grade's colour
+   must not shift with the school's brand. */
+:root {
+  --grade-a: #2E7D57;
+  --grade-b: #2F6DB0;
+  --grade-c: #B7791F;
+  --grade-d: #C2603D;
+  --grade-f: #9E4B4B;
+}
+
+.grade-card-grid {
+  list-style: none;
+  margin: 0;
   padding: 0;
-  border: 0;
-  background: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: var(--sp-4);
+}
+.grade-card-grid > li { display: flex; }
+
+.grade-card-wrap { position: relative; flex: 1 1 auto; display: flex; }
+
+.grade-card {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--sp-3);
+  width: 100%;
+  padding: var(--sp-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background: var(--surface-elevated);
   font: inherit;
   color: inherit;
   text-align: left;
   cursor: pointer;
 }
-/* Row + per-row Remove affordance: the clickable row keeps its full 3-column
-   layout, the Remove button tucks to the far right. */
-.grade-profile-row {
+.grade-card:hover { border-color: var(--accent-ghost-border); }
+.grade-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.grade-card[data-kind='setup'] {
+  border-style: dashed;
+  background: var(--surface);
+}
+
+/* Square ring area. The centre text is overlaid, not part of the SVG, so it
+   can restyle on hover without touching path geometry. */
+.grade-card-face {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: var(--sp-3);
+  justify-content: center;
+  aspect-ratio: 1 / 1;
+  width: 100%;
 }
-.grade-profile-row .grade-profile-row-button { flex: 1 1 auto; }
-.grade-profile-remove { flex: 0 0 auto; }
+.grade-card-ring { width: 100%; height: 100%; display: block; overflow: visible; }
+
+.grade-card-track {
+  fill: none;
+  stroke: var(--line);
+  stroke-width: 7;
+  stroke-linecap: round;
+}
+.grade-card-fill {
+  fill: none;
+  stroke: var(--grade-color, var(--muted));
+  stroke-width: 7;
+  stroke-linecap: round;
+}
+/* Course weight the syllabus never assigned to a category. Dashed + butt-capped
+   so it reads as "structure missing", clearly not the flat --line track of a
+   category that simply has no score yet, and it can never carry a fill. */
+.grade-card-track--shortfall {
+  stroke: var(--muted);
+  stroke-width: 5;
+  stroke-linecap: butt;
+  stroke-dasharray: 1.5 2.5;
+  opacity: 0.65;
+}
+.grade-card[data-grade='a'] { --grade-color: var(--grade-a); }
+.grade-card[data-grade='b'] { --grade-color: var(--grade-b); }
+.grade-card[data-grade='c'] { --grade-color: var(--grade-c); }
+.grade-card[data-grade='d'] { --grade-color: var(--grade-d); }
+.grade-card[data-grade='f'] { --grade-color: var(--grade-f); }
+
+/* Invisible fat stroke that catches the hover; only rendered on fine pointers
+   (GradeCard.tsx omits it otherwise), never a click target. */
+.grade-card-hit {
+  fill: none;
+  stroke: transparent;
+  stroke-width: 15;
+  pointer-events: stroke;
+  cursor: pointer;
+}
+.grade-card-seg { transition: opacity 120ms ease; }
+.grade-card-seg[data-dim] { opacity: 0.22; }
+
+.grade-card-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  pointer-events: none;
+}
+.grade-card-center-primary {
+  font: 600 var(--text-xl) / 1 var(--font-data);
+  color: var(--grade-color, var(--ink));
+}
+/* a bare letter grade gets the big treatment; a percentage / dash stays
+   smaller so it fits inside the ring without crowding */
+.grade-card[data-grade] .grade-card-center-primary { font-size: var(--text-2xl); }
+.grade-card-center-secondary {
+  font: 500 var(--text-sm) / 1.2 var(--font-ui);
+  color: var(--muted);
+  text-align: center;
+  max-width: 90%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* setup + categoryless faces: no ring, just a centred mark */
+.grade-card-face--setup,
+.grade-card-face--flat { flex-direction: column; gap: var(--sp-2); }
+.grade-card-setup-mark {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed var(--accent-ghost-border);
+  border-radius: 50%;
+  font: 400 var(--text-xl) / 1 var(--font-ui);
+  color: var(--muted);
+}
+.grade-card-setup-text { font-size: var(--text-sm); color: var(--muted); }
+
+.grade-card-title {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.grade-card-title strong {
+  font: 600 var(--text-base) / 1.2 var(--font-data);
+  color: var(--accent-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.grade-card-title small { font-size: var(--text-xs); color: var(--muted); }
+
+/* Always visible, not hover-gated: discoverable without a pointer and stable
+   for tests. Sits over the card's top-right padding, clear of the ring. */
+.grade-card-remove {
+  position: absolute;
+  top: var(--sp-2);
+  right: var(--sp-2);
+  background: var(--surface-elevated);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .grade-card-seg { transition: none; }
+}
+
 .grade-review-card { display: flex; flex-direction: column; gap: var(--sp-4); }
 
 /* Unified letter-grade cutoff table (CutoffTable): one editable row per
@@ -6947,5 +7103,5 @@ label.profile-form-check { display: flex; flex-direction: row; align-items: cent
 
 @media (max-width: 640px) {
   .grade-entry-row { grid-template-columns: minmax(0, 1fr); gap: var(--sp-1); }
-  .grade-profile-row-button { grid-template-columns: minmax(0, 1fr); }
+  .grade-card-grid { grid-template-columns: minmax(0, 1fr); }
 }
