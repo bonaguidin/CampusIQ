@@ -146,6 +146,20 @@ export interface SyllabusGradeState {
   assessment_scores: SyllabusAssessmentScore[];
 }
 
+// Trimmed per-component slice the list endpoint serializes for a course
+// card's ring: one segment per component, sized by weight_percent, filled by
+// effective_score. status null + effective_score null = ungraded (empty
+// segment); effective_score 0 with a status = a real scored zero. The fuller
+// SyllabusCalculationComponent (original_score, contribution, points) is only
+// on the /calculate response, not here.
+export interface SyllabusListCardComponent {
+  name: string;
+  source_type: 'category' | 'assessment';
+  weight_percent: number | null;
+  effective_score: number | null;
+  status: 'completed' | 'projected' | null;
+}
+
 export interface SyllabusProfileSummary {
   id: string;
   institution: string | null;
@@ -157,6 +171,8 @@ export interface SyllabusProfileSummary {
   updated_at: string;
   calculator_ready?: boolean;
   current_grade?: number | null;
+  current_letter_grade?: string | null;
+  components?: SyllabusListCardComponent[];
 }
 
 export interface SyllabusProfileDetail {
