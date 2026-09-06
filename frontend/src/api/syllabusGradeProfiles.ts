@@ -376,6 +376,10 @@ export async function calculateSyllabusGrade(
   );
 }
 
+// NOTE: currently unused. The Target Grade card that called this was removed
+// from GradeCalculatorPanel in favour of the live projection flow; the
+// `.../solve-target` endpoint and its engine path are still in place and this
+// wrapper is kept ready for a future caller.
 export async function solveSyllabusTarget(
   accessToken: string,
   profileId: string,
