@@ -1794,7 +1794,7 @@ test('Grade Calculator: the list renders a segmented ring card per calculator', 
   const shortLabel = await short.locator('svg.grade-card-ring').getAttribute('aria-label')
   assert.match(shortLabel, /Labs: weight 30%, score 82%\./)
   assert.match(shortLabel, /Exams: weight 40%, not yet graded\./)
-  assert.match(shortLabel, /30% of the course weight is not assigned to any category/)
+  assert.match(shortLabel, /30% of the course weight is not accounted for by any component/)
 
   // --- points-based: one full-circle arc, no segments, letter + percentage centre ---
   const points = page.locator('.grade-card', { hasText: 'ENGR 102' })
