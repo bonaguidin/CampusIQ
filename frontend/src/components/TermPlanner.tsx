@@ -61,7 +61,16 @@ import { CourseSearchAdd } from './CourseSearchAdd';
  */
 
 interface TermPlannerProps {
-  identity: AnalysisIdentity;
+  /**
+   * The session identity, passed as two primitives rather than a prebuilt
+   * `{ slug, accessToken }` object. A parent that constructs that object inline
+   * hands a fresh reference on every render; this component's terms-loading
+   * effect keys on it, so an unstable identity re-fires that effect on every
+   * unrelated parent re-render and resets the term dropdown. Taking primitives
+   * moves the single memoized construction in here, where it belongs.
+   */
+  slug: string | null;
+  accessToken: string | null;
   /** course_records rows the dashboard already loaded, for the selected term. */
   courses: Array<{
     id: string;
@@ -82,7 +91,7 @@ interface TermPlannerProps {
   onCourseRecordsChanged: () => void;
 }
 
-export function TermPlanner({ identity, courses, onCourseRecordsChanged }: TermPlannerProps) {
+export function TermPlanner({ slug, accessToken, courses, onCourseRecordsChanged }: TermPlannerProps) {
   const [terms, setTerms] = useState<PlanningTerm[]>([]);
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [planned, setPlanned] = useState<PlannedCourse[]>([]);
@@ -99,6 +108,15 @@ export function TermPlanner({ identity, courses, onCourseRecordsChanged }: TermP
   // `today` is captured once per mount rather than read at each comparison, so
   // a term cannot change status midway through a render pass.
   const today = useMemo(() => new Date(), []);
+
+  // The one place the identity object is built. Memoized on the primitives so
+  // every effect and callback below that lists `identity` as a dependency sees
+  // a stable reference until the session actually changes -- see the prop
+  // comment for what an unstable one breaks.
+  const identity = useMemo<AnalysisIdentity>(
+    () => ({ slug, accessToken }),
+    [slug, accessToken],
+  );
 
   useEffect(() => {
     let cancelled = false;
