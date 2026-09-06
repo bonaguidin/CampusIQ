@@ -1762,6 +1762,41 @@ test('Grade Calculator: clearing a What-if reverts that row to sending its actua
   assert.deepEqual(calcBody.category_scores, [{ category_name: 'Mid-term Exam', actual_score: 20 }])
 })
 
+test('Grade Calculator: the current-grade card flags when a What-if has displaced a real score', { timeout: 45_000 }, async (t) => {
+  const page = await mountCutoffPanel(t, 'grade-calculator-displaced-actual-note', async (path, method, request, response) => {
+    if (path === `/api/v2/student/me/syllabus-grade-profiles/${PROFILE_ID}` && method === 'GET') {
+      json(response, 200, PROJECTION_READY_DETAIL())
+      return true
+    }
+    if (path === `/api/v2/student/me/syllabus-grade-profiles/${PROFILE_ID}/calculate` && method === 'POST') {
+      await readBody(request)
+      json(response, 200, calcResponse({ completed_weight: 50, current_grade: 88, projected_grade: 79 }))
+      return true
+    }
+    return false
+  })
+
+  const note = page.getByText('projected from a What-if score instead of counted')
+
+  await page.getByRole('heading', { name: 'Enter your grades' }).waitFor()
+
+  // a What-if on an EMPTY row: it never counted, so nothing is displaced
+  await page.fill('#hypo-category\\:Lecture\\ Quizzes', '95')
+  await page.getByText('Based on 50% of the course completed').waitFor()
+  await page.waitForTimeout(700)
+  assert.equal(await note.count(), 0, 'no note when the What-if only sits on an empty row')
+
+  // now put a What-if over a row that also has a real score -> note appears
+  await page.fill('#actual-category\\:Mid-term\\ Exam', '80')
+  await page.fill('#hypo-category\\:Mid-term\\ Exam', '40')
+  await note.waitFor()
+
+  // clear that What-if -> the row is counted again, note disappears
+  await page.fill('#hypo-category\\:Mid-term\\ Exam', '')
+  await page.waitForTimeout(700)
+  assert.equal(await note.count(), 0, 'note clears once the displacing What-if is removed')
+})
+
 test('Grade Calculator: clicking "Save & calculate" cancels a pending live projection (one result, from the button)', { timeout: 45_000 }, async (t) => {
   const calls = []
   let calcCount = 0

@@ -861,6 +861,17 @@ export function GradeCalculatorPanel({ accessToken, courses, institutionName }: 
     return names;
   }, [detail]);
 
+  // Rows where a What-if is standing in for a real score the student also
+  // entered: buildGradeState(.., true) submits these as projected_score, so
+  // they drop out of the completed-weight pool and the current grade shifts.
+  // A What-if on an empty row displaces nothing (it never counted), so it
+  // is not tallied here.
+  const displacedActualCount = useMemo(
+    () =>
+      Object.values(gradeDraft).filter((v) => v.actual.trim() !== '' && v.projected.trim() !== '').length,
+    [gradeDraft],
+  );
+
   // Reselecting a calculator (or the initial load of one) starts review
   // findings fresh -- dismissal is session-only and must not leak between
   // calculators or survive a reopen. See dismissedFindingKeys above.
@@ -1088,6 +1099,13 @@ export function GradeCalculatorPanel({ accessToken, courses, institutionName }: 
                           ? `Based on ${calcResult.completed_weight}% of the course completed.`
                           : 'No grades entered yet.'}
                       </p>
+                      {displacedActualCount > 0 && (
+                        <p className="empty-state">
+                          {displacedActualCount === 1
+                            ? '1 category is projected from a What-if score instead of counted.'
+                            : `${displacedActualCount} categories are projected from What-if scores instead of counted.`}
+                        </p>
+                      )}
 
                       <h3 className="card-heading">Projected grade</h3>
                       {calcResult.projected_grade !== null ? (
