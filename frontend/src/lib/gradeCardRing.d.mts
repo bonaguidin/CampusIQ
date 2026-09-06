@@ -9,7 +9,7 @@ export interface GradeRingSegment {
   status: 'completed' | 'projected' | null;
   /** false = ungraded (track only); true = counted, even at score 0. */
   graded: boolean;
-  /** true = course weight not assigned to any category; hatched, never fillable. */
+  /** true = course weight not accounted for by any component; hatched, never fillable. */
   isShortfall: boolean;
   fillFraction: number;
   startAngle: number;
@@ -52,11 +52,12 @@ export interface GradeCardRingModel {
   centerSecondary: string | null;
   hasGrades: boolean;
   segments: GradeRingSegment[];
-  totalCategoryWeight: number;
+  /** sum of every segmented component's weight (categories + decomposed assessments). */
+  totalSegmentWeight: number;
   weightSumOff: boolean;
-  /** >0 when category weights fall short of 100; rendered as a shortfall segment. */
+  /** >0 when segment weights fall short of 100; rendered as a shortfall segment. */
   weightShortfallPercent: number | null;
-  /** >0 when category weights exceed 100; segments are scaled to fit the circle. */
+  /** >0 when segment weights exceed 100; segments are scaled to fit the circle. */
   weightOveragePercent: number | null;
   ariaLabel: string;
 }

@@ -65,7 +65,7 @@ test('a thin sliver is not merged or padded away', () => {
   assert.ok(sliver.endAngle - sliver.startAngle <= 3.6) // ~1% of 360, minus its own capped pad
 })
 
-test('assessments and weightless categories are ignored; only weighted categories become segments', () => {
+test('every weighted component segments (category or assessment); only null-weight ones are skipped', () => {
   const model = buildGradeCardModel(
     readyProfile({
       current_grade: 88,
@@ -78,8 +78,40 @@ test('assessments and weightless categories are ignored; only weighted categorie
     }),
   )
   const realSegments = model.segments.filter((s) => !s.isShortfall)
-  assert.equal(realSegments.length, 1)
-  assert.equal(realSegments[0].name, 'Homework')
+  assert.deepEqual(
+    realSegments.map((s) => s.name),
+    ['Homework', 'Final Project'],
+  )
+  assert.equal(model.totalSegmentWeight, 100)
+  assert.equal(model.weightSumOff, false)
+})
+
+test('a decomposed category (Homework category + three assessment components) renders 4 segments, no shortfall', () => {
+  const model = buildGradeCardModel(
+    readyProfile({
+      course_code: 'CSCE 222',
+      current_grade: 94,
+      current_letter_grade: 'A',
+      components: [
+        category('Homework assignment', 35, 100, 'completed'),
+        { name: 'midterm I', source_type: 'assessment', weight_percent: 15, effective_score: 80, status: 'completed' },
+        { name: 'midterm II', source_type: 'assessment', weight_percent: 15, effective_score: 80, status: 'completed' },
+        { name: 'final exam', source_type: 'assessment', weight_percent: 35, effective_score: 100, status: 'completed' },
+      ],
+    }),
+  )
+  assert.equal(model.kind, 'ring')
+  assert.deepEqual(
+    model.segments.map((s) => s.name),
+    ['Homework assignment', 'midterm I', 'midterm II', 'final exam'],
+  )
+  assert.equal(model.totalSegmentWeight, 100)
+  assert.equal(model.weightSumOff, false)
+  assert.equal(model.weightShortfallPercent, null)
+  assert.ok(model.segments.every((s) => !s.isShortfall))
+  for (const name of ['Homework assignment', 'midterm I', 'midterm II', 'final exam']) {
+    assert.match(model.ariaLabel, new RegExp(`${name}: weight \\d+%, score \\d+%\\.`))
+  }
 })
 
 test('arcPath emits a stroke arc (M then A) with the large-arc flag past 180 degrees', () => {
@@ -287,7 +319,7 @@ test('category weights summing to ~100 do not trip weightSumOff and add no short
   const model = buildGradeCardModel(
     readyProfile({ components: [category('A', 33.34), category('B', 33.33), category('C', 33.33)] }),
   )
-  assert.equal(model.totalCategoryWeight, 100)
+  assert.equal(model.totalSegmentWeight, 100)
   assert.equal(model.weightSumOff, false)
   assert.equal(model.weightShortfallPercent, null)
   assert.equal(model.weightOveragePercent, null)
@@ -303,7 +335,7 @@ test('a sub-100 weight sum renders a distinct, unfillable shortfall segment that
     }),
     { gapDeg: 0 },
   )
-  assert.equal(model.totalCategoryWeight, 70)
+  assert.equal(model.totalSegmentWeight, 70)
   assert.equal(model.weightSumOff, true)
   assert.equal(model.weightShortfallPercent, 30)
   assert.equal(model.weightOveragePercent, null)
@@ -349,8 +381,8 @@ test('sub-100 aria-label states that course weight is unaccounted for, distinct 
   )
   assert.match(model.ariaLabel, /A: weight 30%, score 80%\./)
   assert.match(model.ariaLabel, /B: weight 40%, not yet graded\./)
-  assert.match(model.ariaLabel, /30% of the course weight is not assigned to any category/)
-  assert.doesNotMatch(model.ariaLabel, /Unassigned weight: weight/) // the shortfall is not listed as a category line
+  assert.match(model.ariaLabel, /30% of the course weight is not accounted for by any component/)
+  assert.doesNotMatch(model.ariaLabel, /Unassigned weight: weight/) // the shortfall is not listed as a component line
 })
 
 test('an over-100 weight sum scales the segments to fit the circle and says so in the aria-label', () => {
@@ -362,7 +394,7 @@ test('an over-100 weight sum scales the segments to fit the circle and says so i
     }),
     { gapDeg: 0 },
   )
-  assert.equal(model.totalCategoryWeight, 130)
+  assert.equal(model.totalSegmentWeight, 130)
   assert.equal(model.weightSumOff, true)
   assert.equal(model.weightOveragePercent, 30)
   assert.equal(model.weightShortfallPercent, null)
@@ -374,7 +406,7 @@ test('an over-100 weight sum scales the segments to fit the circle and says so i
   const spanB = b.endAngle - b.startAngle
   assert.equal(Math.round(spanA + spanB), 360)
   assert.ok(Math.abs(spanA / spanB - 70 / 60) < 0.001)
-  assert.match(model.ariaLabel, /Category weights add up to 130%, more than 100%\./)
+  assert.match(model.ariaLabel, /Component weights add up to 130%, more than 100%\./)
 })
 
 // --- aria-label carries the whole breakdown ---------------------------------------

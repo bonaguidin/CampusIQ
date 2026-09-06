@@ -109,7 +109,7 @@ function buildAriaLabel({ courseLabel, term, letter, pct, segments, categoryless
   }
 
   if (segments.length === 0) {
-    parts.push('No category breakdown available yet.');
+    parts.push('No breakdown available yet.');
     return aria(parts.join(' '));
   }
 
@@ -123,11 +123,11 @@ function buildAriaLabel({ courseLabel, term, letter, pct, segments, categoryless
   }
   if (shortfallPercent != null) {
     parts.push(
-      `${shortfallPercent}% of the course weight is not assigned to any category (the syllabus breakdown may be incomplete).`,
+      `${shortfallPercent}% of the course weight is not accounted for by any component (the syllabus breakdown may be incomplete).`,
     );
   }
   if (overagePercent != null) {
-    parts.push(`Category weights add up to ${round2(100 + overagePercent)}%, more than 100%.`);
+    parts.push(`Component weights add up to ${round2(100 + overagePercent)}%, more than 100%.`);
   }
   return aria(parts.join(' '));
 }
@@ -140,17 +140,19 @@ function buildAriaLabel({ courseLabel, term, letter, pct, segments, categoryless
  *   { kind: 'categoryless', courseLabel, term, letter, colorKey, percentText,
  *     centerPrimary, centerSecondary, trackPath, fillPath|null, ariaLabel }
  *   { kind: 'ring', courseLabel, term, letter, colorKey, percentText,
- *     centerPrimary, centerSecondary, hasGrades, segments[], totalCategoryWeight,
+ *     centerPrimary, centerSecondary, hasGrades, segments[], totalSegmentWeight,
  *     weightSumOff, weightShortfallPercent|null, weightOveragePercent|null, ariaLabel }
  *
  * A ring segment: { name, weightPercent, score|null, status|null, graded,
  *   isShortfall, fillFraction, startAngle, endAngle, midAngle, trackPath, fillPath|null }
- *   - graded=false, isShortfall=false -> ungraded category, track only
+ *   - graded=false, isShortfall=false -> ungraded component, track only
  *   - graded=true, fillFraction=0     -> a real scored zero (track only, counted)
- *   - isShortfall=true                -> course weight not assigned to any
- *     category; a distinct hatched track, never fillable, not hoverable
+ *   - isShortfall=true                -> course weight not accounted for by any
+ *     component; a distinct hatched track, never fillable, not hoverable
  *
- * Category weights that fall short of 100 get a trailing shortfall segment so
+ * Every component with a numeric weight_percent is a segment -- weighted
+ * categories and the individual assessments of a decomposed category alike.
+ * Segment weights that fall short of 100 get a trailing shortfall segment so
  * the ring still closes; weights that exceed 100 are scaled to fit the circle
  * (proportions preserved) and noted in the aria-label. Same arc formula for
  * both: sweep = weight / max(100, sum) * 360.
@@ -173,9 +175,20 @@ export function buildGradeCardModel(profile, opts = {}) {
   }
 
   const allComponents = Array.isArray(profile.components) ? profile.components : [];
-  const categories = allComponents.filter(
-    (c) => c && c.source_type === 'category' && typeof c.weight_percent === 'number',
-  );
+
+  // Every component carrying a real weight becomes a ring segment: weighted
+  // categories AND the individual assessments of a decomposed category, which
+  // the syllabus calculator returns with source_type 'assessment'.
+  const segmentComponents = allComponents.filter((c) => c && typeof c.weight_percent === 'number');
+  // The categoryless (single full-circle arc) branch is for points-based
+  // syllabi. It keys on the absence of any *category-typed* component, NOT on
+  // segmentComponents.length: a points course puts a numeric weight_percent on
+  // every assessment, so a length check would send it down the segmented-ring
+  // path -- and its weights can legitimately sum to under 100 (the calculator's
+  // _build_points_components drops assessments whose possible_points is
+  // unknown), painting a bogus "not accounted for" shortfall. Do not
+  // "simplify" this to a segment-count test.
+  const categoryTypedComponents = segmentComponents.filter((c) => c.source_type === 'category');
 
   const letterRaw = profile.current_letter_grade ?? null;
   const colorKey = gradeColorKey(letterRaw);
@@ -185,7 +198,7 @@ export function buildGradeCardModel(profile, opts = {}) {
   // Points-based syllabus: components are all assessments, no weighted
   // categories. One full-circle arc filled to the overall percentage, same
   // grade-colour keying, letter + percentage in the centre. No segments.
-  if (categories.length === 0 && allComponents.length > 0) {
+  if (categoryTypedComponents.length === 0 && allComponents.length > 0) {
     const hasGrades = pct != null;
     const { centerPrimary, centerSecondary } = centreText({ hasGrades, usableLetter, pct });
     return {
@@ -203,14 +216,16 @@ export function buildGradeCardModel(profile, opts = {}) {
     };
   }
 
-  const rawTotal = round2(categories.reduce((sum, c) => sum + c.weight_percent, 0));
-  const shortfall = categories.length > 0 && rawTotal < 100 - WEIGHT_SUM_TOLERANCE ? round2(100 - rawTotal) : 0;
-  const overage = categories.length > 0 && rawTotal > 100 + WEIGHT_SUM_TOLERANCE ? round2(rawTotal - 100) : 0;
+  const rawTotal = round2(segmentComponents.reduce((sum, c) => sum + c.weight_percent, 0));
+  const shortfall =
+    segmentComponents.length > 0 && rawTotal < 100 - WEIGHT_SUM_TOLERANCE ? round2(100 - rawTotal) : 0;
+  const overage =
+    segmentComponents.length > 0 && rawTotal > 100 + WEIGHT_SUM_TOLERANCE ? round2(rawTotal - 100) : 0;
   // Arcs always sum to exactly 360: shortfall tops the total back up to 100;
   // an over-100 total becomes its own basis so proportions still fit the circle.
   const basis = Math.max(100, rawTotal);
 
-  const entries = categories.map((c) => ({ category: c, weightPercent: c.weight_percent }));
+  const entries = segmentComponents.map((c) => ({ component: c, weightPercent: c.weight_percent }));
   if (shortfall > 0) entries.push({ isShortfall: true, weightPercent: shortfall });
 
   let cursor = startAngle;
@@ -245,7 +260,7 @@ export function buildGradeCardModel(profile, opts = {}) {
       };
     }
 
-    const c = entry.category;
+    const c = entry.component;
     const graded = c.status != null && typeof c.effective_score === 'number';
     const fillFraction = graded ? clamp(c.effective_score / 100, 0, 1) : 0;
     const fillEnd = segStart + (segEnd - segStart) * fillFraction;
@@ -276,7 +291,7 @@ export function buildGradeCardModel(profile, opts = {}) {
     centerSecondary,
     hasGrades,
     segments,
-    totalCategoryWeight: rawTotal,
+    totalSegmentWeight: rawTotal,
     weightSumOff: shortfall > 0 || overage > 0,
     weightShortfallPercent: shortfall > 0 ? shortfall : null,
     weightOveragePercent: overage > 0 ? overage : null,
