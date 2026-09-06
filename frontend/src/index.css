@@ -6772,10 +6772,15 @@ label.profile-form-check { display: flex; flex-direction: row; align-items: cent
   margin: 0;
   padding: 0;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  /* 3 up at desktop -> 2 -> 1, so each ring is large enough to read its
+     segments rather than 5-6 cramped cards. */
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--sp-4);
 }
 .grade-card-grid > li { display: flex; }
+@media (max-width: 900px) {
+  .grade-card-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
 
 .grade-card-wrap { position: relative; flex: 1 1 auto; display: flex; }
 
@@ -6812,18 +6817,28 @@ label.profile-form-check { display: flex; flex-direction: row; align-items: cent
   aspect-ratio: 1 / 1;
   width: 100%;
 }
-.grade-card-ring { width: 100%; height: 100%; display: block; overflow: visible; }
+/* Slightly inset so the ring clears the absolutely-positioned Remove button
+   in the card's top-right corner. */
+.grade-card-ring { width: 90%; height: 90%; display: block; overflow: visible; }
 
+/* Butt caps on the segmented ring: a round cap adds half the stroke width
+   past each arc end (~3deg at this radius) and swallows the inter-segment
+   gaps. The categoryless single-arc card has no gaps to protect and keeps
+   round caps (below). */
 .grade-card-track {
   fill: none;
   stroke: var(--line);
-  stroke-width: 7;
-  stroke-linecap: round;
+  stroke-width: 8;
+  stroke-linecap: butt;
 }
 .grade-card-fill {
   fill: none;
   stroke: var(--grade-color, var(--muted));
-  stroke-width: 7;
+  stroke-width: 8;
+  stroke-linecap: butt;
+}
+.grade-card[data-kind='categoryless'] .grade-card-track,
+.grade-card[data-kind='categoryless'] .grade-card-fill {
   stroke-linecap: round;
 }
 /* Course weight the syllabus never assigned to a category. Dashed + butt-capped
@@ -6831,7 +6846,7 @@ label.profile-form-check { display: flex; flex-direction: row; align-items: cent
    category that simply has no score yet, and it can never carry a fill. */
 .grade-card-track--shortfall {
   stroke: var(--muted);
-  stroke-width: 5;
+  stroke-width: 6;
   stroke-linecap: butt;
   stroke-dasharray: 1.5 2.5;
   opacity: 0.65;

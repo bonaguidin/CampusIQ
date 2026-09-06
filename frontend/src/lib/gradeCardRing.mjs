@@ -11,7 +11,9 @@
 const RING_CENTER = 50; // viewBox is 0 0 100 100
 const RING_RADIUS = 42;
 const START_ANGLE = -90; // 12 o'clock; SVG y-down so increasing angle = clockwise
-const DEFAULT_GAP_DEG = 2;
+// Wide enough that adjacent same-score segments read as separate now that the
+// tracks are butt-capped (a round cap used to visually fill a ~3deg gap).
+const DEFAULT_GAP_DEG = 6;
 // Category weights within +/- this of 100 are treated as a clean 100 -- neither
 // a shortfall segment nor an over-100 note.
 const WEIGHT_SUM_TOLERANCE = 1;
