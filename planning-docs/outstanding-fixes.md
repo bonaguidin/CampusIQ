@@ -178,6 +178,7 @@ Proposed agents, roughly in order of leverage:
 ## 🟡 Test suite — flake watch list (not confirmed broken)
 
 - [ ] **`test_career_optimization_cache_changes_with_selection_add_change_and_clear`** (`tests/test_api_v2_schedule.py`) failed exactly once, on PR #52's CI run, with `assert 4 == 3` (a fingerprint set had one extra unique value). Never reproduced since: clean across 6 isolated local runs (3× on `dev`, 3× on the PR branch), clean across 3 full-suite runs on `dev` (1981 passed each time, this test included), and clean on a same-commit CI re-run. Logging as a watch-item in case it recurs — not treated as a confirmed bug. If it fails again, the fingerprint-uniqueness assertion and whatever seeds/orders the four `OPTIMIZE_URL` calls in that test are the place to start.
+- [ ] **`career profile: Course Discovery role selector marks unsupported roles instead of letting them run silently`** (`frontend/tests/careerProfile.test.mjs:851`) failed exactly once, with `AssertionError [ERR_ASSERTION]: false !== true`, surfaced incidentally during unrelated full-suite verification runs for PR #58 (the `courseDiscoveryPanel.test.mjs` race-condition fix). Not re-investigated or reproduced on purpose beyond that — two immediate full-suite re-runs afterward were clean. Unlike the `courseDiscoveryPanel` fix in the same session, no mechanism is known yet for this one. Logging as a watch-item in case it recurs.
 
 ## 🔵 Bigger picture — process & product gaps
 
