@@ -124,8 +124,15 @@ export function TermPlanner({ slug, accessToken, courses, onCourseRecordsChanged
       const result = await fetchTerms(identity);
       if (cancelled) return;
       setTerms(result.terms);
-      setSelectedKey(
-        pickDefaultTermKey({ terms: result.terms, upcoming_term_key: result.upcomingTermKey }),
+      // Only pick a default when there is nothing to preserve: the first load
+      // (selectedKey still null), or a refetch whose term list no longer
+      // contains what the user had chosen. Otherwise this effect running again
+      // -- a discarded useMemo cache, a StrictMode double-invoke, a later
+      // identity change -- must not overwrite a live selection.
+      setSelectedKey((current) =>
+        current !== null && result.terms.some((term) => term.key === current)
+          ? current
+          : pickDefaultTermKey({ terms: result.terms, upcoming_term_key: result.upcomingTermKey }),
       );
       setTermsLoaded(true);
     })();
