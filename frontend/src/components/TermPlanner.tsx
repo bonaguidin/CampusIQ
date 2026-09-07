@@ -132,12 +132,15 @@ export function TermPlanner({ slug, accessToken, courses, onCourseRecordsChanged
       setSelectedKey((current) =>
         current !== null && result.terms.some((term) => term.key === current)
           ? current
-          : pickDefaultTermKey({ terms: result.terms, upcoming_term_key: result.upcomingTermKey }),
+          : pickDefaultTermKey(
+              { terms: result.terms, upcoming_term_key: result.upcomingTermKey },
+              today,
+            ),
       );
       setTermsLoaded(true);
     })();
     return () => { cancelled = true; };
-  }, [identity]);
+  }, [identity, today]);
 
   // Every planned course for the student, not per-term: the payload is small,
   // and refetching on each dropdown change would make switching terms flicker
